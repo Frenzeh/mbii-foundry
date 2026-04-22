@@ -48,7 +48,7 @@ This panel provides real-time documentation and context for the field you're edi
 `
 	ip.content = widget.NewRichTextFromMarkdown(welcomeMsg)
 
-	ip.search = widget.NewEntry()
+	ip.search = NewInputEntry()
 	ip.search.SetPlaceHolder("Search help...")
 	ip.search.OnChanged = ip.filterList
 

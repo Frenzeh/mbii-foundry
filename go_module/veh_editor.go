@@ -64,10 +64,10 @@ func (e *VEHEditor) SetAssetBrowser(ab *AssetBrowser)         { e.assetBrowser =
 func (e *VEHEditor) SetHolocronClient(client *HolocronClient) { e.holocronClient = client }
 
 func (e *VEHEditor) createUI() {
-	e.nameEntry = widget.NewEntry()
+	e.nameEntry = NewInputEntry()
 	e.typeSelect = widget.NewSelect(VehicleTypes, func(s string) { e.vehicle.Type = s })
-	e.modelEntry = widget.NewEntry()
-	e.skinEntry = widget.NewEntry()
+	e.modelEntry = NewInputEntry()
+	e.skinEntry = NewInputEntry()
 
 	browseModelBtn := widget.NewButtonWithIcon("", theme.FolderOpenIcon(), func() {
 		if e.app != nil {
@@ -81,12 +81,12 @@ func (e *VEHEditor) createUI() {
 		widget.NewFormItem("Skin", e.skinEntry),
 	)
 
-	e.speedEntry = widget.NewEntry()
-	e.turboEntry = widget.NewEntry()
-	e.accelEntry = widget.NewEntry()
-	e.decelEntry = widget.NewEntry()
-	e.strafeEntry = widget.NewEntry()
-	e.brakingEntry = widget.NewEntry()
+	e.speedEntry = NewInputEntry()
+	e.turboEntry = NewInputEntry()
+	e.accelEntry = NewInputEntry()
+	e.decelEntry = NewInputEntry()
+	e.strafeEntry = NewInputEntry()
+	e.brakingEntry = NewInputEntry()
 
 	statsForm := widget.NewForm(
 		widget.NewFormItem("Max Speed", e.speedEntry),
@@ -97,9 +97,9 @@ func (e *VEHEditor) createUI() {
 		widget.NewFormItem("Braking", e.brakingEntry),
 	)
 
-	e.armorEntry = widget.NewEntry()
-	e.shieldsEntry = widget.NewEntry()
-	e.weaponsEntry = widget.NewEntry()
+	e.armorEntry = NewInputEntry()
+	e.shieldsEntry = NewInputEntry()
+	e.weaponsEntry = NewInputEntry()
 
 	combatForm := widget.NewForm(
 		widget.NewFormItem("Armor", e.armorEntry),
@@ -107,7 +107,7 @@ func (e *VEHEditor) createUI() {
 		widget.NewFormItem("Weapons", e.weaponsEntry),
 	)
 
-	e.sourceView = widget.NewMultiLineEntry()
+	e.sourceView = NewMultiLineInputEntry()
 	e.sourceView.TextStyle = fyne.TextStyle{Monospace: true}
 	sourceTab := container.NewMax(container.NewScroll(e.sourceView))
 

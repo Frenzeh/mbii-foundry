@@ -55,15 +55,15 @@ func (ui *ForceInfoUI) createUI() {
 		ui.forceList,
 	)
 
-	ui.forceToReplaceEntry = widget.NewEntry()
+	ui.forceToReplaceEntry = NewInputEntry()
 	ui.forceToReplaceEntry.OnChanged = ui.onDetailChanged
-	ui.iconEntry = widget.NewEntry()
+	ui.iconEntry = NewInputEntry()
 	ui.iconEntry.OnChanged = ui.onDetailChanged
-	ui.forcePowerNameEntry = widget.NewEntry()
+	ui.forcePowerNameEntry = NewInputEntry()
 	ui.forcePowerNameEntry.OnChanged = ui.onDetailChanged
-	ui.startSoundEntry = widget.NewEntry()
+	ui.startSoundEntry = NewInputEntry()
 	ui.startSoundEntry.OnChanged = ui.onDetailChanged
-	ui.loopSoundEntry = widget.NewEntry()
+	ui.loopSoundEntry = NewInputEntry()
 	ui.loopSoundEntry.OnChanged = ui.onDetailChanged
 
 	ui.detailForm = widget.NewForm(

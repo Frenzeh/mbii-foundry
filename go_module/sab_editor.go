@@ -194,12 +194,12 @@ func (e *SABEditor) browseAsset(entry *widget.Entry, assetType AssetType) {
 }
 
 func (e *SABEditor) createUI() {
-	e.nameEntry = widget.NewEntry()
-	e.fullNameEntry = widget.NewEntry()
+	e.nameEntry = NewInputEntry()
+	e.fullNameEntry = NewInputEntry()
 	e.typeSelect = widget.NewSelect(SaberTypes, func(s string) { e.saber.SaberType = s; e.markDirty() })
-	e.modelEntry = widget.NewEntry()
-	e.customSkinEntry = widget.NewEntry()
-	e.numBladesEntry = widget.NewEntry()
+	e.modelEntry = NewInputEntry()
+	e.customSkinEntry = NewInputEntry()
+	e.numBladesEntry = NewInputEntry()
 
 	// Wire up dirty tracking for identity fields
 	e.nameEntry.OnChanged = func(s string) { e.markDirty() }
@@ -228,16 +228,16 @@ func (e *SABEditor) createUI() {
 			e.markDirty()
 		}
 	})
-	e.blade1LengthEntry = widget.NewEntry()
-	e.blade1RadiusEntry = widget.NewEntry()
+	e.blade1LengthEntry = NewInputEntry()
+	e.blade1RadiusEntry = NewInputEntry()
 	e.blade1LengthEntry.OnChanged = func(s string) { e.markDirty() }
 	e.blade1RadiusEntry.OnChanged = func(s string) { e.markDirty() }
 	bladeGrid := container.NewGridWithColumns(2, widget.NewFormItem("Color", e.blade1ColorSelect).Widget, widget.NewFormItem("Preview", e.bladePreview).Widget, widget.NewFormItem("Length", e.blade1LengthEntry).Widget, widget.NewFormItem("Radius", e.blade1RadiusEntry).Widget)
 
-	e.soundOnEntry = widget.NewEntry()
-	e.soundOffEntry = widget.NewEntry()
-	e.soundLoopEntry = widget.NewEntry()
-	e.spinSoundEntry = widget.NewEntry()
+	e.soundOnEntry = NewInputEntry()
+	e.soundOffEntry = NewInputEntry()
+	e.soundLoopEntry = NewInputEntry()
+	e.spinSoundEntry = NewInputEntry()
 	e.soundOnEntry.OnChanged = func(s string) { e.markDirty() }
 	e.soundOffEntry.OnChanged = func(s string) { e.markDirty() }
 	e.soundLoopEntry.OnChanged = func(s string) { e.markDirty() }
@@ -254,53 +254,53 @@ func (e *SABEditor) createUI() {
 		widget.NewFormItem("Spin", container.NewBorder(nil, nil, nil, browseSound(e.spinSoundEntry), e.spinSoundEntry)),
 	)
 
-	e.swingSound1Entry = widget.NewEntry()
-	e.swingSound2Entry = widget.NewEntry()
-	e.swingSound3Entry = widget.NewEntry()
+	e.swingSound1Entry = NewInputEntry()
+	e.swingSound2Entry = NewInputEntry()
+	e.swingSound3Entry = NewInputEntry()
 	e.swingSound1Entry.OnChanged = func(s string) { e.markDirty() }
 	e.swingSound2Entry.OnChanged = func(s string) { e.markDirty() }
 	e.swingSound3Entry.OnChanged = func(s string) { e.markDirty() }
 	e.swingSoundsGroup = widget.NewForm(widget.NewFormItem("Swing 1", e.swingSound1Entry), widget.NewFormItem("Swing 2", e.swingSound2Entry), widget.NewFormItem("Swing 3", e.swingSound3Entry))
 
-	e.fallSound1Entry = widget.NewEntry()
-	e.fallSound2Entry = widget.NewEntry()
-	e.fallSound3Entry = widget.NewEntry()
+	e.fallSound1Entry = NewInputEntry()
+	e.fallSound2Entry = NewInputEntry()
+	e.fallSound3Entry = NewInputEntry()
 	e.fallSound1Entry.OnChanged = func(s string) { e.markDirty() }
 	e.fallSound2Entry.OnChanged = func(s string) { e.markDirty() }
 	e.fallSound3Entry.OnChanged = func(s string) { e.markDirty() }
 	e.fallSoundsGroup = widget.NewForm(widget.NewFormItem("Fall 1", e.fallSound1Entry), widget.NewFormItem("Fall 2", e.fallSound2Entry), widget.NewFormItem("Fall 3", e.fallSound3Entry))
 
-	e.hitSound1Entry = widget.NewEntry()
-	e.hitSound2Entry = widget.NewEntry()
-	e.hitSound3Entry = widget.NewEntry()
+	e.hitSound1Entry = NewInputEntry()
+	e.hitSound2Entry = NewInputEntry()
+	e.hitSound3Entry = NewInputEntry()
 	e.hitSound1Entry.OnChanged = func(s string) { e.markDirty() }
 	e.hitSound2Entry.OnChanged = func(s string) { e.markDirty() }
 	e.hitSound3Entry.OnChanged = func(s string) { e.markDirty() }
 	e.hitSoundsGroup = widget.NewForm(widget.NewFormItem("Hit 1", e.hitSound1Entry), widget.NewFormItem("Hit 2", e.hitSound2Entry), widget.NewFormItem("Hit 3", e.hitSound3Entry))
 
-	e.blockSound1Entry = widget.NewEntry()
-	e.blockSound2Entry = widget.NewEntry()
-	e.blockSound3Entry = widget.NewEntry()
+	e.blockSound1Entry = NewInputEntry()
+	e.blockSound2Entry = NewInputEntry()
+	e.blockSound3Entry = NewInputEntry()
 	e.blockSound1Entry.OnChanged = func(s string) { e.markDirty() }
 	e.blockSound2Entry.OnChanged = func(s string) { e.markDirty() }
 	e.blockSound3Entry.OnChanged = func(s string) { e.markDirty() }
 	e.blockSoundsGroup = widget.NewForm(widget.NewFormItem("Block 1", e.blockSound1Entry), widget.NewFormItem("Block 2", e.blockSound2Entry), widget.NewFormItem("Block 3", e.blockSound3Entry))
 
-	e.bounceSound1Entry = widget.NewEntry()
-	e.bounceSound2Entry = widget.NewEntry()
-	e.bounceSound3Entry = widget.NewEntry()
+	e.bounceSound1Entry = NewInputEntry()
+	e.bounceSound2Entry = NewInputEntry()
+	e.bounceSound3Entry = NewInputEntry()
 	e.bounceSound1Entry.OnChanged = func(s string) { e.markDirty() }
 	e.bounceSound2Entry.OnChanged = func(s string) { e.markDirty() }
 	e.bounceSound3Entry.OnChanged = func(s string) { e.markDirty() }
 	e.bounceSoundsGroup = widget.NewForm(widget.NewFormItem("Bounce 1", e.bounceSound1Entry), widget.NewFormItem("Bounce 2", e.bounceSound2Entry), widget.NewFormItem("Bounce 3", e.bounceSound3Entry))
 
-	e.styleEntry = widget.NewEntry()
-	e.singleBladeStyleEntry = widget.NewEntry()
-	e.maxChainEntry = widget.NewEntry()
-	e.lockBonusEntry = widget.NewEntry()
-	e.parryBonusEntry = widget.NewEntry()
-	e.breakParryEntry = widget.NewEntry()
-	e.disarmBonusEntry = widget.NewEntry()
+	e.styleEntry = NewInputEntry()
+	e.singleBladeStyleEntry = NewInputEntry()
+	e.maxChainEntry = NewInputEntry()
+	e.lockBonusEntry = NewInputEntry()
+	e.parryBonusEntry = NewInputEntry()
+	e.breakParryEntry = NewInputEntry()
+	e.disarmBonusEntry = NewInputEntry()
 	e.styleEntry.OnChanged = func(s string) { e.markDirty() }
 	e.singleBladeStyleEntry.OnChanged = func(s string) { e.markDirty() }
 	e.maxChainEntry.OnChanged = func(s string) { e.markDirty() }
@@ -310,23 +310,23 @@ func (e *SABEditor) createUI() {
 	e.disarmBonusEntry.OnChanged = func(s string) { e.markDirty() }
 	combatForm := widget.NewForm(widget.NewFormItem("Saber Style", e.styleEntry), widget.NewFormItem("Single Blade Style", e.singleBladeStyleEntry), widget.NewFormItem("Max Chain", e.maxChainEntry), widget.NewFormItem("Lock Bonus", e.lockBonusEntry), widget.NewFormItem("Parry Bonus", e.parryBonusEntry), widget.NewFormItem("Break Parry Bonus", e.breakParryEntry), widget.NewFormItem("Disarm Bonus", e.disarmBonusEntry))
 
-	e.moveSpeedEntry = widget.NewEntry()
-	e.animSpeedEntry = widget.NewEntry()
-	e.damageScaleEntry = widget.NewEntry()
-	e.knockbackEntry = widget.NewEntry()
+	e.moveSpeedEntry = NewInputEntry()
+	e.animSpeedEntry = NewInputEntry()
+	e.damageScaleEntry = NewInputEntry()
+	e.knockbackEntry = NewInputEntry()
 	e.moveSpeedEntry.OnChanged = func(s string) { e.markDirty() }
 	e.animSpeedEntry.OnChanged = func(s string) { e.markDirty() }
 	e.damageScaleEntry.OnChanged = func(s string) { e.markDirty() }
 	e.knockbackEntry.OnChanged = func(s string) { e.markDirty() }
 	speedDamageForm := widget.NewForm(widget.NewFormItem("Move Speed Scale", e.moveSpeedEntry), widget.NewFormItem("Anim Speed Scale", e.animSpeedEntry), widget.NewFormItem("Damage Scale", e.damageScaleEntry), widget.NewFormItem("Knockback Scale", e.knockbackEntry))
 
-	e.trailStyleEntry = widget.NewEntry()
-	e.blockEffectEntry = widget.NewEntry()
-	e.hitPersonEffectEntry = widget.NewEntry()
-	e.bladeEffectEntry = widget.NewEntry()
-	e.hitOtherEffectEntry = widget.NewEntry()
-	e.g2MarksShaderEntry = widget.NewEntry()
-	e.g2WeaponMarkShaderEntry = widget.NewEntry()
+	e.trailStyleEntry = NewInputEntry()
+	e.blockEffectEntry = NewInputEntry()
+	e.hitPersonEffectEntry = NewInputEntry()
+	e.bladeEffectEntry = NewInputEntry()
+	e.hitOtherEffectEntry = NewInputEntry()
+	e.g2MarksShaderEntry = NewInputEntry()
+	e.g2WeaponMarkShaderEntry = NewInputEntry()
 	e.trailStyleEntry.OnChanged = func(s string) { e.markDirty() }
 	e.blockEffectEntry.OnChanged = func(s string) { e.markDirty() }
 	e.hitPersonEffectEntry.OnChanged = func(s string) { e.markDirty() }
@@ -366,11 +366,11 @@ func (e *SABEditor) createUI() {
 		e.useGoreConfigCheck, e.useGoreConfig2Check, e.noDismemberment2Check, e.noBladeEffectsCheck, e.noBladeEffects2Check,
 	)
 
-	e.slapAnimEntry = widget.NewEntry()
-	e.readyAnimEntry = widget.NewEntry()
-	e.jumpAtkUpMoveEntry = widget.NewEntry()
-	e.jumpAtkFwdMoveEntry = widget.NewEntry()
-	e.lungeAtkMoveEntry = widget.NewEntry()
+	e.slapAnimEntry = NewInputEntry()
+	e.readyAnimEntry = NewInputEntry()
+	e.jumpAtkUpMoveEntry = NewInputEntry()
+	e.jumpAtkFwdMoveEntry = NewInputEntry()
+	e.lungeAtkMoveEntry = NewInputEntry()
 	e.slapAnimEntry.OnChanged = func(s string) { e.markDirty() }
 	e.readyAnimEntry.OnChanged = func(s string) { e.markDirty() }
 	e.jumpAtkUpMoveEntry.OnChanged = func(s string) { e.markDirty() }

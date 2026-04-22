@@ -305,9 +305,9 @@ func (e *MBCHEditor) createUI() {
 	e.iconPreview = widget.NewIcon(theme.FileImageIcon())
 	// e.iconPreview.SetMinSize(fyne.NewSize(64, 64)) // Bigger preview
 
-	e.weaponsEntry = widget.NewMultiLineEntry()
-	e.attributesEntry = widget.NewMultiLineEntry()
-	e.forcePowersEntry = widget.NewMultiLineEntry()
+	e.weaponsEntry = NewMultiLineInputEntry()
+	e.attributesEntry = NewMultiLineInputEntry()
+	e.forcePowersEntry = NewMultiLineInputEntry()
 	e.weaponsEntry.SetMinRowsVisible(3)
 	e.attributesEntry.SetMinRowsVisible(3)
 	e.forcePowersEntry.SetMinRowsVisible(3)

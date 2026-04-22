@@ -53,7 +53,7 @@ func (be *BulkEditor) createUI() {
 	)
 
 	be.fieldSelect = widget.NewSelect([]string{"MaxHealth", "MaxArmor", "Speed", "ForcePool"}, nil)
-	be.valueEntry = widget.NewEntry()
+	be.valueEntry = NewInputEntry()
 	be.valueEntry.SetPlaceHolder("New Value")
 
 	be.applyBtn = widget.NewButtonWithIcon("Apply to Selected", theme.ConfirmIcon(), be.applyChanges)

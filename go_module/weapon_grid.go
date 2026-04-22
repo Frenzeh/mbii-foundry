@@ -72,7 +72,7 @@ func (wg *WeaponGrid) createUI() {
 	} else {
 		content = container.NewVBox()
 
-		wg.search = widget.NewEntry()
+		wg.search = NewInputEntry()
 		wg.search.SetPlaceHolder("Filter Weapons...")
 		wg.search.OnChanged = func(s string) {
 			wg.filter = s

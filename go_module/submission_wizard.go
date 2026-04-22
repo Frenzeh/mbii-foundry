@@ -43,7 +43,7 @@ func (a *App) showSubmissionWizard() {
 		modeSelect.Disable() // No choice for master
 	}
 
-	titleEntry := widget.NewEntry()
+	titleEntry := NewInputEntry()
 	titleEntry.PlaceHolder = "Brief summary of changes (e.g., Fix Clone Stats)"
 
 	// Pre-fill title if updating existing branch?
@@ -51,7 +51,7 @@ func (a *App) showSubmissionWizard() {
 		titleEntry.SetText("Update " + currentBranch)
 	}
 
-	descEntry := widget.NewMultiLineEntry()
+	descEntry := NewMultiLineInputEntry()
 	descEntry.PlaceHolder = "Detailed description of what you changed and why..."
 	descEntry.SetMinRowsVisible(5)
 

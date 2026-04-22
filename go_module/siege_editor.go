@@ -99,15 +99,15 @@ func (e *SiegeEditor) markDirty() {
 }
 
 func (e *SiegeEditor) createUI() {
-	e.missionNameEntry = widget.NewEntry()
+	e.missionNameEntry = NewInputEntry()
 	e.missionNameEntry.OnChanged = func(s string) { e.markDirty() }
-	e.mapGraphicEntry = widget.NewEntry()
+	e.mapGraphicEntry = NewInputEntry()
 	e.mapGraphicEntry.OnChanged = func(s string) { e.markDirty() }
-	e.radarTLEntry = widget.NewEntry()
+	e.radarTLEntry = NewInputEntry()
 	e.radarTLEntry.OnChanged = func(s string) { e.markDirty() }
-	e.radarBREntry = widget.NewEntry()
+	e.radarBREntry = NewInputEntry()
 	e.radarBREntry.OnChanged = func(s string) { e.markDirty() }
-	e.modesEntry = widget.NewEntry()
+	e.modesEntry = NewInputEntry()
 	e.modesEntry.OnChanged = func(s string) { e.markDirty() }
 
 	globalForm := widget.NewForm(
@@ -123,7 +123,7 @@ func (e *SiegeEditor) createUI() {
 
 	teamsSplit := container.NewHSplit(e.team1UI.container, e.team2UI.container)
 
-	e.sourceView = widget.NewMultiLineEntry()
+	e.sourceView = NewMultiLineInputEntry()
 	e.sourceView.TextStyle = fyne.TextStyle{Monospace: true}
 	sourceTab := container.NewMax(container.NewScroll(e.sourceView))
 
@@ -145,13 +145,13 @@ func (e *SiegeEditor) createUI() {
 func NewTeamUI(editor *SiegeEditor, label string) *TeamUI {
 	ui := &TeamUI{editor: editor}
 
-	ui.nameEntry = widget.NewEntry()
+	ui.nameEntry = NewInputEntry()
 	ui.nameEntry.OnChanged = func(s string) { editor.markDirty() }
-	ui.useTeamEntry = widget.NewEntry()
+	ui.useTeamEntry = NewInputEntry()
 	ui.useTeamEntry.OnChanged = func(s string) { editor.markDirty() }
-	ui.iconEntry = widget.NewEntry()
+	ui.iconEntry = NewInputEntry()
 	ui.iconEntry.OnChanged = func(s string) { editor.markDirty() }
-	ui.briefingEntry = widget.NewMultiLineEntry()
+	ui.briefingEntry = NewMultiLineInputEntry()
 	ui.briefingEntry.OnChanged = func(s string) { editor.markDirty() }
 
 	form := widget.NewForm(

@@ -1,0 +1,144 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MBII Class Flags Enum",
+  "description": "All class flag types from bg_saga.h siegeClassFlags_t enum",
+  "version": "1.0.0",
+  "source_file": "game/bg_saga.h",
+
+  "class_flags": {
+    "CFL_STRONGAGAINSTPHYSICAL": {
+      "value": 0,
+      "description": "Resistant to physical damage (melee, knockback)"
+    },
+    "CFL_STATVIEWER": {
+      "value": 1,
+      "description": "Can view enemy stats/information"
+    },
+    "CFL_HEAVYMELEE": {
+      "value": 2,
+      "description": "Enhanced melee attacks (more damage/knockback)"
+    },
+    "CFL_REALTD": {
+      "value": 3,
+      "description": "Uses real thermal detonators (class 3 explosives)"
+    },
+    "CFL_HASQ3": {
+      "value": 4,
+      "description": "Has Q3 movement mode available"
+    },
+    "CFL_FASTHACKING": {
+      "value": 5,
+      "description": "Faster objective hacking speed"
+    },
+    "CFL_NOPICKUPS": {
+      "value": 6,
+      "description": "Cannot pick up items from ground"
+    },
+    "CFL_BPFREEJUMPS": {
+      "value": 7,
+      "description": "Jumps don't cost BP (block points)"
+    },
+    "CFL_SEEING_STEALTH": {
+      "value": 8,
+      "description": "Force Seeing reveals cloaked enemies"
+    },
+    "CFL_AKIMBOPISTOL3": {
+      "value": 9,
+      "description": "Can use third akimbo pistol style"
+    },
+    "CFL_THERMALROCKETS": {
+      "value": 10,
+      "description": "Rockets explode with thermal effect"
+    },
+    "CFL_INSTAGIB": {
+      "value": 11,
+      "description": "One-hit kill attacks (ifdef INSTAGIB)",
+      "conditional": "INSTAGIB"
+    },
+    "CFL_ACIDBLOOD": {
+      "value": 12,
+      "description": "Bleeds acid that damages attackers (ifdef ACIDBLOOD)",
+      "conditional": "ACIDBLOOD"
+    },
+    "CFL_DISMEMBERFRAGILE": {
+      "value": 13,
+      "description": "More easily dismembered by saber attacks"
+    },
+    "CFL_BLOODYMELEE": {
+      "value": 14,
+      "description": "Melee attacks cause blood effects (GORECONFIG)"
+    },
+    "CFL_BUBBLESHIELD": {
+      "value": 15,
+      "description": "Has Galak Mech style bubble shield"
+    },
+    "CFL_NO_FUEL_USE": {
+      "value": 16,
+      "description": "Jetpack doesn't consume fuel"
+    },
+    "CFL_NO_JETPACK_OVERHEAT": {
+      "value": 17,
+      "description": "Jetpack never overheats"
+    },
+    "CFL_NO_JETPACK_COOLDOWN": {
+      "value": 18,
+      "description": "Jetpack has no cooldown between uses"
+    },
+    "CFL_DISRUPTOR_WALLS": {
+      "value": 19,
+      "description": "Disruptor shots penetrate walls"
+    },
+    "CFL_KILLTEAMONDEATH": {
+      "value": 20,
+      "description": "Death kills entire team (VIP mode)"
+    },
+    "CFL_NOLOCATIONALDAMAGE": {
+      "value": 21,
+      "description": "No headshot/location-based damage multipliers"
+    },
+    "CFL_RUNFASTMELEE": {
+      "value": 22,
+      "description": "Move faster while in melee stance (ifdef NEW_CLASSFLAGS)",
+      "conditional": "NEW_CLASSFLAGS"
+    },
+    "CFL_NODISMEMBER": {
+      "value": 23,
+      "description": "Cannot be dismembered"
+    }
+  },
+
+  "weapon_held_flags": {
+    "_description": "These are weapon-specific flags (ifdef WEAPON_HELD_FLAGS)",
+    "HELD_HEAL": "Weapon heals user on hit",
+    "HELD_AMMOREGEN": "Weapon regenerates ammo",
+    "HELD_SPEED": "Weapon grants speed boost",
+    "HELD_SLOW": "Weapon slows targets",
+    "HELD_HIGHDAMAGE": "Increased missile/grenade damage",
+    "HELD_LOWDAMAGE": "Decreased missile/grenade damage",
+    "HELD_KNOCKDOWN": "Missiles cause knockdown",
+    "HELD_SOFTKNOCKDOWN": "Missiles cause soft knockdown",
+    "HELD_POISON": "Missiles apply poison",
+    "HELD_FLAME": "Missiles apply fire effect",
+    "HELD_PULSE": "Missiles apply pulse/EMP effect",
+    "HELD_EXPLOSIVE": "Enhanced explosive effect",
+    "HELD_KNOCKBACK": "Enhanced knockback on missiles",
+    "HELD_KNOCKDOWNRESISTANCE": "Resistance to knockdown",
+    "HELD_DAMAGERESISTANCE": "Resistance to damage",
+    "HELD_DAMAGEVULNERABLE": "Increased vulnerability to damage",
+    "HELD_FORCEREGEN": "Force point regeneration",
+    "HELD_FORCEEATER": "Drains Force on hit",
+    "HELD_ALTRELOAD": "Alternative reload animation",
+    "HELD_SLOWPROJ": "Slower projectiles",
+    "HELD_DISRUPTIFY": "Kills cause disintegration",
+    "HELD_SONIC": "Causes sonic stagger/screen effect",
+    "HELD_STUN": "Causes short blocking stagger",
+    "HELD_FREEZE": "Causes short freeze on hit",
+    "HELD_IGNOREBLOCK": "Ignores saber blocking"
+  },
+
+  "usage": {
+    "single_flag": "classflags CFL_HASQ3",
+    "multiple_flags": "classflags CFL_HASQ3|CFL_HEAVYMELEE|CFL_REALTD",
+    "notes": "Flags are combined using bitwise OR (|) operator"
+  }
+}

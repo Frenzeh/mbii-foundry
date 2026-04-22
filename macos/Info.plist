@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>FA Creator</string>
+    <key>CFBundleDisplayName</key>
+    <string>FA Creator</string>
+    <key>CFBundleIdentifier</key>
+    <string>org.moviebattles.facreator</string>
+    <key>CFBundleVersion</key>
+    <string>1.1</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.1</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleExecutable</key>
+    <string>fa_creator</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>10.13</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSSupportsAutomaticGraphicsSwitching</key>
+    <true/>
+    <key>LSUIElement</key>
+    <false/>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>FA Creator needs to respond to keyboard input for editing.</string>
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>MBII Character File</string>
+            <key>CFBundleTypeExtensions</key>
+            <array>
+                <string>mbch</string>
+            </array>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+        </dict>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>MBII Saber File</string>
+            <key>CFBundleTypeExtensions</key>
+            <array>
+                <string>sab</string>
+            </array>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+        </dict>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>MBII Vehicle File</string>
+            <key>CFBundleTypeExtensions</key>
+            <array>
+                <string>veh</string>
+            </array>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+        </dict>
+    </array>
+</dict>
+</plist>

@@ -1,0 +1,121 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MBII Powerups Enum",
+  "description": "All powerup types from bg_public.h powerup_t enum",
+  "version": "1.0.0",
+  "source_file": "game/bg_public.h",
+
+  "powerups": {
+    "PW_NONE": {
+      "value": 0,
+      "description": "No powerup"
+    },
+    "PW_QUAD": {
+      "value": 1,
+      "description": "Hijacked for cleaner flameburning effects",
+      "note": "Original Q3 quad damage, repurposed in MBII"
+    },
+    "PW_BATTLESUIT": {
+      "value": 2,
+      "description": "Hijacked for cleaner plasma flameburning effects",
+      "note": "Original Q3 battlesuit, repurposed in MBII"
+    },
+    "PW_PULL": {
+      "value": 3,
+      "description": "Force Pull active state"
+    },
+    "PW_REDFLAG": {
+      "value": 4,
+      "description": "Carrying red team flag (CTF)"
+    },
+    "PW_BLUEFLAG": {
+      "value": 5,
+      "description": "Carrying blue team flag (CTF)"
+    },
+    "PW_NEUTRALFLAG": {
+      "value": 6,
+      "description": "Carrying neutral flag"
+    },
+    "PW_SHIELDHIT": {
+      "value": 7,
+      "description": "Hijacked for bubble shield effect",
+      "note": "Used for deployable bubble shield visual"
+    },
+    "PW_SPEEDBURST": {
+      "value": 8,
+      "description": "Speed burst active (was used for base dodge)",
+      "note": "Could be removed according to source comments"
+    },
+    "PW_DISINT_4": {
+      "value": 9,
+      "description": "Disintegration effect state"
+    },
+    "PW_SPEED": {
+      "value": 10,
+      "description": "Force Speed active state",
+      "note": "Could be removed - can check FP_SPEED directly"
+    },
+    "PW_CLOAKED": {
+      "value": 11,
+      "description": "Cloaking device active"
+    },
+    "PW_FORCE_ENLIGHTENED_LIGHT": {
+      "value": 12,
+      "description": "Light side Force enlightenment active"
+    },
+    "PW_FORCE_ENLIGHTENED_DARK": {
+      "value": 13,
+      "description": "Dark side Force enlightenment active"
+    },
+    "PW_FORCE_BOON": {
+      "value": 14,
+      "description": "Force Boon bonus active"
+    },
+    "PW_YSALAMIRI": {
+      "value": 15,
+      "description": "Ysalamiri effect - nullifies Force powers"
+    },
+    "PW_POISON": {
+      "value": 16,
+      "description": "Poisoned state - taking damage over time"
+    },
+    "PW_TRACKED_R": {
+      "value": 17,
+      "description": "Tracked by Red Team (visible on radar)"
+    },
+    "PW_TRACKED_B": {
+      "value": 18,
+      "description": "Tracked by Blue Team (visible on radar)"
+    },
+    "PW_ELECTRIFY": {
+      "value": 19,
+      "description": "Electrified/shocked state (PW_SHOCKED)"
+    },
+    "PW_FREEZE": {
+      "value": 20,
+      "description": "Frozen state from ice thrower"
+    },
+    "PW_GALAKMECHSHIELD": {
+      "value": 21,
+      "description": "Galak Mech style bubble shield active"
+    },
+    "PW_NUM_POWERUPS": {
+      "value": 22,
+      "description": "Total powerup count marker"
+    }
+  },
+
+  "categories": {
+    "force_related": ["PW_PULL", "PW_SPEED", "PW_FORCE_ENLIGHTENED_LIGHT", "PW_FORCE_ENLIGHTENED_DARK", "PW_FORCE_BOON", "PW_YSALAMIRI"],
+    "ctf_flags": ["PW_REDFLAG", "PW_BLUEFLAG", "PW_NEUTRALFLAG"],
+    "debuffs": ["PW_POISON", "PW_ELECTRIFY", "PW_FREEZE"],
+    "tracking": ["PW_TRACKED_R", "PW_TRACKED_B"],
+    "shields": ["PW_SHIELDHIT", "PW_GALAKMECHSHIELD"],
+    "stealth": ["PW_CLOAKED"]
+  },
+
+  "notes": {
+    "usage": "Powerups are temporary states that affect gameplay. Many are applied automatically by Force powers or abilities.",
+    "legacy": "Several powerups are repurposed from Quake 3/JKA base code for MBII-specific effects."
+  }
+}

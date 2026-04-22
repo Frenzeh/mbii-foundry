@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <!-- Outer glow effect -->
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="15" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <!-- Inner glow gradient -->
+    <radialGradient id="innerGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFCC66"/>
+      <stop offset="60%" stop-color="#FF8C00"/>
+      <stop offset="100%" stop-color="#CC5500"/>
+    </radialGradient>
+    <!-- Diamond face gradient -->
+    <linearGradient id="faceGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFD080"/>
+      <stop offset="50%" stop-color="#FF9020"/>
+      <stop offset="100%" stop-color="#CC6600"/>
+    </linearGradient>
+    <!-- Edge highlight -->
+    <linearGradient id="edgeHighlight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFEECC"/>
+      <stop offset="100%" stop-color="#FF8800"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background circle (subtle) -->
+  <circle cx="256" cy="256" r="240" fill="#1a1a22" stroke="#FF8C00" stroke-width="3" opacity="0.8"/>
+
+  <!-- Holocron diamond shape - main body -->
+  <g filter="url(#glow)">
+    <!-- Diamond outline with glow -->
+    <polygon points="256,60 440,256 256,452 72,256"
+             fill="url(#innerGlow)"
+             stroke="#FFAA33"
+             stroke-width="4"/>
+
+    <!-- Inner diamond facets -->
+    <!-- Top facet -->
+    <polygon points="256,60 340,180 256,200 172,180" fill="#FFD090" opacity="0.7"/>
+    <!-- Right facet -->
+    <polygon points="440,256 340,180 340,332" fill="#CC6600" opacity="0.8"/>
+    <!-- Bottom facet -->
+    <polygon points="256,452 340,332 256,312 172,332" fill="#993300" opacity="0.7"/>
+    <!-- Left facet -->
+    <polygon points="72,256 172,180 172,332" fill="#FF8800" opacity="0.8"/>
+
+    <!-- Center core -->
+    <polygon points="256,200 340,256 256,312 172,256"
+             fill="url(#faceGrad)"
+             stroke="#FFCC66"
+             stroke-width="2"/>
+
+    <!-- Inner core glow -->
+    <circle cx="256" cy="256" r="40" fill="#FFDD88" opacity="0.9"/>
+    <circle cx="256" cy="256" r="25" fill="#FFEEAA" opacity="0.95"/>
+    <circle cx="256" cy="256" r="12" fill="#FFFFFF" opacity="0.9"/>
+  </g>
+
+  <!-- Edge highlights -->
+  <line x1="256" y1="60" x2="440" y2="256" stroke="url(#edgeHighlight)" stroke-width="2" opacity="0.6"/>
+  <line x1="256" y1="60" x2="72" y2="256" stroke="url(#edgeHighlight)" stroke-width="2" opacity="0.6"/>
+</svg>

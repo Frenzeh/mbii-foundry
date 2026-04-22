@@ -1,0 +1,5 @@
+# MB_CLASS_HERO
+
+`MB_CLASS_HERO`
+
+Hero

@@ -1,0 +1,900 @@
+[
+  {
+    "id": "uishader",
+    "name": "UI Shader",
+    "overview": "The icon displayed in the class selection menu and on the scoreboard.\n\n**Format**\n`gfx/menus/classes/icon_name`\n\n**Finding Icons**\n*   Browse `mbii-holocron/FA_Assets/icons/`\n*   Use the **Asset Browser** in the FA Creator to find `.jpg` or `.tga` files in `gfx/menus/`.",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "The icon displayed in the class selection menu and on the scoreboard."
+  },
+  {
+    "id": "model",
+    "name": "Model",
+    "overview": "The 3D character model used in-game.\n\n**Format**\n`model_name`\n\n**Examples**\n*   `jedi_hm` (Human Male Jedi)\n*   `clonetrooper` (Clone Trooper)\n*   `cultist` (Sith Cultist)",
+    "tips": [
+      "Must correspond to a folder in `models/players/`.",
+      "Use the **Asset Browser** or **Preview** button to verify."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "The 3D character model used in-game."
+  },
+  {
+    "id": "skin",
+    "name": "Skin",
+    "overview": "The texture set applied to the model.\n\n**Format**\n`skin_name` (e.g., `default`, `red`, `blue`, `rgb`)",
+    "tips": [
+      "Must exist within the model's `.skin` files.",
+      "`default` is the most common.",
+      "`rgb` allows for custom colors if the model supports it."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "The texture set applied to the model."
+  },
+  {
+    "id": "classflags",
+    "name": "Class Flags",
+    "overview": "Special modifiers that alter the fundamental behavior of a character class.",
+    "tips": [
+      "Select flags from the list to enable unique mechanics like \"No Locational Damage\" or \"Acid Blood\".",
+      "Combine multiple flags for custom boss characters."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Special modifiers that alter the fundamental behavior of a character class."
+  },
+  {
+    "id": "soundset",
+    "name": "Soundset",
+    "overview": "The voice lines and sounds the character makes.\n\n**Format**\n`sound_folder`\n\n**Examples**\n*   `jedi1`\n*   `clonetrooper`\n*   `kyle`",
+    "tips": [
+      "Must correspond to a folder in `sound/chars/`."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "The voice lines and sounds the character makes."
+  },
+  {
+    "id": "mbPoints",
+    "name": "\ud83d\udd22 MB Points",
+    "overview": "The total points available for a Custom Build character to spend.\n> **Default:** 0\n\n**\u2699\ufe0f Mechanics**\n*   **Pool:** The budget the player has to buy ranks in `c_att_skill_*`.",
+    "tips": [
+      "Standard Legends value: ~100-150 depending on power level."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "The total points available for a Custom Build character to spend."
+  },
+  {
+    "id": "maxhealth",
+    "name": "\u2764\ufe0f Max Health",
+    "overview": "Sets the character's base maximum HP.\n> **Default:** Varies by class (Soldier: 100, Wookiee: 400+, etc.)",
+    "tips": [
+      "This is the \"naked\" HP before any `MB_ATT_HEALTH` or `MB_ATT_WOOKIE_HEALTH` bonuses are applied.",
+      "For **SBDs** and **Droidekas**, this is their Hull integrity."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Sets the character's base maximum HP."
+  },
+  {
+    "id": "rateOfFire",
+    "name": "\ud83d\udd2b Rate of Fire",
+    "overview": "Multiplier for weapon firing speed.\n> **Default:** 1.0 (Normal Speed)\n\n**\u2699\ufe0f Mechanics**\n*   **Lower is Faster:** Values < 1.0 increase fire rate (e.g., 0.8 = 20% faster).\n*   **Higher is Slower:** Values > 1.0 decrease fire rate (e.g., 2.0 = half speed).",
+    "tips": [
+      "Careful with low values; can make weapons overpowered instantly."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Multiplier for weapon firing speed."
+  },
+  {
+    "id": "isCustomBuild",
+    "name": "\ud83d\udee0\ufe0f Custom Build",
+    "overview": "Enables the Point Buy system for this character.\n> **Default:** 0 (Disabled)\n\n**\u2699\ufe0f Mechanics**\n*   **1 (Enabled):** The character starts with a pool of `mbPoints` and must purchase attributes/weapons in the UI.\n*   **0 (Disabled):** The character spawns with the preset `attributes` and `weapons` defined in the file.",
+    "tips": [
+      "Required for \"Legends\" style configurable classes."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Enables the Point Buy system for this character."
+  },
+  {
+    "id": "baseSpeed",
+    "name": "\ud83c\udfc3 Base Speed",
+    "overview": "Sets a fixed movement speed value, overriding class defaults.\n> **Default:** -1 (Use class default)\n\n**\u2699\ufe0f Mechanics**\n*   **Value:** Raw engine units (e.g., 250 = Hero speed).\n*   **Override:** Ignores the `speed` multiplier field if set.",
+    "tips": [
+      "Use this if you want a specific speed regardless of what class the character is based on."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Sets a fixed movement speed value, overriding class defaults."
+  },
+  {
+    "id": "maxarmor",
+    "name": "\ud83d\udee1\ufe0f Max Armor",
+    "overview": "Sets the character's base maximum Armor.\n> **Default:** 0",
+    "tips": [
+      "This is the base armor value.",
+      "Use `MB_ATT_ARMOUR` to define the *quality* (light/medium/heavy) and effectiveness of this armor.",
+      "Without `MB_ATT_ARMOUR` (or Cortosis/Blast Armor), this armor offers basic protection."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Sets the character's base maximum Armor."
+  },
+  {
+    "id": "modelscale",
+    "name": "\ud83d\udcd0 Model Scale",
+    "overview": "Scales the size of the player model and hitbox.\n> **Default:** 1.0\n\n**\u2699\ufe0f Mechanics**\n*   **< 1.0:** Smaller (e.g., Yoda = ~0.6-0.7). Harder to hit, can fit in small vents.\n*   **> 1.0:** Larger (e.g., Desann = ~1.12). Easier to hit, longer reach.",
+    "tips": [
+      "Overrides class defaults (like Wookiee/SBD scaling).",
+      "Not currently compatible with Droidekas."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Scales the size of the player model and hitbox."
+  },
+  {
+    "id": "speed",
+    "name": "\ud83c\udfc3 Speed Multiplier",
+    "overview": "Multiplies the class's default movement speed.\n> **Default:** 1.0\n\n**\u2699\ufe0f Mechanics**\n*   **1.0:** Normal class speed.\n*   **1.1:** 10% Faster.\n*   **0.9:** 10% Slower.",
+    "tips": [
+      "Jedi Base: ~250?",
+      "Soldier Base: ~200?",
+      "Use `baseSpeed` for absolute control, `speed` for relative scaling."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Multiplies the class's default movement speed."
+  },
+  {
+    "id": "saberDamage",
+    "name": "\u2694\ufe0f Saber Damage",
+    "overview": "Forces a flat damage value for all lightsaber styles.\n> **Default:** -1 (Use .sab file values)\n\n**\u2699\ufe0f Mechanics**\n*   **Value:** Integer damage per hit.\n*   **Override:** Overrides .sab file damage, but NOT `damageGiven` multiplier.\n*   **Healing:** Negative values can heal targets (Experimental).",
+    "tips": [
+      "Useful for standardizing damage across different styles without editing .sab files."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Forces a flat damage value for all lightsaber styles."
+  },
+  {
+    "id": "armourRegenAmount",
+    "name": "\ud83d\udee1\ufe0f Armor Regen",
+    "overview": "Passive Armor regeneration.\n\n**\u2699\ufe0f Mechanics**\n*   **Amount:** How much Armor to restore per tick.\n*   **Rate:** Time in ms between ticks.",
+    "tips": [
+      "Simulates recharging shields (Halo/Halo style).",
+      "Great for Droids or Master Chiefs."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Passive Armor regeneration."
+  },
+  {
+    "id": "extralives",
+    "name": "\u2764\ufe0f Extra Lives",
+    "overview": "Number of times the player can respawn.\n> **Default:** 0 (1 Life total).\n\n**\u2699\ufe0f Mechanics**\n*   **Value:** Number of *respawns* (not total lives).\n*   **1:** You play, die, respawn once. (2 Lives total).\n*   **4:** Standard Soldier count (5 Lives total).",
+    "tips": [
+      "**Soldiers:** Typically 2-4 extra lives.",
+      "**Jedi/Sith/Heroes:** Typically 0 extra lives."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Number of times the player can respawn."
+  },
+  {
+    "id": "userRGB",
+    "name": "\ud83c\udfa8 User RGB",
+    "overview": "Enables custom color selection for the model's shader.\n> **Default:** 0 (Disabled).\n\n**\u2699\ufe0f Mechanics**\n*   **1 (True):** Enables `customred`, `customgreen`, `customblue` fields.\n*   **Requirement:** The model/skin must support RGB tinting (usually has a `_rgb` suffix).",
+    "tips": [
+      "Allows for \"Custom\" clone battalions or lightsaber colors on armor."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Enables custom color selection for the model's shader."
+  },
+  {
+    "id": "rankHealth",
+    "name": "\ud83d\udd22 Rank Health",
+    "overview": "Defines the Health values for Point Buy ranks.\n> **Format:** `rank1,rank2,rank3` (e.g., `100,120,150`)\n\n**\u2699\ufe0f Mechanics**\n*   **Rank 1:** Health value when purchasing the first level of `MB_ATT_HEALTH` (or custom equivalent).\n*   **Rank 2/3:** Subsequent levels.",
+    "tips": [
+      "Overrides standard `+X` logic if used in a Custom Build."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Defines the Health values for Point Buy ranks."
+  },
+  {
+    "id": "knockbackTaken",
+    "name": "\ud83d\uddff Knockback Taken",
+    "overview": "Multiplier for how far YOU fly when hit by explosives or Push.\n> **Default:** 1.0\n\n**\u2699\ufe0f Mechanics**\n*   **0.0:** **Immovable Object**.\n*   **0.5:** \"Heavy\" feel. Hard to push off ledges.\n*   **1.5:** \"Light\" feel. Easily ragdolled.",
+    "tips": [
+      "**Droidekas** and **SBDs** usually have low values (0.5 - 0.8) to simulate weight."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Multiplier for how far YOU fly when hit by explosives or Push."
+  },
+  {
+    "id": "customblue",
+    "name": "\ud83d\udd35 Custom Blue",
+    "overview": "Blue component of the custom color.\n> **Range:** 0.0 to 1.0",
+    "tips": [
+      "`1.0` = Max Blue."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Blue component of the custom color."
+  },
+  {
+    "id": "customgreen",
+    "name": "\ud83d\udfe2 Custom Green",
+    "overview": "Green component of the custom color.\n> **Range:** 0.0 to 1.0",
+    "tips": [
+      "`1.0` = Max Green."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Green component of the custom color."
+  },
+  {
+    "id": "damageGiven",
+    "name": "\ud83d\udca5 Damage Given Multiplier",
+    "overview": "Global damage output multiplier for this character.\n> **Default:** 1.0 (100%)\n\n**\u2699\ufe0f Mechanics**\n*   **1.0:** Normal Damage.\n*   **0.8:** 80% Damage (20% reduction).\n*   **1.2:** 120% Damage (20% bonus).",
+    "tips": [
+      "**0.8** is common for classes with high fire rate or spam potential.",
+      "**1.2+** is used for \"Glass Cannons\" or Bosses."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Global damage output multiplier for this character."
+  },
+  {
+    "id": "respawnCustomTime",
+    "name": "\u23f3 Respawn Time",
+    "overview": "Sets a custom respawn timer for this specific class.\n> **Default:** 0 (Uses gametype default, usually 10-20s).\n\n**\u2699\ufe0f Mechanics**\n*   **Value:** Milliseconds (e.g., `10000` = 10s).\n*   **Effect:** Overrides the server's wave spawn timer for this class.",
+    "tips": [
+      "Use for \"fodder\" classes (Soldiers) to let them spawn faster (`5000` ms).",
+      "Use for elite classes to punish death (`30000` ms)."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Sets a custom respawn timer for this specific class."
+  },
+  {
+    "id": "classNumberLimit",
+    "name": "\ud83d\udd22 Class Limit",
+    "overview": "Restricts how many players can pick this class simultaneously.\n> **Default:** -1 (Unlimited).\n\n**\u2699\ufe0f Mechanics**\n*   **Value:** Integer count.\n*   **Effect:** Once the limit is reached, the class icon grays out for other players.",
+    "tips": [
+      "**1:** Unique Hero/Boss (Luke, Vader).",
+      "**2-3:** Elite units (ARC Troopers, Droidekas)."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Restricts how many players can pick this class simultaneously."
+  },
+  {
+    "id": "uioverlay",
+    "name": "\ud83d\uddbc\ufe0f UI Overlay",
+    "overview": "Displays a custom image overlay on the class portrait.\n\n**\u2699\ufe0f Mechanics**\n*   **Value:** Path to shader/image.\n*   **Usage:** Often used to show rank insignias (Commander stars, Sergeant stripes) over the base icon.",
+    "tips": [
+      "Example: `gfx/icons/infantry`"
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Displays a custom image overlay on the class portrait."
+  },
+  {
+    "id": "knockbackGiven",
+    "name": "\ud83d\udca8 Knockback Given",
+    "overview": "Multiplier for how far this character sends enemies flying.\n> **Default:** 1.0\n\n**\u2699\ufe0f Mechanics**\n*   **> 1.0:** Your explosions/punches send enemies further.\n*   **< 1.0:** Your attacks barely move enemies.",
+    "tips": [
+      "**Wookiees** and **SBDs** often have high `knockbackGiven` on melee."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Multiplier for how far this character sends enemies flying."
+  },
+  {
+    "id": "healthRegenAmount",
+    "name": "\u2764\ufe0f Health Regen",
+    "overview": "Passive HP regeneration.\n\n**\u2699\ufe0f Mechanics**\n*   **Amount:** How much HP to restore per tick (e.g., `1`, `5`).\n*   **Rate:** How often to tick in milliseconds (e.g., `1000` = 1 second).",
+    "tips": [
+      "**Bosses:** Give them `1` HP every `1000` ms for slow, steady recovery.",
+      "**Trolls:** Give them `100` HP every `500` ms for near-invincibility (not recommended)."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Passive HP regeneration."
+  },
+  {
+    "id": "rankArmor",
+    "name": "\ud83d\udee1\ufe0f Rank Armor",
+    "overview": "Defines the Armor values for Point Buy ranks.\n> **Format:** `rank1,rank2,rank3` (e.g., `50,100,150`)\n\n**\u2699\ufe0f Mechanics**\n*   Sets the exact Armor value per purchased rank.",
+    "tips": [
+      "Useful for classes where you want Armor upgrades to be massive (e.g. SBD plating)."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Defines the Armor values for Point Buy ranks."
+  },
+  {
+    "id": "damageTaken",
+    "name": "\ud83d\udee1\ufe0f Damage Taken Multiplier",
+    "overview": "Global damage resistance multiplier.\n> **Default:** 1.0 (100% / No resistance)\n\n**\u2699\ufe0f Mechanics**\n*   **1.0:** Takes normal damage.\n*   **0.5:** Takes 50% damage (Half damage).\n*   **0.9:** Takes 90% damage (10% resistance - Standard Jedi trait).",
+    "tips": [
+      "**Jedi/Sith** usually have **0.9** (10% innate reduction).",
+      "**Wookiees** often use `0.85` or `0.9` to simulate toughness."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Global damage resistance multiplier."
+  },
+  {
+    "id": "customred",
+    "name": "\ud83d\udd34 Custom Red",
+    "overview": "Red component of the custom color.\n> **Range:** 0.0 to 1.0",
+    "tips": [
+      "`1.0` = Max Red.",
+      "`0.0` = No Red."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Red component of the custom color."
+  },
+  {
+    "id": "disarmBonus",
+    "name": "\ud83d\udc50 Disarm Bonus",
+    "overview": "Modifies the chance to disarm an opponent's saber.\n> **Default:** 0\n\n**\u2699\ufe0f Mechanics**\n*   **Value:** Integer.\n*   **Effect:** A positive value increases the likelihood of knocking the saber out of an opponent's hand, especially when their Block Points are low or on specific \"Disarm\" moves.",
+    "tips": [
+      "Used for highly skilled \"Swordmaster\" characters."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Modifies the chance to disarm an opponent's saber."
+  },
+  {
+    "id": "breakParryBonus",
+    "name": "\ud83d\udca5 Break Parry Bonus",
+    "overview": "Increases the chance to smash through an opponent's parry/block.\n> **Default:** 0\n\n**\u2699\ufe0f Mechanics**\n*   **Value:** Integer.\n*   **Effect:** Increases BP damage dealt to a blocking opponent.",
+    "tips": [
+      "Essential for \"Guard Breaker\" builds."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Increases the chance to smash through an opponent's parry/block."
+  },
+  {
+    "id": "knockbackScale",
+    "name": "\ud83d\ude80 Knockback Scale",
+    "overview": "Multiplier for force applied to enemies on hit.\n> **Default:** 0.0 (Uses standard physics)\n\n**\u2699\ufe0f Mechanics**\n*   **Higher values:** Send enemies flying further on hit.\n*   **Baseball Bat:** Set to **5.0+** for comical knockback effects.",
+    "tips": [
+      "Combined with low damage (`damageScale 0.1`), creates a \"CC\" weapon."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Multiplier for force applied to enemies on hit."
+  },
+  {
+    "id": "trailStyle",
+    "name": "\ud83d\udea5 Trail Style",
+    "overview": "Changes the visual trail left by the lightsaber blade.\n> **Default:** 0 (Standard Blur)\n\n**\ud83d\udcca Values**\n*   **0:** Standard Motion Blur.\n*   **1:** Solid Ribbon.\n*   **2:** Sparkles/Particles (Unstable blade effect).",
+    "tips": [
+      "Use **2** for Kylo Ren style \"crackle\" blades."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Changes the visual trail left by the lightsaber blade."
+  },
+  {
+    "id": "saberLength",
+    "name": "\ud83d\udcd0 Saber Length",
+    "overview": "The physical length of the blade in game units.\n> **Default:** 32.0\n\n**\ud83d\udcca Common Values**\n*   **32.0:** Standard one-handed hilt.\n*   **40.0:** Long blade (Desann/Galak style). Good for reach, bad for close quarters (wall hits).\n*   **24.0:** Shoto / Short blade (Yoda style). Fast, low reach.",
+    "tips": [
+      "Does not affect damage directly, but affects **reach** which is critical in duels."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "The physical length of the blade in game units."
+  },
+  {
+    "id": "soundLoop",
+    "name": "\ud83c\udfb5 Sound Loop",
+    "overview": "The continuous hum of the idle lightsaber.\n> **Example:** `\"sound/weapons/saber/saberhum4.wav\"`",
+    "tips": [
+      "Must be a seamless loop.",
+      "Crucial for the \"feel\" of the saber (menacing vs calm)."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "The continuous hum of the idle lightsaber."
+  },
+  {
+    "id": "slapAnim",
+    "name": "\u2694\ufe0f Slap Animation",
+    "overview": "Overrides the animation used when performing a \"Slap\" (or Kick with saber).\n> **Default:** `BOTH_KICK_RL_LEG` (Standard Kick)\n\n**\u2699\ufe0f Mechanics**\n*   **Value:** Enum string from `animation.cfg`.\n*   **Usage:** Used for custom melee attacks on specialized sabers (e.g. hitting with the hilt).",
+    "tips": [
+      "`BOTH_PUNCH1` makes it look like a punch.",
+      "`BOTH_PUSH1` makes it look like a Force Push gesture."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Overrides the animation used when performing a \"Slap\" (or Kick with saber)."
+  },
+  {
+    "id": "swingSound1",
+    "name": "\ud83c\udfb5 Swing Sounds",
+    "overview": "Sounds played when the saber is swung.\n> **Example:** `\"sound/weapons/saber/saberhup1.wav\"`",
+    "tips": [
+      "Define all three for variety.",
+      "Heavy weapons should have deeper \"whoosh\" sounds."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Sounds played when the saber is swung."
+  },
+  {
+    "id": "jumpAtkUpMove",
+    "name": "\u2694\ufe0f Jump Attack (Up)",
+    "overview": "Overrides the animation for the \"Death From Above\" or upward jump attack.\n> **Default:** `LS_JUMPATTACK_DUAL` (or style dependent).\n\n**\u2699\ufe0f Mechanics**\n*   **Value:** Enum string.\n*   **Gameplay:** Changes the hitbox timing and visual of the aerial attack.",
+    "tips": [
+      "Use `LS_A_FLIP_STAB` for a downward stab motion."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Overrides the animation for the \"Death From Above\" or upward jump attack."
+  },
+  {
+    "id": "lungeAtkMove",
+    "name": "\u2694\ufe0f Lunge Attack",
+    "overview": "Overrides the animation for the forward lunge attack (Crouch + Forward + Attack).\n> **Default:** `LS_LUNGE`\n\n**\u2699\ufe0f Mechanics**\n*   **Value:** Enum string.\n*   **Gameplay:** Can change a stab into a slash or spin.",
+    "tips": [
+      "`LS_STAFF_SOULCAL` creates a unique spinning lunge."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Overrides the animation for the forward lunge attack (Crouch + Forward + Attack)."
+  },
+  {
+    "id": "noWallMarks",
+    "name": "\ud83d\udeab No Wall Marks",
+    "overview": "Prevents the saber from leaving burn marks on architecture.\n\n**\u2699\ufe0f Mechanics**\n*   **1 (True):** No molten slash marks on walls/floors.\n*   **0 (False):** Standard behavior.",
+    "tips": [
+      "Useful for \"physical\" swords (Vibroblades, Beskads) that aren't superheated plasma."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Prevents the saber from leaving burn marks on architecture."
+  },
+  {
+    "id": "noDlight",
+    "name": "\ud83d\udeab No Dlight (Dynamic Light)",
+    "overview": "Prevents the saber from casting light on the environment.\n\n**\u2699\ufe0f Mechanics**\n*   **1 (True):** Blade does not glow/illuminate surroundings.\n*   **0 (False):** Blade casts light matching its color.",
+    "tips": [
+      "Essential for metallic weapons (Swords, Axes, Clubs) so they don't look like glowsticks."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Prevents the saber from casting light on the environment."
+  },
+  {
+    "id": "animSpeedScale",
+    "name": "\u2694\ufe0f Anim Speed Scale (Saber)",
+    "overview": "Multiplies the animation speed of this saber's attacks.\n> **Default:** 1.0\n\n**\u2699\ufe0f Mechanics**\n*   **1.0:** Normal animation speed.\n*   **1.1:** +10% Faster animations.\n*   **0.9:** -10% Slower animations.",
+    "tips": [
+      "Can make an otherwise slow saber style feel much faster, or a fast one feel sluggish."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Multiplies the animation speed of this saber's attacks."
+  },
+  {
+    "id": "blockSound1",
+    "name": "\ud83c\udfb5 Block Sounds",
+    "overview": "Sounds played when blocking another saber.\n> **Example:** `\"sound/weapons/saber/saberblock1.wav\"`",
+    "tips": [
+      "The clash of plasma!"
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Sounds played when blocking another saber."
+  },
+  {
+    "id": "bounceSound1",
+    "name": "\ud83c\udfb5 Bounce Sounds",
+    "overview": "Sounds played when the saber hits a wall/floor.\n> **Example:** `\"sound/weapons/saber/saberbounce1.wav\"`",
+    "tips": [
+      "Used if `bounceOnWalls` is enabled."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Sounds played when the saber hits a wall/floor."
+  },
+  {
+    "id": "bounceOnWalls",
+    "name": "\ud83c\udfbe Bounce on Walls",
+    "overview": "Saber bounces off architecture instead of sliding.\n\n**\u2699\ufe0f Mechanics**\n*   **1 (True):** Hitting a wall stops the swing and plays a bounce animation/sound.\n*   **0 (False):** Saber slides along the wall (Molten cutting effect).",
+    "tips": [
+      "Recommended for physical weapons (Batons, Staves) that cannot cut through durasteel."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Saber bounces off architecture instead of sliding."
+  },
+  {
+    "id": "maxChain",
+    "name": "\u2694\ufe0f Max Chain",
+    "overview": "Defines the maximum number of consecutive lightsaber swings in a combo.\n> **Default:** Varies by saber style (typically 3-5).\n\n**\u2699\ufe0f Mechanics**\n*   **Value:** Integer (e.g., `3`, `5`, `10`).\n*   **Effect:** A higher value allows for longer, more fluid offensive sequences.\n*   **Relation:** `MB_ATT_SABER_MAXCHAIN` attribute can override this.",
+    "tips": [
+      "A value of `0` or `1` often indicates a very slow, heavy-hitting style or a physical weapon."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Defines the maximum number of consecutive lightsaber swings in a combo."
+  },
+  {
+    "id": "moveSpeedScale",
+    "name": "\ud83c\udfc3 Move Speed Scale (Saber)",
+    "overview": "Multiplies the player's movement speed while this saber is equipped.\n> **Default:** 1.0\n\n**\u2699\ufe0f Mechanics**\n*   **1.0:** No change.\n*   **1.1:** +10% Speed.\n*   **0.9:** -10% Speed.",
+    "tips": [
+      "Useful for custom lightsabers that are unusually heavy (`0.8`) or very light (`1.1`)."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Multiplies the player's movement speed while this saber is equipped."
+  },
+  {
+    "id": "lockBonus",
+    "name": "\u2694\ufe0f Lock Bonus",
+    "overview": "Modifies the chance of winning a saber lock (blade bind).\n> **Default:** 0\n\n**\u2699\ufe0f Mechanics**\n*   **Value:** Integer.\n*   **Effect:** A positive value increases your chance to push back an opponent in a blade lock.",
+    "tips": [
+      "High strength characters (Vader, Desann) or those with high `MB_ATT_WOOKIE_STRENGTH` often have a bonus here."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Modifies the chance of winning a saber lock (blade bind)."
+  },
+  {
+    "id": "saberRadius",
+    "name": "\u2b55 Saber Radius",
+    "overview": "The thickness of the lightsaber blade.\n> **Default:** 3.0\n\n**\u2699\ufe0f Mechanics**\n*   **Visual:** Makes the core thicker.\n*   **Hitbox:** Slightly increases the hit detection cylinder? (Needs verification, often purely visual in JKA mods, but MBII may use it for collision).",
+    "tips": [
+      "**Broadsabers:** Use values like **5.0** or **6.0** for a \"heavy plasma\" look.",
+      "**Rapiers:** Use **1.5** or **2.0** for a thin, needle-like blade."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "The thickness of the lightsaber blade."
+  },
+  {
+    "id": "soundOn",
+    "name": "\ud83c\udfb5 Sound On",
+    "overview": "Sound played when the lightsaber ignites.\n> **Example:** `\"sound/weapons/saber/saberon.wav\"`",
+    "tips": [
+      "Make sure it's a mono `.wav` or `.mp3`.",
+      "Standard paths: `sound/weapons/saber/...`"
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Sound played when the lightsaber ignites."
+  },
+  {
+    "id": "noBlade",
+    "name": "\ud83d\udeab No Blade",
+    "overview": "Hides the energy blade completely.\n\n**\u2699\ufe0f Mechanics**\n*   **1 (True):** Only the hilt model is visible.\n*   **Usage:** Used when the \"hilt\" model actually includes the blade geometry (e.g. a physical sword model).",
+    "tips": [
+      "If you are making a Vibroblade and the model includes the metal blade, set `noBlade 1`."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Hides the energy blade completely."
+  },
+  {
+    "id": "saberType",
+    "name": "\u2694\ufe0f Saber Type",
+    "overview": "Defines the fundamental mechanic of the weapon.\n> **Default:** SABER_SINGLE\n\n**\ud83d\udccb Types**\n*   `SABER_SINGLE`: Standard one-bladed hilt.\n*   `SABER_STAFF`: Double-bladed (Maul style). Requires `numBlades 2`.\n*   `SABER_BROAD`: ? (Specific broadsaber mechanics).\n*   `SABER_CRYSTAL`: ? (Non-standard).",
+    "tips": [
+      "Use `SABER_SINGLE` for Dual Sabers (you just equip two of them). `SABER_STAFF` is for a single hilt with two blades."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Defines the fundamental mechanic of the weapon."
+  },
+  {
+    "id": "parryBonus",
+    "name": "\ud83d\udee1\ufe0f Parry Bonus",
+    "overview": "Improves the ability to parry incoming attacks.\n> **Default:** 0\n\n**\u2699\ufe0f Mechanics**\n*   **Value:** Integer.\n*   **Effect:** Reduces the BP (Block Point) cost when parrying a swing? Or increases the \"stun\" on the attacker? (MBII mechanics are complex here).",
+    "tips": [
+      "Used for defensive duelists (Obi-Wan, Dooku)."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Improves the ability to parry incoming attacks."
+  },
+  {
+    "id": "damageScale",
+    "name": "\ud83d\udca5 Damage Scale",
+    "overview": "Multiplier for saber damage.\n> **Default:** 1.0\n\n**\u2699\ufe0f Mechanics**\n*   **1.0:** Standard MBII saber damage.\n*   **0.1:** Training saber (negligible damage).\n*   **2.0:** One-hit kill on almost anything.",
+    "tips": [
+      "Use **0.0** or extremely low values for \"Knockback Sticks\" or utility weapons that shouldn't kill."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Multiplier for saber damage."
+  },
+  {
+    "id": "readyAnim",
+    "name": "\u2694\ufe0f Ready Animation",
+    "overview": "Overrides the idle stance animation.\n> **Default:** Based on Saber Style.\n\n**\u2699\ufe0f Mechanics**\n*   **Value:** Enum string (e.g., `BOTH_STAND1`).\n*   **Visual:** Changes how the character holds the saber when not attacking.",
+    "tips": [
+      "Use `BOTH_SABERDUAL_STANCE` for a cool dual-wielding pose even with a single saber."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Overrides the idle stance animation."
+  },
+  {
+    "id": "customGravity",
+    "name": "\u2b07\ufe0f Custom Gravity",
+    "overview": "Sets the gravity affecting this specific vehicle.\n> **Default:** 800 (Standard gravity).\n\n**\u2699\ufe0f Mechanics**\n*   **Lower:** Vehicle floats/falls slowly.\n*   **Higher:** Vehicle sticks to the ground.",
+    "tips": [
+      "Use low gravity for \"Hover\" vehicles that shouldn't crash down hard after a jump."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Sets the gravity affecting this specific vehicle."
+  },
+  {
+    "id": "rollLimit",
+    "name": "\ud83d\udd04 Roll Limit",
+    "overview": "Maximum angle the vehicle can roll (tilt sideways).\n> **Default:** ~45 degrees.\n\n**\u2699\ufe0f Mechanics**\n*   **Value:** Degrees.\n*   **Effect:** Limits how much the vehicle leans when turning.",
+    "tips": [
+      "Set to **0** for stable platforms (Skiffs, Tanks) that shouldn't lean."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Maximum angle the vehicle can roll (tilt sideways)."
+  },
+  {
+    "id": "bankingSpeed",
+    "name": "\ud83d\udd04 Banking Speed",
+    "overview": "How quickly the vehicle rolls/tilts into turns.\n\n**\u2699\ufe0f Mechanics**\n*   **Visual:** Controls the leaning animation.\n*   **Feel:** High banking makes the vehicle feel agile/light. Low feels rigid/heavy.",
+    "tips": [
+      "Critical for the \"Swoop Bike\" feel."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "How quickly the vehicle rolls/tilts into turns."
+  },
+  {
+    "id": "strafePerc",
+    "name": "\ud83d\uded1 Strafe Percentage",
+    "overview": "Multiplier for sideways movement speed (strafing) relative to forward speed.\n> **Default:** 1.0 (Same speed)\n\n**\u2699\ufe0f Mechanics**\n*   **0.5:** Strafing is half as fast as moving forward.\n*   **0.0:** Cannot strafe (Tank/Rail shooter style).",
+    "tips": [
+      "Lower this for heavy vehicles like AT-STs to make them feel cumbersome."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Multiplier for sideways movement speed (strafing) relative to forward speed."
+  },
+  {
+    "id": "armor",
+    "name": "\ud83d\udee1\ufe0f Armor (Vehicle)",
+    "overview": "Hull integrity of the vehicle.\n\n**\u2699\ufe0f Mechanics**\n*   **Health:** When this hits 0, the vehicle explodes.\n*   **Resistance:** Vehicles generally resist small arms fire better than players.",
+    "tips": [
+      "**Speeder Bike:** ~200-400.",
+      "**Tank:** ~2000+."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Hull integrity of the vehicle."
+  },
+  {
+    "id": "accel",
+    "name": "\ud83d\ude80 Acceleration",
+    "overview": "How quickly the vehicle reaches top speed.\n\n**\u2699\ufe0f Mechanics**\n*   **Higher:** Snappy, responsive takeoff.\n*   **Lower:** Heavy, sluggish takeoff.",
+    "tips": [
+      "Tanks should have low accel. Speeder bikes high."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "How quickly the vehicle reaches top speed."
+  },
+  {
+    "id": "mouseYaw",
+    "name": "\ud83d\uddb1\ufe0f Mouse Yaw",
+    "overview": "Sensitivity of turning left/right with the mouse.\n> **Default:** 0.003 (approx)\n\n**\u2699\ufe0f Mechanics**\n*   **Higher:** Turns faster/snappier.\n*   **Lower:** Turns slower/heavier.",
+    "tips": [
+      "Crucial for balancing turret turn rates."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Sensitivity of turning left/right with the mouse."
+  },
+  {
+    "id": "shields",
+    "name": "\ud83d\udee1\ufe0f Shields (Vehicle)",
+    "overview": "Regenerating energy barrier.\n\n**\u2699\ufe0f Mechanics**\n*   **Regen:** Regenerates after a delay without taking damage.\n*   **Protection:** Absorbs damage before Armor.",
+    "tips": [
+      "Not all vehicles have shields. TIE Fighters do not (Canon). X-Wings do."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Regenerating energy barrier."
+  },
+  {
+    "id": "speed",
+    "name": "\ud83c\udfce\ufe0f Top Speed",
+    "overview": "Maximum forward velocity of the vehicle.\n> **Default:** Varies (Speeder Bike ~800+)\n\n**\u2699\ufe0f Mechanics**\n*   **Units:** Game Units per Second.\n*   **Comparison:** Player run speed is ~250. 500 is fast. 1000 is extremely fast.",
+    "tips": [
+      "Too fast = Uncontrollable on small maps."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Maximum forward velocity of the vehicle."
+  },
+  {
+    "id": "RESOURCE_SUPPLY",
+    "name": "\ud83d\udce6 Supply",
+    "overview": "A generic supply counter.\n> **Default Regen:** 6 / 1000ms\n\n**\u2699\ufe0f Mechanics**\n*   **Usage:** Can be used for custom ability drain.",
+    "tips": [
+      "Flexible resource for custom classes."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "A generic supply counter."
+  },
+  {
+    "id": "RESOURCE_ENERGY",
+    "name": "\u26a1 Energy",
+    "overview": "Generic energy pool for abilities.\n> **Color:** \ud83d\udfe1 Dark Yellow\n> **Default Regen:** 1 / 200ms\n\n**\u2699\ufe0f Mechanics**\n*   **Regen:** Regenerates even while in the air.\n*   **Usage:** Elite Trooper, Hero, Commander abilities.",
+    "tips": [
+      "Reliable, steady resource for non-Force users."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Generic energy pool for abilities."
+  },
+  {
+    "id": "RESOURCE_FUEL",
+    "name": "\u26fd Fuel",
+    "overview": "Propellant for jetpacks and flamethrowers.\n> **Color:** \ud83d\udfe1 Yellow\n> **Default Regen:** level / 1000ms\n\n**\u2699\ufe0f Mechanics**\n*   **Usage:** Flying, Flamethrower, Wrist Laser.\n*   **Regen:** Regenerates slowly when grounded.",
+    "tips": [
+      "Standard for Mandalorians."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Propellant for jetpacks and flamethrowers."
+  },
+  {
+    "id": "RESOURCE_RAGE",
+    "name": "\ud83d\ude21 Rage / Fury",
+    "overview": "Adrenaline and anger.\n> **Color:** \ud83d\udd34 Red\n> **Default Regen:** 1 / 1000ms\n\n**\u2699\ufe0f Mechanics**\n*   **Build:** Builds up by **dealing damage** (if class has `MB_ATT_WOOKIEE_FURY`).\n*   **Usage:** Activating Wookiee Fury.",
+    "tips": [
+      "Used by Wookiees to trigger their berserk state."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Adrenaline and anger."
+  },
+  {
+    "id": "RESOURCE_FORCE",
+    "name": "\ud83e\uddd9 Force Points",
+    "overview": "The mystic energy field.\n> **Color:** \ud83d\udd35 Light Blue\n> **Default Regen:** 1 / 150ms\n\n**\u2699\ufe0f Mechanics**\n*   **Regen:** Pauses regeneration while in the air (unless `MB_ATT_INAIR_FORCE_REGEN` is active).\n*   **Sprint:** Does NOT drain Force (unlike Stamina).\n*   **Usage:** Jumping, Powers, Blocking (BP is separate but related).",
+    "tips": [
+      "Standard for Jedi/Sith."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "The mystic energy field."
+  },
+  {
+    "id": "RESOURCE_BATTERY",
+    "name": "\ud83d\udd0b Battery",
+    "overview": "Standard droid power source.\n> **Color:** \ud83d\udfe2 Green\n> **Default Regen:** 3 / 1000ms\n\n**\u2699\ufe0f Mechanics**\n*   **MB_CLASS_SBD:** Drains on movement, fire, and damage absorption. Low battery reduces movement speed, fire rate, and damage reduction.\n*   **Other Classes:** Only affects damage reduction rules (if applicable).",
+    "tips": [
+      "The lifeblood of an SBD. Manage it or become a sitting duck."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Standard droid power source."
+  },
+  {
+    "id": "RESOURCE_DEKASHIELD",
+    "name": "\ud83d\udee1\ufe0f Droideka Shield",
+    "overview": "Droideka shield generator pool.\n> **Default:** Droideka\n\n**\u2699\ufe0f Mechanics**\n*   **Drain:** Depleted by incoming damage when Shield is active.\n*   **Regen:** Only regenerates when Shield is OFF (Ball mode usually).",
+    "tips": [
+      "Keep an eye on this bar. When it hits 0, your hull takes damage."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Droideka shield generator pool."
+  },
+  {
+    "id": "RESOURCE_STAMINA",
+    "name": "\ud83c\udfc3 Stamina",
+    "overview": "Physical endurance.\n> **Color:** \ud83d\udd35 Blue\n> **Default Regen:** (level*2) + 3 / 1000ms\n\n**\u2699\ufe0f Mechanics**\n*   **Usage:** Sprinting, Wall-running, Acrobatics, Dodge.\n*   **Usage:** Clone/ARC Trooper, Hero.",
+    "tips": [
+      "Regenerates quickly when walking/standing."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Physical endurance."
+  }
+]

@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	_ "image/png" // register PNG decoder for image.Decode
+	"image/png"
 	"path/filepath"
 
 	"fyne.io/fyne/v2"
@@ -42,31 +42,50 @@ func (w *WelcomeScreen) GetContent() fyne.CanvasObject {
 	// communicates the "MBII" half of the brand visually so the type
 	// treatment no longer needs to carry it. Source PNG is 305×189.
 	//
-	// Use NewImageFromReader (explicit PNG decode via the blank import
-	// of image/png) rather than NewImageFromResource. The resource-
-	// based constructor was claiming layout space but rendering blank
-	// — Fyne v2.7's extension-based format detection wasn't producing
-	// a drawable image from the embedded bytes on this path.
+	// Decode the PNG upfront into an image.Image — NewImageFromReader
+	// and NewImageFromResource were both claiming layout space but
+	// rendering blank on Fyne v2.7.1 / macOS. NewImageFromImage takes
+	// an already-decoded image and gives us a reliably drawable asset.
 	logoHeight := SizeDisplay * 1.8 // ~97px tall — roomy enough to read clearly
 	logoWidth := logoHeight * (305.0 / 189.0)
-	logo := canvas.NewImageFromReader(bytes.NewReader(embedLogoMBII), "logo-mbii.png")
-	logo.FillMode = canvas.ImageFillContain
-	logo.SetMinSize(fyne.NewSize(logoWidth, logoHeight))
+	// Decode via png.Decode directly, NOT image.Decode. The generic
+	// image.Decode walks registered formats; one of our deps
+	// (github.com/ftrvxmtrx/tga) registers TGA with an EMPTY magic
+	// string which matches any input, so image.Decode was picking
+	// TGA first, parsing PNG bytes as TGA, and failing with
+	// "tga: invalid format". Direct png.Decode bypasses that.
+	var logo fyne.CanvasObject = layout.NewSpacer()
+	if decoded, err := png.Decode(bytes.NewReader(embedLogoMBII)); err == nil {
+		img := canvas.NewImageFromImage(decoded)
+		img.FillMode = canvas.ImageFillContain
+		img.ScaleMode = canvas.ImageScaleSmooth
+		img.SetMinSize(fyne.NewSize(logoWidth, logoHeight))
+		// GridWrap forces an exact cell size so HBox allocates and
+		// the canvas.Image gets a concrete Resize call — MinSize alone
+		// was honored for layout math but not always for the draw pass.
+		logo = container.New(layout.NewGridWrapLayout(fyne.NewSize(logoWidth, logoHeight)), img)
+	} else {
+		LogError("Welcome logo PNG decode failed: %v (bytes=%d)", err, len(embedLogoMBII))
+	}
 
 	title := canvas.NewText("FOUNDRY", theme.ForegroundColor())
 	title.Alignment = fyne.TextAlignLeading
 	title.TextSize = SizeDisplay
 	title.TextStyle = fyne.TextStyle{Bold: true}
 
-	// HBox with explicit child widths — Fyne's HBox reads MinSize from
-	// each child and allocates exactly that, so setting the image's
-	// MinSize above is what gives the logo its slot.
-	heroRow := container.NewHBox(logo, Gap(SpaceSM), title)
-
 	subtitle := canvas.NewText("MOVIE BATTLES II CONTENT EDITOR", theme.PlaceHolderColor())
 	subtitle.Alignment = fyne.TextAlignLeading
 	subtitle.TextSize = SizeSmall
 	subtitle.TextStyle = fyne.TextStyle{Bold: true}
+
+	// Type stack to the right of the logo: FOUNDRY on top, subtitle
+	// directly beneath it so the subtitle indents to match the "F" of
+	// FOUNDRY rather than hanging off the left margin under the logo.
+	titleStack := container.NewVBox(title, subtitle)
+
+	// Tight horizontal gap between logo and type (SpaceXS = 4px) so the
+	// two read as one composite hero mark.
+	heroRow := container.NewHBox(logo, Gap(SpaceXS), titleStack)
 
 	// Accent rule under the title. Mirrors the sidebar activity
 	// headers — same 2px tinted bar — so the design language carries.
@@ -119,24 +138,25 @@ func (w *WelcomeScreen) GetContent() fyne.CanvasObject {
 	// content so neither side feels under-used.
 	body := container.New(layout.NewGridLayoutWithColumns(2), createCol, recentCol)
 
-	// Footer strip — a bottom band of hints so the screen doesn't trail
-	// off into nothing. Pairs with the top rule to bracket the content.
+	// Footer strip — always pinned to the bottom of the welcome area.
+	// Pairs with the top rule to bracket the content, and gives the
+	// bottom of the screen a visual baseline instead of trailing off
+	// into empty dark space on taller windows.
 	footer := w.buildFooter()
+	footerBlock := container.NewVBox(rule(), Gap(SpaceSM), footer)
 
-	content := container.NewVBox(
+	top := container.NewVBox(
 		heroRow,
-		subtitle,
 		Gap(SpaceSM),
 		rule(),
 		Gap(SpaceLG),
 		body,
-		Gap(SpaceLG),
-		rule(),
-		Gap(SpaceSM),
-		footer,
 	)
 
-	return container.NewPadded(content)
+	// Border lays top at its MinSize at the top, footer at its MinSize
+	// at the bottom, leaving the middle as a breathing gap that grows
+	// with the window — so the GET STARTED strip stays bottom-aligned.
+	return container.NewPadded(container.NewBorder(top, footerBlock, nil, nil, layout.NewSpacer()))
 }
 
 // sectionCaption renders the small-caps-style section header used by

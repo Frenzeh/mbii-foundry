@@ -51,6 +51,17 @@ if [ -f "$MACOS_TEMPLATES/AppIcon.icns" ]; then
     echo "  ✓ Copied AppIcon.icns"
 fi
 
+# Copy the runtime data the app expects next to it: enum metadata,
+# per-enum markdown definitions, JSON schemas, starter templates.
+# Without these the info panel falls back to placeholder descriptions
+# ("Beskar attribute.") because LoadExternalData can't find the files.
+for rsrc in data definitions schemas templates; do
+    if [ -d "$SCRIPT_DIR/$rsrc" ]; then
+        cp -r "$SCRIPT_DIR/$rsrc" "$APP_BUNDLE/Contents/Resources/"
+        echo "  ✓ Copied $rsrc/"
+    fi
+done
+
 # Code sign for macOS (required for newer macOS versions)
 echo "  Signing app bundle..."
 codesign -s - -f --deep "$APP_BUNDLE" 2>/dev/null || echo "  (signing skipped - codesign not available)"

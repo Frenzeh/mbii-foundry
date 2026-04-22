@@ -74,8 +74,21 @@ if [[ "$signing" == "true" ]]; then
         if [[ "$local_sha" == "0000000000000000000000000000000000000000" ]]; then
             continue  # deleting a branch, nothing to check
         fi
+        # Range of commits being introduced by this push.
+        # - Existing ref with a known remote_sha: straightforward A..B range.
+        # - New ref (branch or tag): diff against everything already
+        #   reachable via any ref on this remote, so pushing a tag that
+        #   points to a commit already on origin doesn't re-scan the
+        #   whole history back to the root (and flag ancestors that
+        #   predate this hook). Falls back to the raw tip if the
+        #   remote has no refs yet (fresh repo).
         if [[ "$remote_sha" == "0000000000000000000000000000000000000000" ]]; then
-            range="$local_sha"   # new branch, check the tip
+            if git rev-parse --verify --quiet "refs/remotes/${remote_name}/HEAD" >/dev/null \
+                || git for-each-ref --format='%(refname)' "refs/remotes/${remote_name}/" | read -r _; then
+                range="$local_sha --not --remotes=${remote_name}"
+            else
+                range="$local_sha"
+            fi
         else
             range="$remote_sha..$local_sha"
         fi
@@ -85,7 +98,7 @@ if [[ "$signing" == "true" ]]; then
         # verification, even if the commit IS signed. GitHub verifies
         # against the registered signing key server-side.
         unsigned=""
-        for sha in $(git rev-list "$range"); do
+        for sha in $(git rev-list $range); do
             if ! git cat-file -p "$sha" | head -20 | grep -q "^gpgsig "; then
                 unsigned+="$sha"$'\n'
             fi

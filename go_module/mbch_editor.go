@@ -16,7 +16,7 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	
-	"github.com/mbii-holocron/fa_creator/parsers"
+	"github.com/Frenzeh/mbii-foundry/parsers"
 )
 
 // MBClasses is now managed via data_loader.go and GetClasses()

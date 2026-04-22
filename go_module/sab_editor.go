@@ -14,7 +14,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 	"image/color"
 	
-	"github.com/mbii-holocron/fa_creator/parsers"
+	"github.com/Frenzeh/mbii-foundry/parsers"
 )
 
 var SaberTypes = []string{"SABER_SINGLE", "SABER_STAFF"}

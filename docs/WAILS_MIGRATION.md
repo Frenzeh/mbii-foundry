@@ -184,7 +184,7 @@ func main() {
     app := NewApp()
 
     err := wails.Run(&options.App{
-        Title:  "FA Creator",
+        Title:  "MBII Foundry",
         Width:  1200,
         Height: 800,
         AssetServer: &assetserver.Options{
@@ -342,9 +342,9 @@ wails build -platform linux/amd64
 ```
 
 ### Output Locations
-- macOS: `build/bin/FA Creator.app`
-- Windows: `build/bin/FA Creator.exe`
-- Linux: `build/bin/fa_creator`
+- macOS: `build/bin/MBII Foundry.app`
+- Windows: `build/bin/MBII Foundry.exe`
+- Linux: `build/bin/mbii-foundry`
 
 ---
 

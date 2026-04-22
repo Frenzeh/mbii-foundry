@@ -18,7 +18,7 @@ func NewWelcomeScreen(app *App) *WelcomeScreen {
 }
 
 func (w *WelcomeScreen) GetContent() fyne.CanvasObject {
-	title := widget.NewLabel("FA Creator")
+	title := widget.NewLabel("MBII Foundry")
 	title.TextStyle = fyne.TextStyle{Bold: true, Monospace: true}
 	title.Alignment = fyne.TextAlignCenter
 

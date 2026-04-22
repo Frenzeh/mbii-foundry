@@ -13,7 +13,7 @@ import (
 
 const (
 	// GitHub raw content URLs for data files
-	GitHubDataBaseURL = "https://raw.githubusercontent.com/Frenzeh/mbii-holocron/main/system/fa_creator/data"
+	GitHubDataBaseURL = "https://raw.githubusercontent.com/Frenzeh/mbii-foundry/main/data"
 )
 
 var (

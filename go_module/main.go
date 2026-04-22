@@ -21,7 +21,7 @@ import (
 
 const (
 	AppVersion = "2.0"
-	AppName    = "FA Creator"
+	AppName    = "MBII Foundry"
 )
 
 type App struct {
@@ -485,7 +485,7 @@ func (a *App) createToolbar() fyne.CanvasObject {
 		// Tools & View (Right)
 		btn(theme.SettingsIcon(), func() { a.showPreferences() }, "Preferences"),
 		btn(theme.InfoIcon(), func() { a.showLogs() }, "Show Debug Logs"),
-		btn(theme.HelpIcon(), func() { a.showAbout() }, "About FA Creator"),
+		btn(theme.HelpIcon(), func() { a.showAbout() }, "About MBII Foundry"),
 	)
 }
 
@@ -540,7 +540,7 @@ func (a *App) validateFile() {
 
 func (a *App) showLogs() {
 	// Use platform-appropriate temp directory (works on Windows, macOS, Linux)
-	logPath := os.TempDir() + string(os.PathSeparator) + "fa_creator.log"
+	logPath := os.TempDir() + string(os.PathSeparator) + "mbii-foundry.log"
 	content, err := os.ReadFile(logPath)
 	text := ""
 	if err != nil {
@@ -894,7 +894,7 @@ func (a *App) saveConfig() {
 
 func (a *App) showAbout() {
 	content := widget.NewRichTextFromMarkdown(`
-# FA Creator v` + AppVersion + `
+# MBII Foundry v` + AppVersion + `
 
 **Created by Frenzy & Pipex**
 
@@ -919,7 +919,7 @@ For support, contact the MBII Development Team.
 	scroll := container.NewVScroll(content)
 	scroll.SetMinSize(fyne.NewSize(500, 400))
 
-	dialog.ShowCustom("About FA Creator", "Close", scroll, a.mainWindow)
+	dialog.ShowCustom("About MBII Foundry", "Close", scroll, a.mainWindow)
 }
 
 func (a *App) buildPK3(source, dest string) {}
@@ -980,7 +980,7 @@ func (a *App) checkFirstRun() {
 func (a *App) showSetupWizard() {
 	// Content
 	intro := widget.NewRichTextFromMarkdown(`
-# Welcome to FA Creator!
+# Welcome to MBII Foundry!
 
 To enable the **Asset Browser**, **Visual Editor**, and **Model Previews**, we need to locate your Movie Battles II installation.
 

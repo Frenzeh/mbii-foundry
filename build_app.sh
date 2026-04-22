@@ -1,7 +1,7 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════════════
-# FA Creator - Build Script
-# Creates distributable packages for macOS and Windows
+# MBII Foundry — Build Script
+# Produces a distributable binary + macOS .app bundle.
 # ═══════════════════════════════════════════════════════════════════
 
 set -e
@@ -10,11 +10,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 GO_MODULE="$SCRIPT_DIR/go_module"
 MACOS_TEMPLATES="$SCRIPT_DIR/macos"
-APP_NAME="FA Creator"
+BIN_NAME="mbii-foundry"
+APP_NAME="MBII Foundry"
 
 echo ""
 echo "═══════════════════════════════════════════════════════════════════"
-echo "  Building FA Creator"
+echo "  Building $APP_NAME"
 echo "═══════════════════════════════════════════════════════════════════"
 echo ""
 
@@ -22,8 +23,8 @@ cd "$GO_MODULE"
 
 # Build for current platform
 echo "Building for current platform..."
-go build -o fa_creator
-echo "  ✓ Built: fa_creator"
+go build -o "$BIN_NAME"
+echo "  ✓ Built: $BIN_NAME"
 
 # Create macOS .app bundle
 echo ""
@@ -36,8 +37,8 @@ mkdir -p "$APP_BUNDLE/Contents/MacOS"
 mkdir -p "$APP_BUNDLE/Contents/Resources"
 
 # Copy binary
-cp fa_creator "$APP_BUNDLE/Contents/MacOS/"
-chmod +x "$APP_BUNDLE/Contents/MacOS/fa_creator"
+cp "$BIN_NAME" "$APP_BUNDLE/Contents/MacOS/"
+chmod +x "$APP_BUNDLE/Contents/MacOS/$BIN_NAME"
 
 # Copy Info.plist and icon from templates
 if [ -f "$MACOS_TEMPLATES/Info.plist" ]; then
@@ -58,7 +59,7 @@ echo "  ✓ Created: $APP_NAME.app"
 # Build Windows executable (requires Windows or cross-compile setup)
 echo ""
 echo "Note: Windows build requires native Windows or cross-compile toolchain."
-echo "To build on Windows, run: go build -o fa_creator.exe -ldflags=\"-H windowsgui\""
+echo "To build on Windows, run: go build -o $BIN_NAME.exe -ldflags=\"-H windowsgui\""
 
 echo ""
 echo "═══════════════════════════════════════════════════════════════════"
@@ -66,5 +67,5 @@ echo "  Build Complete!"
 echo "═══════════════════════════════════════════════════════════════════"
 echo ""
 echo "  macOS:   $APP_NAME.app (double-click to run)"
-echo "  Windows: fa_creator.exe (double-click to run)"
+echo "  Windows: $BIN_NAME.exe (double-click to run)"
 echo ""

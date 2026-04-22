@@ -1,7 +1,5 @@
 # MBII Foundry — User Guide
 
-*Launching the app still runs a binary called `fa_creator` — that's historical, the app is the same thing as MBII Foundry.*
-
 ## Getting Started
 1.  **Open a File:** Click the Folder icon or drag-and-drop an `.mbch` (Character), `.sab` (Saber), `.veh` (Vehicle), or `.siege` file.
 2.  **Create New:** Click the `+` icon to start a fresh file.

@@ -30,3 +30,17 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+# Built binaries (don't commit these — produced by build scripts)
+go_module/mbii-foundry
+go_module/mbii-foundry.exe
+go_module/fa_creator
+go_module/fa_creator.exe
+MBII Foundry.app/
+FA Creator.app/
+
+# Runtime artifacts
+mbii-foundry.log
+fa_creator.log
+mbii-foundry_config.json
+fa_creator_config.json

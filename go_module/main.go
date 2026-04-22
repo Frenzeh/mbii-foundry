@@ -75,6 +75,10 @@ type AppConfig struct {
 	SourcePanelVisible bool    `json:"source_panel_visible"`
 	SourcePanelOffset  float32 `json:"source_panel_offset"` // 0 = collapsed, 1 = full
 
+	// Hover tooltips for enum values. Default is on; users who find
+	// them distracting can flip this off in Preferences.
+	HoverTooltipsDisabled bool `json:"hover_tooltips_disabled"`
+
 	// Pinned folder paths — shown as quick-select shortcuts in file pickers
 	// and path-entry fields so users don't have to navigate to the same
 	// location repeatedly. Most-recently-pinned first. Max 12 entries.
@@ -303,6 +307,17 @@ func (a *App) setupUI() {
 	assetsTab := container.NewTabItem("Assets", a.assetBrowser.GetContent())
 	assetsTab.Icon = theme.FolderOpenIcon()
 
+	// Wire double-click-to-open for file-system assets. Was previously
+	// only wired in the CustomFilePicker; in the sidebar browser,
+	// double-tapping an .mbch did nothing. Now routes to
+	// openFileFromPath which picks the right editor from the extension.
+	a.assetBrowser.SetOnAssetDouble(func(asset *AssetEntry) {
+		if asset == nil || asset.IsDir || asset.Path == "" || asset.PK3Source != "" {
+			return
+		}
+		a.openFileFromPath(asset.Path)
+	})
+
 	a.sideTabs = container.NewAppTabs(assetsTab)
 	a.sideTabs.SetTabLocation(container.TabLocationBottom)
 
@@ -391,22 +406,24 @@ func (a *App) toggleSidebar() {
 	a.mainWindow.Content().Refresh() // Force refresh of main window content
 }
 
-// showHoverTooltip is called from editors when the user hovers a field
-// with a known key (enum ID, attribute name, etc.). Pops up a small
-// transient panel near the bottom of the window with the resolved
-// markdown. Replaces the old "Context" tab on the right sidebar.
+// showHoverTooltip is called from editors when the user hovers or
+// focuses a field with a known key. Pops up a small transient panel
+// anchored to the currently-focused widget so the user's eye doesn't
+// have to travel across the screen. Disabled entirely if the user
+// flipped HoverTooltipsDisabled in Preferences.
 func (a *App) showHoverTooltip(key, context string) {
 	if key == "" || a.infoPanel == nil {
+		return
+	}
+	if a.config.HoverTooltipsDisabled {
 		return
 	}
 	// Reuse InfoPanel's lookup pipeline — same resolution logic as the
 	// full Library, just rendered into a transient popup.
 	a.infoPanel.ShowInfo(key, context)
-	// The InfoPanel's GetContent() is the Context+Library tabs. We
-	// can't stick that whole thing in a popup (too big). Render a
-	// compact popup with just the title + first paragraph.
+	// Tiny delay lets ShowInfo's markdown settle before we snapshot
+	// it into the popup.
 	go func() {
-		// Tiny delay to let ShowInfo's markdown settle.
 		time.Sleep(30 * time.Millisecond)
 		fyne.Do(func() {
 			a.renderHoverPopup(key, context)
@@ -434,18 +451,65 @@ func (a *App) renderHoverPopup(key, context string) {
 	// by ShowInfo above). We reuse it rather than re-resolving.
 	content := widget.NewRichText(a.infoPanel.content.Segments...)
 	content.Wrapping = fyne.TextWrapWord
+	// Smaller default — less disruptive than the old 380×220.
 	scroll := container.NewVScroll(content)
-	scroll.SetMinSize(fyne.NewSize(360, 180))
+	scroll.SetMinSize(fyne.NewSize(320, 140))
 
 	card := container.NewBorder(title, nil, nil, nil, scroll)
 	pop := widget.NewPopUp(card, a.mainWindow.Canvas())
-	pop.Resize(fyne.NewSize(380, 220))
-	// Anchor to the bottom-right of the canvas so it doesn't cover the
-	// field the user is hovering.
-	canvasSize := a.mainWindow.Canvas().Size()
-	pos := fyne.NewPos(canvasSize.Width-400, canvasSize.Height-260)
+	pop.Resize(fyne.NewSize(340, 180))
+
+	// Anchor near the focused widget when possible — puts the tooltip
+	// next to the thing the user is editing instead of the screen
+	// corner. Fall back to bottom-right only when no focused widget
+	// is findable (Home tab, etc.).
+	canvas := a.mainWindow.Canvas()
+	pos := a.tooltipAnchor(canvas)
 	pop.ShowAtPosition(pos)
 	currentHoverPopup = pop
+}
+
+// tooltipAnchor returns a good position for a hover popup. Tries the
+// currently-focused widget's bottom-right corner first; falls back to
+// the canvas bottom-right if there's no focused object.
+func (a *App) tooltipAnchor(canvas fyne.Canvas) fyne.Position {
+	const (
+		popupW = float32(340)
+		popupH = float32(180)
+	)
+	canvasSize := canvas.Size()
+	fallback := fyne.NewPos(canvasSize.Width-popupW-20, canvasSize.Height-popupH-20)
+
+	focused := canvas.Focused()
+	if focused == nil {
+		return fallback
+	}
+	// Focusable may or may not also be a CanvasObject. Try to extract
+	// position via fyne.CanvasObject interface.
+	obj, ok := focused.(fyne.CanvasObject)
+	if !ok {
+		return fallback
+	}
+	absPos := fyne.CurrentApp().Driver().AbsolutePositionForObject(obj)
+	size := obj.Size()
+
+	// Prefer: below and slightly right of the focused widget. If that
+	// would push offscreen, fall back to left or above.
+	x := absPos.X + size.Width + 10
+	y := absPos.Y
+	if x+popupW > canvasSize.Width {
+		// Not enough room to the right — try below.
+		x = absPos.X
+		y = absPos.Y + size.Height + 6
+	}
+	if y+popupH > canvasSize.Height {
+		// Try above.
+		y = absPos.Y - popupH - 6
+	}
+	if x < 0 || y < 0 {
+		return fallback
+	}
+	return fyne.NewPos(x, y)
 }
 
 // showLibraryModal opens the InfoPanel in a full-size dialog so users
@@ -971,6 +1035,12 @@ func (a *App) showPreferences() {
 	md3viewEntry.SetText(a.config.MD3ViewPath)
 
 	themeSelect := widget.NewSelect([]string{"Blue (Jedi)", "Red (Sith)", "Gold (Foundry)", "Green (Console)", "Orange (Rebel)", "Purple (Mace)"}, nil)
+
+	tooltipsCheck := widget.NewCheck("Show info tooltips on hover", func(on bool) {
+		a.config.HoverTooltipsDisabled = !on
+		a.saveConfig()
+	})
+	tooltipsCheck.Checked = !a.config.HoverTooltipsDisabled
 	themeSelect.SetSelected(strings.Title(a.config.PrimaryColor))
 	if a.config.PrimaryColor == "blue" || a.config.PrimaryColor == "" {
 		themeSelect.SetSelected("Blue (Jedi)")
@@ -1017,6 +1087,7 @@ func (a *App) showPreferences() {
 
 	form := widget.NewForm(
 		widget.NewFormItem("Theme Color", themeSelect),
+		widget.NewFormItem("Info Tooltips", tooltipsCheck),
 		widget.NewFormItem("Gamedata Path", a.NewPathEntryWithFavorites(gamedataEntry, prefsBrowseGamedata)),
 		widget.NewFormItem("TextAssets Path", a.NewPathEntryWithFavorites(textAssetsEntry, prefsBrowseTextAssets)),
 		widget.NewFormItem("MD3View Path", container.NewBorder(nil, nil, nil,

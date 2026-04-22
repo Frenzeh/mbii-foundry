@@ -378,11 +378,40 @@ func (ab *AssetBrowser) createUI() {
 		ab.updateGridSize() // New method to update layout without full reload
 	}
 
+	// Tightened layout: navigation buttons + source + search on two rows
+	// instead of four. Up/Home/Refresh buttons satisfy "how do I go back
+	// out of a dir?" without users needing to find the ".. (Up)" tile.
+	// View/Sort collapse into a compact row; Zoom moves into that row
+	// too (no dedicated label, takes remaining space).
+	upBtn := widget.NewButtonWithIcon("", theme.NavigateBackIcon(), func() {
+		if ab.currentDir != nil && ab.currentDir.PK3Source == "" && ab.currentDir.Path != "" {
+			parent := filepath.Dir(ab.currentDir.Path)
+			if parent != "" && parent != "." {
+				ab.loadFS(parent)
+			}
+		}
+	})
+	upBtn.Importance = widget.LowImportance
+
+	homeBtn := widget.NewButtonWithIcon("", theme.HomeIcon(), func() {
+		home, _ := os.UserHomeDir()
+		ab.loadFS(home)
+	})
+	homeBtn.Importance = widget.LowImportance
+
+	refreshBtn := widget.NewButtonWithIcon("", theme.ViewRefreshIcon(), func() {
+		if ab.currentDir != nil && ab.currentDir.PK3Source == "" && ab.currentDir.Path != "" {
+			ab.loadFS(ab.currentDir.Path)
+		}
+	})
+	refreshBtn.Importance = widget.LowImportance
+
+	navButtons := container.NewHBox(upBtn, homeBtn, refreshBtn)
+
 	ab.topBar = container.NewVBox(
-		container.NewBorder(nil, nil, nil, favBtn, ab.sourceSelect),
-		container.NewGridWithColumns(3, ab.quickNavSelect, ab.viewModeSelect, ab.sortSelect),
-		container.NewBorder(nil, nil, widget.NewLabel("Zoom"), nil, ab.zoomSlider),
+		container.NewBorder(nil, nil, navButtons, favBtn, ab.sourceSelect),
 		ab.searchEntry,
+		container.NewGridWithColumns(3, ab.viewModeSelect, ab.sortSelect, ab.zoomSlider),
 	)
 
 	ab.tree = widget.NewTree(

@@ -742,10 +742,7 @@ func sectionHeading(title string) fyne.CanvasObject {
 	label.TextSize = SizeSmall
 	label.TextStyle = fyne.TextStyle{Bold: true}
 
-	rule := canvas.NewRectangle(tintWithAlpha(CurrentThemeColor, 90))
-	rule.SetMinSize(fyne.NewSize(0, 2))
-
-	return container.NewVBox(label, rule)
+	return container.NewVBox(label, NewAccentRule())
 }
 
 // persistSplitOffsets snapshots whatever offsets the user dragged the

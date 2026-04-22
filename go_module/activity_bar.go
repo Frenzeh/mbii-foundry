@@ -125,11 +125,8 @@ func (s *SidebarHeader) CreateRenderer() fyne.WidgetRenderer {
 	row := container.NewBorder(nil, nil, s.collapseBtn, nil, tabRow)
 
 	// Bottom rule — thin accent line under the whole header so it
-	// reads as its own band, separated from the content below.
-	rule := canvas.NewRectangle(tintWithAlpha(CurrentThemeColor, 90))
-	rule.SetMinSize(fyne.NewSize(0, 2))
-
-	return widget.NewSimpleRenderer(container.NewVBox(row, rule))
+	// reads as its own band. AccentRule so it repaints on theme swap.
+	return widget.NewSimpleRenderer(container.NewVBox(row, NewAccentRule()))
 }
 
 // --- individual pill --------------------------------------------------

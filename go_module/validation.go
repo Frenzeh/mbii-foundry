@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"strings"
-	
+
 	"github.com/Frenzeh/mbii-foundry/parsers"
 )
 

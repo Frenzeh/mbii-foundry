@@ -7,23 +7,35 @@ import (
 )
 
 func TestParseRealFiles(t *testing.T) {
-	// Adjust path to find the MBII_Dev root relative to where test runs
-	// Assuming test runs in go_module/parsers/
-	rootDir := "../../../../" 
-	textAssetsDir := filepath.Join(rootDir, "TextAssets")
-	
-	if _, err := os.Stat(textAssetsDir); os.IsNotExist(err) {
-		t.Logf("TextAssets not found at %s, trying fallback...", textAssetsDir)
-		// Fallback for different environment structure
-		rootDir = "../../../../../"
-		textAssetsDir = filepath.Join(rootDir, "TextAssets")
+	// Integration test that exercises the parser against a real TextAssets
+	// checkout. Skipped when the checkout isn't available (e.g. CI running
+	// off a fresh clone of just this repo). Run with `MBII_TEXTASSETS=/path`
+	// or place a TextAssets checkout adjacent to this repo.
+	textAssetsDir := os.Getenv("MBII_TEXTASSETS")
+	if textAssetsDir == "" {
+		candidates := []string{
+			"../../../../TextAssets",
+			"../../../../../TextAssets",
+			"../../../TextAssets",
+		}
+		for _, c := range candidates {
+			if _, err := os.Stat(c); err == nil {
+				textAssetsDir = c
+				break
+			}
+		}
+	}
+	if textAssetsDir == "" {
+		t.Skip("TextAssets checkout not found; set MBII_TEXTASSETS or place one adjacent to this repo to run this integration test")
 	}
 
 	t.Logf("Scanning for MBCH files in %s...", textAssetsDir)
 
 	var files []string
 	err := filepath.Walk(textAssetsDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 		if !info.IsDir() && filepath.Ext(path) == ".mbch" {
 			files = append(files, path)
 		}
@@ -38,7 +50,7 @@ func TestParseRealFiles(t *testing.T) {
 
 	passed := 0
 	failed := 0
-	
+
 	for _, file := range files {
 		content, err := os.ReadFile(file)
 		if err != nil {
@@ -60,7 +72,7 @@ func TestParseRealFiles(t *testing.T) {
 	}
 
 	t.Logf("Result: %d Passed, %d Failed", passed, failed)
-	
+
 	if failed > 0 {
 		t.Logf("Success Rate: %.2f%%", float64(passed)/float64(len(files))*100)
 	} else {

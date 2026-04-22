@@ -8,34 +8,34 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-	
+
 	"github.com/Frenzeh/mbii-foundry/parsers"
 )
 
 type WeaponInfoUI struct {
-	editor *MBCHEditor
+	editor    *MBCHEditor
 	container *container.Split
-	
+
 	weaponList *widget.List
 	detailForm *widget.Form
-	
-	weaponToReplaceEntry *widget.Entry
-	weaponBasedOffEntry *widget.Entry
-	newWorldModelEntry *widget.Entry
-	newViewModelEntry *widget.Entry
-	iconEntry *widget.Entry
-	weaponNameEntry *widget.Entry
-	muzzleEffectEntry *widget.Entry
-	altMuzzleEffectEntry *widget.Entry
-	missileEffectEntry *widget.Entry
-	altMissileEffectEntry *widget.Entry
-	flashSound0Entry *widget.Entry
-	altFlashSound0Entry *widget.Entry
-	chargeSoundEntry *widget.Entry
-	customAmmoEntry *widget.Entry
-	clipSizeEntry *widget.Entry
+
+	weaponToReplaceEntry    *widget.Entry
+	weaponBasedOffEntry     *widget.Entry
+	newWorldModelEntry      *widget.Entry
+	newViewModelEntry       *widget.Entry
+	iconEntry               *widget.Entry
+	weaponNameEntry         *widget.Entry
+	muzzleEffectEntry       *widget.Entry
+	altMuzzleEffectEntry    *widget.Entry
+	missileEffectEntry      *widget.Entry
+	altMissileEffectEntry   *widget.Entry
+	flashSound0Entry        *widget.Entry
+	altFlashSound0Entry     *widget.Entry
+	chargeSoundEntry        *widget.Entry
+	customAmmoEntry         *widget.Entry
+	clipSizeEntry           *widget.Entry
 	reloadTimeModifierEntry *widget.Entry
-	
+
 	currentWeaponIndex int
 }
 
@@ -65,33 +65,49 @@ func (ui *WeaponInfoUI) createUI() {
 		ui.currentWeaponIndex = id
 		ui.loadWeaponDetails(id)
 	}
-	
+
 	addBtn := widget.NewButtonWithIcon("Add", theme.ContentAddIcon(), ui.addWeapon)
 	removeBtn := widget.NewButtonWithIcon("Remove", theme.ContentRemoveIcon(), ui.removeWeapon)
-	
+
 	listPane := container.NewBorder(
 		container.NewHBox(addBtn, removeBtn),
 		nil, nil, nil,
 		ui.weaponList,
 	)
 
-	ui.weaponToReplaceEntry = widget.NewEntry(); ui.weaponToReplaceEntry.OnChanged = ui.onDetailChanged
-	ui.weaponBasedOffEntry = widget.NewEntry(); ui.weaponBasedOffEntry.OnChanged = ui.onDetailChanged
-	ui.newWorldModelEntry = widget.NewEntry(); ui.newWorldModelEntry.OnChanged = ui.onDetailChanged
-	ui.newViewModelEntry = widget.NewEntry(); ui.newViewModelEntry.OnChanged = ui.onDetailChanged
-	ui.iconEntry = widget.NewEntry(); ui.iconEntry.OnChanged = ui.onDetailChanged
-	ui.weaponNameEntry = widget.NewEntry(); ui.weaponNameEntry.OnChanged = ui.onDetailChanged
-	ui.muzzleEffectEntry = widget.NewEntry(); ui.muzzleEffectEntry.OnChanged = ui.onDetailChanged
-	ui.altMuzzleEffectEntry = widget.NewEntry(); ui.altMuzzleEffectEntry.OnChanged = ui.onDetailChanged
-	ui.missileEffectEntry = widget.NewEntry(); ui.missileEffectEntry.OnChanged = ui.onDetailChanged
-	ui.altMissileEffectEntry = widget.NewEntry(); ui.altMissileEffectEntry.OnChanged = ui.onDetailChanged
-	ui.flashSound0Entry = widget.NewEntry(); ui.flashSound0Entry.OnChanged = ui.onDetailChanged
-	ui.altFlashSound0Entry = widget.NewEntry(); ui.altFlashSound0Entry.OnChanged = ui.onDetailChanged
-	ui.chargeSoundEntry = widget.NewEntry(); ui.chargeSoundEntry.OnChanged = ui.onDetailChanged
-	ui.customAmmoEntry = widget.NewEntry(); ui.customAmmoEntry.OnChanged = ui.onDetailChanged
-	ui.clipSizeEntry = widget.NewEntry(); ui.clipSizeEntry.OnChanged = ui.onDetailChanged
-	ui.reloadTimeModifierEntry = widget.NewEntry(); ui.reloadTimeModifierEntry.OnChanged = ui.onDetailChanged
-	
+	ui.weaponToReplaceEntry = widget.NewEntry()
+	ui.weaponToReplaceEntry.OnChanged = ui.onDetailChanged
+	ui.weaponBasedOffEntry = widget.NewEntry()
+	ui.weaponBasedOffEntry.OnChanged = ui.onDetailChanged
+	ui.newWorldModelEntry = widget.NewEntry()
+	ui.newWorldModelEntry.OnChanged = ui.onDetailChanged
+	ui.newViewModelEntry = widget.NewEntry()
+	ui.newViewModelEntry.OnChanged = ui.onDetailChanged
+	ui.iconEntry = widget.NewEntry()
+	ui.iconEntry.OnChanged = ui.onDetailChanged
+	ui.weaponNameEntry = widget.NewEntry()
+	ui.weaponNameEntry.OnChanged = ui.onDetailChanged
+	ui.muzzleEffectEntry = widget.NewEntry()
+	ui.muzzleEffectEntry.OnChanged = ui.onDetailChanged
+	ui.altMuzzleEffectEntry = widget.NewEntry()
+	ui.altMuzzleEffectEntry.OnChanged = ui.onDetailChanged
+	ui.missileEffectEntry = widget.NewEntry()
+	ui.missileEffectEntry.OnChanged = ui.onDetailChanged
+	ui.altMissileEffectEntry = widget.NewEntry()
+	ui.altMissileEffectEntry.OnChanged = ui.onDetailChanged
+	ui.flashSound0Entry = widget.NewEntry()
+	ui.flashSound0Entry.OnChanged = ui.onDetailChanged
+	ui.altFlashSound0Entry = widget.NewEntry()
+	ui.altFlashSound0Entry.OnChanged = ui.onDetailChanged
+	ui.chargeSoundEntry = widget.NewEntry()
+	ui.chargeSoundEntry.OnChanged = ui.onDetailChanged
+	ui.customAmmoEntry = widget.NewEntry()
+	ui.customAmmoEntry.OnChanged = ui.onDetailChanged
+	ui.clipSizeEntry = widget.NewEntry()
+	ui.clipSizeEntry.OnChanged = ui.onDetailChanged
+	ui.reloadTimeModifierEntry = widget.NewEntry()
+	ui.reloadTimeModifierEntry.OnChanged = ui.onDetailChanged
+
 	ui.detailForm = widget.NewForm(
 		widget.NewFormItem("Weapon To Replace", ui.weaponToReplaceEntry),
 		widget.NewFormItem("Weapon Based Off", ui.weaponBasedOffEntry),
@@ -111,7 +127,6 @@ func (ui *WeaponInfoUI) createUI() {
 		widget.NewFormItem("Reload Time Modifier", ui.reloadTimeModifierEntry),
 	)
 
-	
 	ui.container = container.NewHSplit(listPane, container.NewVScroll(ui.detailForm))
 	ui.container.SetOffset(0.3)
 }
@@ -149,7 +164,7 @@ func (ui *WeaponInfoUI) loadWeaponDetails(index int) {
 		ui.clearDetails()
 		return
 	}
-	
+
 	wi := ui.editor.character.WeaponOverrides[index]
 	ui.weaponToReplaceEntry.SetText(wi.WeaponToReplace)
 	ui.weaponBasedOffEntry.SetText(wi.WeaponBasedOff)
@@ -189,8 +204,10 @@ func (ui *WeaponInfoUI) clearDetails() {
 }
 
 func (ui *WeaponInfoUI) onDetailChanged(s string) {
-	if ui.currentWeaponIndex == -1 || ui.currentWeaponIndex >= len(ui.editor.character.WeaponOverrides) { return }
-	
+	if ui.currentWeaponIndex == -1 || ui.currentWeaponIndex >= len(ui.editor.character.WeaponOverrides) {
+		return
+	}
+
 	wi := &ui.editor.character.WeaponOverrides[ui.currentWeaponIndex]
 	wi.WeaponToReplace = ui.weaponToReplaceEntry.Text
 	wi.WeaponBasedOff = ui.weaponBasedOffEntry.Text

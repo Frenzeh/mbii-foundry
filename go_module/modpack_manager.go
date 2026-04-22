@@ -27,7 +27,7 @@ type ModpackManager struct {
 	app       *App
 	container *fyne.Container
 	projects  []*Modpack
-	
+
 	// UI
 	projectList *widget.List
 	detailView  *fyne.Container
@@ -44,7 +44,9 @@ func NewModpackManager(app *App) *ModpackManager {
 }
 
 func (mm *ModpackManager) loadProjects() {
-	if mm.app.configPath == "" { return }
+	if mm.app.configPath == "" {
+		return
+	}
 	configPath := filepath.Join(filepath.Dir(mm.app.configPath), "fa_projects.json")
 	data, err := os.ReadFile(configPath)
 	if err == nil {
@@ -53,7 +55,9 @@ func (mm *ModpackManager) loadProjects() {
 }
 
 func (mm *ModpackManager) saveProjects() {
-	if mm.app.configPath == "" { return }
+	if mm.app.configPath == "" {
+		return
+	}
 	configPath := filepath.Join(filepath.Dir(mm.app.configPath), "fa_projects.json")
 	data, _ := json.MarshalIndent(mm.projects, "", "  ")
 	os.WriteFile(configPath, data, 0644)
@@ -88,8 +92,8 @@ func (mm *ModpackManager) createUI() {
 		nil, nil, nil,
 		mm.projectList,
 	)
-	
-split := container.NewHSplit(leftPane, mm.detailView)
+
+	split := container.NewHSplit(leftPane, mm.detailView)
 	split.SetOffset(0.3)
 
 	mm.container = container.NewMax(split)
@@ -102,11 +106,11 @@ func (mm *ModpackManager) GetContent() fyne.CanvasObject {
 func (mm *ModpackManager) showNewProjectDialog() {
 	nameEntry := widget.NewEntry()
 	nameEntry.SetPlaceHolder("MyCoolMod")
-	
+
 	pathEntry := widget.NewEntry()
 	pathEntry.SetPlaceHolder("C:/MBII_Dev/MyCoolMod")
-	
-browseBtn := widget.NewButtonWithIcon("", theme.FolderOpenIcon(), func() {
+
+	browseBtn := widget.NewButtonWithIcon("", theme.FolderOpenIcon(), func() {
 		dialog.ShowFolderOpen(func(uri fyne.ListableURI, err error) {
 			if uri != nil {
 				pathEntry.SetText(filepath.Join(uri.Path(), nameEntry.Text))
@@ -147,13 +151,13 @@ func (mm *ModpackManager) createProject(name, path string) {
 		Path:       path,
 		LastEdited: time.Now(),
 	}
-	
+
 	mm.projects = append(mm.projects, p)
 	mm.saveProjects()
 	mm.projectList.Refresh()
 	mm.projectList.Select(len(mm.projects) - 1)
-	
-dialog.ShowInformation("Success", "Project created successfully!\nFolders initialized.", mm.app.mainWindow)
+
+	dialog.ShowInformation("Success", "Project created successfully!\nFolders initialized.", mm.app.mainWindow)
 }
 
 func (mm *ModpackManager) importProject() {
@@ -176,7 +180,7 @@ func (mm *ModpackManager) importProject() {
 func (mm *ModpackManager) showProjectDetails(p *Modpack) {
 	nameLabel := widget.NewLabelWithStyle(p.Name, fyne.TextAlignLeading, fyne.TextStyle{Bold: true, Monospace: true})
 	pathLabel := widget.NewLabel(p.Path)
-	
+
 	openBtn := widget.NewButtonWithIcon("Open in Editor", theme.LoginIcon(), func() {
 		// Set app context to this project
 		mm.app.config.LastOpenDir = filepath.Join(p.Path, "ext_data/mb2/character") // Default to char folder
@@ -191,7 +195,7 @@ func (mm *ModpackManager) showProjectDetails(p *Modpack) {
 	shareBtn := widget.NewButtonWithIcon("Share / Export Source", theme.MailAttachmentIcon(), func() {
 		mm.shareProject(p)
 	})
-	
+
 	buildBtn := widget.NewButtonWithIcon("Build PK3", theme.DownloadIcon(), func() {
 		// Call main build function (not yet implemented in main.go but we can stub)
 		pk3Path := filepath.Join(p.Path, "..", p.Name+".pk3")
@@ -216,7 +220,7 @@ func (mm *ModpackManager) showProjectDetails(p *Modpack) {
 		widget.NewSeparator(),
 		form,
 	)
-	
+
 	mm.detailView.Objects = []fyne.CanvasObject{container.NewPadded(content)}
 	mm.detailView.Refresh()
 }
@@ -228,8 +232,10 @@ func (mm *ModpackManager) shareProject(p *Modpack) {
 			ShowError(fmt.Errorf("Failed to save file: %v", err), mm.app.mainWindow)
 			return
 		}
-		if writer == nil { return } // Cancelled
-		
+		if writer == nil {
+			return
+		} // Cancelled
+
 		// destPath := writer.URI().Path()
 		// Call python zip logic or internal zip
 	}, mm.app.mainWindow)

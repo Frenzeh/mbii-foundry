@@ -9,6 +9,11 @@
                     W H E R E   M O V I E   B A T T L E S   I I   I S   F O R G E D
 ```
 
+[![CI](https://github.com/Frenzeh/mbii-foundry/actions/workflows/ci.yml/badge.svg)](https://github.com/Frenzeh/mbii-foundry/actions/workflows/ci.yml)
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Go version](https://img.shields.io/github/go-mod/go-version/Frenzeh/mbii-foundry?filename=go_module%2Fgo.mod)](go_module/go.mod)
+[![Release](https://img.shields.io/github/v/release/Frenzeh/mbii-foundry?include_prereleases&label=release)](https://github.com/Frenzeh/mbii-foundry/releases)
+
 > A visual content editor for **Movie Battles II**. Shape classes, sabers, and vehicles without wrestling raw config syntax.
 
 **Status:** Alpha — works end-to-end for `.mbch` editing, other formats rolling in. Rough edges expected; feedback welcome.
@@ -91,6 +96,14 @@ git pull
 ```
 
 If you're editing your own branch, `git pull` won't work — `git fetch && git merge origin/main` instead. Ask an existing contributor if you're unsure.
+
+### Where do I find `.mbch` files to edit?
+
+MBII Foundry edits files; it doesn't ship with any. The `.mbch` / `.sab` / `.veh` files you'll want to open live in the **MBII TextAssets repo**, or inside your Jedi Academy install's MBII PK3s.
+
+- **To edit official MBII content and contribute back:** clone [`MBII/TextAssets`](https://github.com/MBII/TextAssets). Character files are under `MBAssets3/ext_data/mb2/character/`. Edit in Foundry → commit → push → MBII's CI builds a pk3.
+- **To make your own custom characters:** start from `templates/jedi_template.mbch` in this repo (File → New in the app, or duplicate the file).
+- **To browse files already inside your MBII install:** point the app's "Gamedata path" setting at your `GameData` directory. Foundry's asset browser can peek into the pk3s.
 
 ### Getting help
 

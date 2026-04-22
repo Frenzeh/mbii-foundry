@@ -18,14 +18,14 @@ const (
 
 var (
 	// Global data stores
-	LoadedAttributes []AttributeDef
-	LoadedWeapons    []WeaponDef
-	LoadedClasses    []ClassDef
-	LoadedClassFlags []ClassFlagDef
+	LoadedAttributes  []AttributeDef
+	LoadedWeapons     []WeaponDef
+	LoadedClasses     []ClassDef
+	LoadedClassFlags  []ClassFlagDef
 	LoadedSaberStyles []SaberStyleDef
-	LoadedGlossary   []GlossaryDef
-	DataLock         sync.RWMutex
-	DataPath         string // Store the data path for updates
+	LoadedGlossary    []GlossaryDef
+	DataLock          sync.RWMutex
+	DataPath          string // Store the data path for updates
 )
 
 // LoadExternalData loads data files from the specified directory.
@@ -34,25 +34,31 @@ func LoadExternalData(dataPath string) error {
 	defer DataLock.Unlock()
 
 	DataPath = dataPath // Store for GitHub update caching
-	
+
 	// --- Classes ---
 	classPath := filepath.Join(dataPath, "classes.json")
 	classData, err := os.ReadFile(classPath)
-	
+
 	LoadedClasses = make([]ClassDef, len(MBIIClasses))
 	copy(LoadedClasses, MBIIClasses)
-	
+
 	if err == nil {
 		var classes []ClassDef
 		if err := json.Unmarshal(classData, &classes); err == nil {
 			// Merge logic
 			classMap := make(map[string]int)
-			for i, c := range LoadedClasses { classMap[c.ID] = i }
+			for i, c := range LoadedClasses {
+				classMap[c.ID] = i
+			}
 
 			for _, ext := range classes {
 				if idx, ok := classMap[ext.ID]; ok {
-					if ext.Name != "" { LoadedClasses[idx].Name = ext.Name }
-					if ext.Description != "" { LoadedClasses[idx].Description = ext.Description }
+					if ext.Name != "" {
+						LoadedClasses[idx].Name = ext.Name
+					}
+					if ext.Description != "" {
+						LoadedClasses[idx].Description = ext.Description
+					}
 				} else {
 					LoadedClasses = append(LoadedClasses, ext)
 					classMap[ext.ID] = len(LoadedClasses) - 1
@@ -69,7 +75,7 @@ func LoadExternalData(dataPath string) error {
 	// Load Attributes
 	attPath := filepath.Join(dataPath, "attributes.json")
 	attData, err := os.ReadFile(attPath)
-	
+
 	// Initialize with defaults
 	LoadedAttributes = make([]AttributeDef, len(MBIIAttributes))
 	copy(LoadedAttributes, MBIIAttributes)
@@ -79,21 +85,39 @@ func LoadExternalData(dataPath string) error {
 		if err := json.Unmarshal(attData, &atts); err == nil {
 			// Merge logic
 			attMap := make(map[string]int)
-			for i, a := range LoadedAttributes { attMap[a.ID] = i }
+			for i, a := range LoadedAttributes {
+				attMap[a.ID] = i
+			}
 
 			for _, ext := range atts {
 				if idx, ok := attMap[ext.ID]; ok {
 					// Update existing
-					if ext.Name != "" { LoadedAttributes[idx].Name = ext.Name }
-					if ext.Description != "" { LoadedAttributes[idx].Description = ext.Description }
-					if ext.Category != "" { LoadedAttributes[idx].Category = ext.Category }
-					if ext.MaxLevel > 0 { LoadedAttributes[idx].MaxLevel = ext.MaxLevel }
-					
+					if ext.Name != "" {
+						LoadedAttributes[idx].Name = ext.Name
+					}
+					if ext.Description != "" {
+						LoadedAttributes[idx].Description = ext.Description
+					}
+					if ext.Category != "" {
+						LoadedAttributes[idx].Category = ext.Category
+					}
+					if ext.MaxLevel > 0 {
+						LoadedAttributes[idx].MaxLevel = ext.MaxLevel
+					}
+
 					// Rich Docs - overwrite
-					if ext.Overview != "" { LoadedAttributes[idx].Overview = ext.Overview }
-					if len(ext.Levels) > 0 { LoadedAttributes[idx].Levels = ext.Levels }
-					if len(ext.Tips) > 0 { LoadedAttributes[idx].Tips = ext.Tips }
-					if len(ext.Tags) > 0 { LoadedAttributes[idx].Tags = ext.Tags }
+					if ext.Overview != "" {
+						LoadedAttributes[idx].Overview = ext.Overview
+					}
+					if len(ext.Levels) > 0 {
+						LoadedAttributes[idx].Levels = ext.Levels
+					}
+					if len(ext.Tips) > 0 {
+						LoadedAttributes[idx].Tips = ext.Tips
+					}
+					if len(ext.Tags) > 0 {
+						LoadedAttributes[idx].Tags = ext.Tags
+					}
 				} else {
 					// Add new
 					LoadedAttributes = append(LoadedAttributes, ext)
@@ -111,7 +135,7 @@ func LoadExternalData(dataPath string) error {
 	// Load Weapons
 	weapPath := filepath.Join(dataPath, "weapons.json")
 	weapData, err := os.ReadFile(weapPath)
-	
+
 	// Initialize with defaults
 	LoadedWeapons = make([]WeaponDef, len(MBIIWeapons))
 	copy(LoadedWeapons, MBIIWeapons)
@@ -121,17 +145,31 @@ func LoadExternalData(dataPath string) error {
 		if err := json.Unmarshal(weapData, &weaps); err == nil {
 			// Merge logic
 			weapMap := make(map[string]int)
-			for i, w := range LoadedWeapons { weapMap[w.ID] = i }
+			for i, w := range LoadedWeapons {
+				weapMap[w.ID] = i
+			}
 
 			for _, ext := range weaps {
 				if idx, ok := weapMap[ext.ID]; ok {
-					if ext.Name != "" { LoadedWeapons[idx].Name = ext.Name }
-					if ext.Description != "" { LoadedWeapons[idx].Description = ext.Description }
-					if ext.Category != "" { LoadedWeapons[idx].Category = ext.Category }
-					
-					if ext.Overview != "" { LoadedWeapons[idx].Overview = ext.Overview }
-					if len(ext.Tips) > 0 { LoadedWeapons[idx].Tips = ext.Tips }
-					if len(ext.Tags) > 0 { LoadedWeapons[idx].Tags = ext.Tags }
+					if ext.Name != "" {
+						LoadedWeapons[idx].Name = ext.Name
+					}
+					if ext.Description != "" {
+						LoadedWeapons[idx].Description = ext.Description
+					}
+					if ext.Category != "" {
+						LoadedWeapons[idx].Category = ext.Category
+					}
+
+					if ext.Overview != "" {
+						LoadedWeapons[idx].Overview = ext.Overview
+					}
+					if len(ext.Tips) > 0 {
+						LoadedWeapons[idx].Tips = ext.Tips
+					}
+					if len(ext.Tags) > 0 {
+						LoadedWeapons[idx].Tags = ext.Tags
+					}
 				} else {
 					LoadedWeapons = append(LoadedWeapons, ext)
 					weapMap[ext.ID] = len(LoadedWeapons) - 1
@@ -154,12 +192,20 @@ func LoadExternalData(dataPath string) error {
 		var flags []ClassFlagDef
 		if err := json.Unmarshal(cfData, &flags); err == nil {
 			fMap := make(map[string]int)
-			for i, f := range LoadedClassFlags { fMap[f.ID] = i }
+			for i, f := range LoadedClassFlags {
+				fMap[f.ID] = i
+			}
 			for _, ext := range flags {
 				if idx, ok := fMap[ext.ID]; ok {
-					if ext.Name != "" { LoadedClassFlags[idx].Name = ext.Name }
-					if ext.Description != "" { LoadedClassFlags[idx].Description = ext.Description }
-					if ext.Overview != "" { LoadedClassFlags[idx].Overview = ext.Overview }
+					if ext.Name != "" {
+						LoadedClassFlags[idx].Name = ext.Name
+					}
+					if ext.Description != "" {
+						LoadedClassFlags[idx].Description = ext.Description
+					}
+					if ext.Overview != "" {
+						LoadedClassFlags[idx].Overview = ext.Overview
+					}
 				} else {
 					LoadedClassFlags = append(LoadedClassFlags, ext)
 					fMap[ext.ID] = len(LoadedClassFlags) - 1
@@ -178,12 +224,20 @@ func LoadExternalData(dataPath string) error {
 		var styles []SaberStyleDef
 		if err := json.Unmarshal(ssData, &styles); err == nil {
 			sMap := make(map[string]int)
-			for i, s := range LoadedSaberStyles { sMap[s.ID] = i }
+			for i, s := range LoadedSaberStyles {
+				sMap[s.ID] = i
+			}
 			for _, ext := range styles {
 				if idx, ok := sMap[ext.ID]; ok {
-					if ext.Name != "" { LoadedSaberStyles[idx].Name = ext.Name }
-					if ext.Description != "" { LoadedSaberStyles[idx].Description = ext.Description }
-					if ext.Overview != "" { LoadedSaberStyles[idx].Overview = ext.Overview }
+					if ext.Name != "" {
+						LoadedSaberStyles[idx].Name = ext.Name
+					}
+					if ext.Description != "" {
+						LoadedSaberStyles[idx].Description = ext.Description
+					}
+					if ext.Overview != "" {
+						LoadedSaberStyles[idx].Overview = ext.Overview
+					}
 				} else {
 					LoadedSaberStyles = append(LoadedSaberStyles, ext)
 					sMap[ext.ID] = len(LoadedSaberStyles) - 1
@@ -260,8 +314,6 @@ func GetGlossary() []GlossaryDef {
 	defer DataLock.RUnlock()
 	return LoadedGlossary
 }
-
-
 
 // FetchDataFromGitHub downloads a JSON file from the GitHub repository.
 // Returns the downloaded content and any error encountered.

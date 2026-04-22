@@ -20,11 +20,11 @@ func InitDefinitions() {
 
 	// Potential paths for definitions
 	paths := []string{
-		"definitions",                 // relative to binary
-		"../definitions",              // relative to go_module source
-		"../../definitions",           // deeper nesting
-		"mbii-foundry/definitions",    // sibling checkout
-		"fa_creator_app/definitions",  // legacy mount point inside mbii-holocron (submodule)
+		"definitions",                // relative to binary
+		"../definitions",             // relative to go_module source
+		"../../definitions",          // deeper nesting
+		"mbii-foundry/definitions",   // sibling checkout
+		"fa_creator_app/definitions", // legacy mount point inside mbii-holocron (submodule)
 	}
 
 	for _, p := range paths {
@@ -40,11 +40,15 @@ func InitDefinitions() {
 
 func loadDefinitionsFromPath(root string) {
 	filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		if err != nil { return nil }
+		if err != nil {
+			return nil
+		}
 		if !info.IsDir() && strings.HasSuffix(info.Name(), ".md") {
 			content, err := os.ReadFile(path)
-			if err != nil { return nil }
-			
+			if err != nil {
+				return nil
+			}
+
 			// Key is the filename without extension (e.g., MB_ATT_JETPACK)
 			key := strings.TrimSuffix(info.Name(), ".md")
 			Definitions[key] = string(content)

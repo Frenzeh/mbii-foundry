@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"image/color"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
-	"net/url"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -31,22 +31,22 @@ type App struct {
 	config     AppConfig
 	configPath string
 
-	docTabs    *container.DocTabs
-	editors    map[*container.TabItem]Editor
+	docTabs *container.DocTabs
+	editors map[*container.TabItem]Editor
 
 	assetBrowser *AssetBrowser
 	infoPanel    *InfoPanel
-	
-	fileManager *FileManager
+
+	fileManager   *FileManager
 	githubManager *GitHubManager
-	
+
 	modpackManager *ModpackManager
 
-	statusLabel *widget.Label
-	split       *container.Split // Reference to split layout
-	sideTabs    *container.AppTabs // Reference to sidebar
+	statusLabel    *widget.Label
+	split          *container.Split   // Reference to split layout
+	sideTabs       *container.AppTabs // Reference to sidebar
 	sidebarVisible bool
-	
+
 	// Holocron Integration
 	holocronClient *HolocronClient
 	holocronStatus *widget.Icon // Visual indicator
@@ -55,23 +55,23 @@ type App struct {
 var CurrentThemeColor color.Color = color.RGBA{R: 0, G: 128, B: 255, A: 255} // Default Blue
 
 type AppConfig struct {
-	GamedataPath       string        `json:"gamedata_path"`
-	TextAssetsPath     string        `json:"text_assets_path"`
-	MD3ViewPath        string        `json:"md3view_path"`
-	LastOpenDir        string        `json:"last_open_dir"`
-	WindowWidth        float32       `json:"window_width"`
-	WindowHeight       float32       `json:"window_height"`
-	RecentFiles        []RecentFile  `json:"recent_files"`
-	Theme              string        `json:"theme"`
-	PrimaryColor       string        `json:"primary_color"` // New field
-	KnownModpacks      []*Modpack    `json:"known_modpacks"`
-	SidebarOffset      float32       `json:"sidebar_offset"`
-	SidebarVisible     bool          `json:"sidebar_visible"`
-	SetupWizardSeen    bool          `json:"setup_wizard_seen"`
-	
+	GamedataPath    string       `json:"gamedata_path"`
+	TextAssetsPath  string       `json:"text_assets_path"`
+	MD3ViewPath     string       `json:"md3view_path"`
+	LastOpenDir     string       `json:"last_open_dir"`
+	WindowWidth     float32      `json:"window_width"`
+	WindowHeight    float32      `json:"window_height"`
+	RecentFiles     []RecentFile `json:"recent_files"`
+	Theme           string       `json:"theme"`
+	PrimaryColor    string       `json:"primary_color"` // New field
+	KnownModpacks   []*Modpack   `json:"known_modpacks"`
+	SidebarOffset   float32      `json:"sidebar_offset"`
+	SidebarVisible  bool         `json:"sidebar_visible"`
+	SetupWizardSeen bool         `json:"setup_wizard_seen"`
+
 	// GitHub Config
-	GitHubToken        string        `json:"github_token"`
-	GitHubUser         string        `json:"github_user"`
+	GitHubToken string `json:"github_token"`
+	GitHubUser  string `json:"github_user"`
 }
 
 // NewToolbarAction is a helper to create a ToolbarAction
@@ -86,40 +86,40 @@ func (h HolocronTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant
 	if name == theme.ColorNamePrimary {
 		return CurrentThemeColor
 	}
-	
+
 	// Surface Shifting for Backgrounds
 	if name == theme.ColorNameBackground || name == theme.ColorNameInputBackground || name == theme.ColorNameOverlayBackground {
 		var base color.Color
-		
+
 		if variant == theme.VariantLight {
 			base = theme.DefaultTheme().Color(name, variant)
 		} else {
 			// Custom "Star Wars" Dark Mode Base
 			if name == theme.ColorNameInputBackground {
-				base = color.RGBA{R: 15, G: 15, B: 15, A: 255} 
+				base = color.RGBA{R: 15, G: 15, B: 15, A: 255}
 			} else {
-				base = color.RGBA{R: 28, G: 28, B: 28, A: 255} 
+				base = color.RGBA{R: 28, G: 28, B: 28, A: 255}
 			}
 		}
-		
+
 		// Tint the background slightly with the primary accent (5%)
 		// This creates the "Surface Shift" effect (e.g. reddish dark mode for Sith)
 		return blendColors(base, CurrentThemeColor, 0.04)
 	}
-	
+
 	return theme.DefaultTheme().Color(name, variant)
 }
 
 func blendColors(c1, c2 color.Color, ratio float32) color.Color {
 	r1, g1, b1, a1 := c1.RGBA()
 	r2, g2, b2, a2 := c2.RGBA()
-	
+
 	// Fast conversion (lossy but fine for UI tinting)
 	r1, g1, b1, a1 = r1>>8, g1>>8, b1>>8, a1>>8
 	r2, g2, b2, a2 = r2>>8, g2>>8, b2>>8, a2>>8
-	
+
 	inv := 1.0 - ratio
-	
+
 	return color.RGBA{
 		R: uint8(float32(r1)*inv + float32(r2)*ratio),
 		G: uint8(float32(g1)*inv + float32(g2)*ratio),
@@ -128,13 +128,15 @@ func blendColors(c1, c2 color.Color, ratio float32) color.Color {
 	}
 }
 
-func (h HolocronTheme) Font(style fyne.TextStyle) fyne.Resource { 
+func (h HolocronTheme) Font(style fyne.TextStyle) fyne.Resource {
 	if embedFont != nil {
 		return fyne.NewStaticResource("font.ttf", embedFont)
 	}
-	return theme.DefaultTheme().Font(style) 
+	return theme.DefaultTheme().Font(style)
 }
-func (h HolocronTheme) Icon(name fyne.ThemeIconName) fyne.Resource { return theme.DefaultTheme().Icon(name) }
+func (h HolocronTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
+	return theme.DefaultTheme().Icon(name)
+}
 func (h HolocronTheme) Size(name fyne.ThemeSizeName) float32 { return theme.DefaultTheme().Size(name) }
 
 func (a *App) applyThemeColor(colorName string) {
@@ -164,7 +166,7 @@ func main() {
 			LogFile.Close()
 		}
 	}()
-	
+
 	LogInfo("Starting %s v%s", AppName, AppVersion)
 
 	// Load Definitions
@@ -175,7 +177,7 @@ func main() {
 	// Default to local data folder relative to binary or source
 	// If running from go_module: ../data
 	dataPath := filepath.Join(exPath, "..", "data")
-	
+
 	// Check if running via go run (ex is in temp)
 	if strings.Contains(exPath, "go-build") || strings.Contains(exPath, "/tmp/") || strings.Contains(exPath, "private") {
 		// Fallback for development: assume CWD is go_module
@@ -192,11 +194,11 @@ func main() {
 	os.MkdirAll(appConfigDir, 0755)
 
 	application := &App{
-		editors: make(map[*container.TabItem]Editor),
+		editors:        make(map[*container.TabItem]Editor),
 		holocronClient: NewHolocronClient(),
-		fileManager: NewFileManager(appConfigDir),
+		fileManager:    NewFileManager(appConfigDir),
 	}
-	
+
 	// Initialize GitHub Manager if token exists
 	if application.config.GitHubToken != "" {
 		repoPath := application.config.TextAssetsPath
@@ -206,7 +208,7 @@ func main() {
 		}
 		application.githubManager = NewGitHubManager(application.config.GitHubToken, repoPath)
 	}
-	
+
 	// Start background check for Holocron
 	go application.monitorHolocronStatus()
 
@@ -229,27 +231,27 @@ func (a *App) monitorHolocronStatus() {
 	for {
 		wasAvailable := a.holocronClient.Available
 		isAvailable := a.holocronClient.CheckAvailability()
-		
+
 		if wasAvailable != isAvailable && a.holocronStatus != nil {
 			if isAvailable {
-				a.holocronStatus.SetResource(theme.ConfirmIcon()) 
+				a.holocronStatus.SetResource(theme.ConfirmIcon())
 			} else {
 				a.holocronStatus.SetResource(theme.CancelIcon())
 			}
 			a.holocronStatus.Refresh()
 		}
-		
+
 		time.Sleep(5 * time.Second)
 	}
 }
 
 func (a *App) setupUI() {
 	a.sidebarVisible = a.config.SidebarVisible
-	
+
 	a.assetBrowser = NewAssetBrowser(a.config.GamedataPath, a.config.TextAssetsPath)
 	a.infoPanel = NewInfoPanel()
-	a.infoPanel.SetHolocronClient(a.holocronClient) 
-	
+	a.infoPanel.SetHolocronClient(a.holocronClient)
+
 	a.modpackManager = NewModpackManager(a)
 
 	// DocTabs setup
@@ -259,17 +261,17 @@ func (a *App) setupUI() {
 
 	a.statusLabel = widget.NewLabel("Ready")
 	a.statusLabel.TextStyle = fyne.TextStyle{Italic: true}
-	
+
 	// Holocron Status Icon
 	a.holocronStatus = widget.NewIcon(theme.CancelIcon())
-	
+
 	// Layout
 	assetsTab := container.NewTabItem("Assets", a.assetBrowser.GetContent())
 	assetsTab.Icon = theme.FolderOpenIcon()
-	
+
 	infoTab := container.NewTabItem("Info", a.infoPanel.GetContent())
 	infoTab.Icon = theme.InfoIcon()
-	
+
 	// Info first (default)
 	a.sideTabs = container.NewAppTabs(infoTab, assetsTab)
 	a.sideTabs.SetTabLocation(container.TabLocationBottom)
@@ -304,7 +306,7 @@ func (a *App) updateMainLayout() {
 	)
 
 	var centerContent fyne.CanvasObject
-	
+
 	if a.sidebarVisible {
 		a.split = container.NewHSplit(a.docTabs, a.sideTabs)
 		a.split.SetOffset(float64(a.config.SidebarOffset)) // Use configured offset
@@ -341,7 +343,7 @@ func (a *App) createNewFile(title string, editor interface{}) {
 		ed.SetOnHover(a.infoPanel.ShowInfo)
 		ed.SetHolocronClient(a.holocronClient)
 
-		tab := container.NewTabItem("Untitled " + title, ed.GetContent())
+		tab := container.NewTabItem("Untitled "+title, ed.GetContent())
 		a.docTabs.Append(tab)
 		a.docTabs.Select(tab)
 		a.editors[tab] = ed
@@ -373,10 +375,14 @@ func (a *App) openFileFromPath(filePath string) {
 	var title = filepath.Base(filePath)
 
 	switch ext {
-	case ".mbch": editor = NewMBCHEditor(a)
-	case ".sab": editor = NewSABEditor(a)
-	case ".veh": editor = NewVEHEditor(a)
-	case ".siege": editor = NewSiegeEditor(a)
+	case ".mbch":
+		editor = NewMBCHEditor(a)
+	case ".sab":
+		editor = NewSABEditor(a)
+	case ".veh":
+		editor = NewVEHEditor(a)
+	case ".siege":
+		editor = NewSiegeEditor(a)
 	default:
 		dialog.ShowInformation("Unknown File Type", "Could not determine editor for this file.", a.mainWindow)
 		return
@@ -390,13 +396,13 @@ func (a *App) openFileFromPath(filePath string) {
 		}
 		// Add to recent files centrally
 		a.fileManager.AddRecentFile(filePath)
-		
+
 		// Reuse logic
 		a.createNewFile(title, editor)
 		tab := a.docTabs.Selected()
 		tab.Text = title
 		a.docTabs.Refresh()
-		
+
 		a.updateStatus(fmt.Sprintf("Opened %s", title))
 	}
 }
@@ -414,7 +420,6 @@ func (a *App) closeTab(tab *container.TabItem) {
 		} else if siege, ok := editor.(*SiegeEditor); ok {
 			isDirty = siege.IsDirty()
 		}
-
 
 		if isDirty {
 			dialog.ShowConfirm("Unsaved Changes",
@@ -473,7 +478,7 @@ func (a *App) createToolbar() fyne.CanvasObject {
 
 		// Sharing
 		btn(theme.MailSendIcon(), func() { a.shareFile() }, "Share with Holocron"),
-		
+
 		// Workspace (GitHub)
 		btn(theme.StorageIcon(), func() { a.showWorkspaceSetupWizard() }, "Setup TextAssets Workspace"),
 		btn(theme.DownloadIcon(), func() { a.syncWorkspace() }, "Update Assets (Sync)"),
@@ -491,7 +496,9 @@ func (a *App) createToolbar() fyne.CanvasObject {
 
 func (a *App) validateFile() {
 	tab := a.docTabs.Selected()
-	if tab == nil { return }
+	if tab == nil {
+		return
+	}
 
 	editor, ok := a.editors[tab]
 	if !ok {
@@ -548,11 +555,11 @@ func (a *App) showLogs() {
 	} else {
 		text = string(content)
 	}
-	
+
 	entry := widget.NewMultiLineEntry()
 	entry.SetText(text)
 	entry.TextStyle = fyne.TextStyle{Monospace: true}
-	
+
 	w := a.fyneApp.NewWindow("Debug Logs")
 	w.SetContent(container.NewScroll(entry))
 	w.Resize(fyne.NewSize(800, 600))
@@ -566,27 +573,33 @@ func (a *App) shareFile() {
 	}
 
 	tab := a.docTabs.Selected()
-	if tab == nil { return }
-	
+	if tab == nil {
+		return
+	}
+
 	editor, ok := a.editors[tab]
-	if !ok { return }
-	
+	if !ok {
+		return
+	}
+
 	// Currently only supporting MBCH for sharing demo
 	mbchEditor, ok := editor.(*MBCHEditor)
 	if !ok {
 		dialog.ShowInformation("Not Supported", "Sharing is currently only supported for Character (.mbch) files.", a.mainWindow)
 		return
 	}
-	
+
 	dialog.ShowConfirm("Share to Holocron", "Upload this character to the local Holocron server for sharing?", func(b bool) {
 		if b {
 			var sb strings.Builder
 			mbchEditor.WriteContent(&sb)
 			content := sb.String()
-			
+
 			name := filepath.Base(mbchEditor.GetCurrentPath())
-			if name == "" || name == "." { name = "untitled.mbch" }
-			
+			if name == "" || name == "." {
+				name = "untitled.mbch"
+			}
+
 			msg, err := a.holocronClient.ShareFile(name, content, "character")
 			if err != nil {
 				dialog.ShowError(err, a.mainWindow)
@@ -600,15 +613,17 @@ func (a *App) shareFile() {
 func (a *App) openFile() {
 	filePickerWindow := a.fyneApp.NewWindow("Open File")
 	filePickerWindow.Resize(fyne.NewSize(900, 600))
-	
+
 	pickerBrowser := NewAssetBrowser(a.config.GamedataPath, a.config.TextAssetsPath)
 	cfp := NewCustomFilePicker(filePickerWindow, pickerBrowser)
-	
+
 	cfp.Show(func(filePath string) {
-		if filePath == "" { return }
+		if filePath == "" {
+			return
+		}
 
 		ext := strings.ToLower(filepath.Ext(filePath))
-		
+
 		var editor Editor
 		var title string
 
@@ -636,16 +651,16 @@ func (a *App) openFile() {
 				ShowError(fmt.Errorf("Failed to load file: %v", err), a.mainWindow)
 				return
 			}
-			
+
 			editor.SetAssetBrowser(a.assetBrowser)
 			editor.SetOnHover(a.infoPanel.ShowInfo)
 			editor.SetHolocronClient(a.holocronClient)
-			
+
 			tab := container.NewTabItem(title, editor.GetContent())
 			a.docTabs.Append(tab)
 			a.docTabs.Select(tab)
 			a.editors[tab] = editor
-			
+
 			a.updateStatus(fmt.Sprintf("Opened %s", title))
 		}
 	})
@@ -653,22 +668,34 @@ func (a *App) openFile() {
 
 func (a *App) saveFile() {
 	tab := a.docTabs.Selected()
-	if tab == nil { return }
-	
+	if tab == nil {
+		return
+	}
+
 	editor, ok := a.editors[tab]
-	if !ok { return }
-	
+	if !ok {
+		return
+	}
+
 	var path string
-	if ed, ok := editor.(*MBCHEditor); ok { path = ed.GetCurrentPath() }
-	if ed, ok := editor.(*SABEditor); ok { path = ed.GetCurrentPath() }
-	if ed, ok := editor.(*VEHEditor); ok { path = ed.GetCurrentPath() }
-	if ed, ok := editor.(*SiegeEditor); ok { path = ed.GetCurrentPath() }
-	
+	if ed, ok := editor.(*MBCHEditor); ok {
+		path = ed.GetCurrentPath()
+	}
+	if ed, ok := editor.(*SABEditor); ok {
+		path = ed.GetCurrentPath()
+	}
+	if ed, ok := editor.(*VEHEditor); ok {
+		path = ed.GetCurrentPath()
+	}
+	if ed, ok := editor.(*SiegeEditor); ok {
+		path = ed.GetCurrentPath()
+	}
+
 	if path == "" {
 		a.saveFileAs()
 		return
 	}
-	
+
 	err := editor.SaveFile(path)
 	if err != nil {
 		ShowError(err, a.mainWindow)
@@ -681,9 +708,13 @@ func (a *App) saveFile() {
 
 func (a *App) saveFileAs() {
 	tab := a.docTabs.Selected()
-	if tab == nil { return }
+	if tab == nil {
+		return
+	}
 	editor, ok := a.editors[tab]
-	if !ok { return }
+	if !ok {
+		return
+	}
 
 	// Determine the appropriate extension based on editor type
 	var expectedExt string
@@ -699,9 +730,14 @@ func (a *App) saveFileAs() {
 	}
 
 	dialog.ShowFileSave(func(uri fyne.URIWriteCloser, err error) {
-		if err != nil { ShowError(err, a.mainWindow); return }
-		if uri == nil { return }
-		
+		if err != nil {
+			ShowError(err, a.mainWindow)
+			return
+		}
+		if uri == nil {
+			return
+		}
+
 		// Get path and close the Fyne handle immediately so we can manage the file ourselves
 		path := uri.URI().Path()
 		uri.Close()
@@ -727,7 +763,10 @@ func (a *App) saveFileAs() {
 
 func (a *App) loadConfig() {
 	configDir, err := os.UserConfigDir()
-	if err != nil { LogError("Failed to get user config dir: %v", err); return }
+	if err != nil {
+		LogError("Failed to get user config dir: %v", err)
+		return
+	}
 	appConfigDir := filepath.Join(configDir, "mbii-fa-creator")
 	os.MkdirAll(appConfigDir, 0755)
 	a.configPath = filepath.Join(appConfigDir, "config.json")
@@ -736,15 +775,19 @@ func (a *App) loadConfig() {
 	a.config.SidebarVisible = true // Default to true
 
 	data, err := os.ReadFile(a.configPath)
-	if err == nil { json.Unmarshal(data, &a.config) }
+	if err == nil {
+		json.Unmarshal(data, &a.config)
+	}
 
 	// Set default sidebar offset if not configured
 	if a.config.SidebarOffset == 0 {
 		a.config.SidebarOffset = 0.8
 	}
-	
+
 	// Apply Theme
-	if a.config.PrimaryColor == "" { a.config.PrimaryColor = "blue" }
+	if a.config.PrimaryColor == "" {
+		a.config.PrimaryColor = "blue"
+	}
 	a.applyThemeColor(a.config.PrimaryColor)
 }
 
@@ -771,15 +814,27 @@ func (a *App) showPreferences() {
 
 	md3viewEntry := widget.NewEntry()
 	md3viewEntry.SetText(a.config.MD3ViewPath)
-	
+
 	themeSelect := widget.NewSelect([]string{"Blue (Jedi)", "Red (Sith)", "Gold (Holocron)", "Green (Console)", "Orange (Rebel)", "Purple (Mace)"}, nil)
 	themeSelect.SetSelected(strings.Title(a.config.PrimaryColor))
-	if a.config.PrimaryColor == "blue" || a.config.PrimaryColor == "" { themeSelect.SetSelected("Blue (Jedi)") }
-	if a.config.PrimaryColor == "red" { themeSelect.SetSelected("Red (Sith)") }
-	if a.config.PrimaryColor == "gold" { themeSelect.SetSelected("Gold (Holocron)") }
-	if a.config.PrimaryColor == "green" { themeSelect.SetSelected("Green (Console)") }
-	if a.config.PrimaryColor == "orange" { themeSelect.SetSelected("Orange (Rebel)") }
-	if a.config.PrimaryColor == "purple" { themeSelect.SetSelected("Purple (Mace)") }
+	if a.config.PrimaryColor == "blue" || a.config.PrimaryColor == "" {
+		themeSelect.SetSelected("Blue (Jedi)")
+	}
+	if a.config.PrimaryColor == "red" {
+		themeSelect.SetSelected("Red (Sith)")
+	}
+	if a.config.PrimaryColor == "gold" {
+		themeSelect.SetSelected("Gold (Holocron)")
+	}
+	if a.config.PrimaryColor == "green" {
+		themeSelect.SetSelected("Green (Console)")
+	}
+	if a.config.PrimaryColor == "orange" {
+		themeSelect.SetSelected("Orange (Rebel)")
+	}
+	if a.config.PrimaryColor == "purple" {
+		themeSelect.SetSelected("Purple (Mace)")
+	}
 
 	// GitHub Update button for data files
 	updateStatusLabel := widget.NewLabel("")
@@ -789,22 +844,28 @@ func (a *App) showPreferences() {
 		widget.NewFormItem("Gamedata Path", container.NewBorder(nil, nil, nil,
 			NewTooltipButton("", theme.FolderOpenIcon(), func() {
 				dialog.ShowFolderOpen(func(uri fyne.ListableURI, err error) {
-					if uri != nil { gamedataEntry.SetText(uri.Path()) }
+					if uri != nil {
+						gamedataEntry.SetText(uri.Path())
+					}
 				}, a.mainWindow)
 			}, "Select your game's gamedata folder"), gamedataEntry)),
 		widget.NewFormItem("TextAssets Path", container.NewBorder(nil, nil, nil,
 			NewTooltipButton("", theme.FolderOpenIcon(), func() {
 				dialog.ShowFolderOpen(func(uri fyne.ListableURI, err error) {
-					if uri != nil { textAssetsEntry.SetText(uri.Path()) }
+					if uri != nil {
+						textAssetsEntry.SetText(uri.Path())
+					}
 				}, a.mainWindow)
 			}, "Select your MBII TextAssets folder"), textAssetsEntry)),
 		widget.NewFormItem("MD3View Path", container.NewBorder(nil, nil, nil,
 			NewTooltipButton("", theme.FolderOpenIcon(), func() {
 				dialog.ShowFileOpen(func(uri fyne.URIReadCloser, err error) {
-					if uri != nil { md3viewEntry.SetText(uri.URI().Path()) }
+					if uri != nil {
+						md3viewEntry.SetText(uri.URI().Path())
+					}
 				}, a.mainWindow)
 			}, "Select the md3view executable for model previews"), md3viewEntry)),
-			
+
 		widget.NewFormItem("", func() fyne.CanvasObject {
 			return widget.NewButton("Download MD3View (Required for Previews)", func() {
 				// Link to JACoders or a reliable mirror
@@ -813,14 +874,14 @@ func (a *App) showPreferences() {
 				}
 			})
 		}()),
-		
+
 		widget.NewFormItem("", widget.NewSeparator()),
-		
+
 		// GitHub Config
 		widget.NewFormItem("GitHub Token", func() fyne.CanvasObject {
 			tokenEntry := widget.NewPasswordEntry()
 			tokenEntry.SetText(a.config.GitHubToken)
-			
+
 			helpBtn := widget.NewButton("Get Token", func() {
 				// Open browser to token creation page
 				// Note: Ideally use Device Flow, but for now simple link
@@ -829,21 +890,21 @@ func (a *App) showPreferences() {
 					a.fyneApp.OpenURL(u)
 				}
 			})
-			
+
 			// On change, update config and manager
-			tokenEntry.OnChanged = func(s string) { 
+			tokenEntry.OnChanged = func(s string) {
 				a.config.GitHubToken = s
 				// Re-init manager
 				if a.config.TextAssetsPath != "" {
 					a.githubManager = NewGitHubManager(s, a.config.TextAssetsPath)
 				}
 			}
-			
+
 			return container.NewBorder(nil, nil, nil, helpBtn, tokenEntry)
 		}()),
-		
+
 		widget.NewFormItem("", widget.NewSeparator()),
-		
+
 		widget.NewFormItem("Enum Data", container.NewVBox(
 			NewTooltipButton("Update Data from GitHub", nil, func() {
 				updateStatusLabel.SetText("Updating...")
@@ -865,18 +926,24 @@ func (a *App) showPreferences() {
 			a.config.GamedataPath = gamedataEntry.Text
 			a.config.TextAssetsPath = textAssetsEntry.Text
 			a.config.MD3ViewPath = md3viewEntry.Text
-			
+
 			// Save Theme
 			switch themeSelect.Selected {
-			case "Blue (Jedi)": a.config.PrimaryColor = "blue"
-			case "Red (Sith)": a.config.PrimaryColor = "red"
-			case "Gold (Holocron)": a.config.PrimaryColor = "gold"
-			case "Green (Console)": a.config.PrimaryColor = "green"
-			case "Orange (Rebel)": a.config.PrimaryColor = "orange"
-			case "Purple (Mace)": a.config.PrimaryColor = "purple"
+			case "Blue (Jedi)":
+				a.config.PrimaryColor = "blue"
+			case "Red (Sith)":
+				a.config.PrimaryColor = "red"
+			case "Gold (Holocron)":
+				a.config.PrimaryColor = "gold"
+			case "Green (Console)":
+				a.config.PrimaryColor = "green"
+			case "Orange (Rebel)":
+				a.config.PrimaryColor = "orange"
+			case "Purple (Mace)":
+				a.config.PrimaryColor = "purple"
 			}
 			a.applyThemeColor(a.config.PrimaryColor)
-			
+
 			a.saveConfig()
 
 			// Refresh components
@@ -915,7 +982,7 @@ The ultimate content creation suite for Movie Battles II.
 
 For support, contact the MBII Development Team.
 `)
-	
+
 	scroll := container.NewVScroll(content)
 	scroll.SetMinSize(fyne.NewSize(500, 400))
 
@@ -929,12 +996,12 @@ func (a *App) syncWorkspace() {
 		dialog.ShowInformation("Not Configured", "Please setup your workspace first.", a.mainWindow)
 		return
 	}
-	
+
 	// Check for dirty state?
 	clean, err := a.githubManager.IsClean()
 	if err == nil && !clean {
-		dialog.ShowConfirm("Unsaved Changes", 
-			"You have pending changes. Updating assets might cause conflicts or require a reset.\n\nIt is recommended to Submit your changes first.\n\nContinue anyway?", 
+		dialog.ShowConfirm("Unsaved Changes",
+			"You have pending changes. Updating assets might cause conflicts or require a reset.\n\nIt is recommended to Submit your changes first.\n\nContinue anyway?",
 			func(ok bool) {
 				if ok {
 					a.doSync()
@@ -942,18 +1009,18 @@ func (a *App) syncWorkspace() {
 			}, a.mainWindow)
 		return
 	}
-	
+
 	a.doSync()
 }
 
 func (a *App) doSync() {
 	progress := dialog.NewProgressInfinite("Updating...", "Pulling latest assets from official repository...", a.mainWindow)
 	progress.Show()
-	
+
 	go func() {
 		err := a.githubManager.SyncUpdates()
 		progress.Hide()
-		
+
 		if err != nil {
 			dialog.ShowError(fmt.Errorf("Update Failed: %v", err), a.mainWindow)
 		} else {
@@ -988,15 +1055,15 @@ To enable the **Asset Browser**, **Visual Editor**, and **Model Previews**, we n
 2. (Optional) Select **TextAssets** if you are a developer.
 3. You can configure **MD3View** later in Preferences for 3D previews.
 `)
-	
+
 	gamedataEntry := widget.NewEntry()
 	gamedataEntry.PlaceHolder = "Path to GameData..."
 	gamedataEntry.SetText(a.config.GamedataPath)
-	
+
 	textAssetsEntry := widget.NewEntry()
 	textAssetsEntry.PlaceHolder = "Path to TextAssets (Optional, for Devs)..."
 	textAssetsEntry.SetText(a.config.TextAssetsPath)
-	
+
 	statusLabel := widget.NewLabel("")
 	statusLabel.TextStyle = fyne.TextStyle{Italic: true}
 
@@ -1011,7 +1078,7 @@ To enable the **Asset Browser**, **Visual Editor**, and **Model Previews**, we n
 			`/Users/Shared/Jedi Academy/GameData`,
 			os.Getenv("HOME") + `/Library/Application Support/Steam/steamapps/common/Jedi Academy/GameData`,
 		}
-		
+
 		found := false
 		for _, p := range candidates {
 			if _, err := os.Stat(filepath.Join(p, "MBII")); err == nil {
@@ -1030,14 +1097,18 @@ To enable the **Asset Browser**, **Visual Editor**, and **Model Previews**, we n
 		widget.NewFormItem("GameData", container.NewBorder(nil, nil, nil,
 			NewTooltipButton("", theme.FolderOpenIcon(), func() {
 				dialog.ShowFolderOpen(func(uri fyne.ListableURI, err error) {
-					if uri != nil { gamedataEntry.SetText(uri.Path()) }
+					if uri != nil {
+						gamedataEntry.SetText(uri.Path())
+					}
 				}, a.mainWindow)
 			}, "Browse for GameData folder"), gamedataEntry)),
-			
+
 		widget.NewFormItem("TextAssets", container.NewBorder(nil, nil, nil,
 			NewTooltipButton("", theme.FolderOpenIcon(), func() {
 				dialog.ShowFolderOpen(func(uri fyne.ListableURI, err error) {
-					if uri != nil { textAssetsEntry.SetText(uri.Path()) }
+					if uri != nil {
+						textAssetsEntry.SetText(uri.Path())
+					}
 				}, a.mainWindow)
 			}, "Browse for TextAssets Git Repository (Optional)"), textAssetsEntry)),
 	)
@@ -1061,7 +1132,7 @@ To enable the **Asset Browser**, **Visual Editor**, and **Model Previews**, we n
 				a.config.TextAssetsPath = textAssetsEntry.Text
 				a.config.SetupWizardSeen = true // Mark as seen
 				a.saveConfig()
-				
+
 				// Update components
 				if a.assetBrowser != nil {
 					a.assetBrowser.SetPaths(a.config.GamedataPath, a.config.TextAssetsPath)
@@ -1074,7 +1145,7 @@ To enable the **Asset Browser**, **Visual Editor**, and **Model Previews**, we n
 			dialog.ShowInformation("Skipped", "Asset features will be limited. You can configure paths later in Preferences.", a.mainWindow)
 		}
 	}, a.mainWindow)
-	
+
 	// Resize dialog to be readable
 	d.Resize(fyne.NewSize(600, 400))
 	d.Show()
@@ -1084,9 +1155,9 @@ To enable the **Asset Browser**, **Visual Editor**, and **Model Previews**, we n
 func (a *App) showFilePickerForEntry(entry *widget.Entry, title string, filter AssetType) {
 	filePickerWindow := a.fyneApp.NewWindow(title)
 	filePickerWindow.Resize(fyne.NewSize(900, 600))
-	
+
 	pickerBrowser := NewAssetBrowser(a.config.GamedataPath, a.config.TextAssetsPath)
-	
+
 	// Set initial path based on filter type
 	initialPath := ""
 	if a.config.GamedataPath != "" {
@@ -1106,7 +1177,7 @@ func (a *App) showFilePickerForEntry(entry *widget.Entry, title string, filter A
 	if initialPath != "" {
 		cfp.SetInitialPath(initialPath)
 	}
-	
+
 	cfp.Show(func(filePath string) {
 		if filePath != "" {
 			// Convert absolute path to relative game path if it's within gamedata
@@ -1116,7 +1187,7 @@ func (a *App) showFilePickerForEntry(entry *widget.Entry, title string, filter A
 				if strings.HasPrefix(relativePath, "base"+string(os.PathSeparator)) {
 					relativePath = strings.TrimPrefix(relativePath, "base"+string(os.PathSeparator))
 				}
-				
+
 				// Smart parsing based on type
 				if filter == AssetTypeModel {
 					// models/players/X/model.glm -> X

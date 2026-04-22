@@ -29,15 +29,15 @@ func (w *WelcomeScreen) GetContent() fyne.CanvasObject {
 	newCharBtn := widget.NewButtonWithIcon("New Character", theme.ContentAddIcon(), func() {
 		w.app.createNewFile("Character", NewMBCHEditor(w.app))
 	})
-	
+
 	newSaberBtn := widget.NewButtonWithIcon("New Saber", theme.ContentAddIcon(), func() {
 		w.app.createNewFile("Saber", NewSABEditor(w.app))
 	})
-	
+
 	newVehBtn := widget.NewButtonWithIcon("New Vehicle", theme.ContentAddIcon(), func() {
 		w.app.createNewFile("Vehicle", NewVEHEditor(w.app))
 	})
-	
+
 	openBtn := widget.NewButtonWithIcon("Open File...", theme.FolderOpenIcon(), func() {
 		w.app.openFile()
 	})
@@ -45,11 +45,11 @@ func (w *WelcomeScreen) GetContent() fyne.CanvasObject {
 	// Recent Files List
 	recentLabel := widget.NewLabel("Recent Files")
 	recentLabel.TextStyle = fyne.TextStyle{Bold: true}
-	
+
 	recentList := container.NewVBox()
-	
+
 	recentFiles := w.app.fileManager.GetRecentFiles()
-	
+
 	if len(recentFiles) > 0 {
 		for _, rf := range recentFiles {
 			path := rf.Path

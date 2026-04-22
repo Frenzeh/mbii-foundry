@@ -6,8 +6,8 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/widget"
 	"fyne.io/fyne/v2/driver/desktop"
+	"fyne.io/fyne/v2/widget"
 )
 
 type WeaponGrid struct {
@@ -15,9 +15,9 @@ type WeaponGrid struct {
 	selected  map[string]bool
 	onChange  func(string)
 	onHover   func(string, string)
-	
-	filter    string
-	search    *widget.Entry
+
+	filter string
+	search *widget.Entry
 }
 
 func NewWeaponGrid(initialStr string, onChange func(string), onHover func(string, string)) *WeaponGrid {
@@ -33,7 +33,9 @@ func NewWeaponGrid(initialStr string, onChange func(string), onHover func(string
 
 func (wg *WeaponGrid) parseString(s string) {
 	wg.selected = make(map[string]bool)
-	if s == "" { return }
+	if s == "" {
+		return
+	}
 	parts := strings.Split(s, "|")
 	for _, p := range parts {
 		wg.selected[strings.TrimSpace(p)] = true
@@ -49,10 +51,10 @@ func (wg *WeaponGrid) createUI() {
 	}
 
 	catOrder := []string{"Melee/Force", "Sidearms", "Rifles", "Heavy"}
-	
+
 	var content *fyne.Container
 	var mainLayout *fyne.Container
-	
+
 	if wg.container != nil {
 		mainLayout = wg.container
 		if len(mainLayout.Objects) > 1 {
@@ -62,14 +64,14 @@ func (wg *WeaponGrid) createUI() {
 		}
 	} else {
 		content = container.NewVBox()
-		
+
 		wg.search = widget.NewEntry()
 		wg.search.SetPlaceHolder("Filter Weapons...")
 		wg.search.OnChanged = func(s string) {
 			wg.filter = s
 			wg.Refresh()
 		}
-		
+
 		scroll := container.NewVScroll(content)
 		mainLayout = container.NewBorder(wg.search, nil, nil, nil, scroll)
 		wg.container = mainLayout
@@ -79,18 +81,22 @@ func (wg *WeaponGrid) createUI() {
 
 	for _, catName := range catOrder {
 		weapons, ok := categories[catName]
-		if !ok { continue }
-		
+		if !ok {
+			continue
+		}
+
 		var visibleWeapons []WeaponDef
 		for _, w := range weapons {
-			if filterLower == "" || 
-			   strings.Contains(strings.ToLower(w.Name), filterLower) || 
-			   strings.Contains(strings.ToLower(w.ID), filterLower) {
+			if filterLower == "" ||
+				strings.Contains(strings.ToLower(w.Name), filterLower) ||
+				strings.Contains(strings.ToLower(w.ID), filterLower) {
 				visibleWeapons = append(visibleWeapons, w)
 			}
 		}
-		
-		if len(visibleWeapons) == 0 { continue }
+
+		if len(visibleWeapons) == 0 {
+			continue
+		}
 
 		header := widget.NewLabelWithStyle(catName, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 		content.Add(header)
@@ -99,25 +105,25 @@ func (wg *WeaponGrid) createUI() {
 
 		for _, w := range visibleWeapons {
 			weaponID := w.ID
-			
+
 			check := widget.NewCheck(w.Name, func(on bool) {
 				wg.toggleWeapon(weaponID, on)
 			})
 			check.Checked = wg.selected[weaponID]
-			
+
 			// Wrap in HoverContainer
 			hoverContainer := NewHoverContainer(check, func() {
 				if wg.onHover != nil {
 					wg.onHover(weaponID, w.Description)
 				}
 			})
-			
+
 			catGrid.Add(hoverContainer)
 		}
 		content.Add(catGrid)
 		content.Add(widget.NewSeparator())
 	}
-	
+
 	if wg.container != nil {
 		wg.container.Refresh()
 	}
@@ -170,7 +176,9 @@ func (h *HoverContainer) CreateRenderer() fyne.WidgetRenderer {
 }
 
 func (h *HoverContainer) MouseIn(*desktop.MouseEvent) {
-	if h.onHover != nil { h.onHover() }
+	if h.onHover != nil {
+		h.onHover()
+	}
 }
-func (h *HoverContainer) MouseOut() {}
+func (h *HoverContainer) MouseOut()                      {}
 func (h *HoverContainer) MouseMoved(*desktop.MouseEvent) {}

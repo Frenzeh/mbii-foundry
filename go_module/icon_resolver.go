@@ -19,13 +19,15 @@ func NewIconResolver(vfs *VirtualFileSystem) *IconResolver {
 func (ir *IconResolver) ResolveWeaponIcon(wpID string) string {
 	// Standard pattern: gfx/hud/w_icon_{name}
 	// e.g. WP_BLASTER_PISTOL -> w_icon_blaster_pistol
-	
+
 	// Special overrides
 	overrides := map[string]string{
 		"WP_MELEE": "gfx/hud/w_icon_melee",
 		"WP_SABER": "gfx/hud/w_icon_lightsaber",
 	}
-	if val, ok := overrides[wpID]; ok { return val }
+	if val, ok := overrides[wpID]; ok {
+		return val
+	}
 
 	// General case
 	suffix := strings.ToLower(strings.TrimPrefix(wpID, "WP_"))
@@ -37,17 +39,17 @@ func (ir *IconResolver) ResolveAttributeIcon(attID string) string {
 	// Patterns vary widely.
 	// Force powers: gfx/forcepowers/{name} usually? Or gfx/hud/force_{name}?
 	// Actually most attributes don't have HUD icons unless they are abilities.
-	
+
 	// Common mapping based on observation
 	suffix := strings.ToLower(strings.TrimPrefix(attID, "MB_ATT_"))
-	
+
 	// Try ability icon pattern
 	candidates := []string{
 		fmt.Sprintf("gfx/hud/chk_%s", suffix),
 		fmt.Sprintf("gfx/hud/i_icon_%s", suffix),
 		fmt.Sprintf("gfx/2d/forcepowers/%s", suffix),
 	}
-	
+
 	// Handle FP_ prefix (e.g. MB_ATT_FP_PUSH -> fp_push -> push)
 	if strings.HasPrefix(suffix, "fp_") {
 		short := strings.TrimPrefix(suffix, "fp_")
@@ -55,14 +57,16 @@ func (ir *IconResolver) ResolveAttributeIcon(attID string) string {
 		candidates = append(candidates, fmt.Sprintf("gfx/hud/force_%s", short))
 		candidates = append(candidates, fmt.Sprintf("gfx/menus/forcepowers/%s", short))
 	}
-	
+
 	if ir.vfs != nil {
 		for _, c := range candidates {
 			// Check if exists (with extensions)
-			if ir.checkExists(c) { return c }
+			if ir.checkExists(c) {
+				return c
+			}
 		}
 	}
-	
+
 	return candidates[0] // Return best guess
 }
 
@@ -72,12 +76,16 @@ func (ir *IconResolver) ResolveClassIcon(model, skin, customShader string) strin
 	if customShader != "" && customShader != "default" {
 		return customShader
 	}
-	
+
 	// 2. Standard Model Icon Pattern
 	// models/players/{model}/mb2_icon_{skin}
-	if model == "" { model = "kyle" }
-	if skin == "" { skin = "default" }
-	
+	if model == "" {
+		model = "kyle"
+	}
+	if skin == "" {
+		skin = "default"
+	}
+
 	return fmt.Sprintf("models/players/%s/mb2_icon_%s", model, skin)
 }
 

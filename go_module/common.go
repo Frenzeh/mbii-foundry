@@ -33,7 +33,7 @@ type Editor interface {
 	SetOnHover(func(string, string))
 	SetAssetBrowser(*AssetBrowser)
 	SetHolocronClient(*HolocronClient)
-	
+
 	IsDirty() bool
 	MarkClean()
 	SetOnDirtyChanged(func(bool))

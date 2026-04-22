@@ -17,14 +17,14 @@ type CustomFilePicker struct {
 	onSelected   func(string)
 	currentPath  string
 	selectedFile *AssetEntry
-	
+
 	// UI elements
 	pathLabel    *widget.Label
 	sidebar      *widget.List
 	selectButton *widget.Button
 	cancelButton *widget.Button
-	
-	sources      []string
+
+	sources     []string
 	initialPath string // New field to store the initial path
 }
 
@@ -46,11 +46,11 @@ func (cfp *CustomFilePicker) createUI() {
 
 	cfp.pathLabel = widget.NewLabel("Current Path: /")
 	cfp.pathLabel.TextStyle = fyne.TextStyle{Monospace: true}
-	
+
 	cfp.selectButton = widget.NewButton("Open", func() {
 		if cfp.selectedFile != nil {
 			LogInfo("Open Clicked. Selected: %s, IsDir: %v, Path: %s", cfp.selectedFile.Name, cfp.selectedFile.IsDir, cfp.selectedFile.Path)
-			
+
 			if cfp.selectedFile.IsDir || cfp.selectedFile.Name == ".." || cfp.selectedFile.Name == "(Parent)" {
 				LogInfo("Navigating directory...")
 				// Navigate into directory
@@ -72,7 +72,7 @@ func (cfp *CustomFilePicker) createUI() {
 			}
 		}
 	})
-	cfp.selectButton.Disable() 
+	cfp.selectButton.Disable()
 	cfp.selectButton.Importance = widget.HighImportance
 
 	cfp.cancelButton = widget.NewButton("Cancel", func() {
@@ -81,12 +81,16 @@ func (cfp *CustomFilePicker) createUI() {
 
 	// Sidebar Sources
 	cfp.sources = []string{"Home", "Computer", "--- Locations ---"}
-	
+
 	// Helper to add sources from AssetBrowser's logic (reusing detection logic for consistent UI)
 	homeDir, _ := os.UserHomeDir()
 	cloudStoragePath := filepath.Join(homeDir, "Library", "CloudStorage")
 	if entries, err := os.ReadDir(cloudStoragePath); err == nil {
-		for _, e := range entries { if e.IsDir() { cfp.sources = append(cfp.sources, "Cloud: "+e.Name()) } }
+		for _, e := range entries {
+			if e.IsDir() {
+				cfp.sources = append(cfp.sources, "Cloud: "+e.Name())
+			}
+		}
 	}
 	if entries, err := os.ReadDir("/Volumes"); err == nil {
 		for _, e := range entries {
@@ -106,7 +110,9 @@ func (cfp *CustomFilePicker) createUI() {
 	}
 	cfp.sources = append(cfp.sources, "--- PK3s ---")
 	pk3Names := make([]string, len(cfp.browser.pk3Files))
-	for i, p := range cfp.browser.pk3Files { pk3Names[i] = filepath.Base(p) }
+	for i, p := range cfp.browser.pk3Files {
+		pk3Names[i] = filepath.Base(p)
+	}
 	cfp.sources = append(cfp.sources, pk3Names...)
 
 	cfp.sidebar = widget.NewList(
@@ -118,9 +124,9 @@ func (cfp *CustomFilePicker) createUI() {
 			text := cfp.sources[id]
 			label := obj.(*fyne.Container).Objects[1].(*widget.Label)
 			icon := obj.(*fyne.Container).Objects[0].(*widget.Icon)
-			
+
 			label.SetText(text)
-			
+
 			if strings.HasPrefix(text, "---") {
 				label.TextStyle = fyne.TextStyle{Bold: true}
 				icon.Hide()
@@ -143,17 +149,19 @@ func (cfp *CustomFilePicker) createUI() {
 			}
 		},
 	)
-	
+
 	cfp.sidebar.OnSelected = func(id widget.ListItemID) {
 		s := cfp.sources[id]
-		if strings.HasPrefix(s, "---") { return }
-		
+		if strings.HasPrefix(s, "---") {
+			return
+		}
+
 		homeDir, _ := os.UserHomeDir() // Ensure homeDir is available here too
 
 		if s == "Home" {
 			cfp.browser.loadFS(homeDir)
 		} else if s == "Computer" {
-			cfp.browser.loadFS("/") 
+			cfp.browser.loadFS("/")
 		} else if strings.HasPrefix(s, "Cloud: ") {
 			name := strings.TrimPrefix(s, "Cloud: ")
 			cfp.browser.loadFS(filepath.Join(homeDir, "Library", "CloudStorage", name))
@@ -174,14 +182,16 @@ func (cfp *CustomFilePicker) createUI() {
 					break
 				}
 			}
-			if isFav { return }
+			if isFav {
+				return
+			}
 
 			// Check PK3s
-			for _, p := range cfp.browser.pk3Files { 
-				if filepath.Base(p) == s { 
+			for _, p := range cfp.browser.pk3Files {
+				if filepath.Base(p) == s {
 					cfp.browser.loadPK3(p)
 					return
-				} 
+				}
 			}
 		}
 	}
@@ -192,7 +202,7 @@ func (cfp *CustomFilePicker) createUI() {
 		cfp.selectedFile = asset
 		cfp.selectButton.Enable()
 	})
-	
+
 	cfp.browser.SetOnAssetDouble(func(asset *AssetEntry) {
 		if cfp.onSelected != nil {
 			cfp.onSelected(asset.Path)
@@ -202,7 +212,7 @@ func (cfp *CustomFilePicker) createUI() {
 
 	// Main Layout
 	split := container.NewHSplit(
-		container.NewBorder(widget.NewLabelWithStyle("Sources", fyne.TextAlignLeading, fyne.TextStyle{Bold:true}), nil, nil, nil, cfp.sidebar),
+		container.NewBorder(widget.NewLabelWithStyle("Sources", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), nil, nil, nil, cfp.sidebar),
 		cfp.browser.GetContent(),
 	)
 	split.SetOffset(0.25)
@@ -216,11 +226,11 @@ func (cfp *CustomFilePicker) Show(onSelected func(string)) {
 	cfp.onSelected = onSelected
 	cfp.selectedFile = nil
 	cfp.selectButton.Disable()
-	
+
 	// Ensure decent initial size
 	cfp.window.Resize(fyne.NewSize(900, 600))
 	cfp.window.Show()
-	
+
 	// Default to Home or Computer if nothing loaded
 	if cfp.browser.currentDir == nil {
 		if cfp.initialPath != "" {

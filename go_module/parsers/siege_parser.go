@@ -7,21 +7,21 @@ import (
 )
 
 type SiegeObjective struct {
-	Name          string // e.g. Objective1
-	GoalName      string
-	Final         int
-	ObjDesc       string
-	ObjGfx        string
-	MapIcon       string
-	LitMapIcon    string
-	DoneMapIcon   string
-	MapPos        string // "x y w h"? or "x y"
-	MessageTeam1  string
-	MessageTeam2  string
-	SoundTeam1    string
-	SoundTeam2    string
-	Target        string
-	ExtraFields   map[string]string
+	Name         string // e.g. Objective1
+	GoalName     string
+	Final        int
+	ObjDesc      string
+	ObjGfx       string
+	MapIcon      string
+	LitMapIcon   string
+	DoneMapIcon  string
+	MapPos       string // "x y w h"? or "x y"
+	MessageTeam1 string
+	MessageTeam2 string
+	SoundTeam1   string
+	SoundTeam2   string
+	Target       string
+	ExtraFields  map[string]string
 }
 
 type SiegeTeam struct {
@@ -47,10 +47,10 @@ type SiegeTeam struct {
 }
 
 type SiegeData struct {
-	TeamsMap         map[string]string // team1 -> Name, team2 -> Name
-	Team1            *SiegeTeam
-	Team2            *SiegeTeam
-	
+	TeamsMap map[string]string // team1 -> Name, team2 -> Name
+	Team1    *SiegeTeam
+	Team2    *SiegeTeam
+
 	MissionName      string
 	MapGraphic       string
 	RadarTopLeft     string
@@ -73,27 +73,29 @@ func NewSiegeData() *SiegeData {
 // ParseSiege parses a .siege file content using a brace-counting tokenizer.
 func ParseSiege(content string) (*SiegeData, error) {
 	siege := NewSiegeData()
-	
+
 	// Pre-process: Remove comments
 	cleanContent := stripComments(content)
-	
+
 	// Tokenize
 	tokens := tokenize(cleanContent)
-	
+
 	i := 0
 	for i < len(tokens) {
 		key := tokens[i]
 		i++
-		
-		if i >= len(tokens) { break }
-		
+
+		if i >= len(tokens) {
+			break
+		}
+
 		val := tokens[i]
-		
+
 		if val == "{" {
 			// Block start
 			blockContent, newIdx := extractBlock(tokens, i)
 			i = newIdx
-			
+
 			processGlobalBlock(siege, key, blockContent)
 		} else {
 			// Key-Value pair
@@ -101,7 +103,7 @@ func ParseSiege(content string) (*SiegeData, error) {
 			processGlobalField(siege, key, val)
 		}
 	}
-	
+
 	return siege, nil
 }
 
@@ -122,10 +124,10 @@ func tokenize(content string) []string {
 	var tokens []string
 	var currentToken strings.Builder
 	inQuote := false
-	
+
 	for j := 0; j < len(content); j++ {
 		c := content[j]
-		
+
 		if inQuote {
 			if c == '"' {
 				inQuote = false
@@ -168,7 +170,7 @@ func extractBlock(tokens []string, startIdx int) ([]string, int) {
 	depth := 1
 	i := startIdx + 1
 	blockStart := i
-	
+
 	for i < len(tokens) {
 		if tokens[i] == "{" {
 			depth++
@@ -225,13 +227,20 @@ func processGlobalBlock(siege *SiegeData, key string, content []string) {
 func processGlobalField(siege *SiegeData, key, value string) {
 	k := strings.ToLower(key)
 	switch k {
-	case "missionname": siege.MissionName = value
-	case "mapgraphic": siege.MapGraphic = value
-	case "radartopleft": siege.RadarTopLeft = value
-	case "radarbottomright": siege.RadarBottomRight = value
-	case "mbmodesallowed": siege.MBModesAllowed = value
-	case "roundbegin_target": siege.RoundBeginTarget = value
-	default: siege.ExtraFields[key] = value
+	case "missionname":
+		siege.MissionName = value
+	case "mapgraphic":
+		siege.MapGraphic = value
+	case "radartopleft":
+		siege.RadarTopLeft = value
+	case "radarbottomright":
+		siege.RadarBottomRight = value
+	case "mbmodesallowed":
+		siege.MBModesAllowed = value
+	case "roundbegin_target":
+		siege.RoundBeginTarget = value
+	default:
+		siege.ExtraFields[key] = value
 	}
 }
 
@@ -241,8 +250,10 @@ func parseTeamBlock(name string, content []string) *SiegeTeam {
 	for i < len(content) {
 		key := content[i]
 		i++
-		if i >= len(content) { break }
-		
+		if i >= len(content) {
+			break
+		}
+
 		if content[i] == "{" {
 			// Nested Block (Objective)
 			blockContent, newIdx := extractBlock(content, i)
@@ -264,20 +275,34 @@ func parseTeamBlock(name string, content []string) *SiegeTeam {
 
 func setTeamField(team *SiegeTeam, key, value string) {
 	switch strings.ToLower(key) {
-	case "useteam": team.UseTeam = value
-	case "teamicon": team.TeamIcon = value
-	case "teamcoloron": team.TeamColorOn = value
-	case "teamcoloroff": team.TeamColorOff = value
-	case "requiredobjectives": team.RequiredObjectives, _ = strconv.Atoi(value)
-	case "timed": team.Timed, _ = strconv.Atoi(value)
-	case "attackers": team.Attackers, _ = strconv.Atoi(value)
-	case "wonround": team.WonRound = value
-	case "lostround": team.LostRound = value
-	case "roundover_sound_wewon": team.RoundOverSoundWon = value
-	case "roundover_sound_welost": team.RoundOverSoundLost = value
-	case "roundover_target": team.RoundOverTarget = value
-	case "briefing": team.Briefing = value
-	default: team.ExtraFields[key] = value
+	case "useteam":
+		team.UseTeam = value
+	case "teamicon":
+		team.TeamIcon = value
+	case "teamcoloron":
+		team.TeamColorOn = value
+	case "teamcoloroff":
+		team.TeamColorOff = value
+	case "requiredobjectives":
+		team.RequiredObjectives, _ = strconv.Atoi(value)
+	case "timed":
+		team.Timed, _ = strconv.Atoi(value)
+	case "attackers":
+		team.Attackers, _ = strconv.Atoi(value)
+	case "wonround":
+		team.WonRound = value
+	case "lostround":
+		team.LostRound = value
+	case "roundover_sound_wewon":
+		team.RoundOverSoundWon = value
+	case "roundover_sound_welost":
+		team.RoundOverSoundLost = value
+	case "roundover_target":
+		team.RoundOverTarget = value
+	case "briefing":
+		team.Briefing = value
+	default:
+		team.ExtraFields[key] = value
 	}
 }
 
@@ -287,8 +312,10 @@ func parseObjective(name string, content []string) *SiegeObjective {
 	for i < len(content) {
 		key := content[i]
 		i++
-		if i >= len(content) { break }
-		
+		if i >= len(content) {
+			break
+		}
+
 		// Objectives usually don't have nested blocks, but if they do...
 		if content[i] == "{" {
 			blockContent, newIdx := extractBlock(content, i)
@@ -305,20 +332,34 @@ func parseObjective(name string, content []string) *SiegeObjective {
 
 func setObjectiveField(obj *SiegeObjective, key, value string) {
 	switch strings.ToLower(key) {
-	case "goalname": obj.GoalName = value
-	case "final": obj.Final, _ = strconv.Atoi(value)
-	case "objdesc": obj.ObjDesc = value
-	case "objgfx": obj.ObjGfx = value
-	case "mapicon": obj.MapIcon = value
-	case "litmapicon": obj.LitMapIcon = value
-	case "donemapicon": obj.DoneMapIcon = value
-	case "mappos": obj.MapPos = value
-	case "message_team1": obj.MessageTeam1 = value
-	case "message_team2": obj.MessageTeam2 = value
-	case "sound_team1": obj.SoundTeam1 = value
-	case "sound_team2": obj.SoundTeam2 = value
-	case "target": obj.Target = value
-	default: obj.ExtraFields[key] = value
+	case "goalname":
+		obj.GoalName = value
+	case "final":
+		obj.Final, _ = strconv.Atoi(value)
+	case "objdesc":
+		obj.ObjDesc = value
+	case "objgfx":
+		obj.ObjGfx = value
+	case "mapicon":
+		obj.MapIcon = value
+	case "litmapicon":
+		obj.LitMapIcon = value
+	case "donemapicon":
+		obj.DoneMapIcon = value
+	case "mappos":
+		obj.MapPos = value
+	case "message_team1":
+		obj.MessageTeam1 = value
+	case "message_team2":
+		obj.MessageTeam2 = value
+	case "sound_team1":
+		obj.SoundTeam1 = value
+	case "sound_team2":
+		obj.SoundTeam2 = value
+	case "target":
+		obj.Target = value
+	default:
+		obj.ExtraFields[key] = value
 	}
 }
 
@@ -331,7 +372,9 @@ func reconstructBlock(tokens []string) string {
 	for i < len(tokens) {
 		k := tokens[i]
 		i++
-		if i >= len(tokens) { break }
+		if i >= len(tokens) {
+			break
+		}
 		if tokens[i] == "{" {
 			// Nested
 			nested, newIdx := extractBlock(tokens, i)
@@ -349,15 +392,27 @@ func reconstructBlock(tokens []string) string {
 
 func GenerateSiege(siege *SiegeData) (string, error) {
 	var sb strings.Builder
-	
+
 	// Global Fields
-	if siege.MissionName != "" { fmt.Fprintf(&sb, "missionname \"%s\"\n", siege.MissionName) }
-	if siege.MapGraphic != "" { fmt.Fprintf(&sb, "mapgraphic \"%s\"\n", siege.MapGraphic) }
-	if siege.RadarTopLeft != "" { fmt.Fprintf(&sb, "radartopleft \"%s\"\n", siege.RadarTopLeft) }
-	if siege.RadarBottomRight != "" { fmt.Fprintf(&sb, "radarbottomright \"%s\"\n", siege.RadarBottomRight) }
-	if siege.MBModesAllowed != "" { fmt.Fprintf(&sb, "MBModesAllowed \"%s\"\n", siege.MBModesAllowed) }
-	if siege.RoundBeginTarget != "" { fmt.Fprintf(&sb, "roundbegin_target \"%s\"\n", siege.RoundBeginTarget) }
-	
+	if siege.MissionName != "" {
+		fmt.Fprintf(&sb, "missionname \"%s\"\n", siege.MissionName)
+	}
+	if siege.MapGraphic != "" {
+		fmt.Fprintf(&sb, "mapgraphic \"%s\"\n", siege.MapGraphic)
+	}
+	if siege.RadarTopLeft != "" {
+		fmt.Fprintf(&sb, "radartopleft \"%s\"\n", siege.RadarTopLeft)
+	}
+	if siege.RadarBottomRight != "" {
+		fmt.Fprintf(&sb, "radarbottomright \"%s\"\n", siege.RadarBottomRight)
+	}
+	if siege.MBModesAllowed != "" {
+		fmt.Fprintf(&sb, "MBModesAllowed \"%s\"\n", siege.MBModesAllowed)
+	}
+	if siege.RoundBeginTarget != "" {
+		fmt.Fprintf(&sb, "roundbegin_target \"%s\"\n", siege.RoundBeginTarget)
+	}
+
 	for k, v := range siege.ExtraFields {
 		if strings.HasPrefix(v, "{") {
 			fmt.Fprintf(&sb, "%s\n%s\n", k, v) // Block
@@ -365,22 +420,36 @@ func GenerateSiege(siege *SiegeData) (string, error) {
 			fmt.Fprintf(&sb, "%s \"%s\"\n", k, v)
 		}
 	}
-	
+
 	// Teams
 	fmt.Fprintf(&sb, "\nTeams\n{\n")
-	if siege.Team1 != nil { fmt.Fprintf(&sb, "\tteam1 %s\n", siege.Team1.Name) }
-	if siege.Team2 != nil { fmt.Fprintf(&sb, "\tteam2 %s\n", siege.Team2.Name) }
+	if siege.Team1 != nil {
+		fmt.Fprintf(&sb, "\tteam1 %s\n", siege.Team1.Name)
+	}
+	if siege.Team2 != nil {
+		fmt.Fprintf(&sb, "\tteam2 %s\n", siege.Team2.Name)
+	}
 	fmt.Fprintf(&sb, "}\n\n")
-	
+
 	// HelpIcons
-	if siege.HelpIcons != "" { fmt.Fprintf(&sb, "HelpIcons\n%s\n\n", siege.HelpIcons) }
-	if siege.LevelshotDesc != "" { fmt.Fprintf(&sb, "LevelshotDesc\n%s\n\n", siege.LevelshotDesc) }
-	if siege.AutoMap != "" { fmt.Fprintf(&sb, "AutoMap\n%s\n\n", siege.AutoMap) }
-	
+	if siege.HelpIcons != "" {
+		fmt.Fprintf(&sb, "HelpIcons\n%s\n\n", siege.HelpIcons)
+	}
+	if siege.LevelshotDesc != "" {
+		fmt.Fprintf(&sb, "LevelshotDesc\n%s\n\n", siege.LevelshotDesc)
+	}
+	if siege.AutoMap != "" {
+		fmt.Fprintf(&sb, "AutoMap\n%s\n\n", siege.AutoMap)
+	}
+
 	// Team Blocks
-	if siege.Team1 != nil { generateTeamBlock(&sb, siege.Team1) }
-	if siege.Team2 != nil { generateTeamBlock(&sb, siege.Team2) }
-	
+	if siege.Team1 != nil {
+		generateTeamBlock(&sb, siege.Team1)
+	}
+	if siege.Team2 != nil {
+		generateTeamBlock(&sb, siege.Team2)
+	}
+
 	return sb.String(), nil
 }
 
@@ -389,29 +458,51 @@ func generateTeamBlock(sb *strings.Builder, team *SiegeTeam) {
 	fmt.Fprintf(sb, "\tRequiredObjectives %d\n", team.RequiredObjectives)
 	fmt.Fprintf(sb, "\tTimed %d\n", team.Timed)
 	fmt.Fprintf(sb, "\tattackers %d\n", team.Attackers)
-	if team.UseTeam != "" { fmt.Fprintf(sb, "\tUseTeam \"%s\"\n", team.UseTeam) }
-	if team.TeamIcon != "" { fmt.Fprintf(sb, "\tTeamIcon \"%s\"\n", team.TeamIcon) }
-	if team.TeamColorOn != "" { fmt.Fprintf(sb, "\tTeamColorOn \"%s\"\n", team.TeamColorOn) }
-	if team.TeamColorOff != "" { fmt.Fprintf(sb, "\tTeamColorOff \"%s\"\n", team.TeamColorOff) }
-	if team.WonRound != "" { fmt.Fprintf(sb, "\twonround \"%s\"\n", team.WonRound) }
-	if team.LostRound != "" { fmt.Fprintf(sb, "\tlostround \"%s\"\n", team.LostRound) }
-	if team.Briefing != "" { fmt.Fprintf(sb, "\tbriefing \"%s\"\n", team.Briefing) }
-	
+	if team.UseTeam != "" {
+		fmt.Fprintf(sb, "\tUseTeam \"%s\"\n", team.UseTeam)
+	}
+	if team.TeamIcon != "" {
+		fmt.Fprintf(sb, "\tTeamIcon \"%s\"\n", team.TeamIcon)
+	}
+	if team.TeamColorOn != "" {
+		fmt.Fprintf(sb, "\tTeamColorOn \"%s\"\n", team.TeamColorOn)
+	}
+	if team.TeamColorOff != "" {
+		fmt.Fprintf(sb, "\tTeamColorOff \"%s\"\n", team.TeamColorOff)
+	}
+	if team.WonRound != "" {
+		fmt.Fprintf(sb, "\twonround \"%s\"\n", team.WonRound)
+	}
+	if team.LostRound != "" {
+		fmt.Fprintf(sb, "\tlostround \"%s\"\n", team.LostRound)
+	}
+	if team.Briefing != "" {
+		fmt.Fprintf(sb, "\tbriefing \"%s\"\n", team.Briefing)
+	}
+
 	for _, obj := range team.Objectives {
 		fmt.Fprintf(sb, "\n\t%s\n\t{\n", obj.Name)
 		fmt.Fprintf(sb, "\t\tgoalname \"%s\"\n", obj.GoalName)
 		fmt.Fprintf(sb, "\t\tfinal %d\n", obj.Final)
-		if obj.ObjDesc != "" { fmt.Fprintf(sb, "\t\tobjdesc \"%s\"\n", obj.ObjDesc) }
-		if obj.ObjGfx != "" { fmt.Fprintf(sb, "\t\tobjgfx \"%s\"\n", obj.ObjGfx) }
-		if obj.MessageTeam1 != "" { fmt.Fprintf(sb, "\t\tmessage_team1 \"%s\"\n", obj.MessageTeam1) }
-		if obj.MessageTeam2 != "" { fmt.Fprintf(sb, "\t\tmessage_team2 \"%s\"\n", obj.MessageTeam2) }
+		if obj.ObjDesc != "" {
+			fmt.Fprintf(sb, "\t\tobjdesc \"%s\"\n", obj.ObjDesc)
+		}
+		if obj.ObjGfx != "" {
+			fmt.Fprintf(sb, "\t\tobjgfx \"%s\"\n", obj.ObjGfx)
+		}
+		if obj.MessageTeam1 != "" {
+			fmt.Fprintf(sb, "\t\tmessage_team1 \"%s\"\n", obj.MessageTeam1)
+		}
+		if obj.MessageTeam2 != "" {
+			fmt.Fprintf(sb, "\t\tmessage_team2 \"%s\"\n", obj.MessageTeam2)
+		}
 		// ... output other fields ...
 		for k, v := range obj.ExtraFields {
 			fmt.Fprintf(sb, "\t\t%s \"%s\"\n", k, v)
 		}
 		fmt.Fprintf(sb, "\t}\n")
 	}
-	
+
 	for k, v := range team.ExtraFields {
 		fmt.Fprintf(sb, "\t%s \"%s\"\n", k, v)
 	}

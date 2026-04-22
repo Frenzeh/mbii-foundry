@@ -15,22 +15,22 @@ import (
 // AttributeToggleWidget is a custom widget for selecting attribute levels
 type AttributeToggleWidget struct {
 	widget.BaseWidget
-	
+
 	ID          string
 	Name        string
 	Category    string
 	MaxLevel    int
 	CurrentVal  int
 	Description string
-	
-	OnChange    func(int)
-	OnInfo      func(string, string) // Key, Context
-	
+
+	OnChange func(int)
+	OnInfo   func(string, string) // Key, Context
+
 	// UI Components
-	label       *widget.Label
-	buttons     []*HoverButton
-	infoBtn     *widget.Button
-	container   *fyne.Container
+	label     *widget.Label
+	buttons   []*HoverButton
+	infoBtn   *widget.Button
+	container *fyne.Container
 }
 
 func NewAttributeToggleWidget(attr AttributeDef, currentVal int, onChange func(int), onInfo func(string, string), icon fyne.Resource) *AttributeToggleWidget {
@@ -43,7 +43,7 @@ func NewAttributeToggleWidget(attr AttributeDef, currentVal int, onChange func(i
 		Description: attr.Description,
 		OnChange:    onChange,
 	}
-	
+
 	w.ExtendBaseWidget(w)
 	w.createUI(onInfo, icon)
 	return w
@@ -52,14 +52,14 @@ func NewAttributeToggleWidget(attr AttributeDef, currentVal int, onChange func(i
 func (w *AttributeToggleWidget) createUI(onInfo func(string, string), iconRes fyne.Resource) {
 	w.label = widget.NewLabel(w.Name)
 	w.label.TextStyle = fyne.TextStyle{Bold: true}
-	
+
 	w.infoBtn = widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
 		if onInfo != nil {
 			onInfo(w.ID, "")
 		}
 	})
 	w.infoBtn.Importance = widget.LowImportance // Less intrusive
-	
+
 	// Icon
 	var iconObj fyne.CanvasObject
 	if iconRes != nil {
@@ -73,20 +73,20 @@ func (w *AttributeToggleWidget) createUI(onInfo func(string, string), iconRes fy
 
 	// Create toggle buttons
 	w.buttons = make([]*HoverButton, w.MaxLevel+1)
-	
+
 	// Level 0 (Off)
 	w.buttons[0] = w.createLevelButton(0, "Off", onInfo)
-	
+
 	// Levels 1..Max
 	for i := 1; i <= w.MaxLevel; i++ {
 		w.buttons[i] = w.createLevelButton(i, strconv.Itoa(i), onInfo)
 	}
-	
+
 	btnBox := container.NewHBox()
 	for _, btn := range w.buttons {
 		btnBox.Add(btn)
 	}
-	
+
 	// Color Coding
 	var catColor color.Color
 	switch w.Category {
@@ -107,13 +107,13 @@ func (w *AttributeToggleWidget) createUI(onInfo func(string, string), iconRes fy
 
 	// Layout: [Strip] [Info] [Icon] [Label] -- Spacer -- Buttons (Right)
 	leftContainer := container.NewHBox(rect, w.infoBtn, iconObj, w.label)
-	
-	w.container = container.NewBorder(nil, nil, 
-		leftContainer, // Left
-		btnBox,        // Right
+
+	w.container = container.NewBorder(nil, nil,
+		leftContainer,      // Left
+		btnBox,             // Right
 		layout.NewSpacer(), // Center (filler)
 	)
-	
+
 	w.refreshButtons()
 }
 
@@ -127,7 +127,7 @@ func (w *AttributeToggleWidget) createLevelButton(level int, text string, onInfo
 			onInfo(w.ID, context)
 		}
 	}
-	
+
 	btn := NewHoverButton(text, func() {
 		w.CurrentVal = level
 		w.refreshButtons()

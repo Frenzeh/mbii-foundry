@@ -136,8 +136,7 @@ func NewAssetBrowser(gamedataPath, textAssetsPath string) *AssetBrowser {
 		vfs:            NewVirtualFileSystem(gamedataPath, textAssetsPath),
 	}
 
-	configDir, _ := os.UserConfigDir()
-	ab.favoritesFile = filepath.Join(configDir, "mbii-fa-creator", "favorites.json")
+	ab.favoritesFile = filepath.Join(AppConfigDir(), "favorites.json")
 	ab.loadFavorites()
 
 	ab.loadConfig()

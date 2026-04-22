@@ -551,13 +551,7 @@ func GenerateSAB(saber *SaberData) (string, error) {
 		fmt.Fprintf(&sb, "\tuseGoreConfig\t\t1\n")
 	}
 
-	for k, v := range saber.ExtraFields {
-		if strings.Contains(v, " ") {
-			fmt.Fprintf(&sb, "\t%s\t\t\t\"%s\"\n", k, v)
-		} else {
-			fmt.Fprintf(&sb, "\t%s\t\t\t%s\n", k, v)
-		}
-	}
+	writeExtraFields(&sb, saber.ExtraFields)
 
 	fmt.Fprintln(&sb, "}")
 	return sb.String(), nil

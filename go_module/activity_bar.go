@@ -118,9 +118,11 @@ func (s *SidebarHeader) CreateRenderer() fyne.WidgetRenderer {
 	}
 	s.collapseBtn = newActivityPill(collapseItem, s, true)
 
-	// Left: pills. Right: collapse toggle. Center spacer pushes the
-	// collapse button to the right edge regardless of pill count.
-	row := container.NewBorder(nil, nil, tabRow, s.collapseBtn, layout.NewSpacer())
+	// Collapse toggle pinned to the far LEFT of the header — the
+	// sidebar itself is on the left of the window, so a left-edge
+	// "push this out" button reads more directly than one on the
+	// right. Pills sit immediately to its right.
+	row := container.NewBorder(nil, nil, s.collapseBtn, nil, tabRow)
 
 	// Bottom rule — thin accent line under the whole header so it
 	// reads as its own band, separated from the content below.

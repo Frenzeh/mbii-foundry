@@ -3,6 +3,7 @@ package parsers
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -198,8 +199,16 @@ func GenerateVEH(veh *VehicleData) (string, error) {
 		fmt.Fprintf(&sb, "\tweapons\t\t%s\n", veh.Weapons)
 	}
 
-	for k, v := range veh.ExtraFields {
-		fmt.Fprintf(&sb, "\t%s\t\t%s\n", k, v)
+	// Sorted iteration — map iteration order is randomized in Go,
+	// which would cause output line order to flip between ticks in
+	// the live source panel.
+	vehKeys := make([]string, 0, len(veh.ExtraFields))
+	for k := range veh.ExtraFields {
+		vehKeys = append(vehKeys, k)
+	}
+	sort.Strings(vehKeys)
+	for _, k := range vehKeys {
+		fmt.Fprintf(&sb, "\t%s\t\t%s\n", k, veh.ExtraFields[k])
 	}
 	fmt.Fprintln(&sb, "}")
 	return sb.String(), nil

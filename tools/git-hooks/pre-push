@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+#
+# MBII Foundry — pre-push identity guard.
+#
+# Rejects a push if:
+#   1. The configured Git author isn't Frenzy.
+#   2. The remote URL isn't the canonical Frenzeh remote.
+#
+# This is a defense-in-depth catch, not a security boundary — it can be
+# bypassed with `git push --no-verify`. Its purpose is to prevent
+# honest mistakes: pushing from a dev session that was configured under
+# the wrong Git identity, or to the wrong fork.
+#
+# Install:
+#   ./tools/git-hooks/install.sh
+# Which sets:
+#   git config core.hooksPath tools/git-hooks
+
+set -euo pipefail
+
+# --- Expected identity ---
+EXPECTED_NAME="Frenzy"
+EXPECTED_EMAIL="elitewarriors@protonmail.com"
+EXPECTED_REMOTE_PATTERN='github\.com.*Frenzeh/mbii-foundry(\.git)?$'
+
+# --- Actual identity ---
+remote_name="$1"
+remote_url="$2"
+
+actual_name=$(git config --get user.name || true)
+actual_email=$(git config --get user.email || true)
+
+fail() {
+    echo ""
+    echo "  ┌─ PUSH BLOCKED ─────────────────────────────────────────────┐"
+    echo "  │"
+    for line in "$@"; do
+        echo "  │  $line"
+    done
+    echo "  │"
+    echo "  │  Override (not recommended): git push --no-verify"
+    echo "  └────────────────────────────────────────────────────────────┘"
+    echo ""
+    exit 1
+}
+
+# --- Identity checks ---
+if [[ "$actual_name" != "$EXPECTED_NAME" ]]; then
+    fail "Git user.name is '$actual_name' — expected '$EXPECTED_NAME'." \
+         "Fix: git config user.name '$EXPECTED_NAME'"
+fi
+
+if [[ "$actual_email" != "$EXPECTED_EMAIL" ]]; then
+    fail "Git user.email is '$actual_email' — expected '$EXPECTED_EMAIL'." \
+         "Fix: git config user.email '$EXPECTED_EMAIL'"
+fi
+
+# --- Remote check ---
+if ! [[ "$remote_url" =~ $EXPECTED_REMOTE_PATTERN ]]; then
+    fail "Pushing to an unexpected remote:" \
+         "  $remote_url" \
+         "Expected a URL matching: Frenzeh/mbii-foundry" \
+         "If this is a legitimate new remote, update EXPECTED_REMOTE_PATTERN."
+fi
+
+# --- Signed-commit check ---
+# If signing is enabled for this repo, make sure the most recent commit
+# actually got signed (catches the "forgot to rebase after enabling
+# signing" case).
+signing=$(git config --get commit.gpgsign || echo false)
+if [[ "$signing" == "true" ]]; then
+    # The range of commits being pushed comes in on stdin. Check each.
+    while read -r local_ref local_sha remote_ref remote_sha; do
+        if [[ "$local_sha" == "0000000000000000000000000000000000000000" ]]; then
+            continue  # deleting a branch, nothing to check
+        fi
+        if [[ "$remote_sha" == "0000000000000000000000000000000000000000" ]]; then
+            range="$local_sha"   # new branch, check the tip
+        else
+            range="$remote_sha..$local_sha"
+        fi
+        unsigned=$(git log --format='%H %G?' "$range" | awk '$2 != "G" && $2 != "U" {print $1}' | head -5)
+        if [[ -n "$unsigned" ]]; then
+            fail "Unsigned commits in push:" \
+                 "$(echo "$unsigned" | sed 's/^/  /')" \
+                 "Sign them with: git rebase --exec 'git commit --amend --no-edit -S' <base>"
+        fi
+    done
+fi
+
+exit 0

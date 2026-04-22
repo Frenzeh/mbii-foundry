@@ -369,11 +369,14 @@ func (ab *AssetBrowser) createUI() {
 	// grid view" at a glance.
 	viewModeBtn := widget.NewButtonWithIcon("", theme.GridIcon(), nil)
 	viewModeBtn.Importance = widget.LowImportance
+	// Icon shows the mode you'd SWITCH TO on click — standard toolbar
+	// toggle convention. Currently in grid → button shows list (tap
+	// me to see a list). Currently in list → button shows grid.
 	syncViewModeIcon := func() {
 		if ab.viewMode == ViewModeGrid {
-			viewModeBtn.SetIcon(theme.GridIcon())
-		} else {
 			viewModeBtn.SetIcon(theme.ListIcon())
+		} else {
+			viewModeBtn.SetIcon(theme.GridIcon())
 		}
 	}
 	viewModeBtn.OnTapped = func() {
@@ -409,7 +412,10 @@ func (ab *AssetBrowser) createUI() {
 	// out of a dir?" without users needing to find the ".. (Up)" tile.
 	// View/Sort collapse into a compact row; Zoom moves into that row
 	// too (no dedicated label, takes remaining space).
-	upBtn := widget.NewButtonWithIcon("", theme.NavigateBackIcon(), func() {
+	// MoveUpIcon (↑) — the action is "go up a directory", not
+	// history-back. The back-arrow was reading as a browser back
+	// button, which is semantically wrong here.
+	upBtn := widget.NewButtonWithIcon("", theme.MoveUpIcon(), func() {
 		if ab.currentDir != nil && ab.currentDir.PK3Source == "" && ab.currentDir.Path != "" {
 			parent := filepath.Dir(ab.currentDir.Path)
 			if parent != "" && parent != "." {
@@ -480,27 +486,34 @@ func (ab *AssetBrowser) createUI() {
 			}
 		},
 	)
-	ab.tree.OnSelected = func(id widget.TreeNodeID) {
-		if entry, ok := ab.assets[id]; ok {
-			if entry.IsDir {
-				if entry.PK3Source == "" {
-					// FS Mode: Navigate into this folder
-					ab.loadFS(entry.Path)
-				} else if entry.PK3Source == "VFS" {
-					// VFS Mode
-					ab.loadVFS(entry.Path)
-				} else {
-					// PK3 Mode: Show contents in grid
-					ab.loadGrid(entry)
-				}
-			} else {
-				// Single click on file in tree, select it
-				if ab.onAssetSelected != nil {
-					ab.onAssetSelected(entry)
-				}
+	// Shared dispatcher — used by both OnSelected (row tap) and
+	// OnBranchOpened (disclosure-arrow tap). Fyne's Tree fires one
+	// or the other depending on exactly where the user clicked on
+	// the row; wiring both to the same action means "click a folder
+	// in the tree" reliably navigates the grid into it regardless
+	// of which pixel the click landed on.
+	navigateTreeEntry := func(id widget.TreeNodeID) {
+		entry, ok := ab.assets[id]
+		if !ok {
+			return
+		}
+		if entry.IsDir {
+			switch entry.PK3Source {
+			case "":
+				ab.loadFS(entry.Path)
+			case "VFS":
+				ab.loadVFS(entry.Path)
+			default:
+				ab.loadGrid(entry)
 			}
+			return
+		}
+		if ab.onAssetSelected != nil {
+			ab.onAssetSelected(entry)
 		}
 	}
+	ab.tree.OnSelected = navigateTreeEntry
+	ab.tree.OnBranchOpened = navigateTreeEntry
 
 	ab.grid = container.NewGridWrap(fyne.NewSize(ab.iconSize, ab.iconSize+30)) // Init with size
 	// Empty by default — "Ready" was noise that duplicated the app's
@@ -1125,6 +1138,10 @@ func (ab *AssetBrowser) loadVFS(path string) {
 
 	ab.statusLabel.SetText(fmt.Sprintf("VFS: %s (%d items)", path, len(ab.rootEntries)))
 
+	// Refresh the tree so its folder list shows up without the user
+	// needing to jostle the split divider first.
+	ab.tree.Refresh()
+
 	// Dummy entry for grid loading
 	dummyDir := &AssetEntry{Path: path, IsDir: true, Children: ab.rootEntries, PK3Source: "VFS"}
 	ab.loadGrid(dummyDir)
@@ -1207,6 +1224,10 @@ func (ab *AssetBrowser) loadFS(path string) {
 	ab.rootEntries = append(ab.rootEntries, fileEntries...)
 
 	ab.statusLabel.SetText(fmt.Sprintf("Loaded %d items", len(ab.rootEntries)))
+
+	// Tell the tree its data changed — otherwise it sits empty until
+	// the user drags the split divider (which forces a relayout).
+	ab.tree.Refresh()
 
 	// Hack: Set currentDir to a dummy entry containing these children
 	dummyDir := &AssetEntry{Path: path, IsDir: true, Children: ab.rootEntries}

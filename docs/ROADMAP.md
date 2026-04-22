@@ -255,7 +255,7 @@ saber_flags:
 - [x] PK3 icon loader with TGA→PNG conversion
 - [x] Documentation schema with per-level support
 - [x] Initial enum documentation (~15 items)
-- [x] Project documentation (CLAUDE.md, GEMINI.md)
+- [x] Project documentation (CLAUDE.md + stub GEMINI.md)
 - [x] Wails migration plan
 
 ---

@@ -1,7 +1,7 @@
 # MBII Foundry — Project Instructions (for AI assistants)
 
 > Source of truth for project rules, conventions, and architecture.
-> Other AI assistants (Gemini, etc.) should read `GEMINI.md` for onboarding context, then defer to this file.
+> Despite the name, this document is AI-agnostic — Gemini, Copilot, and other assistants can read it directly. `GEMINI.md` is a short redirect stub pointing back here.
 
 ---
 
@@ -36,7 +36,7 @@ MBII Foundry is a **standalone visual editor** for Movie Battles II (MBII) conte
 ```
 mbii-foundry/
 ├── CLAUDE.md              # THIS FILE - source of truth
-├── GEMINI.md              # Onboarding doc for other AI assistants
+├── GEMINI.md              # Stub: redirects to CLAUDE.md
 ├── README.md              # User-facing readme
 ├── build_app.sh           # macOS app bundle build script
 │
@@ -227,12 +227,17 @@ go build -o mbii-foundry && ./mbii-foundry
 
 | File | Purpose |
 |------|---------|
-| `CLAUDE.md` | Source of truth (this file) |
-| `GEMINI.md` | Onboarding for other AI assistants |
+| `CLAUDE.md` | Source of truth for AI assistants (this file) |
+| `GEMINI.md` | Stub: redirects to `CLAUDE.md` |
+| `README.md` | User-facing overview + install instructions |
+| `CONTRIBUTING.md` | Developer contribution guide |
+| `USER_GUIDE.md` | How to use the app (end-user docs) |
+| `docs/DEFINITIONS_GUIDE.md` | Editing per-enum prose (`definitions/*.md`) |
 | `docs/ROADMAP.md` | Feature roadmap with priorities |
-| `docs/WAILS_MIGRATION.md` | Future migration plan |
-| `docs/UX_IMPROVEMENT_PLAN.md` | UX vision document |
 | `docs/ARCHITECTURE.md` | System architecture |
+| `docs/UX_IMPROVEMENT_PLAN.md` | UX vision document |
+| `docs/WAILS_MIGRATION.md` | Future Wails migration plan (on hold) |
+| `docs/ASSET_VIEWER_PLAN.md` | Future asset browser improvements |
 
 ---
 

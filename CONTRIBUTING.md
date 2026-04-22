@@ -120,10 +120,13 @@ We are currently focused on:
 ## How to Contribute
 
 ### Finding Work
-1. Check `docs/ROADMAP.md` for priorities
+1. Check [`docs/ROADMAP.md`](docs/ROADMAP.md) for priorities
 2. Look for `// TODO:` comments in code
 3. Open issues on GitHub
 4. Ask in discussions
+
+### Non-code contributions (highest leverage)
+Most MBII Foundry contributions don't require writing Go. Fixing an enum description in `definitions/attributes/MB_ATT_*.md` directly improves the app's in-panel help for every user. See [`docs/DEFINITIONS_GUIDE.md`](docs/DEFINITIONS_GUIDE.md) — especially the "Common AI mistakes to watch for" section if you're reviewing generated stubs.
 
 ### Making Changes
 
@@ -232,7 +235,7 @@ PYEOF
 
 ### Key Documentation
 - **CLAUDE.md** - Instructions for Claude AI
-- **GEMINI.md** - Onboarding for other AIs
+- **GEMINI.md** - Stub: redirects to CLAUDE.md
 - Both point to this file for human developers
 
 ---
@@ -304,7 +307,7 @@ Fyne has no native tooltips. We use popup workarounds.
 
 - **Issues**: GitHub Issues for bugs/features
 - **Discussions**: GitHub Discussions for questions
-- **Docs**: Start with `ROADMAP.md`, then `CLAUDE.md`
+- **Docs**: Start with `docs/ROADMAP.md`, then `CLAUDE.md`
 
 ---
 

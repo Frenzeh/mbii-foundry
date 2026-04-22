@@ -42,38 +42,72 @@ You do not need to be a programmer. You do not need any AI assistant or backend 
 
 ## Install
 
-Binaries for Mac, Windows, and Linux are published under [Releases](https://github.com/Frenzeh/mbii-foundry/releases) when available. During alpha, you're likely building from source — see below.
+There are two install paths. **Most people want the Easy Path.** Only use "From Source" if you're on the bleeding edge or there's no prebuilt release for your platform yet.
 
-## Build from source
+### Easy Path — prebuilt download (not yet available)
 
-Requires **Go 1.21+**. Fyne handles the native GUI, so no extra GUI toolkit install.
+1. Open the [Releases page](https://github.com/Frenzeh/mbii-foundry/releases).
+2. Find the latest release → scroll to **Assets**.
+3. Download the file for your OS:
+   - macOS → `MBII.Foundry.app.zip`  → unzip → drag to **Applications**.
+   - Windows → `mbii-foundry-windows.zip` → unzip anywhere → double-click `mbii-foundry.exe`.
+   - Linux → `mbii-foundry-linux.tar.gz` → extract → `./mbii-foundry`.
+4. Launch. First run will ask for your **MBII gamedata path** (the folder with the `MBII` subfolder inside your Jedi Academy install). Point it there.
+
+> **Status note:** MBII Foundry is alpha; no prebuilt Releases exist yet. Until one does, use "From Source" below.
+
+### From Source — for alpha testers and contributors
+
+You need **Go 1.21 or newer** installed. Go is free and fast to set up.
+
+**Install Go (one-time):**
+- **macOS:** `brew install go` (or download from [go.dev/dl](https://go.dev/dl/))
+- **Windows:** download the MSI from [go.dev/dl](https://go.dev/dl/) and run it
+- **Linux (Ubuntu/Debian):** `sudo apt install golang` (Fedora/Arch users already know the drill)
+
+Verify: open a terminal and run `go version`. If it prints a version, you're set.
+
+**Build and launch MBII Foundry:**
 
 ```bash
 git clone https://github.com/Frenzeh/mbii-foundry.git
-cd mbii-foundry/go_module
-go build -o mbii-foundry        # mbii-foundry.exe on Windows
-./mbii-foundry
+cd mbii-foundry
+./setup_mbii-foundry.sh      # builds the app (first time only, takes ~1 minute)
+./run_mbii-foundry.sh        # launches the app
 ```
 
-macOS app bundle (with local code signing):
+On **Windows**, use the same commands from a Git Bash or WSL terminal. If you're in PowerShell/cmd, run `cd go_module && go build -o mbii-foundry.exe` then double-click `mbii-foundry.exe`.
+
+**Want a double-clickable Mac app?** After `setup_mbii-foundry.sh`, run `./build_app.sh`. You'll get `MBII Foundry.app` you can drag into Applications.
+
+### Update to the latest version
+
+Pull and rebuild:
 
 ```bash
 cd mbii-foundry
-./build_app.sh
-# Output: "MBII Foundry.app"
+git pull
+./setup_mbii-foundry.sh     # rebuilds the binary with the new code
 ```
 
-Details and caveats in [`USER_GUIDE.md`](USER_GUIDE.md).
+If you're editing your own branch, `git pull` won't work — `git fetch && git merge origin/main` instead. Ask an existing contributor if you're unsure.
+
+### Getting help
+
+- App crashes on launch? Check the log at `go_module/mbii-foundry.log` (or `mbii-foundry.log` next to the binary).
+- Build failed? Re-read the Go version message (`go version` must print 1.21+) and file an [issue](https://github.com/Frenzeh/mbii-foundry/issues) with the error output.
+- Gamedata path? You're looking for the folder that contains `base/` and `MBII/` subfolders — that's your Jedi Academy `GameData` install directory.
 
 ## Contributing
 
 Issues and PRs welcome. Priority areas during alpha:
 
-- **Documentation prose** — many enum definitions under `definitions/<category>/*.md` are stubs waiting for descriptive text. These feed the in-app info panel and are the single highest-leverage contribution for a non-coder.
+- **Writing / fixing enum documentation** — the highest-leverage contribution for anyone who isn't a programmer. Many `definitions/<category>/*.md` files are AI-generated stubs or placeholders. Editing them directly on GitHub (pencil icon → Propose changes) works; no git clone needed. Full walkthrough: [`docs/DEFINITIONS_GUIDE.md`](docs/DEFINITIONS_GUIDE.md).
 - **Bug reports** — especially anything that crashes the app or produces a `.mbch` that MBII won't load.
 - **UI polish** — Fyne tooltips, layout tweaks, keyboard shortcuts.
+- **Code contributions** — see [`CONTRIBUTING.md`](CONTRIBUTING.md) for the developer guide.
 
-Read [`CONTRIBUTING.md`](CONTRIBUTING.md) before opening a PR. Some MBII enums (`MB_ATT_*`, `WP_*`, etc.) are curated from the game's source — when new ones land, a maintainer regenerates the stubs and the community polishes the prose.
+Some MBII enums (`MB_ATT_*`, `WP_*`, etc.) are curated from the game's source — when new ones land, a maintainer regenerates the stubs and the community polishes the prose.
 
 ## Layout
 

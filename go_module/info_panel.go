@@ -38,9 +38,9 @@ func (ip *InfoPanel) createUI() {
 	ip.title = widget.NewLabelWithStyle("Information", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 
 	welcomeMsg := `
-### Welcome to the Holocron
+### Info Panel
 
-This panel provides real-time documentation and context for your editing.
+This panel provides real-time documentation and context for the field you're editing.
 
 **How to use:**
 *   **Hover** over any attribute or weapon in the editor to see its description here.
@@ -339,15 +339,16 @@ func (ip *InfoPanel) ShowInfo(key, context string) {
 
 	ip.content.ParseMarkdown(md)
 
-	// 3. Holocron Async Lookup
+	// Dev-only: async query the local Holocron server for extra context.
+	// Client is nil for regular users (see holocron_client.go); this
+	// block is dead code for non-maintainer builds.
 	if ip.holocronClient != nil && ip.holocronClient.Available {
 		go func(query string) {
-			// Show loading state
-			ip.content.ParseMarkdown(md + "\n\n_[Accessing Holocron...]_")
+			ip.content.ParseMarkdown(md + "\n\n_[querying dev backend...]_")
 
 			summary, err := ip.holocronClient.Ask(query)
 			if err == nil && summary != "" {
-				newContent := md + "\n\n**HOLOCRON INSIGHT**\n" + summary
+				newContent := md + "\n\n**DEV INSIGHT**\n" + summary
 				ip.content.ParseMarkdown(newContent)
 			} else {
 				ip.content.ParseMarkdown(md) // Revert

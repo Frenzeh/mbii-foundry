@@ -79,10 +79,12 @@ func NewToolbarAction(icon fyne.Resource, tooltip string, action func()) *widget
 	return widget.NewToolbarAction(icon, action)
 }
 
-// HolocronTheme provides the custom amber-gold theme
-type HolocronTheme struct{}
+// FoundryTheme is the custom amber-gold sci-fi theme. Name is cosmetic;
+// derived from the MBII Holocron project's original palette but unrelated
+// to the dev-only Holocron network integration (see holocron_client.go).
+type FoundryTheme struct{}
 
-func (h HolocronTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
+func (h FoundryTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
 	if name == theme.ColorNamePrimary {
 		return CurrentThemeColor
 	}
@@ -128,16 +130,16 @@ func blendColors(c1, c2 color.Color, ratio float32) color.Color {
 	}
 }
 
-func (h HolocronTheme) Font(style fyne.TextStyle) fyne.Resource {
+func (h FoundryTheme) Font(style fyne.TextStyle) fyne.Resource {
 	if embedFont != nil {
 		return fyne.NewStaticResource("font.ttf", embedFont)
 	}
 	return theme.DefaultTheme().Font(style)
 }
-func (h HolocronTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
+func (h FoundryTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
 	return theme.DefaultTheme().Icon(name)
 }
-func (h HolocronTheme) Size(name fyne.ThemeSizeName) float32 { return theme.DefaultTheme().Size(name) }
+func (h FoundryTheme) Size(name fyne.ThemeSizeName) float32 { return theme.DefaultTheme().Size(name) }
 
 func (a *App) applyThemeColor(colorName string) {
 	switch strings.ToLower(colorName) {
@@ -145,7 +147,7 @@ func (a *App) applyThemeColor(colorName string) {
 		CurrentThemeColor = color.RGBA{R: 200, G: 0, B: 0, A: 255}
 	case "green", "console":
 		CurrentThemeColor = color.RGBA{R: 0, G: 200, B: 0, A: 255}
-	case "gold", "holocron":
+	case "gold", "foundry", "holocron": // "holocron" kept as alias for pre-rebrand configs
 		CurrentThemeColor = color.RGBA{R: 255, G: 215, B: 0, A: 255}
 	case "blue", "jedi":
 		CurrentThemeColor = color.RGBA{R: 0, G: 128, B: 255, A: 255}
@@ -156,7 +158,7 @@ func (a *App) applyThemeColor(colorName string) {
 	default:
 		CurrentThemeColor = color.RGBA{R: 0, G: 128, B: 255, A: 255} // Default Blue
 	}
-	a.fyneApp.Settings().SetTheme(&HolocronTheme{}) // Refresh theme
+	a.fyneApp.Settings().SetTheme(&FoundryTheme{}) // Refresh theme
 }
 
 func main() {
@@ -209,11 +211,15 @@ func main() {
 		application.githubManager = NewGitHubManager(application.config.GitHubToken, repoPath)
 	}
 
-	// Start background check for Holocron
-	go application.monitorHolocronStatus()
+	// Dev-only: start background check for local Holocron server.
+	// Guarded at creation via NewHolocronClient; nil for regular users so
+	// this goroutine noops. See holocron_client.go for context.
+	if application.holocronClient != nil {
+		go application.monitorHolocronStatus()
+	}
 
 	application.fyneApp = app.NewWithID("com.mbii.facreator")
-	application.fyneApp.Settings().SetTheme(&HolocronTheme{})
+	application.fyneApp.Settings().SetTheme(&FoundryTheme{})
 	application.mainWindow = application.fyneApp.NewWindow(fmt.Sprintf("%s - MBII Content Editor", AppName))
 	application.mainWindow.Resize(fyne.NewSize(1400, 900))
 
@@ -227,7 +233,12 @@ func main() {
 	application.mainWindow.ShowAndRun()
 }
 
+// monitorHolocronStatus polls the local Holocron server and updates the
+// dev-mode status icon. Only runs when MBII_FOUNDRY_DEV is set.
 func (a *App) monitorHolocronStatus() {
+	if a.holocronClient == nil {
+		return
+	}
 	for {
 		wasAvailable := a.holocronClient.Available
 		isAvailable := a.holocronClient.CheckAvailability()
@@ -262,7 +273,8 @@ func (a *App) setupUI() {
 	a.statusLabel = widget.NewLabel("Ready")
 	a.statusLabel.TextStyle = fyne.TextStyle{Italic: true}
 
-	// Holocron Status Icon
+	// Dev-mode status icon. Only displayed when MBII_FOUNDRY_DEV is set;
+	// updateMainLayout hides the whole label/icon pair for regular users.
 	a.holocronStatus = widget.NewIcon(theme.CancelIcon())
 
 	// Layout
@@ -295,15 +307,22 @@ func (a *App) updateMainLayout() {
 	toggleBtn := widget.NewButtonWithIcon("", toggleIcon, func() { a.toggleSidebar() })
 	toggleBtn.Importance = widget.LowImportance
 
-	// StatusBar container
-	statusBar := container.NewHBox(
+	// StatusBar container. The Holocron status indicator only surfaces in
+	// dev mode (set MBII_FOUNDRY_DEV=1); regular users see a clean status
+	// bar with no mention of internal tooling.
+	statusBarItems := []fyne.CanvasObject{
 		a.statusLabel,
 		layout.NewSpacer(),
 		toggleBtn,
-		widget.NewSeparator(),
-		widget.NewLabel("Holocron:"),
-		a.holocronStatus,
-	)
+	}
+	if a.holocronClient != nil {
+		statusBarItems = append(statusBarItems,
+			widget.NewSeparator(),
+			widget.NewLabel("Holocron:"),
+			a.holocronStatus,
+		)
+	}
+	statusBar := container.NewHBox(statusBarItems...)
 
 	var centerContent fyne.CanvasObject
 
@@ -455,7 +474,7 @@ func (a *App) createToolbar() fyne.CanvasObject {
 		return b
 	}
 
-	return container.NewHBox(
+	items := []fyne.CanvasObject{
 		// File Operations (Left)
 		btn(theme.ContentAddIcon(), func() {
 			var d dialog.Dialog
@@ -475,10 +494,17 @@ func (a *App) createToolbar() fyne.CanvasObject {
 
 		// Validate
 		btn(theme.WarningIcon(), func() { a.validateFile() }, "Validate Current File"),
+	}
 
-		// Sharing
-		btn(theme.MailSendIcon(), func() { a.shareFile() }, "Share with Holocron"),
+	// Dev-only: maintainer "share with Holocron" button. Uploads the
+	// current file to a local Holocron Ops server for review before a
+	// definition change lands in the repo. Only shown when
+	// MBII_FOUNDRY_DEV is set (NewHolocronClient returns non-nil).
+	if a.holocronClient != nil {
+		items = append(items, btn(theme.MailSendIcon(), func() { a.shareFile() }, "Share with Holocron (dev)"))
+	}
 
+	items = append(items,
 		// Workspace (GitHub)
 		btn(theme.StorageIcon(), func() { a.showWorkspaceSetupWizard() }, "Setup TextAssets Workspace"),
 		btn(theme.DownloadIcon(), func() { a.syncWorkspace() }, "Update Assets (Sync)"),
@@ -492,6 +518,8 @@ func (a *App) createToolbar() fyne.CanvasObject {
 		btn(theme.InfoIcon(), func() { a.showLogs() }, "Show Debug Logs"),
 		btn(theme.HelpIcon(), func() { a.showAbout() }, "About MBII Foundry"),
 	)
+
+	return container.NewHBox(items...)
 }
 
 func (a *App) validateFile() {
@@ -815,7 +843,7 @@ func (a *App) showPreferences() {
 	md3viewEntry := widget.NewEntry()
 	md3viewEntry.SetText(a.config.MD3ViewPath)
 
-	themeSelect := widget.NewSelect([]string{"Blue (Jedi)", "Red (Sith)", "Gold (Holocron)", "Green (Console)", "Orange (Rebel)", "Purple (Mace)"}, nil)
+	themeSelect := widget.NewSelect([]string{"Blue (Jedi)", "Red (Sith)", "Gold (Foundry)", "Green (Console)", "Orange (Rebel)", "Purple (Mace)"}, nil)
 	themeSelect.SetSelected(strings.Title(a.config.PrimaryColor))
 	if a.config.PrimaryColor == "blue" || a.config.PrimaryColor == "" {
 		themeSelect.SetSelected("Blue (Jedi)")
@@ -824,7 +852,7 @@ func (a *App) showPreferences() {
 		themeSelect.SetSelected("Red (Sith)")
 	}
 	if a.config.PrimaryColor == "gold" {
-		themeSelect.SetSelected("Gold (Holocron)")
+		themeSelect.SetSelected("Gold (Foundry)")
 	}
 	if a.config.PrimaryColor == "green" {
 		themeSelect.SetSelected("Green (Console)")
@@ -933,7 +961,7 @@ func (a *App) showPreferences() {
 				a.config.PrimaryColor = "blue"
 			case "Red (Sith)":
 				a.config.PrimaryColor = "red"
-			case "Gold (Holocron)":
+			case "Gold (Foundry)":
 				a.config.PrimaryColor = "gold"
 			case "Green (Console)":
 				a.config.PrimaryColor = "green"
@@ -978,9 +1006,9 @@ The ultimate content creation suite for Movie Battles II.
 *   **Visual Attributes:** Toggle attributes grid instead of typing enums.
 *   **Asset Integration:** Browse and preview game assets.
 *   **Force & Weapons:** Dedicated editors for complex overrides.
-*   **Holocron:** Built-in reference library.
+*   **Info Panel:** Hover any field for its enum definition and usage tips.
 
-For support, contact the MBII Development Team.
+For support, file an issue at github.com/Frenzeh/mbii-foundry or ask in the MBII Discord.
 `)
 
 	scroll := container.NewVScroll(content)

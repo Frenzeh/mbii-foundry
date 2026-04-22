@@ -67,11 +67,13 @@ This panel provides real-time documentation and context for the field you're edi
 
 	ip.refreshKeys("")
 
-	detailsHeader := widget.NewLabelWithStyle("Active Context", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	details := container.NewVBox(detailsHeader, ip.title, widget.NewSeparator(), ip.content)
+	// "Active Context" was an unhelpful header that just said "here's the
+	// thing you're hovering" — redundant when the title below already shows
+	// the item name. Dropped; the title + content speak for themselves.
+	details := container.NewVBox(ip.title, widget.NewSeparator(), ip.content)
 	detailsScroll := container.NewVScroll(details)
 
-	listHeader := widget.NewLabelWithStyle("Full Library", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	listHeader := widget.NewLabelWithStyle("Reference Library", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	listContainer := container.NewBorder(container.NewVBox(listHeader, ip.search), nil, nil, nil, ip.list)
 
 	ip.tabs = container.NewAppTabs(
@@ -228,21 +230,36 @@ func (ip *InfoPanel) ShowInfo(key, context string) {
 		return sb.String()
 	}
 
+	// Treat an empty/placeholder JSON description as "not found" so the
+	// markdown fallback runs. Rich .md files like
+	// definitions/attributes/MB_ATT_BESKAR.md have real prose that would
+	// otherwise lose out to a blank JSON row.
+	hasContent := func(desc, overview string) bool {
+		return strings.TrimSpace(desc) != "" || strings.TrimSpace(overview) != ""
+	}
+
 	// 1. JSON Data Lookup (Priority)
+	var resolvedID string
 	for _, attr := range GetAttributes() {
 		if attr.ID == key || attr.Name == key {
-			def = formatRich(attr.Description, attr.Overview, attr.Tips, attr.Levels, nil, attr.Tags)
-			key = attr.Name
-			found = true
+			resolvedID = attr.ID
+			if hasContent(attr.Description, attr.Overview) {
+				def = formatRich(attr.Description, attr.Overview, attr.Tips, attr.Levels, nil, attr.Tags)
+				key = attr.Name
+				found = true
+			}
 			break
 		}
 	}
 	if !found {
 		for _, w := range GetWeapons() {
 			if w.ID == key || w.Name == key {
-				def = formatRich(w.Description, w.Overview, w.Tips, nil, w.Stats, w.Tags)
-				key = w.Name
-				found = true
+				resolvedID = w.ID
+				if hasContent(w.Description, w.Overview) {
+					def = formatRich(w.Description, w.Overview, w.Tips, nil, w.Stats, w.Tags)
+					key = w.Name
+					found = true
+				}
 				break
 			}
 		}
@@ -250,9 +267,12 @@ func (ip *InfoPanel) ShowInfo(key, context string) {
 	if !found {
 		for _, c := range GetClasses() {
 			if c.ID == key || c.Name == key {
-				def = c.Description
-				key = c.Name
-				found = true
+				resolvedID = c.ID
+				if strings.TrimSpace(c.Description) != "" {
+					def = c.Description
+					key = c.Name
+					found = true
+				}
 				break
 			}
 		}
@@ -260,9 +280,12 @@ func (ip *InfoPanel) ShowInfo(key, context string) {
 	if !found {
 		for _, f := range GetClassFlags() {
 			if f.ID == key || f.Name == key {
-				def = formatRich(f.Description, f.Overview, nil, nil, nil, nil)
-				key = f.Name
-				found = true
+				resolvedID = f.ID
+				if hasContent(f.Description, f.Overview) {
+					def = formatRich(f.Description, f.Overview, nil, nil, nil, nil)
+					key = f.Name
+					found = true
+				}
 				break
 			}
 		}
@@ -270,9 +293,12 @@ func (ip *InfoPanel) ShowInfo(key, context string) {
 	if !found {
 		for _, s := range GetSaberStyles() {
 			if s.ID == key || s.Name == key {
-				def = formatRich(s.Description, s.Overview, nil, nil, nil, nil)
-				key = s.Name
-				found = true
+				resolvedID = s.ID
+				if hasContent(s.Description, s.Overview) {
+					def = formatRich(s.Description, s.Overview, nil, nil, nil, nil)
+					key = s.Name
+					found = true
+				}
 				break
 			}
 		}
@@ -280,9 +306,12 @@ func (ip *InfoPanel) ShowInfo(key, context string) {
 	if !found {
 		for _, g := range GetGlossary() {
 			if g.ID == key || g.Name == key {
-				def = formatRich(g.Description, g.Overview, nil, nil, nil, nil)
-				key = g.Name
-				found = true
+				resolvedID = g.ID
+				if hasContent(g.Description, g.Overview) {
+					def = formatRich(g.Description, g.Overview, nil, nil, nil, nil)
+					key = g.Name
+					found = true
+				}
 				break
 			}
 		}
@@ -293,18 +322,29 @@ func (ip *InfoPanel) ShowInfo(key, context string) {
 		altKey := "MB_ATT_" + key
 		for _, attr := range GetAttributes() {
 			if attr.ID == altKey {
-				def = formatRich(attr.Description, attr.Overview, attr.Tips, attr.Levels, nil, attr.Tags)
-				key = attr.Name + " (" + key + ")"
-				found = true
+				resolvedID = attr.ID
+				if hasContent(attr.Description, attr.Overview) {
+					def = formatRich(attr.Description, attr.Overview, attr.Tips, attr.Levels, nil, attr.Tags)
+					key = attr.Name + " (" + key + ")"
+					found = true
+				}
 				break
 			}
 		}
 	}
 	// 2. Legacy Local Lookup (Markdown Fallback)
+	// If JSON matched but had empty prose, resolvedID holds the enum ID so
+	// we can look up the corresponding definitions/*.md directly instead
+	// of falling back to fuzzy name matching.
 	if !found {
 		var legacyDef string
 		var legacyFound bool
-		legacyDef, legacyFound = GetDefinition(key)
+		if resolvedID != "" {
+			legacyDef, legacyFound = GetDefinition(resolvedID)
+		}
+		if !legacyFound {
+			legacyDef, legacyFound = GetDefinition(key)
+		}
 		if !legacyFound {
 			DefinitionsLock.RLock()
 			for k, v := range Definitions {

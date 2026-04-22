@@ -180,21 +180,18 @@ func main() {
 	// Load Definitions
 	InitDefinitions()
 
-	ex, _ := os.Executable()
-	exPath := filepath.Dir(ex)
-	// Default to local data folder relative to binary or source
-	// If running from go_module: ../data
-	dataPath := filepath.Join(exPath, "..", "data")
-
-	// Check if running via go run (ex is in temp)
-	if strings.Contains(exPath, "go-build") || strings.Contains(exPath, "/tmp/") || strings.Contains(exPath, "private") {
-		// Fallback for development: assume CWD is go_module
-		cwd, _ := os.Getwd()
-		dataPath = filepath.Join(cwd, "..", "data")
-	}
-
-	if err := LoadExternalData(dataPath); err != nil {
-		LogError("Failed to load external data from %s: %v", dataPath, err)
+	// Resolve the data/ folder across install layouts. First match wins.
+	// The hardcoded defaults in attribute_data.go ship bare bones ("Name
+	// attribute.") — without a real data/ folder, the info panel looks
+	// embarrassing. So probe every reasonable location.
+	dataPath := resolveDataPath()
+	if dataPath == "" {
+		LogError("Could not find data/ folder. Info panel descriptions will show raw defaults until the data files are available.")
+	} else {
+		LogInfo("Loading data from: %s", dataPath)
+		if err := LoadExternalData(dataPath); err != nil {
+			LogError("Failed to load external data from %s: %v", dataPath, err)
+		}
 	}
 
 	appConfigDir := AppConfigDir()

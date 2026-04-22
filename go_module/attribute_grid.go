@@ -56,7 +56,7 @@ func (ag *AttributeGrid) createUI() {
 		content = container.NewVBox()
 		ag.content = content
 
-		ag.search = widget.NewEntry()
+		ag.search = NewInputEntry()
 		ag.search.SetPlaceHolder("Filter Attributes...")
 		ag.search.OnChanged = func(s string) {
 			ag.filter = s

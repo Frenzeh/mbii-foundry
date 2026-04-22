@@ -51,19 +51,19 @@ func (p *PointBuyUI) createUI() {
 	grid.Add(widget.NewLabelWithStyle("Rank", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}))
 
 	for i := 0; i < 15; i++ {
-		skill := widget.NewEntry()
+		skill := NewInputEntry()
 		skill.SetPlaceHolder(fmt.Sprintf("SKILL_%d", i))
 		skill.OnChanged = p.makeSkillEntryOnChanged(i)
 		p.skillEntries[i] = skill
 		grid.Add(skill)
 
-		name := widget.NewEntry()
+		name := NewInputEntry()
 		name.SetPlaceHolder("Display Name")
 		name.OnChanged = p.makeNameEntryOnChanged(i)
 		p.nameEntries[i] = name
 		grid.Add(name)
 
-		rank := widget.NewEntry()
+		rank := NewInputEntry()
 		rank.SetPlaceHolder("0-5")
 		rank.OnChanged = p.makeRankEntryOnChanged(i)
 		p.rankEntries[i] = rank
@@ -89,7 +89,7 @@ func (p *PointBuyUI) createUI() {
 func (p *PointBuyUI) showAddRankAttrDialog() {
 	keySelect := widget.NewSelectEntry(KnownRankAttributes)
 	keySelect.PlaceHolder = "Select or type attribute (e.g., rankHealth)"
-	valueEntry := widget.NewEntry()
+	valueEntry := NewInputEntry()
 	valueEntry.PlaceHolder = "Comma-separated values (e.g., 100,120,150)"
 
 	dialog.ShowCustomConfirm("Add Rank Attribute", "Add", "Cancel", container.NewVBox(
@@ -112,7 +112,7 @@ func (p *PointBuyUI) refreshRankAttributes() {
 	for key, val := range p.editor.character.RankAttributes {
 		k := key // capture for closure
 
-		entry := widget.NewEntry()
+		entry := NewInputEntry()
 		entry.SetText(val)
 		entry.OnChanged = func(s string) {
 			p.editor.character.RankAttributes[k] = s

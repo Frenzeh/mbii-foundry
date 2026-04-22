@@ -224,7 +224,7 @@ func (ms *MultiSelectWidget) showSelectionDialog() {
 
 	renderList("") // Initial render
 
-	searchEntry := widget.NewEntry()
+	searchEntry := NewInputEntry()
 	searchEntry.SetPlaceHolder("Search...")
 	searchEntry.OnChanged = func(s string) {
 		renderList(s)
@@ -274,4 +274,27 @@ func (b *HoverButton) MouseOut() {
 	if b.onHoverOut != nil {
 		b.onHoverOut()
 	}
+}
+
+// Input-field constructors — force Monospace so FoundryTheme.Font
+// returns Hack. Any field the user types into is a "portal" to
+// editing raw game data; monospace makes path fragments, filenames,
+// and numeric values easier to scan and line up. Use these everywhere
+// instead of bare widget.NewEntry / NewMultiLineEntry / NewPasswordEntry.
+func NewInputEntry() *widget.Entry {
+	e := widget.NewEntry()
+	e.TextStyle = fyne.TextStyle{Monospace: true}
+	return e
+}
+
+func NewMultiLineInputEntry() *widget.Entry {
+	e := widget.NewMultiLineEntry()
+	e.TextStyle = fyne.TextStyle{Monospace: true}
+	return e
+}
+
+func NewPasswordInputEntry() *widget.Entry {
+	e := widget.NewPasswordEntry()
+	e.TextStyle = fyne.TextStyle{Monospace: true}
+	return e
 }

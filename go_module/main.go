@@ -13,6 +13,7 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
@@ -39,6 +40,8 @@ type App struct {
 	assetBrowser *AssetBrowser
 	infoPanel    *InfoPanel
 	sourcePanel  *SourcePanel
+	activityBar  *SidebarHeader // top-of-sidebar horizontal activity switcher (legacy field name)
+	sidebarHost  *fyne.Container // swap target for the active activity's content
 
 	fileManager   *FileManager
 	githubManager *GitHubManager
@@ -49,6 +52,13 @@ type App struct {
 	split          *container.Split   // Reference to split layout
 	sideTabs       *container.AppTabs // Reference to sidebar
 	sidebarVisible bool
+
+	// Live refs to the current HSplits so we can read back the user's
+	// drag offset before the next updateMainLayout rebuild wipes them.
+	// Without this, dragging the divider had no persistent effect: every
+	// rebuild called SetOffset with the stale config value.
+	sidebarSplit *container.Split
+	sourceSplit  *container.Split
 
 	// Holocron Integration
 	holocronClient *HolocronClient
@@ -75,6 +85,10 @@ type AppConfig struct {
 	// Right-side live source panel. Remembered across sessions.
 	SourcePanelVisible bool    `json:"source_panel_visible"`
 	SourcePanelOffset  float32 `json:"source_panel_offset"` // 0 = collapsed, 1 = full
+
+	// Left-side activity bar: the currently-selected activity id
+	// (files/library/modpacks/workspace). Empty = use the default.
+	ActiveActivity string `json:"active_activity"`
 
 	// Hover tooltips for enum values. Default is on; users who find
 	// them distracting can flip this off in Preferences.
@@ -125,6 +139,49 @@ func (h FoundryTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant)
 		return blendColors(base, CurrentThemeColor, 0.04)
 	}
 
+	// Dark variant surface overrides. Fyne's default dark theme gives
+	// us generic grey for buttons, hover, selections, separators —
+	// which looks out of place next to our accent-driven chrome. These
+	// overrides keep those surfaces on-brand: tinted darks for resting
+	// states, alpha-accent for interactive states. Light variant keeps
+	// Fyne defaults since it hasn't been design-audited.
+	if variant == theme.VariantDark {
+		switch name {
+		case theme.ColorNameButton:
+			// Default button background: subtle raised surface with a
+			// whisper of accent. Used by widget.Button without LowImp.
+			return blendColors(color.RGBA{R: 40, G: 40, B: 40, A: 255}, CurrentThemeColor, 0.06)
+		case theme.ColorNameDisabled:
+			return color.NRGBA{R: 120, G: 120, B: 120, A: 255}
+		case theme.ColorNameDisabledButton:
+			return color.NRGBA{R: 32, G: 32, B: 32, A: 255}
+		case theme.ColorNameHover:
+			// Accent tint at low alpha — our standard interactive hint.
+			return tintWithAlpha(CurrentThemeColor, 45)
+		case theme.ColorNamePressed:
+			return tintWithAlpha(CurrentThemeColor, 90)
+		case theme.ColorNameFocus:
+			return tintWithAlpha(CurrentThemeColor, 110)
+		case theme.ColorNameSelection:
+			return tintWithAlpha(CurrentThemeColor, 80)
+		case theme.ColorNameSeparator:
+			// Thin lines between list items / form rows. Slightly
+			// warmer than pure grey so they harmonize with the
+			// accent-tinted base.
+			return color.NRGBA{R: 60, G: 60, B: 60, A: 160}
+		case theme.ColorNameInputBorder:
+			return color.NRGBA{R: 80, G: 80, B: 80, A: 200}
+		case theme.ColorNameScrollBar:
+			return tintWithAlpha(CurrentThemeColor, 80)
+		case theme.ColorNameShadow:
+			return color.NRGBA{R: 0, G: 0, B: 0, A: 140}
+		case theme.ColorNameMenuBackground:
+			return blendColors(color.RGBA{R: 32, G: 32, B: 32, A: 255}, CurrentThemeColor, 0.05)
+		case theme.ColorNameHeaderBackground:
+			return blendColors(color.RGBA{R: 22, G: 22, B: 22, A: 255}, CurrentThemeColor, 0.08)
+		}
+	}
+
 	return theme.DefaultTheme().Color(name, variant)
 }
 
@@ -147,15 +204,61 @@ func blendColors(c1, c2 color.Color, ratio float32) color.Color {
 }
 
 func (h FoundryTheme) Font(style fyne.TextStyle) fyne.Resource {
+	// Monospace code always gets Hack.
+	if style.Monospace {
+		if embedFont != nil {
+			return fyne.NewStaticResource("font.ttf", embedFont)
+		}
+		return theme.DefaultTheme().Font(style)
+	}
+	// Regular UI text gets Jost at an appropriate weight.
+	// Bold text picks the Bold face; other text uses Regular. This is
+	// more targeted than "everything non-mono = display font" — avoids
+	// the over-application of display type to running body content.
+	switch {
+	case style.Bold && embedJostBold != nil:
+		return fyne.NewStaticResource("jost-bold.ttf", embedJostBold)
+	case embedJostRegular != nil:
+		return fyne.NewStaticResource("jost-regular.ttf", embedJostRegular)
+	}
+	return theme.DefaultTheme().Font(style)
+}
+
+// DisplayFontResource returns a SemiBold display face for use with
+// canvas.Text when we want a size-driven hero moment. Nil-safe.
+func DisplayFontResource() fyne.Resource {
+	if embedJostSemibold != nil {
+		return fyne.NewStaticResource("jost-semibold.ttf", embedJostSemibold)
+	}
+	return nil
+}
+
+// MonoFontResource returns the bundled monospace font (Hack). Nil-safe.
+func MonoFontResource() fyne.Resource {
 	if embedFont != nil {
 		return fyne.NewStaticResource("font.ttf", embedFont)
 	}
-	return theme.DefaultTheme().Font(style)
+	return nil
 }
 func (h FoundryTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
 	return theme.DefaultTheme().Icon(name)
 }
 func (h FoundryTheme) Size(name fyne.ThemeSizeName) float32 { return theme.DefaultTheme().Size(name) }
+
+// Panel-push icons wrapped as themed resources so Fyne tints them
+// with the current theme's foreground color automatically.
+func PanelCollapseLeftIcon() fyne.Resource {
+	return theme.NewThemedResource(fyne.NewStaticResource("panel-collapse-left.svg", embedPanelCollapseLeft))
+}
+func PanelExpandLeftIcon() fyne.Resource {
+	return theme.NewThemedResource(fyne.NewStaticResource("panel-expand-left.svg", embedPanelExpandLeft))
+}
+func PanelCollapseRightIcon() fyne.Resource {
+	return theme.NewThemedResource(fyne.NewStaticResource("panel-collapse-right.svg", embedPanelCollapseRight))
+}
+func PanelExpandRightIcon() fyne.Resource {
+	return theme.NewThemedResource(fyne.NewStaticResource("panel-expand-right.svg", embedPanelExpandRight))
+}
 
 func (a *App) applyThemeColor(colorName string) {
 	switch strings.ToLower(colorName) {
@@ -241,6 +344,13 @@ func main() {
 	// Check for first run / missing configuration
 	application.checkFirstRun()
 
+	// Persist whatever the user dragged the split dividers to as the
+	// window closes — no other code path captures a last-minute drag.
+	application.mainWindow.SetCloseIntercept(func() {
+		application.persistSplitOffsets()
+		application.mainWindow.Close()
+	})
+
 	application.mainWindow.ShowAndRun()
 }
 
@@ -292,26 +402,20 @@ func (a *App) setupUI() {
 	}
 	a.docTabs.SetTabLocation(container.TabLocationTop)
 
-	a.statusLabel = widget.NewLabel("Ready")
+	// Starts empty — no "Ready" default. The status bar is there for
+	// meaningful messages ("Opened X", "Saved Y") not for a permanent
+	// "Ready" word that says nothing. updateMainLayout collapses the
+	// bar when the label is empty so the chrome disappears with it.
+	a.statusLabel = widget.NewLabel("")
 	a.statusLabel.TextStyle = fyne.TextStyle{Italic: true}
 
 	// Dev-mode status icon. Only displayed when MBII_FOUNDRY_DEV is set;
 	// updateMainLayout hides the whole label/icon pair for regular users.
 	a.holocronStatus = widget.NewIcon(theme.CancelIcon())
 
-	// Left sidebar: just Assets now. The Info panel moved off the sidebar
-	// in favor of the right-side live-source view. Hover descriptions
-	// still fire — but via a transient tooltip popup (see
-	// showHoverTooltip) instead of a dedicated pane. The full Reference
-	// Library is still accessible via the 📖 toolbar button, which opens
-	// the InfoPanel as a modal.
-	assetsTab := container.NewTabItem("Assets", a.assetBrowser.GetContent())
-	assetsTab.Icon = theme.FolderOpenIcon()
-
-	// Wire double-click-to-open for file-system assets. Was previously
-	// only wired in the CustomFilePicker; in the sidebar browser,
-	// double-tapping an .mbch did nothing. Now routes to
-	// openFileFromPath which picks the right editor from the extension.
+	// Double-click-to-open for file-system assets. Active both in the
+	// sidebar asset browser (when "Files" activity is selected) and in
+	// any future pop-out dialog.
 	a.assetBrowser.SetOnAssetDouble(func(asset *AssetEntry) {
 		if asset == nil || asset.IsDir || asset.Path == "" || asset.PK3Source != "" {
 			return
@@ -319,7 +423,51 @@ func (a *App) setupUI() {
 		a.openFileFromPath(asset.Path)
 	})
 
-	a.sideTabs = container.NewAppTabs(assetsTab)
+	// Activity bar: VS-Code-style vertical icon strip on the far left.
+	// Each icon owns the left sidebar's content — click to switch. Gives
+	// depth-heavy apps a clean way to expose every workflow without
+	// cramming them all into simultaneous panels.
+	// Activity items for the sidebar's horizontal header. Each pill is
+	// icon+label; the active pill is full-opacity, inactive ones are
+	// dimmed. The user picks which activity is showing by clicking the
+	// pill — the previous vertical icon strip was non-obvious, so the
+	// switcher moved into the sidebar's own header where the pill-to-
+	// content relationship is direct.
+	activities := []*ActivityItem{
+		{ID: "files", Label: "Files", Tooltip: "Browse assets and TextAssets",
+			Icon: theme.FolderIcon(), Content: a.assetBrowser.GetContent()},
+		{ID: "library", Label: "Library", Tooltip: "Enum reference and glossary",
+			Icon: theme.ListIcon(), Content: a.infoPanel.GetContent()},
+		{ID: "modpacks", Label: "Modpacks", Tooltip: "Bundle changes into pk3s",
+			Icon: theme.StorageIcon(), Content: a.modpackManager.GetContent()},
+	}
+
+	// Host that holds the currently-active activity's content. Swapped
+	// by the sidebar header's onSelect below.
+	a.sidebarHost = container.NewStack()
+
+	a.activityBar = NewSidebarHeader(activities,
+		func(it *ActivityItem) {
+			a.sidebarHost.Objects = []fyne.CanvasObject{it.Content}
+			a.sidebarHost.Refresh()
+			a.config.ActiveActivity = it.ID
+			a.saveConfig()
+		},
+		func() { // collapse toggle on the right edge of the header
+			a.toggleSidebar()
+		})
+
+	// Choose initial activity: persisted preference → default to Files.
+	initialActivity := a.config.ActiveActivity
+	if initialActivity == "" {
+		initialActivity = "files"
+	}
+	a.activityBar.SetActive(initialActivity)
+
+	// sideTabs kept only as a type-compatibility placeholder — the
+	// legacy AppTabs reference isn't used in the new layout but other
+	// code paths may still hold pointers.
+	a.sideTabs = container.NewAppTabs()
 	a.sideTabs.SetTabLocation(container.TabLocationBottom)
 
 	// Initial "Home" Tab
@@ -333,60 +481,88 @@ func (a *App) setupUI() {
 }
 
 func (a *App) updateMainLayout() {
-	// Sidebar Toggle
-	toggleIcon := theme.NavigateBackIcon() // Point Left (Show)
-	if a.sidebarVisible {
-		toggleIcon = theme.NavigateNextIcon() // Point Right (Hide)
-	}
-	toggleBtn := widget.NewButtonWithIcon("", toggleIcon, func() { a.toggleSidebar() })
-	toggleBtn.Importance = widget.LowImportance
+	// Before tearing down the existing layout, pull whatever the user
+	// just dragged the dividers to back into config. Otherwise the next
+	// SetOffset below would snap them to the stale saved value and it'd
+	// look like dragging does nothing.
+	a.persistSplitOffsets()
 
-	// Source-panel toggle. Icon flips open-eye / closed-eye style —
-	// using Fyne's built-ins since we don't ship custom icons.
-	var sourceIcon fyne.Resource = theme.VisibilityOffIcon()
-	if a.config.SourcePanelVisible {
-		sourceIcon = theme.VisibilityIcon()
+	// Keep the activity bar's collapse icon in sync with the current
+	// sidebar state. The toggle lives on the activity bar now (bottom
+	// of the left strip) — the old status-bar toggle is gone.
+	if a.activityBar != nil {
+		a.activityBar.SetCollapsed(!a.sidebarVisible)
 	}
-	sourceBtn := widget.NewButtonWithIcon("", sourceIcon, func() { a.toggleSourcePanel() })
-	sourceBtn.Importance = widget.LowImportance
 
-	// StatusBar container. The Holocron status indicator only surfaces in
-	// dev mode (set MBII_FOUNDRY_DEV=1); regular users see a clean status
-	// bar with no mention of internal tooling.
-	statusBarItems := []fyne.CanvasObject{
-		a.statusLabel,
-		layout.NewSpacer(),
-		widget.NewLabel("Source:"),
-		sourceBtn,
-		widget.NewSeparator(),
-		toggleBtn,
+	// StatusBar container. Only built when there's something to show —
+	// an empty statusLabel gets collapsed entirely so no "Ready" dead
+	// space sits at the bottom of the window. Holocron indicator only
+	// surfaces in dev mode.
+	var statusBar fyne.CanvasObject
+	hasStatus := a.statusLabel.Text != "" || a.holocronClient != nil
+	if hasStatus {
+		statusBarItems := []fyne.CanvasObject{
+			a.statusLabel,
+			layout.NewSpacer(),
+		}
+		if a.holocronClient != nil {
+			statusBarItems = append(statusBarItems,
+				widget.NewSeparator(),
+				widget.NewLabel("Holocron:"),
+				a.holocronStatus,
+			)
+		}
+		statusBar = container.NewHBox(statusBarItems...)
 	}
-	if a.holocronClient != nil {
-		statusBarItems = append(statusBarItems,
-			widget.NewSeparator(),
-			widget.NewLabel("Holocron:"),
-			a.holocronStatus,
-		)
-	}
-	statusBar := container.NewHBox(statusBarItems...)
 
-	// Layered center: docTabs (required), side panels (optional).
-	// The source panel lives on the right, sidebar on the left. Either
-	// or both can be hidden independently — persisted in config so
-	// preferences stick across launches.
-	var centerContent fyne.CanvasObject = a.docTabs
-	if a.sidebarVisible {
-		a.split = container.NewHSplit(centerContent, a.sideTabs)
-		a.split.SetOffset(float64(a.config.SidebarOffset))
-		centerContent = a.split
+	// Compose the center: [sidebar | docTabs+edge-rails | source-panel]
+	// Each side pane is either shown fully (split) OR collapsed to a
+	// narrow edge rail that peeks on the side of the docTabs area.
+	// Activity switching happens in the sidebar's own header.
+	a.sidebarSplit = nil
+	a.sourceSplit = nil
+
+	// Start with docTabs, then attach edge rails if either panel is
+	// collapsed. Rails sit as Border sides so docTabs still fills the
+	// remaining area.
+	docArea := fyne.CanvasObject(a.docTabs)
+	var leftRail, rightRail fyne.CanvasObject
+	if !a.sidebarVisible {
+		leftRail = collapsedEdgeRail(PanelExpandLeftIcon(), a.toggleSidebar, "Show sidebar")
 	}
+	if !a.config.SourcePanelVisible {
+		rightRail = collapsedEdgeRail(PanelExpandRightIcon(), a.toggleSourcePanel, "Show source panel")
+	}
+	if leftRail != nil || rightRail != nil {
+		docArea = container.NewBorder(nil, nil, leftRail, rightRail, docArea)
+	}
+	var centerContent fyne.CanvasObject = docArea
+
+	// Sidebar: [SidebarHeader] / [active-activity content]. Only built
+	// when visible — when collapsed, the leftRail above offers the
+	// expand affordance instead.
+	if a.sidebarVisible && a.sidebarHost != nil && a.activityBar != nil {
+		sidebarPanel := container.NewBorder(a.activityBar, nil, nil, nil, a.sidebarHost)
+		sidebarSplit := container.NewHSplit(sidebarPanel, centerContent)
+		sidebarOff := a.config.SidebarOffset
+		if sidebarOff <= 0 || sidebarOff >= 1 {
+			sidebarOff = 0.25
+		}
+		sidebarSplit.SetOffset(float64(sidebarOff))
+		a.sidebarSplit = sidebarSplit
+		centerContent = sidebarSplit
+	}
+
+	// Source panel on the right. Collapsed → rightRail above handles
+	// the expand affordance.
 	if a.config.SourcePanelVisible && a.sourcePanel != nil {
 		sourceSplit := container.NewHSplit(centerContent, a.sourcePanel.GetContent())
 		offset := a.config.SourcePanelOffset
 		if offset <= 0 || offset >= 1 {
-			offset = 0.6
+			offset = 0.65
 		}
 		sourceSplit.SetOffset(float64(offset))
+		a.sourceSplit = sourceSplit
 		centerContent = sourceSplit
 	}
 
@@ -526,6 +702,57 @@ func (a *App) showLibraryModal() {
 	win.Show()
 }
 
+// collapsedEdgeRail returns a CollapsedRail widget — a thin vertical
+// strip that stands in for a collapsed panel. Hovering the whole
+// strip fills it with the accent tint (so the user can see the
+// panel's full extent before committing to restore it); clicking
+// anywhere on the strip restores the panel. The arrow icon sits at
+// the top as a visual hint of the direction.
+func collapsedEdgeRail(icon fyne.Resource, onTap func(), tooltip string) fyne.CanvasObject {
+	return NewCollapsedRail(icon, onTap, tooltip)
+}
+
+// sectionHeading renders a bold small-caps label + thin accent rule,
+// used to group form rows in modal dialogs (Preferences, etc.).
+// Replaces the ugly empty-label + separator spacer rows that rendered
+// as dark bands on the dark theme.
+func sectionHeading(title string) fyne.CanvasObject {
+	label := canvas.NewText(title, theme.PlaceHolderColor())
+	label.TextSize = SizeSmall
+	label.TextStyle = fyne.TextStyle{Bold: true}
+
+	rule := canvas.NewRectangle(tintWithAlpha(CurrentThemeColor, 90))
+	rule.SetMinSize(fyne.NewSize(0, 2))
+
+	return container.NewVBox(label, rule)
+}
+
+// persistSplitOffsets snapshots whatever offsets the user dragged the
+// split dividers to and writes them into config. Called right before
+// any rebuild that would otherwise discard the in-memory splits, and
+// on save/close so the offsets survive across sessions. Cheap — just
+// field reads and a small float write.
+func (a *App) persistSplitOffsets() {
+	changed := false
+	if a.sidebarSplit != nil {
+		off := float32(a.sidebarSplit.Offset)
+		if off > 0 && off < 1 && off != a.config.SidebarOffset {
+			a.config.SidebarOffset = off
+			changed = true
+		}
+	}
+	if a.sourceSplit != nil {
+		off := float32(a.sourceSplit.Offset)
+		if off > 0 && off < 1 && off != a.config.SourcePanelOffset {
+			a.config.SourcePanelOffset = off
+			changed = true
+		}
+	}
+	if changed {
+		a.saveConfig()
+	}
+}
+
 func (a *App) toggleSourcePanel() {
 	a.config.SourcePanelVisible = !a.config.SourcePanelVisible
 	if a.config.SourcePanelOffset <= 0 {
@@ -556,9 +783,24 @@ func (a *App) createNewFile(title string, editor interface{}) {
 		ed.SetHolocronClient(a.holocronClient)
 
 		tab := container.NewTabItem("Untitled "+title, ed.GetContent())
+		// Register the mapping BEFORE Append AND Select. Append can
+		// auto-select the new tab when it's the only one (e.g. right
+		// after the Home tab was removed), firing OnSelected before any
+		// later bookkeeping runs. If the map isn't populated yet, the
+		// source panel sees nil and gets stuck on its "Select a file"
+		// placeholder. Registering first makes both auto-select on
+		// Append and explicit Select resolve the editor correctly.
+		a.editors[tab] = ed
 		a.docTabs.Append(tab)
 		a.docTabs.Select(tab)
-		a.editors[tab] = ed
+		// Belt-and-suspenders: explicitly point the source panel at the
+		// new editor. Fyne's DocTabs.OnSelected firing across
+		// remove/append/select is historically inconsistent; doing the
+		// wire-up directly is cheap and guarantees the live-source view
+		// shows content on the first open.
+		if a.sourcePanel != nil {
+			a.sourcePanel.SetActiveEditor(ed)
+		}
 
 		// Set up dirty change handler to update tab title
 		if mbch, ok := ed.(*MBCHEditor); ok {
@@ -668,22 +910,35 @@ func (a *App) closeTab(tab *container.TabItem) {
 
 func (a *App) removeTab(tab *container.TabItem) {
 	delete(a.editors, tab)
-	// If no tabs left, show Welcome
+	// Clear the live source panel — whatever was being tracked is
+	// about to be torn down (or has been), so leaving the panel
+	// pointed at it risks stale refreshes.
+	if a.sourcePanel != nil {
+		a.sourcePanel.SetActiveEditor(nil)
+	}
+
+	// If no tabs remain, the user closed the last editor (or Home).
+	// Re-add the welcome screen so the app never ends up on a blank
+	// document area with no way back.
 	if len(a.docTabs.Items) == 0 {
 		welcomeScreen := NewWelcomeScreen(a)
 		welcomeTab := container.NewTabItem("Home", welcomeScreen.GetContent())
 		welcomeTab.Icon = theme.HomeIcon()
 		a.docTabs.Append(welcomeTab)
 		a.docTabs.Select(welcomeTab)
+		// Force the DocTabs to repaint — Append inside an OnClosed
+		// callback can otherwise leave the tab strip stale for a tick
+		// and the user sees a blank content area.
+		a.docTabs.Refresh()
 	}
 }
 
 func (a *App) createToolbar() fyne.CanvasObject {
-	// Helper for tooltip buttons in toolbar
-	btn := func(icon fyne.Resource, action func(), tooltip string) *TooltipButton {
-		b := NewTooltipButton("", icon, action, tooltip)
-		b.Importance = widget.LowImportance
-		return b
+	// Toolbar buttons use ToolbarButton (icon-only, subtle accent
+	// hover) instead of widget.Button's grey Material hover which was
+	// a visual mismatch with the dark/accent design.
+	btn := func(icon fyne.Resource, action func(), tooltip string) *ToolbarButton {
+		return NewToolbarButton("", icon, action, tooltip)
 	}
 
 	items := []fyne.CanvasObject{
@@ -724,9 +979,17 @@ func (a *App) createToolbar() fyne.CanvasObject {
 
 		// Push to Right
 		layout.NewSpacer(),
+	)
 
-		// Tools & View (Right)
-		btn(theme.DocumentIcon(), func() { a.showLibraryModal() }, "Reference Library (browse all enums + docs)"),
+	// No panel toggles in the toolbar. When a panel is collapsed its
+	// expand button shows up as an edge rail on the main area (see
+	// collapsedEdgeRail in updateMainLayout) — that's a natural place
+	// to click "bring the panel back" and keeps the toolbar focused
+	// on file ops + app-level controls.
+	items = append(items,
+		// Tools & View (Right). The Library moved to the sidebar
+		// header so reference docs are one click away without needing
+		// a modal.
 		btn(theme.SettingsIcon(), func() { a.showPreferences() }, "Preferences"),
 		btn(theme.InfoIcon(), func() { a.showLogs() }, "Show Debug Logs"),
 		btn(theme.HelpIcon(), func() { a.showAbout() }, "About MBII Foundry"),
@@ -797,7 +1060,7 @@ func (a *App) showLogs() {
 		text = string(content)
 	}
 
-	entry := widget.NewMultiLineEntry()
+	entry := NewMultiLineInputEntry()
 	entry.SetText(text)
 	entry.TextStyle = fyne.TextStyle{Monospace: true}
 
@@ -1018,9 +1281,20 @@ func (a *App) loadConfig() {
 		json.Unmarshal(data, &a.config)
 	}
 
-	// Set default sidebar offset if not configured
-	if a.config.SidebarOffset == 0 {
-		a.config.SidebarOffset = 0.8
+	// Set default sidebar offset if not configured. New activity-bar
+	// layout puts the sidebar on the left; 0.25 = quarter for sidebar,
+	// three-quarters for the editor. (Old layout used 0.8 with the
+	// sidebar on the right; we overwrite stale values from that era.)
+	if a.config.SidebarOffset == 0 || a.config.SidebarOffset >= 0.6 {
+		a.config.SidebarOffset = 0.25
+	}
+
+	// Source panel defaults on for first-launch users. We default to
+	// visible iff no saved offset exists (= config was never written
+	// with these keys), so existing users who turned it off keep that.
+	if a.config.SourcePanelOffset == 0 {
+		a.config.SourcePanelVisible = true
+		a.config.SourcePanelOffset = 0.65
 	}
 
 	// Apply Theme
@@ -1031,7 +1305,14 @@ func (a *App) loadConfig() {
 }
 
 func (a *App) updateStatus(msg string) {
+	wasEmpty := a.statusLabel.Text == ""
 	a.statusLabel.SetText(fmt.Sprintf("[%s] %s", time.Now().Format("15:04:05"), msg))
+	// If the status bar was collapsed (empty text), we need to rebuild
+	// the layout so it appears. Only rebuilds on the transition — most
+	// updates just mutate the label in place.
+	if wasEmpty && a.mainWindow != nil {
+		a.updateMainLayout()
+	}
 }
 
 func (a *App) updateTabTitle(tab *container.TabItem, isDirty bool) {
@@ -1045,13 +1326,13 @@ func (a *App) updateTabTitle(tab *container.TabItem, isDirty bool) {
 }
 
 func (a *App) showPreferences() {
-	gamedataEntry := widget.NewEntry()
+	gamedataEntry := NewInputEntry()
 	gamedataEntry.SetText(a.config.GamedataPath)
 
-	textAssetsEntry := widget.NewEntry()
+	textAssetsEntry := NewInputEntry()
 	textAssetsEntry.SetText(a.config.TextAssetsPath)
 
-	md3viewEntry := widget.NewEntry()
+	md3viewEntry := NewInputEntry()
 	md3viewEntry.SetText(a.config.MD3ViewPath)
 
 	themeSelect := widget.NewSelect([]string{"Blue (Jedi)", "Red (Sith)", "Gold (Foundry)", "Green (Console)", "Orange (Rebel)", "Purple (Mace)"}, nil)
@@ -1105,9 +1386,56 @@ func (a *App) showPreferences() {
 		}, a.mainWindow)
 	}
 
-	form := widget.NewForm(
+	// Secondary buttons (download, update, get token) — LowImportance
+	// so they don't compete with the primary Save action. Previous
+	// version used plain widget.NewButton which rendered as Material-
+	// style grey boxes, a jarring mismatch with the rest of the flat
+	// red-accent design language.
+	downloadMD3Btn := widget.NewButton("Download MD3View", func() {
+		if u, err := url.Parse("https://github.com/JACoders/md3view/releases"); err == nil {
+			a.fyneApp.OpenURL(u)
+		}
+	})
+	downloadMD3Btn.Importance = widget.LowImportance
+
+	tokenEntry := NewPasswordInputEntry()
+	tokenEntry.SetText(a.config.GitHubToken)
+	tokenEntry.OnChanged = func(s string) {
+		a.config.GitHubToken = s
+		if a.config.TextAssetsPath != "" {
+			a.githubManager = NewGitHubManager(s, a.config.TextAssetsPath)
+		}
+	}
+	getTokenBtn := widget.NewButton("Get Token", func() {
+		if u, err := url.Parse("https://github.com/settings/tokens/new?scopes=repo&description=FA%20Creator"); err == nil {
+			a.fyneApp.OpenURL(u)
+		}
+	})
+	getTokenBtn.Importance = widget.LowImportance
+
+	updateEnumBtn := NewTooltipButton("Update Data from GitHub", nil, func() {
+		updateStatusLabel.SetText("Updating…")
+		go func() {
+			result, err := UpdateDataFromGitHub()
+			if err != nil {
+				updateStatusLabel.SetText("⚠ " + result)
+			} else {
+				updateStatusLabel.SetText("✓ " + result)
+			}
+		}()
+	}, "Download latest enum definitions from GitHub")
+	updateEnumBtn.Importance = widget.LowImportance
+
+	// Form rows, grouped with visible section headers instead of empty-
+	// label + separator spacer rows. The spacer rows rendered as ugly
+	// dark bands across the dialog — an accidental consequence of the
+	// dark theme + Fyne's form row padding.
+	coreForm := widget.NewForm(
 		widget.NewFormItem("Theme Color", themeSelect),
 		widget.NewFormItem("Info Tooltips", tooltipsCheck),
+	)
+
+	pathsForm := widget.NewForm(
 		widget.NewFormItem("Gamedata Path", a.NewPathEntryWithFavorites(gamedataEntry, prefsBrowseGamedata)),
 		widget.NewFormItem("TextAssets Path", a.NewPathEntryWithFavorites(textAssetsEntry, prefsBrowseTextAssets)),
 		widget.NewFormItem("MD3View Path", container.NewBorder(nil, nil, nil,
@@ -1118,60 +1446,28 @@ func (a *App) showPreferences() {
 					}
 				}, a.mainWindow)
 			}, "Select the md3view executable for model previews"), md3viewEntry)),
+	)
 
-		widget.NewFormItem("", func() fyne.CanvasObject {
-			return widget.NewButton("Download MD3View (Required for Previews)", func() {
-				// Link to JACoders or a reliable mirror
-				if u, err := url.Parse("https://github.com/JACoders/md3view/releases"); err == nil {
-					a.fyneApp.OpenURL(u)
-				}
-			})
-		}()),
+	githubForm := widget.NewForm(
+		widget.NewFormItem("GitHub Token", container.NewBorder(nil, nil, nil, getTokenBtn, tokenEntry)),
+	)
 
-		widget.NewFormItem("", widget.NewSeparator()),
+	form := container.NewVBox(
+		sectionHeading("GENERAL"),
+		coreForm,
+		Gap(SpaceMD),
 
-		// GitHub Config
-		widget.NewFormItem("GitHub Token", func() fyne.CanvasObject {
-			tokenEntry := widget.NewPasswordEntry()
-			tokenEntry.SetText(a.config.GitHubToken)
+		sectionHeading("PATHS"),
+		pathsForm,
+		container.NewPadded(downloadMD3Btn),
+		Gap(SpaceMD),
 
-			helpBtn := widget.NewButton("Get Token", func() {
-				// Open browser to token creation page
-				// Note: Ideally use Device Flow, but for now simple link
-				// "https://github.com/settings/tokens/new?scopes=repo&description=FA%20Creator"
-				if u, err := url.Parse("https://github.com/settings/tokens/new?scopes=repo&description=FA%20Creator"); err == nil {
-					a.fyneApp.OpenURL(u)
-				}
-			})
+		sectionHeading("GITHUB ACCESS"),
+		githubForm,
+		Gap(SpaceMD),
 
-			// On change, update config and manager
-			tokenEntry.OnChanged = func(s string) {
-				a.config.GitHubToken = s
-				// Re-init manager
-				if a.config.TextAssetsPath != "" {
-					a.githubManager = NewGitHubManager(s, a.config.TextAssetsPath)
-				}
-			}
-
-			return container.NewBorder(nil, nil, nil, helpBtn, tokenEntry)
-		}()),
-
-		widget.NewFormItem("", widget.NewSeparator()),
-
-		widget.NewFormItem("Enum Data", container.NewVBox(
-			NewTooltipButton("Update Data from GitHub", nil, func() {
-				updateStatusLabel.SetText("Updating...")
-				go func() {
-					result, err := UpdateDataFromGitHub()
-					if err != nil {
-						updateStatusLabel.SetText("⚠ " + result)
-					} else {
-						updateStatusLabel.SetText("✓ " + result)
-					}
-				}()
-			}, "Download latest enum definitions from GitHub"),
-			updateStatusLabel,
-		)),
+		sectionHeading("DATA"),
+		container.NewPadded(container.NewVBox(updateEnumBtn, updateStatusLabel)),
 	)
 
 	dialog.ShowCustomConfirm("Preferences", "Save", "Cancel", form, func(b bool) {
@@ -1309,11 +1605,11 @@ To enable the **Asset Browser**, **Visual Editor**, and **Model Previews**, we n
 3. You can configure **MD3View** later in Preferences for 3D previews.
 `)
 
-	gamedataEntry := widget.NewEntry()
+	gamedataEntry := NewInputEntry()
 	gamedataEntry.PlaceHolder = "e.g. C:\\Program Files (x86)\\LucasArts\\Star Wars Jedi Knight Jedi Academy\\GameData"
 	gamedataEntry.SetText(a.config.GamedataPath)
 
-	textAssetsEntry := widget.NewEntry()
+	textAssetsEntry := NewInputEntry()
 	textAssetsEntry.PlaceHolder = "Optional — path to your TextAssets Git checkout"
 	textAssetsEntry.SetText(a.config.TextAssetsPath)
 

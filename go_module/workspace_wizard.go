@@ -18,7 +18,7 @@ func (a *App) showWorkspaceSetupWizard() {
 	}
 
 	// 1. Path Selection
-	pathEntry := widget.NewEntry()
+	pathEntry := NewInputEntry()
 	if a.config.TextAssetsPath != "" {
 		pathEntry.SetText(a.config.TextAssetsPath)
 	} else {

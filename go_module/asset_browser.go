@@ -358,7 +358,7 @@ func (ab *AssetBrowser) createUI() {
 	})
 	ab.quickNavSelect.PlaceHolder = "Quick Nav..."
 
-	ab.searchEntry = widget.NewEntry()
+	ab.searchEntry = NewInputEntry()
 	ab.searchEntry.SetPlaceHolder("Search...")
 	ab.searchEntry.OnChanged = func(s string) { ab.filterGrid(s) }
 
@@ -478,7 +478,10 @@ func (ab *AssetBrowser) createUI() {
 	}
 
 	ab.grid = container.NewGridWrap(fyne.NewSize(ab.iconSize, ab.iconSize+30)) // Init with size
-	ab.statusLabel = widget.NewLabel("Ready")
+	// Empty by default — "Ready" was noise that duplicated the app's
+	// global status label. This label now just mirrors directory
+	// load results (see loadFS / loadPK3).
+	ab.statusLabel = widget.NewLabel("")
 
 	split := container.NewHSplit(container.NewScroll(ab.tree), container.NewScroll(ab.grid))
 	split.SetOffset(0.3)

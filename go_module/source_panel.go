@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
@@ -87,8 +88,22 @@ func NewSourcePanel(a *App) *SourcePanel {
 	})
 	copyBtn.Importance = widget.LowImportance
 
-	topRow := container.NewBorder(nil, nil, sp.header, container.NewHBox(sp.byteCount, copyBtn))
-	sp.container = container.NewBorder(topRow, nil, nil, nil, container.NewScroll(sp.content))
+	// Collapse button — mirrors the sidebar's push-arrow design so
+	// both panels use the same visual language for "minimize me."
+	// Panel-collapse-right says "push to the right edge."
+	collapseBtn := widget.NewButtonWithIcon("", PanelCollapseRightIcon(), func() {
+		a.toggleSourcePanel()
+	})
+	collapseBtn.Importance = widget.LowImportance
+
+	// Thin accent rule under the header, matching the sidebar header
+	// treatment so both panels read as part of the same design.
+	rule := canvas.NewRectangle(tintWithAlpha(CurrentThemeColor, 90))
+	rule.SetMinSize(fyne.NewSize(0, 2))
+
+	headerRow := container.NewBorder(nil, nil, sp.header, container.NewHBox(sp.byteCount, copyBtn, collapseBtn))
+	topBlock := container.NewVBox(headerRow, rule)
+	sp.container = container.NewBorder(topBlock, nil, nil, nil, container.NewScroll(sp.content))
 	return sp
 }
 

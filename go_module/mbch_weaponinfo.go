@@ -75,37 +75,37 @@ func (ui *WeaponInfoUI) createUI() {
 		ui.weaponList,
 	)
 
-	ui.weaponToReplaceEntry = widget.NewEntry()
+	ui.weaponToReplaceEntry = NewInputEntry()
 	ui.weaponToReplaceEntry.OnChanged = ui.onDetailChanged
-	ui.weaponBasedOffEntry = widget.NewEntry()
+	ui.weaponBasedOffEntry = NewInputEntry()
 	ui.weaponBasedOffEntry.OnChanged = ui.onDetailChanged
-	ui.newWorldModelEntry = widget.NewEntry()
+	ui.newWorldModelEntry = NewInputEntry()
 	ui.newWorldModelEntry.OnChanged = ui.onDetailChanged
-	ui.newViewModelEntry = widget.NewEntry()
+	ui.newViewModelEntry = NewInputEntry()
 	ui.newViewModelEntry.OnChanged = ui.onDetailChanged
-	ui.iconEntry = widget.NewEntry()
+	ui.iconEntry = NewInputEntry()
 	ui.iconEntry.OnChanged = ui.onDetailChanged
-	ui.weaponNameEntry = widget.NewEntry()
+	ui.weaponNameEntry = NewInputEntry()
 	ui.weaponNameEntry.OnChanged = ui.onDetailChanged
-	ui.muzzleEffectEntry = widget.NewEntry()
+	ui.muzzleEffectEntry = NewInputEntry()
 	ui.muzzleEffectEntry.OnChanged = ui.onDetailChanged
-	ui.altMuzzleEffectEntry = widget.NewEntry()
+	ui.altMuzzleEffectEntry = NewInputEntry()
 	ui.altMuzzleEffectEntry.OnChanged = ui.onDetailChanged
-	ui.missileEffectEntry = widget.NewEntry()
+	ui.missileEffectEntry = NewInputEntry()
 	ui.missileEffectEntry.OnChanged = ui.onDetailChanged
-	ui.altMissileEffectEntry = widget.NewEntry()
+	ui.altMissileEffectEntry = NewInputEntry()
 	ui.altMissileEffectEntry.OnChanged = ui.onDetailChanged
-	ui.flashSound0Entry = widget.NewEntry()
+	ui.flashSound0Entry = NewInputEntry()
 	ui.flashSound0Entry.OnChanged = ui.onDetailChanged
-	ui.altFlashSound0Entry = widget.NewEntry()
+	ui.altFlashSound0Entry = NewInputEntry()
 	ui.altFlashSound0Entry.OnChanged = ui.onDetailChanged
-	ui.chargeSoundEntry = widget.NewEntry()
+	ui.chargeSoundEntry = NewInputEntry()
 	ui.chargeSoundEntry.OnChanged = ui.onDetailChanged
-	ui.customAmmoEntry = widget.NewEntry()
+	ui.customAmmoEntry = NewInputEntry()
 	ui.customAmmoEntry.OnChanged = ui.onDetailChanged
-	ui.clipSizeEntry = widget.NewEntry()
+	ui.clipSizeEntry = NewInputEntry()
 	ui.clipSizeEntry.OnChanged = ui.onDetailChanged
-	ui.reloadTimeModifierEntry = widget.NewEntry()
+	ui.reloadTimeModifierEntry = NewInputEntry()
 	ui.reloadTimeModifierEntry.OnChanged = ui.onDetailChanged
 
 	ui.detailForm = widget.NewForm(

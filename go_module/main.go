@@ -15,6 +15,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
@@ -68,6 +69,11 @@ type AppConfig struct {
 	SidebarOffset   float32      `json:"sidebar_offset"`
 	SidebarVisible  bool         `json:"sidebar_visible"`
 	SetupWizardSeen bool         `json:"setup_wizard_seen"`
+
+	// Pinned folder paths — shown as quick-select shortcuts in file pickers
+	// and path-entry fields so users don't have to navigate to the same
+	// location repeatedly. Most-recently-pinned first. Max 12 entries.
+	FavoritePaths []string `json:"favorite_paths"`
 
 	// GitHub Config
 	GitHubToken string `json:"github_token"`
@@ -867,24 +873,31 @@ func (a *App) showPreferences() {
 	// GitHub Update button for data files
 	updateStatusLabel := widget.NewLabel("")
 
+	prefsBrowseGamedata := func() {
+		d := dialog.NewFolderOpen(func(uri fyne.ListableURI, err error) {
+			if uri != nil {
+				gamedataEntry.SetText(uri.Path())
+			}
+		}, a.mainWindow)
+		if parents := CommonGamedataParents(); len(parents) > 0 {
+			if lister, err := storage.ListerForURI(storage.NewFileURI(parents[0])); err == nil {
+				d.SetLocation(lister)
+			}
+		}
+		d.Show()
+	}
+	prefsBrowseTextAssets := func() {
+		dialog.ShowFolderOpen(func(uri fyne.ListableURI, err error) {
+			if uri != nil {
+				textAssetsEntry.SetText(uri.Path())
+			}
+		}, a.mainWindow)
+	}
+
 	form := widget.NewForm(
 		widget.NewFormItem("Theme Color", themeSelect),
-		widget.NewFormItem("Gamedata Path", container.NewBorder(nil, nil, nil,
-			NewTooltipButton("", theme.FolderOpenIcon(), func() {
-				dialog.ShowFolderOpen(func(uri fyne.ListableURI, err error) {
-					if uri != nil {
-						gamedataEntry.SetText(uri.Path())
-					}
-				}, a.mainWindow)
-			}, "Select your game's gamedata folder"), gamedataEntry)),
-		widget.NewFormItem("TextAssets Path", container.NewBorder(nil, nil, nil,
-			NewTooltipButton("", theme.FolderOpenIcon(), func() {
-				dialog.ShowFolderOpen(func(uri fyne.ListableURI, err error) {
-					if uri != nil {
-						textAssetsEntry.SetText(uri.Path())
-					}
-				}, a.mainWindow)
-			}, "Select your MBII TextAssets folder"), textAssetsEntry)),
+		widget.NewFormItem("Gamedata Path", a.NewPathEntryWithFavorites(gamedataEntry, prefsBrowseGamedata)),
+		widget.NewFormItem("TextAssets Path", a.NewPathEntryWithFavorites(textAssetsEntry, prefsBrowseTextAssets)),
 		widget.NewFormItem("MD3View Path", container.NewBorder(nil, nil, nil,
 			NewTooltipButton("", theme.FolderOpenIcon(), func() {
 				dialog.ShowFileOpen(func(uri fyne.URIReadCloser, err error) {
@@ -1085,63 +1098,77 @@ To enable the **Asset Browser**, **Visual Editor**, and **Model Previews**, we n
 `)
 
 	gamedataEntry := widget.NewEntry()
-	gamedataEntry.PlaceHolder = "Path to GameData..."
+	gamedataEntry.PlaceHolder = "e.g. C:\\Program Files (x86)\\LucasArts\\Star Wars Jedi Knight Jedi Academy\\GameData"
 	gamedataEntry.SetText(a.config.GamedataPath)
 
 	textAssetsEntry := widget.NewEntry()
-	textAssetsEntry.PlaceHolder = "Path to TextAssets (Optional, for Devs)..."
+	textAssetsEntry.PlaceHolder = "Optional — path to your TextAssets Git checkout"
 	textAssetsEntry.SetText(a.config.TextAssetsPath)
 
+	// Inline validation indicator — tells the user whether the typed/
+	// detected path actually contains base/ and MBII/ subfolders.
 	statusLabel := widget.NewLabel("")
-	statusLabel.TextStyle = fyne.TextStyle{Italic: true}
+	statusLabel.Wrapping = fyne.TextWrapWord
+	validateAndShow := func(path string) {
+		if path == "" {
+			statusLabel.SetText("")
+			return
+		}
+		if err := ValidateGamedataPath(path); err != nil {
+			statusLabel.SetText("✗ " + err.Error())
+		} else {
+			statusLabel.SetText("✓ Looks good — base/ and MBII/ both found.")
+		}
+	}
+	gamedataEntry.OnChanged = validateAndShow
+	validateAndShow(gamedataEntry.Text)
 
-	// Auto-Detect Button
+	// Auto-Detect Button — now covers LucasArts retail, Steam, GoG,
+	// Linux, and macOS Wine/OpenJK installs via gamedata_detect.go.
 	autoDetectBtn := widget.NewButton("Auto-Detect Installation", func() {
-		// Common paths to check
-		candidates := []string{
-			`C:\Program Files (x86)\Steam\steamapps\common\Jedi Academy\GameData`,
-			`C:\Program Files\Steam\steamapps\common\Jedi Academy\GameData`,
-			`D:\SteamLibrary\steamapps\common\Jedi Academy\GameData`,
-			`/Applications/Jedi Academy/GameData`,
-			`/Users/Shared/Jedi Academy/GameData`,
-			os.Getenv("HOME") + `/Library/Application Support/Steam/steamapps/common/Jedi Academy/GameData`,
-		}
-
-		found := false
-		for _, p := range candidates {
-			if _, err := os.Stat(filepath.Join(p, "MBII")); err == nil {
-				gamedataEntry.SetText(p)
-				statusLabel.SetText("Found MBII at: " + p)
-				found = true
-				break
-			}
-		}
-		if !found {
-			statusLabel.SetText("Could not auto-detect MBII. Please browse manually.")
+		if found := DetectGamedataPath(); found != "" {
+			gamedataEntry.SetText(found)
+			statusLabel.SetText("✓ Found MBII at: " + found)
+		} else {
+			statusLabel.SetText("✗ Auto-detect didn't find an MBII install. Paste the path above, or use Browse.")
 		}
 	})
 
-	form := widget.NewForm(
-		widget.NewFormItem("GameData", container.NewBorder(nil, nil, nil,
-			NewTooltipButton("", theme.FolderOpenIcon(), func() {
-				dialog.ShowFolderOpen(func(uri fyne.ListableURI, err error) {
-					if uri != nil {
-						gamedataEntry.SetText(uri.Path())
-					}
-				}, a.mainWindow)
-			}, "Browse for GameData folder"), gamedataEntry)),
+	// Browse button: opens Fyne's folder picker, but starts at the
+	// most likely parent directory (e.g. C:\Program Files (x86)\) so
+	// the user doesn't land in their home folder and have to drill
+	// down from scratch.
+	browseGamedata := func() {
+		d := dialog.NewFolderOpen(func(uri fyne.ListableURI, err error) {
+			if uri != nil {
+				gamedataEntry.SetText(uri.Path())
+			}
+		}, a.mainWindow)
+		if parents := CommonGamedataParents(); len(parents) > 0 {
+			if lister, err := storage.ListerForURI(storage.NewFileURI(parents[0])); err == nil {
+				d.SetLocation(lister)
+			}
+		}
+		d.Show()
+	}
 
-		widget.NewFormItem("TextAssets", container.NewBorder(nil, nil, nil,
-			NewTooltipButton("", theme.FolderOpenIcon(), func() {
-				dialog.ShowFolderOpen(func(uri fyne.ListableURI, err error) {
-					if uri != nil {
-						textAssetsEntry.SetText(uri.Path())
-					}
-				}, a.mainWindow)
-			}, "Browse for TextAssets Git Repository (Optional)"), textAssetsEntry)),
+	browseTextAssets := func() {
+		dialog.ShowFolderOpen(func(uri fyne.ListableURI, err error) {
+			if uri != nil {
+				textAssetsEntry.SetText(uri.Path())
+			}
+		}, a.mainWindow)
+	}
+
+	form := widget.NewForm(
+		widget.NewFormItem("GameData", a.NewPathEntryWithFavorites(gamedataEntry, browseGamedata)),
+		widget.NewFormItem("TextAssets", a.NewPathEntryWithFavorites(textAssetsEntry, browseTextAssets)),
 	)
 
-	content := container.NewVBox(intro, autoDetectBtn, widget.NewSeparator(), form, statusLabel)
+	hint := widget.NewLabel("💡 Tip: paste a full path directly, or ★-pin a folder once and pick it from the dropdown next time.")
+	hint.Wrapping = fyne.TextWrapWord
+
+	content := container.NewVBox(intro, autoDetectBtn, widget.NewSeparator(), form, statusLabel, hint)
 
 	// Custom Dialog that forces a choice (mostly)
 	d := dialog.NewCustomConfirm("Initial Setup", "Save & Continue", "Skip (Limited Features)", content, func(save bool) {
@@ -1160,6 +1187,14 @@ To enable the **Asset Browser**, **Visual Editor**, and **Model Previews**, we n
 				a.config.TextAssetsPath = textAssetsEntry.Text
 				a.config.SetupWizardSeen = true // Mark as seen
 				a.saveConfig()
+
+				// Auto-pin successfully-saved paths so they're one-click in
+				// future dialogs. Does nothing on re-save of an already-pinned
+				// path (move-to-front only).
+				a.PinFavorite(path)
+				if ta := textAssetsEntry.Text; ta != "" {
+					a.PinFavorite(ta)
+				}
 
 				// Update components
 				if a.assetBrowser != nil {

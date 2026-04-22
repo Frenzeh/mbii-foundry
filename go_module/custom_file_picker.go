@@ -19,7 +19,7 @@ type CustomFilePicker struct {
 	selectedFile *AssetEntry
 
 	// UI elements
-	pathLabel    *widget.Label
+	pathBar      *fyne.Container // clickable breadcrumb row
 	sidebar      *widget.List
 	selectButton *widget.Button
 	cancelButton *widget.Button
@@ -44,8 +44,8 @@ func (cfp *CustomFilePicker) SetInitialPath(path string) {
 func (cfp *CustomFilePicker) createUI() {
 	cfp.browser.ShowTopBar(false) // Hide internal navigation
 
-	cfp.pathLabel = widget.NewLabel("Current Path: /")
-	cfp.pathLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	cfp.pathBar = container.NewHBox()
+	cfp.refreshPathBar()
 
 	cfp.selectButton = widget.NewButton("Open", func() {
 		if cfp.selectedFile != nil {
@@ -60,7 +60,7 @@ func (cfp *CustomFilePicker) createUI() {
 					cfp.browser.loadGrid(cfp.selectedFile)
 				}
 				cfp.selectedFile = nil
-				cfp.pathLabel.SetText("Current Path: " + cfp.browser.currentDir.Path)
+				cfp.refreshPathBar()
 				cfp.selectButton.Disable()
 			} else {
 				LogInfo("Returning file...")
@@ -198,7 +198,6 @@ func (cfp *CustomFilePicker) createUI() {
 
 	// Configure Browser interactions
 	cfp.browser.SetOnAssetSelected(func(asset *AssetEntry) {
-		cfp.pathLabel.SetText("Selected: " + asset.Name)
 		cfp.selectedFile = asset
 		cfp.selectButton.Enable()
 	})
@@ -210,16 +209,119 @@ func (cfp *CustomFilePicker) createUI() {
 		}
 	})
 
+	// Navigation toolbar — explicit Up / Home / Refresh buttons so users
+	// aren't hunting for a ".. (Up)" folder entry in the grid. Uses Fyne's
+	// built-in theme icons for portability across macOS/Windows/Linux.
+	upBtn := widget.NewButtonWithIcon("Up", theme.NavigateBackIcon(), cfp.goUp)
+	upBtn.Importance = widget.LowImportance
+	homeBtn := widget.NewButtonWithIcon("Home", theme.HomeIcon(), func() {
+		home, _ := os.UserHomeDir()
+		cfp.browser.loadFS(home)
+		cfp.refreshPathBar()
+	})
+	homeBtn.Importance = widget.LowImportance
+	refreshBtn := widget.NewButtonWithIcon("", theme.ViewRefreshIcon(), func() {
+		if cfp.browser.currentDir != nil {
+			cfp.browser.loadFS(cfp.browser.currentDir.Path)
+			cfp.refreshPathBar()
+		}
+	})
+	refreshBtn.Importance = widget.LowImportance
+
+	// View mode toggle (grid/list) exposed here since ShowTopBar(false)
+	// hid the in-browser control.
+	viewToggle := widget.NewSelect([]string{"Grid", "List"}, func(mode string) {
+		if mode == "List" {
+			cfp.browser.viewMode = ViewModeList
+		} else {
+			cfp.browser.viewMode = ViewModeGrid
+		}
+		if cfp.browser.currentDir != nil {
+			cfp.browser.loadGrid(cfp.browser.currentDir)
+		}
+	})
+	viewToggle.Selected = "Grid"
+
+	topNav := container.NewBorder(
+		nil, nil,
+		container.NewHBox(upBtn, homeBtn, refreshBtn),
+		viewToggle,
+		container.NewScroll(cfp.pathBar),
+	)
+
 	// Main Layout
 	split := container.NewHSplit(
 		container.NewBorder(widget.NewLabelWithStyle("Sources", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), nil, nil, nil, cfp.sidebar),
-		cfp.browser.GetContent(),
+		container.NewBorder(topNav, nil, nil, nil, cfp.browser.GetContent()),
 	)
 	split.SetOffset(0.25)
 
-	bottomBar := container.NewBorder(nil, nil, cfp.pathLabel, container.NewHBox(cfp.cancelButton, cfp.selectButton))
+	bottomBar := container.NewBorder(nil, nil, nil, container.NewHBox(cfp.cancelButton, cfp.selectButton))
 
 	cfp.window.SetContent(container.NewBorder(nil, bottomBar, nil, nil, split))
+}
+
+// refreshPathBar rebuilds the breadcrumb from the browser's current
+// directory. Each path segment becomes a clickable button so users can
+// jump up any number of levels in one click.
+func (cfp *CustomFilePicker) refreshPathBar() {
+	cfp.pathBar.Objects = nil
+	path := "/"
+	if cfp.browser.currentDir != nil && cfp.browser.currentDir.Path != "" {
+		path = cfp.browser.currentDir.Path
+	}
+
+	// Build cumulative segments so each breadcrumb button knows the
+	// full path up to and including itself.
+	segments := strings.Split(strings.Trim(filepath.ToSlash(path), "/"), "/")
+	cumulative := ""
+	if strings.HasPrefix(path, "/") || len(segments) == 0 {
+		// Root marker (Unix '/' or empty path).
+		rootBtn := widget.NewButtonWithIcon("", theme.ComputerIcon(), func() {
+			cfp.browser.loadFS("/")
+			cfp.refreshPathBar()
+		})
+		rootBtn.Importance = widget.LowImportance
+		cfp.pathBar.Add(rootBtn)
+	}
+	for _, seg := range segments {
+		if seg == "" {
+			continue
+		}
+		if cumulative == "" && !strings.HasPrefix(path, "/") {
+			// Windows drive letter etc.
+			cumulative = seg
+		} else {
+			cumulative = cumulative + "/" + seg
+		}
+		segPath := cumulative
+		if !strings.HasPrefix(path, "/") && cumulative == seg {
+			segPath = seg + string(filepath.Separator)
+		}
+		cfp.pathBar.Add(widget.NewLabel("›"))
+		btn := widget.NewButton(seg, func() {
+			cfp.browser.loadFS(segPath)
+			cfp.refreshPathBar()
+		})
+		btn.Importance = widget.LowImportance
+		cfp.pathBar.Add(btn)
+	}
+	cfp.pathBar.Refresh()
+}
+
+// goUp navigates one level up from the current directory, wrapping the
+// various "up" cases (FS, PK3, VFS) so the button does the right thing
+// regardless of where the user is.
+func (cfp *CustomFilePicker) goUp() {
+	if cfp.browser.currentDir == nil {
+		return
+	}
+	parent := filepath.Dir(cfp.browser.currentDir.Path)
+	if parent == "" || parent == "." {
+		return
+	}
+	cfp.browser.loadFS(parent)
+	cfp.refreshPathBar()
 }
 
 func (cfp *CustomFilePicker) Show(onSelected func(string)) {
@@ -235,10 +337,10 @@ func (cfp *CustomFilePicker) Show(onSelected func(string)) {
 	if cfp.browser.currentDir == nil {
 		if cfp.initialPath != "" {
 			cfp.browser.loadFS(cfp.initialPath)
-			cfp.pathLabel.SetText("Current Path: " + cfp.initialPath)
 		} else {
 			home, _ := os.UserHomeDir()
 			cfp.browser.loadFS(home)
 		}
 	}
+	cfp.refreshPathBar()
 }

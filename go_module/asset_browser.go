@@ -692,18 +692,38 @@ func (g *GridItem) DoubleTapped(_ *fyne.PointEvent) {
 	}
 }
 
-// createGridItem creates a clickable item for the asset grid
+// createGridItem creates a clickable item for the asset grid.
+//
+// Visual treatment:
+//   - Parent ("..") entries get a dedicated up-arrow icon + "⬆ Up" label,
+//     so navigating up the tree is obvious instead of buried in a folder
+//     that looks like every other folder.
+//   - Known MBII file types get a [MBCH] / [SAB] / [VEH] / [SIEGE]
+//     prefix on the display name so users can distinguish them at a
+//     glance without waiting for Fyne to render per-type icons. Images
+//     and models still use their dedicated icons.
 func (ab *AssetBrowser) createGridItem(entry *AssetEntry, isParent bool) fyne.CanvasObject {
 	var icon fyne.Resource = theme.FileIcon()
-	if entry.IsDir || isParent {
+	displayName := entry.Name
+
+	switch {
+	case isParent:
+		icon = theme.NavigateBackIcon()
+		displayName = "⬆ Up"
+	case entry.IsDir:
 		icon = theme.FolderIcon()
-	} else if ab.isImageAsset(entry) {
+	case ab.isImageAsset(entry):
 		icon = theme.FileImageIcon()
-	} else if entry.Type == AssetTypeModel {
+	case entry.Type == AssetTypeModel:
 		icon = theme.ComputerIcon()
+	default:
+		// Prefix the name with the asset type for quick scanning.
+		if tag := assetTypeTag(entry); tag != "" {
+			displayName = "[" + tag + "] " + entry.Name
+		}
 	}
 
-	item := NewGridItem(entry.Name, icon, func() {
+	item := NewGridItem(displayName, icon, func() {
 		if ab.onAssetSelected != nil {
 			ab.onAssetSelected(entry)
 		}
@@ -1050,4 +1070,39 @@ func detectAssetType(path string) AssetType {
 	default:
 		return AssetTypeOther
 	}
+}
+
+// assetTypeTag returns a short display tag for a known MBII asset type,
+// used to prefix the filename in the grid/list view so users can
+// distinguish files at a glance without needing per-type icons.
+// Returns empty string for types that don't merit a tag (images/models
+// already get dedicated icons; generic "other" files get no prefix).
+func assetTypeTag(entry *AssetEntry) string {
+	if entry == nil {
+		return ""
+	}
+	switch entry.Type {
+	case AssetTypeCharacter:
+		return "MBCH"
+	case AssetTypeSaber:
+		return "SAB"
+	case AssetTypeVehicle:
+		return "VEH"
+	}
+	// Not yet a known type — fall back to the raw extension for
+	// anything we explicitly recognize by suffix.
+	ext := strings.TrimPrefix(strings.ToLower(filepath.Ext(entry.Name)), ".")
+	switch ext {
+	case "siege":
+		return "SIEGE"
+	case "mbtc":
+		return "MBTC"
+	case "skin":
+		return "SKIN"
+	case "shader":
+		return "SHADER"
+	case "efx":
+		return "EFX"
+	}
+	return ""
 }

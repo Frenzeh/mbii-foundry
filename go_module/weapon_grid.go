@@ -57,10 +57,17 @@ func (wg *WeaponGrid) createUI() {
 
 	if wg.container != nil {
 		mainLayout = wg.container
-		if len(mainLayout.Objects) > 1 {
-			scroll := mainLayout.Objects[1].(*container.Scroll)
-			content = scroll.Content.(*fyne.Container)
-			content.Objects = nil
+		// Border container's Objects slice doesn't have a guaranteed
+		// order between center and edges. Scan for the Scroll rather
+		// than indexing blindly.
+		for _, obj := range mainLayout.Objects {
+			if scroll, ok := obj.(*container.Scroll); ok {
+				if c, ok := scroll.Content.(*fyne.Container); ok {
+					content = c
+					content.Objects = nil
+				}
+				break
+			}
 		}
 	} else {
 		content = container.NewVBox()

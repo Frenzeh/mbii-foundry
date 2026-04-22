@@ -118,6 +118,11 @@ func NewMBCHEditor(app *App) *MBCHEditor {
 	e.pointBuyUI = NewPointBuyUI(e)
 	e.weaponInfoUI = NewWeaponInfoUI(e)
 	e.forceInfoUI = NewForceInfoUI(e)
+	// Initialize onHover to a no-op so Select/Entry OnChanged handlers
+	// that fire during LoadFile → updateUI don't hit a nil-deref before
+	// the app has called SetOnHover. SetOnHover later replaces this
+	// with the real showHoverTooltip callback.
+	e.onHover = func(string, string) {}
 	e.createUI()
 	return e
 }

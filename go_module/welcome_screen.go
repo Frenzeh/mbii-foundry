@@ -87,13 +87,10 @@ func (w *WelcomeScreen) GetContent() fyne.CanvasObject {
 	// two read as one composite hero mark.
 	heroRow := container.NewHBox(logo, Gap(SpaceXS), titleStack)
 
-	// Accent rule under the title. Mirrors the sidebar activity
-	// headers — same 2px tinted bar — so the design language carries.
-	rule := func() fyne.CanvasObject {
-		r := canvas.NewRectangle(tintWithAlpha(CurrentThemeColor, 90))
-		r.SetMinSize(fyne.NewSize(0, 2))
-		return r
-	}
+	// Accent rule factory. Uses AccentRule widget so each rule
+	// repaints when the theme changes, rather than keeping whatever
+	// color the welcome screen was built with.
+	rule := func() fyne.CanvasObject { return NewAccentRule() }
 
 	createLabel := sectionCaption("CREATE")
 	recentLabel := sectionCaption("RECENT")

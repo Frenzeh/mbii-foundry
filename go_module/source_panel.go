@@ -25,7 +25,6 @@ import (
 	"time"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
@@ -165,8 +164,7 @@ func NewSourcePanel(a *App) *SourcePanel {
 	})
 	collapseBtn.Importance = widget.LowImportance
 
-	rule := canvas.NewRectangle(tintWithAlpha(CurrentThemeColor, 90))
-	rule.SetMinSize(fyne.NewSize(0, 2))
+	rule := NewAccentRule()
 
 	// Validation indicator — confirm icon + message. Hidden outside
 	// edit mode; visible only when there's something to say.

@@ -3,6 +3,7 @@ package main
 import (
 	"sort"
 	"strings"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -11,12 +12,21 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-// TooltipButton is a button that shows a tooltip on hover
+// TooltipButton is a button that shows a tooltip on hover.
+//
+// Uses a 400ms hover delay before showing (IDE-standard) so the
+// tooltip doesn't flicker when the mouse just transits across an icon
+// toolbar. Tracks hover state explicitly so the tooltip cancels if
+// the user moves off during the delay, and so repeated MouseIn calls
+// from Fyne (e.g., during layout events) don't stack popups.
 type TooltipButton struct {
 	widget.Button
 	tooltipText string
 	popUp       *widget.PopUp
+	hovering    bool
 }
+
+const tooltipHoverDelay = 400 * time.Millisecond
 
 // NewTooltipButton creates a new button with a tooltip
 func NewTooltipButton(text string, icon fyne.Resource, action func(), tooltip string) *TooltipButton {
@@ -32,22 +42,33 @@ func (b *TooltipButton) MouseIn(e *desktop.MouseEvent) {
 	if b.tooltipText == "" {
 		return
 	}
-
-	// Create label content
-	label := widget.NewLabel(b.tooltipText)
-
-	// Find canvas
-	c := fyne.CurrentApp().Driver().CanvasForObject(b)
-	if c == nil {
+	b.hovering = true
+	// If a tooltip is already showing (user hovering same button),
+	// don't re-create it.
+	if b.popUp != nil {
 		return
 	}
-
-	// Show popup relative to the button (below it)
-	b.popUp = widget.NewPopUp(label, c)
-	b.popUp.ShowAtRelativePosition(fyne.NewPos(0, b.Size().Height), b)
+	// Schedule the popup after a short delay. If the user moves off
+	// during the delay, hovering will flip false and we abort.
+	go func() {
+		time.Sleep(tooltipHoverDelay)
+		fyne.Do(func() {
+			if !b.hovering || b.popUp != nil {
+				return
+			}
+			c := fyne.CurrentApp().Driver().CanvasForObject(b)
+			if c == nil {
+				return
+			}
+			label := widget.NewLabel(b.tooltipText)
+			b.popUp = widget.NewPopUp(label, c)
+			b.popUp.ShowAtRelativePosition(fyne.NewPos(0, b.Size().Height), b)
+		})
+	}()
 }
 
 func (b *TooltipButton) MouseOut() {
+	b.hovering = false
 	if b.popUp != nil {
 		b.popUp.Hide()
 		b.popUp = nil

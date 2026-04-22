@@ -39,6 +39,23 @@ type Editor interface {
 	SetOnDirtyChanged(func(bool))
 }
 
+// SourceProvider is an optional capability an Editor may implement to
+// let the app render the current file's text source live in a side
+// panel. Kitsu's MBCH editor popularized this layout — you edit
+// through form widgets and see the exact .mbch / .sab / .veh / .siege
+// bytes update in real time. Editors that don't implement this (e.g.
+// the initial home screen) just leave the source panel blank.
+type SourceProvider interface {
+	// GenerateSource returns the current file as it would be saved to
+	// disk. Should be fast — the live panel polls it on every change.
+	GenerateSource() string
+
+	// SetOnSourceChanged registers a callback invoked whenever the
+	// editor's underlying data changes, so the source panel knows to
+	// refresh without having to poll on a timer.
+	SetOnSourceChanged(func())
+}
+
 // RecentFile stores info about a recently accessed file
 type RecentFile struct {
 	Path       string    `json:"path"`

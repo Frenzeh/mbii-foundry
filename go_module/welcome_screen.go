@@ -146,8 +146,9 @@ func (w *WelcomeScreen) GetContent() fyne.CanvasObject {
 	footerBlock := container.NewVBox(rule(), Gap(SpaceSM), footer)
 
 	top := container.NewVBox(
-		heroRow,
 		Gap(SpaceSM),
+		heroRow,
+		Gap(SpaceMD),
 		rule(),
 		Gap(SpaceLG),
 		body,

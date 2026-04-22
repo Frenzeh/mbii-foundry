@@ -4,9 +4,34 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 )
+
+// writeExtraFields emits ExtraFields map entries in sorted-key order
+// so GenerateMBCH output is deterministic. Go's map iteration is
+// intentionally randomized; without sorting, fields like primGore /
+// altGore swap positions between ticks in the live source panel and
+// round-trip diffs jitter line-by-line.
+func writeExtraFields(sb *strings.Builder, fields map[string]string) {
+	if len(fields) == 0 {
+		return
+	}
+	keys := make([]string, 0, len(fields))
+	for k := range fields {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		v := fields[k]
+		if strings.Contains(v, " ") {
+			fmt.Fprintf(sb, "\t%s\t\t\t\"%s\"\n", k, v)
+		} else {
+			fmt.Fprintf(sb, "\t%s\t\t\t%s\n", k, v)
+		}
+	}
+}
 
 // WeaponInfo represents a weapon override block in an MBCH file
 type WeaponInfo struct {
@@ -496,18 +521,18 @@ func GenerateMBCH(char *MBCHCharacter) (string, error) {
 			}
 		}
 
-		for k, v := range char.RankAttributes {
-			fmt.Fprintf(&sb, "\t%s\t\t%s\n", k, v)
+		// Sorted iteration — same determinism reason as writeExtraFields.
+		rankKeys := make([]string, 0, len(char.RankAttributes))
+		for k := range char.RankAttributes {
+			rankKeys = append(rankKeys, k)
+		}
+		sort.Strings(rankKeys)
+		for _, k := range rankKeys {
+			fmt.Fprintf(&sb, "\t%s\t\t%s\n", k, char.RankAttributes[k])
 		}
 	}
 
-	for k, v := range char.ExtraFields {
-		if strings.Contains(v, " ") {
-			fmt.Fprintf(&sb, "\t%s\t\t\t\"%s\"\n", k, v)
-		} else {
-			fmt.Fprintf(&sb, "\t%s\t\t\t%s\n", k, v)
-		}
-	}
+	writeExtraFields(&sb, char.ExtraFields)
 	fmt.Fprintln(&sb, "}")
 
 	// Weapon Info
@@ -562,13 +587,7 @@ func GenerateMBCH(char *MBCHCharacter) (string, error) {
 		if wi.ReloadTimeModifier > 0 {
 			fmt.Fprintf(&sb, "\treloadTimeModifier\t%.1f\n", wi.ReloadTimeModifier)
 		}
-		for k, v := range wi.ExtraFields {
-			if strings.Contains(v, " ") {
-				fmt.Fprintf(&sb, "\t%s\t\t\t\"%s\"\n", k, v)
-			} else {
-				fmt.Fprintf(&sb, "\t%s\t\t\t%s\n", k, v)
-			}
-		}
+		writeExtraFields(&sb, wi.ExtraFields)
 		fmt.Fprintln(&sb, "}")
 	}
 
@@ -591,13 +610,7 @@ func GenerateMBCH(char *MBCHCharacter) (string, error) {
 		if fi.LoopSound != "" {
 			fmt.Fprintf(&sb, "\tLoopSound\t\t\"%s\"\n", fi.LoopSound)
 		}
-		for k, v := range fi.ExtraFields {
-			if strings.Contains(v, " ") {
-				fmt.Fprintf(&sb, "\t%s\t\t\t\"%s\"\n", k, v)
-			} else {
-				fmt.Fprintf(&sb, "\t%s\t\t\t%s\n", k, v)
-			}
-		}
+		writeExtraFields(&sb, fi.ExtraFields)
 		fmt.Fprintln(&sb, "}")
 	}
 

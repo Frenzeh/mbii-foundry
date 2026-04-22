@@ -2,6 +2,7 @@ package parsers
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -413,7 +414,13 @@ func GenerateSiege(siege *SiegeData) (string, error) {
 		fmt.Fprintf(&sb, "roundbegin_target \"%s\"\n", siege.RoundBeginTarget)
 	}
 
-	for k, v := range siege.ExtraFields {
+	siegeKeys := make([]string, 0, len(siege.ExtraFields))
+	for k := range siege.ExtraFields {
+		siegeKeys = append(siegeKeys, k)
+	}
+	sort.Strings(siegeKeys)
+	for _, k := range siegeKeys {
+		v := siege.ExtraFields[k]
 		if strings.HasPrefix(v, "{") {
 			fmt.Fprintf(&sb, "%s\n%s\n", k, v) // Block
 		} else {
@@ -497,14 +504,24 @@ func generateTeamBlock(sb *strings.Builder, team *SiegeTeam) {
 			fmt.Fprintf(sb, "\t\tmessage_team2 \"%s\"\n", obj.MessageTeam2)
 		}
 		// ... output other fields ...
-		for k, v := range obj.ExtraFields {
-			fmt.Fprintf(sb, "\t\t%s \"%s\"\n", k, v)
+		objKeys := make([]string, 0, len(obj.ExtraFields))
+		for k := range obj.ExtraFields {
+			objKeys = append(objKeys, k)
+		}
+		sort.Strings(objKeys)
+		for _, k := range objKeys {
+			fmt.Fprintf(sb, "\t\t%s \"%s\"\n", k, obj.ExtraFields[k])
 		}
 		fmt.Fprintf(sb, "\t}\n")
 	}
 
-	for k, v := range team.ExtraFields {
-		fmt.Fprintf(sb, "\t%s \"%s\"\n", k, v)
+	teamKeys := make([]string, 0, len(team.ExtraFields))
+	for k := range team.ExtraFields {
+		teamKeys = append(teamKeys, k)
+	}
+	sort.Strings(teamKeys)
+	for _, k := range teamKeys {
+		fmt.Fprintf(sb, "\t%s \"%s\"\n", k, team.ExtraFields[k])
 	}
 	fmt.Fprintf(sb, "}\n\n")
 }

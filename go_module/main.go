@@ -180,6 +180,27 @@ func (h FoundryTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant)
 		case theme.ColorNameHeaderBackground:
 			return blendColors(color.RGBA{R: 22, G: 22, B: 22, A: 255}, CurrentThemeColor, 0.08)
 		}
+
+		// Syntax highlight palette used by the source panel's
+		// RichText view. Colors are tuned for readability against the
+		// 28/28/28 base with accent tint.
+		switch name {
+		case ColorNameSyntaxComment:
+			return color.NRGBA{R: 110, G: 110, B: 110, A: 255} // dim grey
+		case ColorNameSyntaxString:
+			return color.NRGBA{R: 160, G: 205, B: 130, A: 255} // muted green
+		case ColorNameSyntaxNumber:
+			return color.NRGBA{R: 125, G: 175, B: 230, A: 255} // soft blue
+		case ColorNameSyntaxConst:
+			// Enum constants take the theme accent — switching
+			// theme (e.g. Sith → Jedi) repaints every MB_CLASS_*,
+			// WP_*, FP_* token to match.
+			return CurrentThemeColor
+		case ColorNameSyntaxHeader:
+			return color.NRGBA{R: 235, G: 190, B: 110, A: 255} // amber
+		case ColorNameSyntaxPunct:
+			return color.NRGBA{R: 150, G: 150, B: 150, A: 255} // dim grey
+		}
 	}
 
 	return theme.DefaultTheme().Color(name, variant)
@@ -1302,6 +1323,22 @@ func (a *App) loadConfig() {
 		a.config.PrimaryColor = "blue"
 	}
 	a.applyThemeColor(a.config.PrimaryColor)
+}
+
+// currentEditorPath returns the file path of the currently-active
+// editor, or "" if no editor tab is focused. Used by the source
+// panel's Apply flow to restore the original path after reusing
+// LoadFile with a temp file.
+func (a *App) currentEditorPath() string {
+	tab := a.docTabs.Selected()
+	if tab == nil {
+		return ""
+	}
+	editor, ok := a.editors[tab]
+	if !ok {
+		return ""
+	}
+	return editor.GetCurrentPath()
 }
 
 func (a *App) updateStatus(msg string) {

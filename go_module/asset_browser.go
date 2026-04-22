@@ -362,14 +362,32 @@ func (ab *AssetBrowser) createUI() {
 	ab.searchEntry.SetPlaceHolder("Search...")
 	ab.searchEntry.OnChanged = func(s string) { ab.filterGrid(s) }
 
-	// View Controls
-	ab.viewModeSelect = widget.NewSelect([]string{string(ViewModeGrid), string(ViewModeList)}, func(s string) {
-		ab.viewMode = ViewMode(s)
+	// View Controls — icon toggle (grid ↔ list) instead of a dropdown.
+	// The dropdown took two clicks and a full label's worth of space
+	// to swap between two states; an icon toggle is the natural shape.
+	// Icon shown reflects the CURRENT mode so the user sees "I am in
+	// grid view" at a glance.
+	viewModeBtn := widget.NewButtonWithIcon("", theme.GridIcon(), nil)
+	viewModeBtn.Importance = widget.LowImportance
+	syncViewModeIcon := func() {
+		if ab.viewMode == ViewModeGrid {
+			viewModeBtn.SetIcon(theme.GridIcon())
+		} else {
+			viewModeBtn.SetIcon(theme.ListIcon())
+		}
+	}
+	viewModeBtn.OnTapped = func() {
+		if ab.viewMode == ViewModeGrid {
+			ab.viewMode = ViewModeList
+		} else {
+			ab.viewMode = ViewModeGrid
+		}
+		syncViewModeIcon()
 		if ab.currentDir != nil {
 			ab.loadGrid(ab.currentDir)
 		}
-	})
-	ab.viewModeSelect.SetSelected(string(ab.viewMode))
+	}
+	syncViewModeIcon()
 
 	ab.sortSelect = widget.NewSelect([]string{string(SortNameAsc), string(SortNameDesc), string(SortSizeAsc), string(SortSizeDesc), string(SortType)}, func(s string) {
 		ab.sortMode = SortMode(s)
@@ -416,10 +434,17 @@ func (ab *AssetBrowser) createUI() {
 
 	navButtons := container.NewHBox(upBtn, homeBtn, refreshBtn)
 
+	// Control row: sort dropdown + zoom slider take the left/center,
+	// view-mode icon toggle pinned to the far right (Border's trailing
+	// slot). Feels like a standard file-browser toolbar where display
+	// controls live on the right edge.
+	controlsLeft := container.New(layout.NewGridLayoutWithColumns(2), ab.sortSelect, ab.zoomSlider)
+	controlsRow := container.NewBorder(nil, nil, nil, viewModeBtn, controlsLeft)
+
 	ab.topBar = container.NewVBox(
 		container.NewBorder(nil, nil, navButtons, favBtn, ab.sourceSelect),
 		ab.searchEntry,
-		container.NewGridWithColumns(3, ab.viewModeSelect, ab.sortSelect, ab.zoomSlider),
+		controlsRow,
 	)
 
 	ab.tree = widget.NewTree(
@@ -483,7 +508,15 @@ func (ab *AssetBrowser) createUI() {
 	// load results (see loadFS / loadPK3).
 	ab.statusLabel = widget.NewLabel("")
 
-	split := container.NewHSplit(container.NewScroll(ab.tree), container.NewScroll(ab.grid))
+	// Tree scroll gets an explicit MinSize. Without it, Fyne's HSplit
+	// clamps the offset against child MinSizes — and since the grid's
+	// Scroll reports a large MinSize from its children (icon tiles +
+	// search row above), the clamp was collapsing the tree pane to
+	// effectively zero width on first render. Users had to drag the
+	// divider right before any folders appeared.
+	treeScroll := container.NewScroll(ab.tree)
+	treeScroll.SetMinSize(fyne.NewSize(160, 0))
+	split := container.NewHSplit(treeScroll, container.NewScroll(ab.grid))
 	split.SetOffset(0.3)
 
 	ab.container = container.NewBorder(ab.topBar, ab.statusLabel, nil, nil, split)

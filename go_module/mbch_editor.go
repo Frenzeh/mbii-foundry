@@ -544,8 +544,11 @@ func (e *MBCHEditor) createUI() {
 		e.onHover(opt, "")
 	})
 
+	// Icon preview row skipped — with no shader loaded it just
+	// shows a stray file-icon placeholder next to the Name field
+	// and reads as a broken "save" button. Preview surface will
+	// return as a real image when we have shader → image rendering.
 	profileForm := widget.NewForm(
-		widget.NewFormItem("Preview", e.iconPreview),
 		widget.NewFormItem("Name", e.nameEntry),
 		widget.NewFormItem("MB Class", e.classSelect),
 		widget.NewFormItem("Model", container.NewBorder(nil, nil, nil, container.NewHBox(browseModelBtn, previewBtn), e.modelEntry)),
@@ -617,26 +620,21 @@ func (e *MBCHEditor) createUI() {
 	forceTab := e.forceInfoUI.GetContent()
 	pointBuyTab := e.pointBuyUI.GetContent()
 
-	// Source View
-	e.sourceView = widget.NewRichTextFromMarkdown("Loading...")
-	sourceTab := container.NewMax(container.NewScroll(e.sourceView))
+	// Source View — kept allocated so the updateSourceView helper
+	// stays safe to call, but no longer rendered as a tab: the right-
+	// pane live Source panel (with syntax highlighting + validated
+	// editing) has fully replaced it.
+	e.sourceView = widget.NewRichTextFromMarkdown("")
 
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Profile", container.NewVScroll(profileTab)),
-		container.NewTabItem("Attributes", attrScroll),  // Prominent!
-		container.NewTabItem("Inventory", weaponScroll), // Prominent!
+		container.NewTabItem("Attributes", attrScroll),
+		container.NewTabItem("Inventory", weaponScroll),
 		container.NewTabItem("Stats & Sabers", container.NewVScroll(loadoutTab)),
 		container.NewTabItem("Weapon Mods", weaponTab),
 		container.NewTabItem("Force Mods", forceTab),
 		container.NewTabItem("Point Buy", pointBuyTab),
-		container.NewTabItem("Source", sourceTab),
 	)
-
-	tabs.OnSelected = func(tab *container.TabItem) {
-		if tab.Text == "Source" {
-			e.updateSourceView()
-		}
-	}
 
 	e.container = container.NewMax(tabs)
 }

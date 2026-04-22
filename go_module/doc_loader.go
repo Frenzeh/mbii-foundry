@@ -8,34 +8,62 @@ import (
 )
 
 var (
-	Definitions     map[string]string
+	Definitions     = make(map[string]string)
 	DefinitionsLock sync.RWMutex
 )
 
-// InitDefinitions loads definitions from standard locations
+// InitDefinitions loads per-enum markdown docs from the first install
+// layout that has them. Same probing approach as resolveDataPath() in
+// data_path.go — relative paths don't reach into the macOS .app
+// bundle's Contents/Resources/, so we probe binary-relative layouts
+// explicitly.
 func InitDefinitions() {
 	DefinitionsLock.Lock()
 	defer DefinitionsLock.Unlock()
 	Definitions = make(map[string]string)
 
-	// Potential paths for definitions
-	paths := []string{
-		"definitions",                // relative to binary
-		"../definitions",             // relative to go_module source
-		"../../definitions",          // deeper nesting
-		"mbii-foundry/definitions",   // sibling checkout
-		"fa_creator_app/definitions", // legacy mount point inside mbii-holocron (submodule)
+	found := resolveDefinitionsPath()
+	if found == "" {
+		LogInfo("Warning: definitions folder not found — hover docs will be unavailable")
+		return
 	}
+	LogInfo("Found definitions at: %s", found)
+	loadDefinitionsFromPath(found)
+}
 
-	for _, p := range paths {
-		absPath, _ := filepath.Abs(p)
-		if info, err := os.Stat(absPath); err == nil && info.IsDir() {
-			LogInfo("Found definitions at: %s", absPath)
-			loadDefinitionsFromPath(absPath)
-			return // Stop after finding the first valid directory
+func resolveDefinitionsPath() string {
+	var candidates []string
+	if ex, err := os.Executable(); err == nil {
+		exDir := filepath.Dir(ex)
+		candidates = append(candidates,
+			filepath.Join(exDir, "definitions"),                    // release zip/tarball
+			filepath.Join(exDir, "..", "definitions"),              // go_module build
+			filepath.Join(exDir, "..", "Resources", "definitions"), // macOS .app bundle
+			filepath.Join(exDir, "..", "..", "definitions"),        // nested build dir
+		)
+	}
+	if cwd, err := os.Getwd(); err == nil {
+		candidates = append(candidates,
+			filepath.Join(cwd, "definitions"),
+			filepath.Join(cwd, "..", "definitions"),
+			filepath.Join(cwd, "mbii-foundry", "definitions"),
+			// Legacy: Foundry mounted inside mbii-holocron as a submodule
+			filepath.Join(cwd, "fa_creator_app", "definitions"),
+		)
+	}
+	for _, c := range candidates {
+		if info, err := os.Stat(c); err == nil && info.IsDir() {
+			// Quick sanity: a valid definitions dir has subcategories.
+			if _, err := os.Stat(filepath.Join(c, "attributes")); err == nil {
+				abs, _ := filepath.Abs(c)
+				if abs == "" {
+					abs = c
+				}
+				return abs
+			}
 		}
 	}
-	LogInfo("Warning: definitions folder not found")
+	return ""
 }
 
 func loadDefinitionsFromPath(root string) {
@@ -48,18 +76,25 @@ func loadDefinitionsFromPath(root string) {
 			if err != nil {
 				return nil
 			}
-
-			// Key is the filename without extension (e.g., MB_ATT_JETPACK)
+			// Index by bare filename (MB_ATT_PUSH) so the info-panel
+			// lookup can resolve by enum ID. Also index by the relative
+			// path to support fuzzy lookups the info panel does
+			// elsewhere.
 			key := strings.TrimSuffix(info.Name(), ".md")
 			Definitions[key] = string(content)
+			if rel, relErr := filepath.Rel(root, path); relErr == nil {
+				relKey := strings.TrimSuffix(rel, ".md")
+				Definitions[relKey] = string(content)
+			}
 		}
 		return nil
 	})
 }
 
+// GetDefinition returns the markdown body for a key, if known.
 func GetDefinition(key string) (string, bool) {
 	DefinitionsLock.RLock()
 	defer DefinitionsLock.RUnlock()
-	val, ok := Definitions[key]
-	return val, ok
+	v, ok := Definitions[key]
+	return v, ok
 }

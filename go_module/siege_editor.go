@@ -76,6 +76,19 @@ func (e *SiegeEditor) MarkClean() {
 }
 func (e *SiegeEditor) SetOnDirtyChanged(f func(bool)) { e.onDirtyChanged = f }
 
+// SourceProvider impl — timer fallback in SourcePanel handles refresh.
+func (e *SiegeEditor) GenerateSource() string {
+	if e.siege == nil {
+		return ""
+	}
+	content, err := parsers.GenerateSiege(e.siege)
+	if err != nil {
+		return "// generate error: " + err.Error()
+	}
+	return content
+}
+func (e *SiegeEditor) SetOnSourceChanged(f func()) {}
+
 func (e *SiegeEditor) markDirty() {
 	if !e.isDirty {
 		e.isDirty = true

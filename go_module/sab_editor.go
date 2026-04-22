@@ -136,6 +136,21 @@ func (e *SABEditor) SetOnHover(f func(string, string))        {}
 func (e *SABEditor) SetAssetBrowser(ab *AssetBrowser)         { e.assetBrowser = ab }
 func (e *SABEditor) SetHolocronClient(client *HolocronClient) { e.holocronClient = client }
 
+// SourceProvider impl — lets the live source panel render this
+// editor's output. Actual push-notification on change isn't wired;
+// SourcePanel's 500ms fallback timer catches updates.
+func (e *SABEditor) GenerateSource() string {
+	if e.saber == nil {
+		return ""
+	}
+	content, err := parsers.GenerateSAB(e.saber)
+	if err != nil {
+		return "// generate error: " + err.Error()
+	}
+	return content
+}
+func (e *SABEditor) SetOnSourceChanged(f func()) {}
+
 // Dirty tracking methods
 func (e *SABEditor) SetOnDirtyChanged(f func(bool)) { e.onDirtyChanged = f }
 func (e *SABEditor) IsDirty() bool                  { return e.isDirty }

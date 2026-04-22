@@ -10,6 +10,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -32,6 +33,26 @@ type SourcePanel struct {
 
 func NewSourcePanel(a *App) *SourcePanel {
 	sp := &SourcePanel{app: a}
+	// Fallback refresh timer — catches editors that don't call
+	// SetOnSourceChanged from every UI field. Event-driven refresh
+	// (via markDirty() hooks) gets priority for instant updates;
+	// this ticker is the safety net for editors that lack those
+	// hooks (500ms matches kitsu's MBCH editor cadence).
+	go func() {
+		ticker := time.NewTicker(500 * time.Millisecond)
+		defer ticker.Stop()
+		var last string
+		for range ticker.C {
+			if sp.provider == nil {
+				continue
+			}
+			cur := sp.provider.GenerateSource()
+			if cur != last {
+				last = cur
+				fyne.Do(sp.refresh)
+			}
+		}
+	}()
 
 	sp.header = widget.NewLabelWithStyle("Source", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	sp.byteCount = widget.NewLabel("")

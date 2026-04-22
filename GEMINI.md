@@ -1,8 +1,6 @@
 # MBII Foundry — Gemini Onboarding
 
 > This document is the onboarding context for Gemini and other AI assistants. **CLAUDE.md** is the source of truth for project rules and conventions — always defer to it for coding standards, architecture decisions, and workflows.
->
-> The binary is still named `fa_creator` for historical reasons; the app/repo brand is "MBII Foundry."
 
 ---
 
@@ -86,7 +84,7 @@ Migration to Wails is approved but waiting until core UX features are validated.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                      FA Creator                              │
+│                      MBII Foundry                              │
 ├─────────────────────────────────────────────────────────────┤
 │  UI Layer (Currently Fyne, Future: Wails Web)               │
 │  - Editor tabs (MBCH, SAB, VEH)                             │
@@ -157,12 +155,12 @@ EnumDoc{
 ```bash
 # Current (Fyne)
 cd go_module
-go build -o fa_creator
-./fa_creator
+go build -o mbii-foundry
+./mbii-foundry
 
 # macOS App Bundle
 cd ..
-./build_app.sh   # Creates "FA Creator.app"
+./build_app.sh   # Creates "MBII Foundry.app"
 
 # Future (Wails) - NOT YET IMPLEMENTED
 cd wails_app

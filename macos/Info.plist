@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleName</key>
-    <string>FA Creator</string>
+    <string>MBII Foundry</string>
     <key>CFBundleDisplayName</key>
-    <string>FA Creator</string>
+    <string>MBII Foundry</string>
     <key>CFBundleIdentifier</key>
-    <string>org.moviebattles.facreator</string>
+    <string>com.frenzeh.mbii-foundry</string>
     <key>CFBundleVersion</key>
     <string>1.1</string>
     <key>CFBundleShortVersionString</key>
@@ -15,7 +15,7 @@
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleExecutable</key>
-    <string>fa_creator</string>
+    <string>mbii-foundry</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>LSMinimumSystemVersion</key>
@@ -27,7 +27,7 @@
     <key>LSUIElement</key>
     <false/>
     <key>NSAppleEventsUsageDescription</key>
-    <string>FA Creator needs to respond to keyboard input for editing.</string>
+    <string>MBII Foundry needs to respond to keyboard input for editing.</string>
     <key>CFBundleDocumentTypes</key>
     <array>
         <dict>

@@ -20,10 +20,11 @@ func InitDefinitions() {
 
 	// Potential paths for definitions
 	paths := []string{
-		"definitions",                  // relative to binary
-		"../definitions",               // relative to go_module source
-		"../../definitions",            // deeper nesting
-		"fa_creator_app/definitions",   // from root
+		"definitions",                 // relative to binary
+		"../definitions",              // relative to go_module source
+		"../../definitions",           // deeper nesting
+		"mbii-foundry/definitions",    // sibling checkout
+		"fa_creator_app/definitions",  // legacy mount point inside mbii-holocron (submodule)
 	}
 
 	for _, p := range paths {

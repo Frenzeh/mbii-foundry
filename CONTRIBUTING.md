@@ -15,7 +15,7 @@
 
 > *"Your focus determines your reality."* — Qui-Gon Jinn
 
-Welcome. This guide gets you up to speed on the MBII Foundry codebase (binary still named `fa_creator` — historical) and on the kinds of contributions we're looking for during alpha.
+Welcome. This guide gets you up to speed on the MBII Foundry codebase and on the kinds of contributions we're looking for during alpha.
 
 ## Quick Start
 
@@ -27,9 +27,9 @@ Welcome. This guide gets you up to speed on the MBII Foundry codebase (binary st
 
 ### First Build
 ```bash
-cd system/fa_creator/go_module
-go build -o fa_creator
-./fa_creator
+cd mbii-foundry/go_module
+go build -o mbii-foundry
+./mbii-foundry
 ```
 
 If it compiles and runs, you're ready to contribute!
@@ -38,7 +38,7 @@ If it compiles and runs, you're ready to contribute!
 
 ## Project Overview
 
-FA Creator is a visual editor for Movie Battles II (MBII) "Full Authentic" game files. It's built with:
+MBII Foundry is a visual editor for Movie Battles II (MBII) "Full Authentic" game files. It's built with:
 
 - **Go** - Core application language
 - **Fyne** - Cross-platform GUI framework
@@ -63,7 +63,7 @@ FA Creator is a visual editor for Movie Battles II (MBII) "Full Authentic" game 
 ## Project Structure
 
 ```
-fa_creator/
+mbii-foundry/
 ├── CLAUDE.md              # AI assistant instructions (source of truth)
 ├── CONTRIBUTING.md        # This file
 ├── README.md              # User-facing documentation
@@ -242,7 +242,7 @@ PYEOF
 ### Manual Testing Checklist
 Before submitting a PR:
 
-- [ ] App compiles: `go build -o fa_creator`
+- [ ] App compiles: `go build -o mbii-foundry`
 - [ ] App launches without errors
 - [ ] Can open existing file
 - [ ] Can edit and save file
@@ -254,10 +254,10 @@ Before submitting a PR:
 ```bash
 # Build
 cd go_module
-go build -o fa_creator
+go build -o mbii-foundry
 
 # Run
-./fa_creator
+./mbii-foundry
 
 # Check for compile errors quickly
 go vet ./...
@@ -269,7 +269,7 @@ go vet ./...
 
 ### Local Build
 ```bash
-./build_app.sh  # Creates "FA Creator.app"
+./build_app.sh  # Creates "MBII Foundry.app"
 ```
 
 ### CI/CD

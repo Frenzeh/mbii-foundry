@@ -51,8 +51,8 @@ Requires **Go 1.21+**. Fyne handles the native GUI, so no extra GUI toolkit inst
 ```bash
 git clone https://github.com/Frenzeh/mbii-foundry.git
 cd mbii-foundry/go_module
-go build -o fa_creator        # fa_creator.exe on Windows
-./fa_creator
+go build -o mbii-foundry        # mbii-foundry.exe on Windows
+./mbii-foundry
 ```
 
 macOS app bundle (with local code signing):
@@ -60,7 +60,7 @@ macOS app bundle (with local code signing):
 ```bash
 cd mbii-foundry
 ./build_app.sh
-# Output: "FA Creator.app"
+# Output: "MBII Foundry.app"
 ```
 
 Details and caveats in [`USER_GUIDE.md`](USER_GUIDE.md).

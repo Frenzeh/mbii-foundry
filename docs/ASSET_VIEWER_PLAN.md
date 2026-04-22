@@ -45,7 +45,7 @@ PK3 Structure (MBII-specific):
 
 ### Key Differences from NetRadiant
 
-| NetRadiant Focus | FA Creator Focus |
+| NetRadiant Focus | MBII Foundry Focus |
 |------------------|------------------|
 | `textures/` (world brushes) | `models/players/` (characters) |
 | Map shaders | Character skins |

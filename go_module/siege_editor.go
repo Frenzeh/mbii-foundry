@@ -11,7 +11,7 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	
-	"github.com/mbii-holocron/fa_creator/parsers"
+	"github.com/Frenzeh/mbii-foundry/parsers"
 )
 
 type SiegeEditor struct {

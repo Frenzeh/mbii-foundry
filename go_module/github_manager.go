@@ -100,9 +100,9 @@ func (m *GitHubManager) DeviceFlowStart() (string, string, int, string, error) {
 	// but we can request the code manually or use a helper. 
 	// For simplicity, we'll simulate the standard GitHub flow request:
 	// POST https://github.com/login/device/code
-	// client_id = <CLIENT_ID> (We need a client ID for FA Creator app registration)
+	// client_id = <CLIENT_ID> (We need a client ID for MBII Foundry app registration)
 	
-	// Since we don't have a registered Client ID for FA Creator yet in this context,
+	// Since we don't have a registered Client ID for MBII Foundry yet in this context,
 	// we will simulate the flow or require a Personal Access Token (PAT) for MVP.
 	// However, the prompt asked for "Super New User Friendly".
 	// The best SNUF way without a backend is PAT with a very good guide, OR Device Flow if we register an App.
@@ -300,7 +300,7 @@ func (m *GitHubManager) OpenPullRequest(title, body string) (string, error) {
 		Title:               github.String(title),
 		Head:                github.String(headPrefix + ":" + branch),
 		Base:                github.String(m.UpstreamBranch), 
-		Body:                github.String(body + "\n\n*Created with FA Creator*"),
+		Body:                github.String(body + "\n\n*Created with MBII Foundry*"),
 		MaintainerCanModify: github.Bool(true),
 	}
 

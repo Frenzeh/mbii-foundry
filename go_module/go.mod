@@ -1,4 +1,4 @@
-module github.com/mbii-holocron/fa_creator
+module github.com/Frenzeh/mbii-foundry
 
 go 1.24.0
 

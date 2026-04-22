@@ -2,8 +2,6 @@
 
 > Source of truth for project rules, conventions, and architecture.
 > Other AI assistants (Gemini, etc.) should read `GEMINI.md` for onboarding context, then defer to this file.
->
-> The binary is named `fa_creator` for historical reasons; the app and repo are "MBII Foundry" going forward. Don't rename the binary yet — it's referenced by build scripts and a downstream Holocron integration.
 
 ---
 
@@ -36,7 +34,7 @@ MBII Foundry is a **standalone visual editor** for Movie Battles II (MBII) conte
 ## Directory Structure
 
 ```
-fa_creator/
+mbii-foundry/
 ├── CLAUDE.md              # THIS FILE - source of truth
 ├── GEMINI.md              # Onboarding doc for other AI assistants
 ├── README.md              # User-facing readme
@@ -86,16 +84,16 @@ See `docs/ROADMAP.md` for full roadmap. Current focus:
 ```bash
 # Build Go binary
 cd go_module
-go build -o fa_creator
+go build -o mbii-foundry
 
 # Run directly
-./fa_creator
+./mbii-foundry
 
 # Build macOS .app bundle (with code signing)
 cd ..
 ./build_app.sh
 
-# Output: "FA Creator.app" in parent directory
+# Output: "MBII Foundry.app" in parent directory
 ```
 
 **Important**: macOS requires code signing. The build script runs:
@@ -211,7 +209,7 @@ Key fields:
 ### Build and Test
 ```bash
 cd go_module
-go build -o fa_creator && ./fa_creator
+go build -o mbii-foundry && ./mbii-foundry
 ```
 
 ---

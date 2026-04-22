@@ -1,9 +1,9 @@
 #!/bin/bash
 # =============================================================================
-# FA Creator Setup Script
+# MBII Foundry — Setup Script
 # =============================================================================
-# One-time setup to build the FA Creator application.
-# After running this, use ./run_fa_creator.sh to launch the app.
+# One-time setup to build MBII Foundry.
+# After running this, use ./run_mbii-foundry.sh to launch the app.
 # =============================================================================
 
 set -e
@@ -13,8 +13,8 @@ GO_MODULE_DIR="$SCRIPT_DIR/go_module"
 
 echo ""
 echo "========================================"
-echo "   FA Creator - Setup"
-echo "   MBII Full Authentic Content Editor"
+echo "   MBII Foundry — Setup"
+echo "   Visual Content Editor for MBII"
 echo "========================================"
 echo ""
 
@@ -35,14 +35,14 @@ echo "Go version: $(go version)"
 echo ""
 
 # Build the application
-echo "Building FA Creator..."
+echo "Building MBII Foundry..."
 cd "$GO_MODULE_DIR"
 
 # Detect platform and set output name
 if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" || "$OSTYPE" == "cygwin" ]]; then
-    OUTPUT="fa_creator.exe"
+    OUTPUT="mbii-foundry.exe"
 else
-    OUTPUT="fa_creator"
+    OUTPUT="mbii-foundry"
 fi
 
 go build -o "$OUTPUT"
@@ -53,9 +53,9 @@ if [ $? -eq 0 ]; then
     echo "   Setup Complete!"
     echo "========================================"
     echo ""
-    echo "To launch FA Creator:"
+    echo "To launch MBII Foundry:"
     echo ""
-    echo "  ./run_fa_creator.sh"
+    echo "  ./run_mbii-foundry.sh"
     echo ""
     echo "Or directly:"
     echo ""

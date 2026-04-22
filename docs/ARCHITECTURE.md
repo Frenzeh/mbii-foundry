@@ -2,7 +2,7 @@
 
 ## Unified Tool Design
 
-MBII Foundry (binary: `fa_creator`) is a comprehensive content-creation tool for Movie Battles II.
+MBII Foundry is a comprehensive content-creation tool for Movie Battles II.
 It provides a unified interface for editing MBII content file types with integrated asset browsing and PK3 packaging.
 
 ## Supported File Types
@@ -18,7 +18,7 @@ It provides a unified interface for editing MBII content file types with integra
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  FA Creator                                            [_][□][X] │
+│  MBII Foundry                                            [_][□][X] │
 ├─────────────────────────────────────────────────────────────────┤
 │  File   Edit   View   Tools   Package   Help                    │
 ├─────────────────────────────────────────────────────────────────┤
@@ -57,7 +57,7 @@ It provides a unified interface for editing MBII content file types with integra
 ### Core Components
 
 ```
-fa_creator/
+mbii-foundry/
 ├── go_module/
 │   ├── main.go              # Application entry, window management
 │   ├── app.go               # Main app state, menu handling

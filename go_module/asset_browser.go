@@ -170,7 +170,7 @@ func (ab *AssetBrowser) addToFavorites(path string) {
 }
 
 func (ab *AssetBrowser) loadConfig() {
-	configPath := filepath.Join(ab.gamedataPath, "..", "fa_creator_config.json")
+	configPath := filepath.Join(ab.gamedataPath, "..", "mbii-foundry_config.json")
 	data, err := os.ReadFile(configPath)
 	if err == nil {
 		var config struct { MD3ViewPath string `json:"md3view_path"` }

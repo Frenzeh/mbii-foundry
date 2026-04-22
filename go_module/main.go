@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -581,6 +582,25 @@ func (a *App) createNewFile(title string, editor interface{}) {
 }
 
 func (a *App) openFileFromPath(filePath string) {
+	// Catch panics from editor init / LoadFile / updateUI so the app
+	// stays running instead of hard-crashing. Rare-path code in the
+	// editors (e.g. a new field, a missing enum) can nil-deref —
+	// without this, users get silent CTD. With it, they get a dialog
+	// with the path + error and can carry on.
+	defer func() {
+		if r := recover(); r != nil {
+			stack := string(debug.Stack())
+			LogError("PANIC opening %s: %v\n%s", filePath, r, stack)
+			dialog.ShowError(fmt.Errorf(
+				"Failed to open %s\n\nInternal error: %v\n\n"+
+					"Full stack trace written to the log "+
+					"(Debug Logs in toolbar).\nPlease file an issue "+
+					"with the log attached.",
+				filepath.Base(filePath), r),
+				a.mainWindow)
+		}
+	}()
+
 	ext := strings.ToLower(filepath.Ext(filePath))
 	var editor Editor
 	var title = filepath.Base(filePath)

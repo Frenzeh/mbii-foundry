@@ -79,10 +79,20 @@ if [[ "$signing" == "true" ]]; then
         else
             range="$remote_sha..$local_sha"
         fi
-        unsigned=$(git log --format='%H %G?' "$range" | awk '$2 != "G" && $2 != "U" {print $1}' | head -5)
+        # Look at the raw commit object for a gpgsig header. This is
+        # more reliable than `%G?` because the latter returns N when
+        # the user has no allowedSignersFile configured for local
+        # verification, even if the commit IS signed. GitHub verifies
+        # against the registered signing key server-side.
+        unsigned=""
+        for sha in $(git rev-list "$range"); do
+            if ! git cat-file -p "$sha" | head -20 | grep -q "^gpgsig "; then
+                unsigned+="$sha"$'\n'
+            fi
+        done
         if [[ -n "$unsigned" ]]; then
             fail "Unsigned commits in push:" \
-                 "$(echo "$unsigned" | sed 's/^/  /')" \
+                 "$(echo "$unsigned" | head -5 | sed 's/^/  /')" \
                  "Sign them with: git rebase --exec 'git commit --amend --no-edit -S' <base>"
         fi
     done

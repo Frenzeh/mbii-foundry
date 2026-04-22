@@ -197,9 +197,7 @@ func main() {
 		LogError("Failed to load external data from %s: %v", dataPath, err)
 	}
 
-	configDir, _ := os.UserConfigDir()
-	appConfigDir := filepath.Join(configDir, "mbii-fa-creator")
-	os.MkdirAll(appConfigDir, 0755)
+	appConfigDir := AppConfigDir()
 
 	application := &App{
 		editors:        make(map[*container.TabItem]Editor),
@@ -224,7 +222,7 @@ func main() {
 		go application.monitorHolocronStatus()
 	}
 
-	application.fyneApp = app.NewWithID("com.mbii.facreator")
+	application.fyneApp = app.NewWithID("com.frenzeh.mbii-foundry")
 	application.fyneApp.Settings().SetTheme(&FoundryTheme{})
 	application.mainWindow = application.fyneApp.NewWindow(fmt.Sprintf("%s - MBII Content Editor", AppName))
 	application.mainWindow.Resize(fyne.NewSize(1400, 900))
@@ -796,13 +794,11 @@ func (a *App) saveFileAs() {
 }
 
 func (a *App) loadConfig() {
-	configDir, err := os.UserConfigDir()
-	if err != nil {
-		LogError("Failed to get user config dir: %v", err)
+	appConfigDir := AppConfigDir()
+	if appConfigDir == "" {
+		LogError("Failed to resolve app config dir")
 		return
 	}
-	appConfigDir := filepath.Join(configDir, "mbii-fa-creator")
-	os.MkdirAll(appConfigDir, 0755)
 	a.configPath = filepath.Join(appConfigDir, "config.json")
 
 	// Set defaults

@@ -1,0 +1,209 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MBII Classes Enum",
+  "description": "All class types from bg_public.h classes_t enum",
+  "version": "1.0.0",
+  "source_file": "game/bg_public.h",
+
+  "classes": {
+    "MB_CLASS_NOCLASS": {
+      "value": 0,
+      "description": "No class selected",
+      "team": "none"
+    },
+    "MB_CLASS_SOLDIER": {
+      "value": 1,
+      "description": "Rebel Soldier - versatile infantry",
+      "team": "rebels",
+      "era": "classic"
+    },
+    "MB_CLASS_TROOPER": {
+      "value": 2,
+      "description": "Stormtrooper - Imperial infantry",
+      "team": "empire",
+      "era": "classic"
+    },
+    "MB_CLASS_COMMANDER": {
+      "value": 3,
+      "description": "Commander - tactical leader",
+      "team": "any",
+      "era": "classic"
+    },
+    "MB_CLASS_ELITETROOPER": {
+      "value": 4,
+      "description": "Elite Trooper - heavy weapons specialist",
+      "team": "any",
+      "era": "classic"
+    },
+    "MB_CLASS_SITH": {
+      "value": 5,
+      "description": "Sith - dark side Force user",
+      "team": "villains",
+      "era": "any",
+      "force_user": true
+    },
+    "MB_CLASS_JEDI": {
+      "value": 6,
+      "description": "Jedi - light side Force user",
+      "team": "heroes",
+      "era": "any",
+      "force_user": true
+    },
+    "MB_CLASS_BOUNTY_HUNTER": {
+      "value": 7,
+      "description": "Bounty Hunter - versatile mercenary",
+      "team": "villains",
+      "era": "any"
+    },
+    "MB_CLASS_HERO": {
+      "value": 8,
+      "description": "Hero - unique named character",
+      "team": "heroes",
+      "era": "any"
+    },
+    "MB_CLASS_SBD": {
+      "value": 9,
+      "description": "Super Battle Droid - heavy combat droid",
+      "team": "separatists",
+      "era": "prequel",
+      "droid": true
+    },
+    "MB_CLASS_WOOKIE": {
+      "value": 10,
+      "description": "Wookiee - powerful melee warrior",
+      "team": "heroes",
+      "era": "any"
+    },
+    "MB_CLASS_DROIDEKA": {
+      "value": 11,
+      "description": "Droideka/Destroyer - rolling shield droid",
+      "team": "separatists",
+      "era": "prequel",
+      "droid": true
+    },
+    "MB_CLASS_CLONETROOPER": {
+      "value": 12,
+      "description": "Clone Trooper - Republic infantry",
+      "team": "republic",
+      "era": "prequel"
+    },
+    "MB_CLASS_MANDALORIAN": {
+      "value": 13,
+      "description": "Mandalorian - armored warrior with jetpack",
+      "team": "any",
+      "era": "any"
+    },
+    "MB_CLASS_ARCTROOPER": {
+      "value": 14,
+      "description": "ARC Trooper - elite clone trooper",
+      "team": "republic",
+      "era": "prequel"
+    },
+    "MB_CLASS_REDACTED_01": {
+      "value": 15,
+      "description": "Enforcer (ifdef REDACTED_FLAG_04)",
+      "team": "any",
+      "era": "any",
+      "conditional": "REDACTED_FLAG_04"
+    },
+    "MB_CLASS_REDACTED_02": {
+      "value": 16,
+      "description": "Spy/Infiltrator - stealth specialist (ifdef REDACTED_FLAG_04)",
+      "team": "any",
+      "era": "any",
+      "conditional": "REDACTED_FLAG_04"
+    },
+    "MB_CLASS_REDACTED_03": {
+      "value": 17,
+      "description": "Astro Droid (ifdef REDACTED_FLAG_04)",
+      "team": "any",
+      "era": "any",
+      "droid": true,
+      "conditional": "REDACTED_FLAG_04"
+    },
+    "MB_CLASS_REDACTED_04": {
+      "value": 18,
+      "description": "Astromech Droid - R2 style support (ifdef REDACTED_FLAG_04)",
+      "team": "any",
+      "era": "any",
+      "droid": true,
+      "conditional": "REDACTED_FLAG_04"
+    },
+    "MB_CLASS_REDACTED_05": {
+      "value": 19,
+      "description": "Battle Droid - basic combat droid (ifdef REDACTED_FLAG_04)",
+      "team": "separatists",
+      "era": "prequel",
+      "droid": true,
+      "conditional": "REDACTED_FLAG_04"
+    },
+    "MB_CLASS_REDACTED_06": {
+      "value": 20,
+      "description": "Jet Trooper - jetpack infantry (ifdef REDACTED_FLAG_04)",
+      "team": "any",
+      "era": "any",
+      "conditional": "REDACTED_FLAG_04"
+    },
+    "MB_CLASS_REDACTED_07": {
+      "value": 21,
+      "description": "Assassin Droid - IG-series style (ifdef REDACTED_FLAG_04)",
+      "team": "any",
+      "era": "any",
+      "droid": true,
+      "conditional": "REDACTED_FLAG_04"
+    },
+    "MB_CLASS_REDACTED_08": {
+      "value": 22,
+      "description": "Patrolian (ifdef REDACTED_FLAG_04)",
+      "team": "any",
+      "era": "any",
+      "conditional": "REDACTED_FLAG_04"
+    },
+    "MB_CLASS_REDACTED_09": {
+      "value": 23,
+      "description": "Imperial Medic (ifdef REDACTED_FLAG_04)",
+      "team": "empire",
+      "era": "classic",
+      "conditional": "REDACTED_FLAG_04"
+    },
+    "MB_CLASS_REDACTED_10": {
+      "value": 24,
+      "description": "Rebel Medic (ifdef REDACTED_FLAG_04)",
+      "team": "rebels",
+      "era": "classic",
+      "conditional": "REDACTED_FLAG_04"
+    },
+    "MB_CLASS_OBSERVER": {
+      "value": 25,
+      "description": "Observer - spectator mode",
+      "team": "none"
+    },
+    "NO_OF_CLASSES": {
+      "value": 26,
+      "description": "Total class count marker"
+    }
+  },
+
+  "categories": {
+    "force_users": ["MB_CLASS_JEDI", "MB_CLASS_SITH"],
+    "droids": ["MB_CLASS_SBD", "MB_CLASS_DROIDEKA", "MB_CLASS_REDACTED_03", "MB_CLASS_REDACTED_04", "MB_CLASS_REDACTED_05", "MB_CLASS_REDACTED_07"],
+    "infantry": ["MB_CLASS_SOLDIER", "MB_CLASS_TROOPER", "MB_CLASS_CLONETROOPER", "MB_CLASS_ARCTROOPER", "MB_CLASS_REDACTED_06"],
+    "specialists": ["MB_CLASS_BOUNTY_HUNTER", "MB_CLASS_MANDALORIAN", "MB_CLASS_REDACTED_02"],
+    "leaders": ["MB_CLASS_COMMANDER", "MB_CLASS_HERO"],
+    "support": ["MB_CLASS_REDACTED_09", "MB_CLASS_REDACTED_10"]
+  },
+
+  "teams": {
+    "rebels": ["MB_CLASS_SOLDIER"],
+    "empire": ["MB_CLASS_TROOPER", "MB_CLASS_REDACTED_09"],
+    "republic": ["MB_CLASS_CLONETROOPER", "MB_CLASS_ARCTROOPER"],
+    "separatists": ["MB_CLASS_SBD", "MB_CLASS_DROIDEKA", "MB_CLASS_REDACTED_05"],
+    "heroes": ["MB_CLASS_JEDI", "MB_CLASS_HERO", "MB_CLASS_WOOKIE"],
+    "villains": ["MB_CLASS_SITH", "MB_CLASS_BOUNTY_HUNTER"]
+  },
+
+  "notes": {
+    "odd_even": "Odd class numbers are typically Villains, Even are typically Heroes (design convention)",
+    "new_classes": "Classes 15+ require REDACTED_FLAG_04 preprocessor define"
+  }
+}

@@ -1,0 +1,265 @@
+[
+  {
+    "id": "MB_CLASS_SBD",
+    "name": "MB_CLASS_SBD",
+    "overview": "Super Battle Droid\nAny resource given to this class falls under the same properties as Battery",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Super Battle Droid\nAny resource given to this class falls under the same properties as Battery"
+  },
+  {
+    "id": "MB_CLASS_ELITETROOPER",
+    "name": "MB_CLASS_ELITETROOPER",
+    "overview": "Elite Trooper",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Elite Trooper"
+  },
+  {
+    "id": "MB_CLASS_CLONETROOPER",
+    "name": "MB_CLASS_CLONETROOPER",
+    "overview": "Clone Trooper\nComes with Stamina (0), default binds CS1:",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Clone Trooper\nComes with Stamina (0), default binds CS1:"
+  },
+  {
+    "id": "MB_CLASS_SOLDIER",
+    "name": "MB_CLASS_SOLDIER",
+    "overview": "Soldier",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Soldier"
+  },
+  {
+    "id": "MB_CLASS_HERO",
+    "name": "MB_CLASS_HERO",
+    "overview": "Hero",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Hero"
+  },
+  {
+    "id": "MB_CLASS_ARCTROOPER",
+    "name": "MB_CLASS_ARCTROOPER",
+    "overview": "ARC Trooper\nComes with Stamina (0), default binds CS1:",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "ARC Trooper\nComes with Stamina (0), default binds CS1:"
+  },
+  {
+    "id": "MB_CLASS_OBSERVER",
+    "name": "MB_CLASS_OBSERVER",
+    "overview": "Spectator\n}",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Spectator\n}"
+  },
+  {
+    "id": "MB_CLASS_MANDALORIAN",
+    "name": "MB_CLASS_MANDALORIAN",
+    "overview": "Mandalorian",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Mandalorian"
+  },
+  {
+    "id": "MB_CLASS_WOOKIE",
+    "name": "MB_CLASS_WOOKIE",
+    "overview": "Wookiee\nSec fire melee becomes Wookiee Slap, takes 2x damage from burning, must be granted uppercut melee if desired. Default binds CS1: Fury CS2: Shoulder Barge",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Wookiee\nSec fire melee becomes Wookiee Slap, takes 2x damage from burning, must be granted uppercut melee if desired. Default binds CS1: Fury CS2: Shoulder Barge"
+  },
+  {
+    "id": "MB_CLASS_BOUNTY_HUNTER",
+    "name": "MB_CLASS_BOUNTY_HUNTER",
+    "overview": "Bounty Hunter",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Bounty Hunter"
+  },
+  {
+    "id": "MB_CLASS_JEDI",
+    "name": "MB_CLASS_JEDI",
+    "overview": "Jedi / Sith\n10% universal damage reduction",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Jedi / Sith\n10% universal damage reduction"
+  },
+  {
+    "id": "MB_CLASS_DROIDEKA",
+    "name": "MB_CLASS_DROIDEKA",
+    "overview": "Destroyer Droid",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Destroyer Droid"
+  },
+  {
+    "id": "MB_CLASS_TROOPER",
+    "name": "MB_CLASS_TROOPER",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_CLASS_COMMANDER",
+    "name": "MB_CLASS_COMMANDER",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_CLASS_SITH",
+    "name": "MB_CLASS_SITH",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_CLASS_REDACTED_01",
+    "name": "MB_CLASS_REDACTED_01",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_CLASS_REDACTED_02",
+    "name": "MB_CLASS_REDACTED_02",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_CLASS_REDACTED_03",
+    "name": "MB_CLASS_REDACTED_03",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_CLASS_REDACTED_04",
+    "name": "MB_CLASS_REDACTED_04",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_CLASS_REDACTED_05",
+    "name": "MB_CLASS_REDACTED_05",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_CLASS_REDACTED_06",
+    "name": "MB_CLASS_REDACTED_06",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_CLASS_REDACTED_07",
+    "name": "MB_CLASS_REDACTED_07",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_CLASS_REDACTED_08",
+    "name": "MB_CLASS_REDACTED_08",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_CLASS_REDACTED_09",
+    "name": "MB_CLASS_REDACTED_09",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_CLASS_REDACTED_10",
+    "name": "MB_CLASS_REDACTED_10",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  }
+]

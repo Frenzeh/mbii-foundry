@@ -1,0 +1,87 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MBII Saber Styles Enum",
+  "description": "All saber style types from q_shared.h saber_styles_t enum",
+  "version": "1.0.0",
+  "source_file": "game/q_shared.h",
+
+  "saber_styles": {
+    "SS_NONE": {
+      "value": 0,
+      "description": "No saber style",
+      "hands": 0
+    },
+    "SS_FAST": {
+      "value": 1,
+      "description": "Blue/Fast style - quick attacks, low damage",
+      "hands": 1,
+      "color": "blue",
+      "speed": "fast",
+      "damage": "low"
+    },
+    "SS_MEDIUM": {
+      "value": 2,
+      "description": "Yellow/Medium style - balanced attacks",
+      "hands": 1,
+      "color": "yellow",
+      "speed": "medium",
+      "damage": "medium"
+    },
+    "SS_STRONG": {
+      "value": 3,
+      "description": "Red/Strong style - slow attacks, high damage",
+      "hands": 1,
+      "color": "red",
+      "speed": "slow",
+      "damage": "high"
+    },
+    "SS_DESANN": {
+      "value": 4,
+      "description": "Desann style - powerful NPC style",
+      "hands": 1,
+      "special": true
+    },
+    "SS_TAVION": {
+      "value": 5,
+      "description": "Tavion style - acrobatic NPC style",
+      "hands": 1,
+      "special": true
+    },
+    "SS_DUAL": {
+      "value": 6,
+      "description": "Dual sabers style - two lightsabers",
+      "hands": 2,
+      "requires_second_saber": true
+    },
+    "SS_STAFF": {
+      "value": 7,
+      "description": "Staff/Saberstaff style - double-bladed lightsaber",
+      "hands": 2,
+      "requires_staff_saber": true
+    },
+    "SS_SINGLE": {
+      "value": 8,
+      "description": "Single saber (generic marker)",
+      "hands": 1
+    },
+    "SS_NUM_SABER_STYLES": {
+      "value": 9,
+      "description": "Total saber style count marker"
+    }
+  },
+
+  "categories": {
+    "single_saber": ["SS_FAST", "SS_MEDIUM", "SS_STRONG"],
+    "special_single": ["SS_DESANN", "SS_TAVION"],
+    "dual_wield": ["SS_DUAL"],
+    "staff": ["SS_STAFF"]
+  },
+
+  "notes": {
+    "usage": "Saber styles are used with the 'saberstyle' field as a bitmask: SS_FAST|SS_MEDIUM|SS_STRONG",
+    "requirements": {
+      "SS_DUAL": "Requires saber2 to be defined",
+      "SS_STAFF": "Requires a staff-type saber (SABER_STAFF)"
+    }
+  }
+}

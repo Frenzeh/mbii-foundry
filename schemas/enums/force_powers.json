@@ -1,0 +1,171 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MBII Force Powers Enum",
+  "description": "All force power types from q_shared.h forcePowers_t enum",
+  "version": "1.0.0",
+  "source_file": "game/q_shared.h",
+
+  "force_powers": {
+    "FP_HEAL": {
+      "value": 0,
+      "description": "Force Heal - restore health (instant)",
+      "type": "instant",
+      "alignment": "light"
+    },
+    "FP_LEVITATION": {
+      "value": 1,
+      "description": "Force Jump/Levitation - enhanced jumping",
+      "type": "hold/duration",
+      "alignment": "neutral"
+    },
+    "FP_SPEED": {
+      "value": 2,
+      "description": "Force Speed - enhanced movement speed",
+      "type": "duration",
+      "alignment": "neutral"
+    },
+    "FP_PUSH": {
+      "value": 3,
+      "description": "Force Push - push enemies/objects away",
+      "type": "hold/duration",
+      "alignment": "light"
+    },
+    "FP_PULL": {
+      "value": 4,
+      "description": "Force Pull - pull enemies/objects towards you",
+      "type": "hold/duration",
+      "alignment": "light"
+    },
+    "FP_TELEPATHY": {
+      "value": 5,
+      "description": "Mind Trick - confuse/blind enemies",
+      "type": "duration",
+      "alignment": "light"
+    },
+    "FP_GRIP": {
+      "value": 6,
+      "description": "Force Grip - choke/lift enemies",
+      "type": "hold/duration",
+      "alignment": "dark"
+    },
+    "FP_LIGHTNING": {
+      "value": 7,
+      "description": "Force Lightning - damage enemies with electricity",
+      "type": "hold/duration",
+      "alignment": "dark"
+    },
+    "FP_RAGE": {
+      "value": 8,
+      "description": "Dark Rage - damage boost at health cost",
+      "type": "duration",
+      "alignment": "dark"
+    },
+    "FP_PROTECT": {
+      "value": 9,
+      "description": "Force Protect - damage reduction",
+      "type": "duration",
+      "alignment": "light"
+    },
+    "FP_ABSORB": {
+      "value": 10,
+      "description": "Force Absorb - absorb force attacks",
+      "type": "duration",
+      "alignment": "light"
+    },
+    "FP_TEAM_HEAL": {
+      "value": 11,
+      "description": "Team Heal - heal nearby allies",
+      "type": "instant",
+      "alignment": "light"
+    },
+    "FP_TEAM_FORCE": {
+      "value": 12,
+      "description": "Team Energize - restore ally force points",
+      "type": "instant",
+      "alignment": "dark"
+    },
+    "FP_DRAIN": {
+      "value": 13,
+      "description": "Force Drain - drain health from enemies",
+      "type": "hold/duration",
+      "alignment": "dark"
+    },
+    "FP_SEE": {
+      "value": 14,
+      "description": "Force Sense/Seeing - detect enemies through walls",
+      "type": "duration",
+      "alignment": "neutral"
+    },
+    "FP_SABER_OFFENSE": {
+      "value": 15,
+      "description": "Saber Attack - lightsaber damage/combo skill",
+      "type": "passive",
+      "alignment": "neutral"
+    },
+    "FP_SABER_DEFENSE": {
+      "value": 16,
+      "description": "Saber Defense - lightsaber blocking ability",
+      "type": "passive",
+      "alignment": "neutral"
+    },
+    "FP_SABERTHROW": {
+      "value": 17,
+      "description": "Saber Throw - throw lightsaber at enemies",
+      "type": "instant",
+      "alignment": "neutral"
+    },
+    "FP_BLIND": {
+      "value": 18,
+      "description": "Force Blind (ifdef REDACTED_FLAG_01)",
+      "type": "duration",
+      "alignment": "light",
+      "conditional": "REDACTED_FLAG_01"
+    },
+    "FP_DESTRUCTION": {
+      "value": 19,
+      "description": "Force Destruction (ifdef REDACTED_FLAG_01)",
+      "type": "instant",
+      "alignment": "dark",
+      "conditional": "REDACTED_FLAG_01"
+    },
+    "FP_REDACTED_01": {
+      "value": 20,
+      "description": "Redacted Ability (ifdef REDACTED_FLAG_01)",
+      "type": "duration",
+      "alignment": "light",
+      "conditional": "REDACTED_FLAG_01"
+    },
+    "FP_DEADLYSIGHT": {
+      "value": 21,
+      "description": "Deadly Sight (ifdef REDACTED_FLAG_01)",
+      "type": "hold/duration",
+      "alignment": "dark",
+      "conditional": "REDACTED_FLAG_01"
+    },
+    "FP_REDACTED_02": {
+      "value": 22,
+      "description": "Redacted Ability (ifdef REDACTED_FLAG_01)",
+      "type": "duration",
+      "alignment": "light",
+      "conditional": "REDACTED_FLAG_01"
+    },
+    "FP_REDACTED_03": {
+      "value": 23,
+      "description": "Battle Meditation (ifdef REDACTED_FLAG_01)",
+      "type": "duration",
+      "alignment": "light",
+      "conditional": "REDACTED_FLAG_01"
+    }
+  },
+
+  "categories": {
+    "light_side": ["FP_HEAL", "FP_PUSH", "FP_PULL", "FP_TELEPATHY", "FP_PROTECT", "FP_ABSORB", "FP_TEAM_HEAL", "FP_BLIND", "FP_REDACTED_01", "FP_REDACTED_02", "FP_REDACTED_03"],
+    "dark_side": ["FP_GRIP", "FP_LIGHTNING", "FP_RAGE", "FP_TEAM_FORCE", "FP_DRAIN", "FP_DESTRUCTION", "FP_DEADLYSIGHT"],
+    "neutral": ["FP_LEVITATION", "FP_SPEED", "FP_SEE", "FP_SABER_OFFENSE", "FP_SABER_DEFENSE", "FP_SABERTHROW"],
+    "core": ["FP_PUSH", "FP_PULL", "FP_SPEED", "FP_LEVITATION", "FP_SEE"],
+    "saber": ["FP_SABER_OFFENSE", "FP_SABER_DEFENSE", "FP_SABERTHROW"]
+  },
+
+  "max_levels": 3,
+  "notes": "Force powers can be assigned at levels 1-3. Level 0 means the power is not known."
+}

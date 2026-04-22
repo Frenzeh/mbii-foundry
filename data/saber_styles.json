@@ -1,0 +1,84 @@
+[
+  {
+    "id": "SS_DESANN",
+    "name": "Desann Style",
+    "overview": "A heavy, brutish style modeled after Desann.\n\n**Characteristics**\n*   **Speed**: Moderate-Slow.\n*   **Damage**: High.\n*   **Range**: Long.\n*   **Special**: Unique animations with wide hitboxes. Often used for \"Tank\" Sith.\n\n**Use Cases**\n*   Boss characters or heavy Sith.",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "A heavy, brutish style modeled after Desann."
+  },
+  {
+    "id": "SS_TAVION",
+    "name": "Tavion Style",
+    "overview": "A fast, acrobatic style modeled after Tavion.\n\n**Characteristics**\n*   **Speed**: Fast.\n*   **Damage**: Moderate.\n*   **Range**: Short-Medium.\n*   **Special**: Includes unique flip attacks and backstabs.\n\n**Use Cases**\n*   Assassins and agile Sith.",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "A fast, acrobatic style modeled after Tavion."
+  },
+  {
+    "id": "SS_STRONG",
+    "name": "Strong Style",
+    "overview": "A lightsaber style focused on raw power and breaking defenses.\n\n**Characteristics**\n*   **Speed**: Slow, telegraphed swings.\n*   **Damage**: High damage (can 1-hit kill).\n*   **Range**: Long range.\n*   **Defense**: High block drain (inefficient blocking).\n*   **Special**: Breaks through weak blocks.\n\n**Use Cases**\n*   Aggressive duelists.\n*   Crushing turtle players.",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "A lightsaber style focused on raw power and breaking defenses."
+  },
+  {
+    "id": "SS_FAST",
+    "name": "Fast Style",
+    "overview": "A lightsaber style focused on speed and defense.\n\n**Characteristics**\n*   **Speed**: High attack speed.\n*   **Damage**: Low damage per swing.\n*   **Range**: Short range.\n*   **Defense**: Low block drain (efficient blocking).\n*   **Special**: Can chain swings infinitely.\n\n**Use Cases**\n*   Defensive Jedi/Sith.\n*   Interrupting enemy attacks.",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "A lightsaber style focused on speed and defense."
+  },
+  {
+    "id": "SS_DUAL",
+    "name": "Dual Style",
+    "overview": "Dual-wielding lightsaber style (two sabers).\n\n**Characteristics**\n*   **Speed**: Fast.\n*   **Offense**: High damage output (two blades hitting).\n*   **Defense**: Smaller block box than Staff, but good against blasters.\n*   **Special**: Can throw one saber while keeping the other.\n\n**Use Cases**\n*   Overwhelming offense and versatility.",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Dual-wielding lightsaber style (two sabers)."
+  },
+  {
+    "id": "SS_STAFF",
+    "name": "Staff Style",
+    "overview": "Double-bladed lightsaber style (Darth Maul).\n\n**Characteristics**\n*   **Speed**: Very Fast.\n*   **Defense**: Excellent all-around defense (large block box).\n*   **Special**: Can perform the \"Staff Twirl\" and unique kicks.\n*   **Weakness**: Lower damage per hit compared to Strong style.\n\n**Use Cases**\n*   Crowd control and high defense.",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Double-bladed lightsaber style (Darth Maul)."
+  },
+  {
+    "id": "SS_MEDIUM",
+    "name": "SS_MEDIUM",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "SS_SINGLE",
+    "name": "SS_SINGLE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  }
+]

@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MBII FA Creator Enums Index",
+  "description": "Index of all enum definition files for MBII Full Authentic character files",
+  "version": "1.0.0",
+
+  "enums": {
+    "attributes": {
+      "file": "attributes.json",
+      "description": "MB_ATT_* attribute definitions (150+ entries)"
+    },
+    "weapons": {
+      "file": "weapons.json",
+      "description": "WP_* weapon types from bg_weapons.h (58 entries)"
+    },
+    "force_powers": {
+      "file": "force_powers.json",
+      "description": "FP_* force power types from q_shared.h (24 entries)"
+    },
+    "saber_styles": {
+      "file": "saber_styles.json",
+      "description": "SS_* saber style types from q_shared.h (9 entries)"
+    },
+    "holdables": {
+      "file": "holdables.json",
+      "description": "HI_* holdable items and EAS_HI_* extended abilities (50+ entries)"
+    },
+    "powerups": {
+      "file": "powerups.json",
+      "description": "PW_* powerup/status effect types (22 entries)"
+    },
+    "class_flags": {
+      "file": "class_flags.json",
+      "description": "CFL_* class flags and HELD_* weapon flags (40+ entries)"
+    },
+    "classes": {
+      "file": "classes.json",
+      "description": "MB_CLASS_* character class types (26 entries)"
+    }
+  },
+
+  "usage": {
+    "classinfo_fields": {
+      "MBClass": "classes.json",
+      "weapons": "weapons.json",
+      "forcepowers": "force_powers.json",
+      "saberstyle": "saber_styles.json",
+      "holdables": "holdables.json",
+      "attributes": "attributes.json",
+      "classflags": "class_flags.json"
+    },
+    "weaponinfo_fields": {
+      "WeaponToReplace": "weapons.json",
+      "WeaponBasedOff": "weapons.json"
+    },
+    "forceinfo_fields": {
+      "ForceToReplace": "force_powers.json"
+    }
+  },
+
+  "source_files": {
+    "bg_public.h": ["classes", "holdables", "powerups"],
+    "bg_weapons.h": ["weapons"],
+    "bg_saga.h": ["class_flags"],
+    "q_shared.h": ["force_powers", "saber_styles"],
+    "bg_misc.c": ["attributes"]
+  }
+}

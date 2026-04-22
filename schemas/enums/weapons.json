@@ -1,0 +1,342 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MBII Weapons Enum",
+  "description": "All weapon types from bg_weapons.h weapon_t enum",
+  "version": "1.0.0",
+  "source_file": "game/bg_weapons.h",
+
+  "weapons": {
+    "WP_NONE": {
+      "value": 0,
+      "description": "No weapon",
+      "useable": false
+    },
+    "WP_STUN_BATON": {
+      "value": 1,
+      "description": "Stun baton melee weapon",
+      "useable": true
+    },
+    "WP_MELEE": {
+      "value": 2,
+      "description": "Unarmed melee combat",
+      "useable": true
+    },
+    "WP_SABER": {
+      "value": 3,
+      "description": "Lightsaber",
+      "useable": true
+    },
+    "WP_BRYAR_PISTOL": {
+      "value": 4,
+      "description": "Bryar pistol (standard sidearm)",
+      "useable": true
+    },
+    "WP_CLONE_PISTOL": {
+      "value": 5,
+      "description": "Clone DC-17 pistol",
+      "useable": true
+    },
+    "WP_MANDO_PISTOL": {
+      "value": 6,
+      "description": "Mandalorian WESTAR-35 pistol",
+      "useable": true
+    },
+    "WP_BLASTER": {
+      "value": 7,
+      "description": "E-11 blaster rifle",
+      "useable": true
+    },
+    "WP_DC_CARBINE": {
+      "value": 8,
+      "description": "DC-15 carbine (clone rifle)",
+      "useable": true
+    },
+    "WP_CR2": {
+      "value": 9,
+      "description": "CR-2 heavy blaster pistol",
+      "useable": true
+    },
+    "WP_E_22": {
+      "value": 10,
+      "description": "E-22 blaster rifle",
+      "useable": true
+    },
+    "WP_DISRUPTOR": {
+      "value": 11,
+      "description": "Disruptor sniper rifle",
+      "useable": true
+    },
+    "WP_BOWCASTER": {
+      "value": 12,
+      "description": "Wookiee bowcaster",
+      "useable": true
+    },
+    "WP_REPEATER": {
+      "value": 13,
+      "description": "Imperial repeater",
+      "useable": true
+    },
+    "WP_CLONE_RIFLE": {
+      "value": 14,
+      "description": "DC-15A clone rifle",
+      "useable": true
+    },
+    "WP_THROWER": {
+      "value": 15,
+      "description": "Flamethrower/thrower weapon",
+      "useable": true
+    },
+    "WP_MINIGUN": {
+      "value": 16,
+      "description": "Z-6 rotary blaster cannon",
+      "useable": true
+    },
+    "WP_DEMP2": {
+      "value": 17,
+      "description": "DEMP2 ion cannon",
+      "useable": true
+    },
+    "WP_SHOTGUN": {
+      "value": 18,
+      "description": "Scatter gun/shotgun",
+      "useable": true
+    },
+    "WP_FLECHETTE": {
+      "value": 19,
+      "description": "Flechette launcher",
+      "useable": true
+    },
+    "WP_A280": {
+      "value": 20,
+      "description": "A280 blaster rifle",
+      "useable": true
+    },
+    "WP_DLT20A": {
+      "value": 21,
+      "description": "DLT-20A blaster rifle",
+      "useable": true
+    },
+    "WP_M5": {
+      "value": 22,
+      "description": "M-5 blaster rifle",
+      "useable": true
+    },
+    "WP_T21": {
+      "value": 23,
+      "description": "T-21 light repeating blaster",
+      "useable": true
+    },
+    "WP_ROCKET_LAUNCHER": {
+      "value": 24,
+      "description": "PLX-1 rocket launcher",
+      "useable": true
+    },
+    "WP_PLX1": {
+      "value": 25,
+      "description": "PLX-1 portable missile launcher",
+      "useable": true
+    },
+    "WP_THERMAL": {
+      "value": 26,
+      "description": "Thermal detonator",
+      "useable": true,
+      "category": "grenade"
+    },
+    "WP_FRAG_NADE": {
+      "value": 27,
+      "description": "Fragmentation grenade",
+      "useable": true,
+      "category": "grenade"
+    },
+    "WP_REAL_TD": {
+      "value": 28,
+      "description": "Real thermal detonator (class 3)",
+      "useable": true,
+      "category": "grenade"
+    },
+    "WP_TRIP_MINE": {
+      "value": 29,
+      "description": "Laser trip mine",
+      "useable": true
+    },
+    "WP_PULSE_NADE": {
+      "value": 30,
+      "description": "Pulse grenade (EMP)",
+      "useable": true,
+      "category": "grenade"
+    },
+    "WP_FIRE_NADE": {
+      "value": 31,
+      "description": "Incendiary grenade",
+      "useable": true,
+      "category": "grenade"
+    },
+    "WP_SONIC_NADE": {
+      "value": 32,
+      "description": "Sonic grenade",
+      "useable": true,
+      "category": "grenade"
+    },
+    "WP_CRYO_NADE": {
+      "value": 33,
+      "description": "Cryo/freeze grenade",
+      "useable": true,
+      "category": "grenade"
+    },
+    "WP_CONC_NADE": {
+      "value": 34,
+      "description": "Concussion grenade",
+      "useable": true,
+      "category": "grenade"
+    },
+    "WP_DET_PACK": {
+      "value": 35,
+      "description": "Detpack explosives",
+      "useable": true
+    },
+    "WP_CONCUSSION": {
+      "value": 36,
+      "description": "Concussion rifle",
+      "useable": true
+    },
+    "WP_SBD": {
+      "value": 37,
+      "description": "SBD wrist blaster",
+      "useable": true
+    },
+    "WP_WELD_PULSE": {
+      "value": 38,
+      "description": "Astromech weld pulse",
+      "useable": true
+    },
+    "WP_WELD_BEAM": {
+      "value": 39,
+      "description": "Astromech weld beam",
+      "useable": true
+    },
+    "WP_BRYAR_OLD": {
+      "value": 40,
+      "description": "Old Bryar pistol (legacy)",
+      "useable": true
+    },
+    "WP_EE3": {
+      "value": 41,
+      "description": "EE-3 carbine rifle (Boba Fett)",
+      "useable": true
+    },
+    "WP_EE4": {
+      "value": 42,
+      "description": "EE-4 carbine rifle",
+      "useable": true
+    },
+    "WP_AMBAN": {
+      "value": 43,
+      "description": "Amban phase-pulse rifle (Mandalorian)",
+      "useable": true
+    },
+    "WP_PROJ": {
+      "value": 44,
+      "description": "Projectile rifle",
+      "useable": true
+    },
+    "WP_REDACTED_01": {
+      "value": 45,
+      "description": "Impact grenade (ifdef REDACTED_FLAG_02)",
+      "useable": true,
+      "category": "grenade",
+      "conditional": "REDACTED_FLAG_02"
+    },
+    "WP_REDACTED_02": {
+      "value": 46,
+      "description": "Bacta healing bomb (ifdef REDACTED_FLAG_02)",
+      "useable": true,
+      "category": "grenade",
+      "conditional": "REDACTED_FLAG_02"
+    },
+    "WP_REDACTED_03": {
+      "value": 47,
+      "description": "Gas grenade (ifdef REDACTED_FLAG_02)",
+      "useable": true,
+      "category": "grenade",
+      "conditional": "REDACTED_FLAG_02"
+    },
+    "WP_REDACTED_04": {
+      "value": 48,
+      "description": "Flashbang grenade (ifdef REDACTED_FLAG_02)",
+      "useable": true,
+      "category": "grenade",
+      "conditional": "REDACTED_FLAG_02"
+    },
+    "WP_REDACTED_05": {
+      "value": 49,
+      "description": "Glop grenade (ifdef REDACTED_FLAG_02)",
+      "useable": true,
+      "category": "grenade",
+      "conditional": "REDACTED_FLAG_02"
+    },
+    "WP_REDACTED_06": {
+      "value": 50,
+      "description": "Imploder grenade (ifdef REDACTED_FLAG_02)",
+      "useable": true,
+      "category": "grenade",
+      "conditional": "REDACTED_FLAG_02"
+    },
+    "WP_REDACTED_07": {
+      "value": 51,
+      "description": "Smoke grenade (ifdef REDACTED_FLAG_02)",
+      "useable": true,
+      "category": "grenade",
+      "conditional": "REDACTED_FLAG_02"
+    },
+    "WP_REDACTED_08": {
+      "value": 52,
+      "description": "Shield grenade (ifdef REDACTED_FLAG_02)",
+      "useable": true,
+      "category": "grenade",
+      "conditional": "REDACTED_FLAG_02"
+    },
+    "WP_REDACTED_09": {
+      "value": 53,
+      "description": "Proton grenade (ifdef REDACTED_FLAG_02)",
+      "useable": true,
+      "category": "grenade",
+      "conditional": "REDACTED_FLAG_02"
+    },
+    "WP_UGL": {
+      "value": 54,
+      "description": "Universal Grenade Launcher (FRENZY_GL)",
+      "useable": true
+    },
+    "WP_MGL": {
+      "value": 55,
+      "description": "Micro Grenade Launcher - sticky launcher (FRENZY_STICKY)",
+      "useable": true
+    },
+    "WP_EMPLACED_GUN": {
+      "value": 56,
+      "description": "Emplaced turret gun",
+      "useable": false
+    },
+    "WP_TURRET": {
+      "value": 57,
+      "description": "Turret weapon",
+      "useable": false
+    },
+    "WP_NUM_WEAPONS": {
+      "value": 58,
+      "description": "Total weapon count marker",
+      "useable": false
+    }
+  },
+
+  "categories": {
+    "melee": ["WP_STUN_BATON", "WP_MELEE", "WP_SABER"],
+    "pistols": ["WP_BRYAR_PISTOL", "WP_CLONE_PISTOL", "WP_MANDO_PISTOL", "WP_CR2", "WP_BRYAR_OLD"],
+    "rifles": ["WP_BLASTER", "WP_DC_CARBINE", "WP_E_22", "WP_CLONE_RIFLE", "WP_A280", "WP_DLT20A", "WP_M5", "WP_EE3", "WP_EE4", "WP_PROJ", "WP_AMBAN"],
+    "heavy": ["WP_REPEATER", "WP_MINIGUN", "WP_FLECHETTE", "WP_T21", "WP_CONCUSSION"],
+    "special": ["WP_DISRUPTOR", "WP_BOWCASTER", "WP_DEMP2", "WP_SHOTGUN", "WP_THROWER"],
+    "explosives": ["WP_ROCKET_LAUNCHER", "WP_PLX1", "WP_DET_PACK", "WP_TRIP_MINE", "WP_UGL", "WP_MGL"],
+    "grenades": ["WP_THERMAL", "WP_FRAG_NADE", "WP_REAL_TD", "WP_PULSE_NADE", "WP_FIRE_NADE", "WP_SONIC_NADE", "WP_CRYO_NADE", "WP_CONC_NADE"],
+    "droid": ["WP_SBD", "WP_WELD_PULSE", "WP_WELD_BEAM"]
+  }
+}

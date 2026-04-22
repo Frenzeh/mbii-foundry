@@ -1,0 +1,101 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MBII Holdable Items Enum",
+  "description": "All holdable item types from bg_public.h holdable_t enum and EAS_HI_* values",
+  "version": "1.0.0",
+  "source_file": "game/bg_public.h",
+
+  "holdables": {
+    "HI_NONE": {
+      "value": 0,
+      "description": "No holdable item"
+    },
+    "HI_SEEKER": {
+      "value": 1,
+      "description": "Seeker drone - autonomous attack droid"
+    },
+    "HI_SHIELD": {
+      "value": 2,
+      "description": "Portable shield generator"
+    },
+    "HI_MEDPAC": {
+      "value": 3,
+      "description": "Small medpac - heal self"
+    },
+    "HI_MEDPAC_BIG": {
+      "value": 4,
+      "description": "Large bacta tank - full heal"
+    },
+    "HI_BINOCULARS": {
+      "value": 5,
+      "description": "Electrobinoculars - zoom vision"
+    },
+    "HI_SENTRY_GUN": {
+      "value": 6,
+      "description": "Deployable sentry turret"
+    },
+    "HI_JETPACK": {
+      "value": 7,
+      "description": "Jetpack - flight capability"
+    },
+    "HI_EWEB": {
+      "value": 8,
+      "description": "E-Web heavy repeating blaster (deployable)"
+    },
+    "HI_CLOAK": {
+      "value": 9,
+      "description": "Cloaking device - invisibility"
+    },
+    "HI_NUM_HOLDABLE": {
+      "value": 10,
+      "description": "Total holdable count marker"
+    }
+  },
+
+  "extended_abilities": {
+    "EAS_HI_SEEKER": "Seeker drone ability",
+    "EAS_HI_SHIELD": "Shield ability",
+    "EAS_HI_MEDPAC": "Small medpac ability",
+    "EAS_HI_MEDPAC_BIG": "Large medpac ability",
+    "EAS_HI_BINOCULARS": "Binoculars ability",
+    "EAS_HI_SENTRY_GUN": "Sentry gun ability",
+    "EAS_HI_JETPACK": "Jetpack ability",
+    "EAS_HI_HEALTHDISP": "Health dispenser ability",
+    "EAS_HI_AMMODISP": "Ammo dispenser ability",
+    "EAS_HI_ARMORDISP": "Armor dispenser ability",
+    "EAS_HI_FORCEDISP": "Force dispenser ability",
+    "EAS_HI_EWEB": "E-Web ability",
+    "EAS_HI_CLOAK": "Cloak ability",
+    "EAS_HI_DASH": "Dash ability (quick movement burst)",
+    "EAS_HI_SPRINT": "Sprint ability (sustained speed)",
+    "EAS_HI_DEX": "Dexterity ability",
+    "EAS_HI_FURY": "Fury ability (damage boost)",
+    "EAS_HI_QUICKTHROW": "Quick throw ability",
+    "EAS_HI_QUICKTOSS": "Quick toss ability",
+    "EAS_HI_RECHARGE": "Recharge ability",
+    "EAS_HI_SBD_PM": "SBD power mode",
+    "EAS_HI_SBD_ZOOM": "SBD zoom",
+    "EAS_HI_ROCKET": "Rocket ability (wrist rocket)",
+    "EAS_HI_WRIST": "Wrist weapon ability",
+    "EAS_HI_FLAME": "Flamethrower ability",
+    "EAS_HI_PLASMA": "Plasma thrower ability",
+    "EAS_HI_ICE": "Ice thrower ability",
+    "EAS_HI_POISON": "Poison dart ability",
+    "EAS_HI_TRACKER": "Tracking dart ability",
+    "EAS_HI_KICK": "Kick ability",
+    "EAS_HI_BARGE": "Barge/shoulder charge ability",
+    "EAS_HI_DODGE": "Dodge ability",
+    "EAS_HI_HEATDUMP": "Heat dump ability (cooldown weapon)",
+    "EAS_HI_EXTINGUISHER": "Fire extinguisher ability",
+    "EAS_HI_WRIST_ROCKET": "Wrist-mounted rocket",
+    "EAS_HI_WRIST_REPULSOR": "Wrist-mounted repulsor",
+    "EAS_HI_WHISTLING_BIRDS": "Whistling Birds (Mandalorian projectiles)",
+    "EAS_HI_FIBROCORD": "Fibrocord whip",
+    "EAS_HI_GRAPPLEHOOK": "Grappling hook"
+  },
+
+  "notes": {
+    "usage": "Holdables are assigned using the 'holdables' field, often with levels like HI_JETPACK,3",
+    "extended": "EAS_HI_* values represent extended ability skills used in class customization"
+  }
+}

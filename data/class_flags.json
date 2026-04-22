@@ -1,0 +1,223 @@
+[
+  {
+    "id": "CFL_THERMALROCKETS",
+    "name": "\ud83d\ude80 Thermal Rockets",
+    "overview": "Upgrades the Rocket Launcher to fire Thermal Detonators.\n\n**\u2699\ufe0f Mechanics**\n*   **Weapon:** `WP_PLX1` / `MB_ATT_PLX1`.\n*   **Projectile:** Fires a Thermal Detonator instead of a standard rocket.\n*   **Damage:** **Massive** (Thermal Detonator damage scaling).\n*   **Arc:** Projectile may have a slight arc compared to straight rocket?",
+    "tips": [
+      "**Siege Breaker:** One of the most destructive weapons in the game."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Upgrades the Rocket Launcher to fire Thermal Detonators."
+  },
+  {
+    "id": "CFL_EXTRAFLAMEDAMAGE",
+    "name": "\ud83d\udd25 Extra Flame Damage",
+    "overview": "Superheats the Flamethrower output.\n\n**\u2699\ufe0f Mechanics**\n*   **Damage:** **+100%** (Double Damage) on Flamethrower.\n*   **Visual:** **Blue Fire** effect.",
+    "tips": [
+      "Elite Mandalorians or heavy incendiary units."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Superheats the Flamethrower output."
+  },
+  {
+    "id": "CFL_ACIDBLOOD",
+    "name": "\ud83e\ude78 Acid Blood",
+    "overview": "The character's blood is highly corrosive.\n\n**\u2699\ufe0f Mechanics**\n*   **Trigger:** Taking damage from a close-range source (Melee/Saber).\n*   **Effect:** Sprays acid on the attacker.\n*   **Damage:** Poisons the attacker (Damage over Time).\n*   **Death:** Release a poison cloud upon death? (Wiki: \"If a player... dies, enemies nearby are briefly poisoned\").",
+    "tips": [
+      "**Aliens:** Noghri, Trandoshans, Xenomorph-types.",
+      "**Tactics:** Punishes Jedi for aggressive melee spam."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "The character's blood is highly corrosive."
+  },
+  {
+    "id": "CFL_ICETHROWER",
+    "name": "\u2744\ufe0f Icethrower",
+    "overview": "Converts the Flamethrower into a Cryo-projector.\n\n**\u2699\ufe0f Mechanics**\n*   **Weapon:** `MB_ATT_FLAMETHROWER` / `WP_THROWER`.\n*   **Visual:** Blue \"flame\".\n*   **Effect:** **Freezes** enemies on contact (Stun/Slow) instead of burning.",
+    "tips": [
+      "Carbonite Troopers or specialized Droids."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Converts the Flamethrower into a Cryo-projector."
+  },
+  {
+    "id": "CFL_REALTD",
+    "name": "\u2622\ufe0f Real Thermal Detonator",
+    "overview": "Unleashes the true, canon-accurate power of a Thermal Detonator.\n\n**\u2699\ufe0f Mechanics**\n*   **Blast Radius:** **Massive** (Nuclear). Clears entire rooms.\n*   **Damage:** **Instakill**. Ignores almost all damage reduction.\n*   **Fuse:** Often has a longer fuse/distinct warning audio.\n*   **Replacement:** Replaces Frag Grenades (`WP_FRAG_NADE`) if `WP_THERMAL` is not specified? (Check implementation). Usually applies to `WP_REAL_TD`.\n\n**\u26a0\ufe0f Warning**\n*   **Friendly Fire:** Will almost certainly kill the user if not thrown far enough.\n*   **Balance:** Extremely powerful; usually limited to 1 per life.",
+    "tips": [
+      "Boss characters (Jabba, Leia) or objective-breaching \"Nuke\" classes."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Unleashes the true, canon-accurate power of a Thermal Detonator."
+  },
+  {
+    "id": "CFL_STATVIEWER",
+    "name": "\ud83d\udcc8 Stat Viewer",
+    "overview": "Allows the player to see detailed stats of allies.\n\n**\u2699\ufe0f Mechanics**\n*   **HUD:** Displays Health and Shield bars above teammates' heads.\n*   **Wallhack:** Often allows seeing these bars through walls.",
+    "tips": [
+      "**Medics:** Mandatory for effective healing.",
+      "**Officers:** Good for tactical awareness."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Allows the player to see detailed stats of allies."
+  },
+  {
+    "id": "CFL_HEAVYMELEE",
+    "name": "\ud83e\udd4a Heavy Melee",
+    "overview": "Transforms melee combat into a slow, devastating brawler style.\n\n**\u2699\ufe0f Mechanics**\n*   **Damage:** **+100%** (Double Damage). Base Melee is ~15-20, so Heavy is ~30-40 per hit.\n*   **Animation:** Forces \"Heavy\" animations (Haymakers).\n*   **Speed:** Attacks are slower and more telegraphed.\n*   **Knockback:** Increases force, sending enemies flying.\n\n**\ud83d\udd04 Synergies**\n*   **Wookiee Strength:** Stacks damage modifiers.\n*   Str 1: +Damage.\n*   Str 3: **Lethal**. Can hit for 80+ damage.\n*   **High Health:** Necessary to trade hits.",
+    "tips": [
+      "Best for \"Brute\" characters like Wookiees, Gamorreans, or SBDs."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Transforms melee combat into a slow, devastating brawler style."
+  },
+  {
+    "id": "CFL_NOPICKUPS",
+    "name": "\u274c No Pickups",
+    "overview": "Prevents the character from picking up dropped weapons.\n\n**\u2699\ufe0f Mechanics**\n*   **Scavenging:** **Disabled**. You can only use what you spawn with.",
+    "tips": [
+      "**Droids:** SBDs/Droidekas naturally have this.",
+      "**Balance:** Prevents a weak class from picking up a dropped Rocket Launcher or Concussion Rifle."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Prevents the character from picking up dropped weapons."
+  },
+  {
+    "id": "CFL_STRONGAGAINSTPHYSICAL",
+    "name": "\ud83d\udcaa Melee Resistance",
+    "overview": "Reduces damage taken from physical attacks.\n\n**\u2699\ufe0f Mechanics**\n*   **Effect:** **50% Damage Reduction** vs Melee (Punches, Kicks, Wookiee Slams).\n*   **Vulnerability:** Does **not** protect against Lightsabers or Blasters.",
+    "tips": [
+      "Essential for \"Brawler\" characters who want to trade hits in melee.",
+      "Counters Wookiees (`MB_ATT_WOOKIE_STRENGTH`) effectively."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Reduces damage taken from physical attacks."
+  },
+  {
+    "id": "CFL_SEEING_STEALTH",
+    "name": "\ud83d\udc41\ufe0f Seeing Stealth",
+    "overview": "Advanced optical sensors that bypass standard stealth methods.\n\n**\u2699\ufe0f Mechanics**\n*   **Detection:** Grants **Force Sense Immunity**. Wait, per wiki: \"Makes a class invisible to Force Seeing\".\n*   **Correction:** The wiki says `CFL_SEEING_STEALTH` makes the *user* invisible to Force Sense (Immunity).\n*   *Self-Correction*: The name implies \"Seeing Stealth\", but the wiki description says \"Force Sense Immunity\". Let's verify context. \"Seeing Stealth\" usually implies *seeing* stealth. \"Force Sense Immunity\" implies *being* immune.\n*   *Re-reading Wiki*: \"CFL_SEEING_STEALTH - Force Sense Immunity - Makes a class invisible to Force Seeing.\" -> Okay, the name is misleading in the code, but the function is **Immunity**.\n\n**\u2699\ufe0f Mechanics**\n*   **Stealth:** You **cannot be seen** by Force Sense (`FP_SEE`).\n*   **Radar:** You do not appear on Force Sight radar.",
+    "tips": [
+      "Stealth/Infiltrator classes that need to hide from Jedi."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Advanced optical sensors that bypass standard stealth methods."
+  },
+  {
+    "id": "CFL_NOLOCATIONALDAMAGE",
+    "name": "\ud83d\uddff No Locational Damage",
+    "overview": "Uniform damage reception across the entire hitbox.\n\n**\u2699\ufe0f Mechanics**\n*   **Headshots:** **0x Bonus** (Takes normal body damage).\n*   **Leg/Arm Shots:** **0x Reduction** (Takes normal body damage).\n*   **Consistency:** Makes the character feel \"tanky\" and consistent.",
+    "tips": [
+      "**Droids:** SBDs, Droidekas, Dark Troopers (no vital organs).",
+      "**Juggernauts:** Heavily armored units with no weak points."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Uniform damage reception across the entire hitbox."
+  },
+  {
+    "id": "CFL_RUNFASTMELEE",
+    "name": "\ud83c\udfc3 Run Fast Melee",
+    "overview": "Increases movement speed while holding Melee.\n\n**\u2699\ufe0f Mechanics**\n*   **Speed:** **1.15x** (15% Faster).\n*   **Condition:** Active only when `WP_MELEE` is held.",
+    "tips": [
+      "**Obsolete:** largely replaced by `HELD_SPEED` on weapon flags, but still valid for simple configs."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Increases movement speed while holding Melee."
+  },
+  {
+    "id": "CFL_DISRUPTOR_WALLS",
+    "name": "\ud83e\uddf1 Disruptor Walls",
+    "overview": "High-power energy output for Disruptor Rifles.\n\n**\u2699\ufe0f Mechanics**\n*   **Penetration:** Fully charged Disruptor shots pass through **walls**, **doors**, and **multiple enemies**.\n*   **Requirement:** Must have `MB_ATT_DISRUPTOR` (Level 2+ recommended for charge speed).",
+    "tips": [
+      "**Anti-Camper:** Kill enemies hiding behind cover.",
+      "**Bosses:** Makes a sniper boss terrifyingly oppressive."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "High-power energy output for Disruptor Rifles."
+  },
+  {
+    "id": "CFL_BPFREEJUMPS",
+    "name": "\ud83c\udd93 BP-Free Jumps",
+    "overview": "Jumping does not drain Block Points.\n\n**\u2699\ufe0f Mechanics**\n*   **Normal:** Jumping reduces your BP (makes you vulnerable to blaster fire).\n*   **Flagged:** Jumping costs 0 BP.",
+    "tips": [
+      "**Acrobats:** Essential for agile Jedi (Yoda, Maul) who rely on constant movement without losing defense."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Jumping does not drain Block Points."
+  },
+  {
+    "id": "CFL_KILLTEAMONDEATH",
+    "name": "\ud83d\udc80 Kill Team on Death (VIP)",
+    "overview": "Designates the character as a VIP.\n\n**\u2699\ufe0f Mechanics**\n*   **Trigger:** When this character dies.\n*   **Effect:** **Team Wipe**. Every ally dies instantly.",
+    "tips": [
+      "**VIP Mode:** Create custom \"Protect the VIP\" scenarios in standard Open/FA matches."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Designates the character as a VIP."
+  },
+  {
+    "id": "CFL_NO_JETPACK_COOLDOWN",
+    "name": "No Jetpack Cooldown",
+    "overview": "Removes the delay between jetpack bursts.\n\n**Effects**\n*   **Mobility**: Allows for rapid tapping of the jetpack for \"skating\" or unpredictable movement.\n*   **Flight**: Easier to maintain altitude.\n\n**Use Cases**\n*   Elite Mandalorians (e.g. Jango/Boba Fett) for superior aerial agility.",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Removes the delay between jetpack bursts."
+  },
+  {
+    "id": "CFL_AKIMBOPISTOL3",
+    "name": "\ud83d\udd2b Akimbo Pistol 3",
+    "overview": "Upgrades dual-wielded pistols (Clone/Westar) to Level 3 performance.\n\n**\u2699\ufe0f Mechanics**\n*   **Damage:** Applies Pistol 3 damage to *both* guns.\n*   **Ammo:** Drains ammo as if firing two level 3 pistols.",
+    "tips": [
+      "Makes dual pistols viable primary weapons for elite classes."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Upgrades dual-wielded pistols (Clone/Westar) to Level 3 performance."
+  },
+  {
+    "id": "CFL_FASTHACKING",
+    "name": "\ud83d\udcbb Fast Hacking",
+    "overview": "Master slicer proficiency.\n\n**\u2699\ufe0f Mechanics**\n*   **Speed:** Hacks usable objects (panels, consoles) **4x Faster**.\n*   **Objective:** Critical for Siege/Objective modes where time is key.",
+    "tips": [
+      "Tech specialists like **R2-D2**, **Imperial Workers**, or **Slicers**.",
+      "Combine with a weak weapon loadout to create a pure \"Objective Runner\" class."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Master slicer proficiency."
+  }
+]

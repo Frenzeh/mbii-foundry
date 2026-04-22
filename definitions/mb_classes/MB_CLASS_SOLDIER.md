@@ -1,0 +1,5 @@
+# MB_CLASS_SOLDIER
+
+`MB_CLASS_SOLDIER`
+
+Soldier

@@ -1,0 +1,410 @@
+{
+    "FP_HEAL": {
+        "id": "FP_HEAL",
+        "levels": {
+            "1": {
+                "cost": 50,
+                "description": "Cost: 50"
+            },
+            "2": {
+                "cost": 40,
+                "description": "Cost: 40"
+            },
+            "3": {
+                "cost": 30,
+                "description": "Cost: 30"
+            }
+        }
+    },
+    "FP_LEVITATION": {
+        "id": "FP_LEVITATION",
+        "levels": {
+            "1": {
+                "cost": 10,
+                "description": "Cost: 10"
+            },
+            "2": {
+                "cost": 10,
+                "description": "Cost: 10"
+            },
+            "3": {
+                "cost": 10,
+                "description": "Cost: 10"
+            }
+        }
+    },
+    "FP_SPEED": {
+        "id": "FP_SPEED",
+        "levels": {
+            "1": {
+                "cost": 15,
+                "description": "Cost: 15"
+            },
+            "2": {
+                "cost": 10,
+                "description": "Cost: 10"
+            },
+            "3": {
+                "cost": 5,
+                "description": "Cost: 5"
+            }
+        }
+    },
+    "FP_PUSH": {
+        "id": "FP_PUSH",
+        "levels": {
+            "1": {
+                "cost": 20,
+                "description": "Cost: 20"
+            },
+            "2": {
+                "cost": 20,
+                "description": "Cost: 20"
+            },
+            "3": {
+                "cost": 20,
+                "description": "Cost: 20"
+            }
+        }
+    },
+    "FP_PULL": {
+        "id": "FP_PULL",
+        "levels": {
+            "1": {
+                "cost": 20,
+                "description": "Cost: 20"
+            },
+            "2": {
+                "cost": 20,
+                "description": "Cost: 20"
+            },
+            "3": {
+                "cost": 20,
+                "description": "Cost: 20"
+            }
+        }
+    },
+    "FP_MINDTRICK": {
+        "id": "FP_MINDTRICK",
+        "levels": {
+            "1": {
+                "cost": 50,
+                "description": "Cost: 50"
+            },
+            "2": {
+                "cost": 30,
+                "description": "Cost: 30"
+            },
+            "3": {
+                "cost": 30,
+                "description": "Cost: 30"
+            }
+        }
+    },
+    "FP_GRIP": {
+        "id": "FP_GRIP",
+        "levels": {
+            "1": {
+                "cost": 50,
+                "description": "Cost: 50"
+            },
+            "2": {
+                "cost": 65,
+                "description": "Cost: 65"
+            },
+            "3": {
+                "cost": 70,
+                "description": "Cost: 70"
+            }
+        }
+    },
+    "FP_LIGHTNING": {
+        "id": "FP_LIGHTNING",
+        "levels": {
+            "1": {
+                "cost": 2,
+                "description": "Cost: 2"
+            },
+            "2": {
+                "cost": 2,
+                "description": "Cost: 2"
+            },
+            "3": {
+                "cost": 2,
+                "description": "Cost: 2"
+            }
+        }
+    },
+    "FP_RAGE": {
+        "id": "FP_RAGE",
+        "levels": {
+            "1": {
+                "cost": 80,
+                "description": "Cost: 80"
+            },
+            "2": {
+                "cost": 70,
+                "description": "Cost: 70"
+            },
+            "3": {
+                "cost": 60,
+                "description": "Cost: 60"
+            }
+        }
+    },
+    "FP_PROTECT": {
+        "id": "FP_PROTECT",
+        "levels": {
+            "1": {
+                "cost": 50,
+                "description": "Cost: 50"
+            },
+            "2": {
+                "cost": 25,
+                "description": "Cost: 25"
+            },
+            "3": {
+                "cost": 10,
+                "description": "Cost: 10"
+            }
+        }
+    },
+    "FP_ABSORB": {
+        "id": "FP_ABSORB",
+        "levels": {
+            "1": {
+                "cost": 50,
+                "description": "Cost: 50"
+            },
+            "2": {
+                "cost": 25,
+                "description": "Cost: 25"
+            },
+            "3": {
+                "cost": 10,
+                "description": "Cost: 10"
+            }
+        }
+    },
+    "FP_TEAM_HEAL": {
+        "id": "FP_TEAM_HEAL",
+        "levels": {
+            "1": {
+                "cost": 50,
+                "description": "Cost: 50"
+            },
+            "2": {
+                "cost": 33,
+                "description": "Cost: 33"
+            },
+            "3": {
+                "cost": 25,
+                "description": "Cost: 25"
+            }
+        }
+    },
+    "FP_TEAM_FORCE": {
+        "id": "FP_TEAM_FORCE",
+        "levels": {
+            "1": {
+                "cost": 50,
+                "description": "Cost: 50"
+            },
+            "2": {
+                "cost": 33,
+                "description": "Cost: 33"
+            },
+            "3": {
+                "cost": 25,
+                "description": "Cost: 25"
+            }
+        }
+    },
+    "FP_DRAIN": {
+        "id": "FP_DRAIN",
+        "levels": {
+            "1": {
+                "cost": 10,
+                "description": "Cost: 10"
+            },
+            "2": {
+                "cost": 10,
+                "description": "Cost: 10"
+            },
+            "3": {
+                "cost": 10,
+                "description": "Cost: 10"
+            }
+        }
+    },
+    "FP_SEE": {
+        "id": "FP_SEE",
+        "levels": {
+            "1": {
+                "cost": 20,
+                "description": "Cost: 20"
+            },
+            "2": {
+                "cost": 20,
+                "description": "Cost: 20"
+            },
+            "3": {
+                "cost": 20,
+                "description": "Cost: 20"
+            }
+        }
+    },
+    "FP_SABER_OFFENSE": {
+        "id": "FP_SABER_OFFENSE",
+        "levels": {
+            "1": {
+                "cost": 0,
+                "description": "Cost: 0"
+            },
+            "2": {
+                "cost": 0,
+                "description": "Cost: 0"
+            },
+            "3": {
+                "cost": 0,
+                "description": "Cost: 0"
+            }
+        }
+    },
+    "FP_SABER_DEFENSE": {
+        "id": "FP_SABER_DEFENSE",
+        "levels": {
+            "1": {
+                "cost": 2,
+                "description": "Cost: 2"
+            },
+            "2": {
+                "cost": 1,
+                "description": "Cost: 1"
+            },
+            "3": {
+                "cost": 0,
+                "description": "Cost: 0"
+            }
+        }
+    },
+    "FP_SABER_THROW": {
+        "id": "FP_SABER_THROW",
+        "levels": {
+            "1": {
+                "cost": 20,
+                "description": "Cost: 20"
+            },
+            "2": {
+                "cost": 20,
+                "description": "Cost: 20"
+            },
+            "3": {
+                "cost": 20,
+                "description": "Cost: 20"
+            }
+        }
+    },
+    "FP_BLIND": {
+        "id": "FP_BLIND",
+        "levels": {
+            "1": {
+                "cost": 20,
+                "description": "Cost: 20"
+            },
+            "2": {
+                "cost": 20,
+                "description": "Cost: 20"
+            },
+            "3": {
+                "cost": 20,
+                "description": "Cost: 20"
+            }
+        }
+    },
+    "FP_DESTRUCTION": {
+        "id": "FP_DESTRUCTION",
+        "levels": {
+            "1": {
+                "cost": 20,
+                "description": "Cost: 20"
+            },
+            "2": {
+                "cost": 20,
+                "description": "Cost: 20"
+            },
+            "3": {
+                "cost": 20,
+                "description": "Cost: 20"
+            }
+        }
+    },
+    "FP_REDACTED_01": {
+        "id": "FP_REDACTED_01",
+        "levels": {
+            "1": {
+                "cost": 20,
+                "description": "Cost: 20"
+            },
+            "2": {
+                "cost": 20,
+                "description": "Cost: 20"
+            },
+            "3": {
+                "cost": 20,
+                "description": "Cost: 20"
+            }
+        }
+    },
+    "FP_DEADLYSIGHT": {
+        "id": "FP_DEADLYSIGHT",
+        "levels": {
+            "1": {
+                "cost": 20,
+                "description": "Cost: 20"
+            },
+            "2": {
+                "cost": 20,
+                "description": "Cost: 20"
+            },
+            "3": {
+                "cost": 20,
+                "description": "Cost: 20"
+            }
+        }
+    },
+    "FP_REDACTED_02": {
+        "id": "FP_REDACTED_02",
+        "levels": {
+            "1": {
+                "cost": 20,
+                "description": "Cost: 20"
+            },
+            "2": {
+                "cost": 20,
+                "description": "Cost: 20"
+            },
+            "3": {
+                "cost": 20,
+                "description": "Cost: 20"
+            }
+        }
+    },
+    "FP_REDACTED_03": {
+        "id": "FP_REDACTED_03",
+        "levels": {
+            "1": {
+                "cost": 20,
+                "description": "Cost: 20"
+            },
+            "2": {
+                "cost": 20,
+                "description": "Cost: 20"
+            },
+            "3": {
+                "cost": 20,
+                "description": "Cost: 20"
+            }
+        }
+    }
+}

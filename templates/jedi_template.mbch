@@ -1,0 +1,36 @@
+// Jedi Template - FA Creator
+// Use this as a starting point for Jedi/light-side Force users
+
+ClassInfo
+{
+	name			"_H_Template_Jedi"
+	MBClass			MB_CLASS_JEDI
+
+	model			"cultist"
+	skin			"default"
+	uishader		"models/players/cultist/mb2_icon_default"
+
+	weapons			WP_SABER|WP_MELEE
+	saberstyle		SS_FAST|SS_MEDIUM|SS_STRONG
+	forcepowers		FP_PUSH,3|FP_PULL,3|FP_SPEED,3|FP_LEVITATION,3
+	attributes		MB_ATT_SABER_OFFENSE,3|MB_ATT_SABER_DEFENSE,3
+
+	maxhealth		100
+	maxarmor		0
+	forcepool		100
+	forceregen		1.0
+	speed			1.0
+
+	APmultiplier		1.0
+	BPmultiplier		1.0
+	CSmultiplier		1.0
+	ASmultiplier		1.0
+
+	saber1			single_1
+	sabercolor		5
+
+	classNumberLimit	1
+	classflags		CFL_HASQ3
+}
+
+description "A Jedi Knight wielding a lightsaber. Masters of defensive combat and Force abilities."

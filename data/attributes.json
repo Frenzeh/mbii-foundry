@@ -1,0 +1,5581 @@
+[
+  {
+    "id": "EAS_FP_REPULSE",
+    "name": "\ud83d\udca5 Repulse (Special)",
+    "overview": "Activates Force Repulse.\n\n**\u2699\ufe0f Mechanics**\n*   **Trigger:** Press Special Key.\n*   **Effect:** Instant 360-degree knockback.\n*   **Requirement:** `MB_ATT_FP_REPULSE`.",
+    "tips": [
+      "Unlike standard Push, this hits *everyone* around you instantly."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Activates Force Repulse."
+  },
+  {
+    "id": "EAS_HI_DASH",
+    "name": "\ud83d\udca8 Dash (Special)",
+    "overview": "Activates the Dash ability.\n\n**\u2699\ufe0f Mechanics**\n*   **Trigger:** Press Special Key.\n*   **Effect:** Rapid burst of movement in the WASD direction.\n*   **Requirement:** `MB_ATT_DASH`.",
+    "tips": [
+      "Assign to `special1` or `special2` for ease of use."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Activates the Dash ability."
+  },
+  {
+    "id": "EAS_HI_DODGE",
+    "name": "\ud83d\udee1\ufe0f Dodge (Special)",
+    "overview": "Activates the Dodge ability manually.\n\n**\u2699\ufe0f Mechanics**\n*   **Trigger:** Press Special Key.\n*   **Effect:** Drains ammo/stamina to evade all incoming projectile fire for a short duration.\n*   **Requirement:** `MB_ATT_DODGE`.",
+    "tips": [
+      "Unlike passive Dodge, this forces the state to \"Active\" immediately."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Activates the Dodge ability manually."
+  },
+  {
+    "id": "EAS_HI_FLAME",
+    "name": "EAS_HI_FLAME",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": []
+  },
+  {
+    "id": "EAS_HI_FURY",
+    "name": "EAS_HI_FURY",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": []
+  },
+  {
+    "id": "EAS_HI_GRAPPLEHOOK",
+    "name": "\ud83e\uddd7 Grapple Hook",
+    "overview": "Fires the grappling hook.\n\n**\u2699\ufe0f Mechanics**\n*   **Trigger:** Press Special Key (hold to reel in).\n*   **Effect:** Fires a hook. If it hits a surface, pulls the player towards it.\n*   **Combat:** Hitting an enemy pulls them to you (\"Get over here!\").\n*   **Requirement:** `MB_ATT_GRAPPLE_HOOK`.",
+    "tips": [
+      "Must have Melee weapon active to use."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Fires the grappling hook."
+  },
+  {
+    "id": "EAS_HI_KICK",
+    "name": "\ud83e\uddb6 Kick",
+    "overview": "Performs a melee kick.\n\n**\u2699\ufe0f Mechanics**\n*   **Trigger:** Press Special Key.\n*   **Effect:** Standard knockdown kick.\n*   **Utility:** Useful for classes that don't have the `M_KICK` melee move by default.",
+    "tips": [
+      "Can knock down enemies who are not blocking."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Performs a melee kick."
+  },
+  {
+    "id": "EAS_HI_MEDPAC",
+    "name": "EAS_HI_MEDPAC",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": []
+  },
+  {
+    "id": "EAS_HI_POISON",
+    "name": "\ud83d\udc89 Poison",
+    "overview": "Fires a Poison Dart.\n\n**\u2699\ufe0f Mechanics**\n*   **Trigger:** Press Special Key.\n*   **Requirement:** `MB_ATT_POISON_DART` (Rank 1+).",
+    "tips": [
+      "Allows firing darts without switching away from your main weapon."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Fires a Poison Dart."
+  },
+  {
+    "id": "EAS_HI_QUICKTHROW",
+    "name": "EAS_HI_QUICKTHROW",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": []
+  },
+  {
+    "id": "EAS_HI_RECHARGE",
+    "name": "EAS_HI_RECHARGE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": []
+  },
+  {
+    "id": "EAS_HI_ROCKET",
+    "name": "EAS_HI_ROCKET",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": []
+  },
+  {
+    "id": "EAS_HI_SBD_ZOOM",
+    "name": "EAS_HI_SBD_ZOOM",
+    "overview": "Gives a Zoom Option (MB_CLASS_SBD only).\n`EAS_HI_SBD_ZOOM`\nGives a Zoom Option (MB_CLASS_SBD only).",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Gives a Zoom Option (MB_CLASS_SBD only)."
+  },
+  {
+    "id": "EAS_HI_SEEKER",
+    "name": "EAS_HI_SEEKER",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": []
+  },
+  {
+    "id": "EAS_HI_SENTRY_GUN",
+    "name": "EAS_HI_SENTRY_GUN",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": []
+  },
+  {
+    "id": "EAS_HI_TRACKER",
+    "name": "\ud83c\udfaf Tracker",
+    "overview": "Fires a Tracking Dart.\n\n**\u2699\ufe0f Mechanics**\n*   **Trigger:** Press Special Key.\n*   **Requirement:** `MB_ATT_TRACKING_DART` (Rank 1+).",
+    "tips": [
+      "Allows firing darts without switching away from your main weapon."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Fires a Tracking Dart."
+  },
+  {
+    "id": "EAS_HI_WHISTLING_BIRDS",
+    "name": "EAS_HI_WHISTLING_BIRDS",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": []
+  },
+  {
+    "id": "EAS_HI_WRIST",
+    "name": "EAS_HI_WRIST",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": []
+  },
+  {
+    "id": "EAS_MELEE",
+    "name": "EAS_MELEE",
+    "overview": "Slap\nEAS_MELEE\nSlaps with any weapon out. Faster cooldown than Gunbash unless used with Saber.",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Slap"
+  },
+  {
+    "id": "FP_ABSORB",
+    "name": "FP_ABSORB",
+    "overview": "Force Absorb\nEAS_FP_ABSORB\n1:\n2:\n3:\nReturns Force to the user by <math display=\"inline\" alt=\"Square root of pi\">\\frac{F \\times R}{3}</math> where <var style=\"font-family: serif;\">F</var> is the enemy FP cost and <var style=\"font-family: serif;\">R</var> is the rank of Force Absorb.\nYes",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Force Absorb"
+  },
+  {
+    "id": "FP_ATTUNEMENT",
+    "name": "FP_ATTUNEMENT",
+    "overview": "Force Attunement\nIncreases Force Pool above level 1 to 120 and 140, decreases to 80 at Level 0, Level 1 is 100. Deprecated?",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Force Attunement"
+  },
+  {
+    "id": "FP_REDACTED_03",
+    "name": "FP_REDACTED_03",
+    "overview": "Description needed.\n## Level 1\n**Cost:** 20\nCost: 20\n## Level 2\n**Cost:** 20\nCost: 20\n## Level 3\n**Cost:** 20\nCost: 20",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Description needed."
+  },
+  {
+    "id": "FP_BLIND",
+    "name": "FP_BLIND",
+    "overview": "Force Blinding\nEAS_FP_BLIND\n1:\n2:\n3:\nCauses Temporary \"Blindness\" to the target, requires direct aim. Force Sense can partially counter.",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Force Blinding"
+  },
+  {
+    "id": "FP_DEADLYSIGHT",
+    "name": "FP_DEADLYSIGHT",
+    "overview": "Force Deadly Sight\nEAS_FP_DEADLYSIGHT\n1:\n2:\n3:\nCauses damage over time while looking in the direction of the target, at level 1 it requires direct sight, at 2 and 3 it gains an increasing cone of effect.",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Force Deadly Sight"
+  },
+  {
+    "id": "FP_DESTRUCTION",
+    "name": "FP_DESTRUCTION",
+    "overview": "Force Destruction\nEAS_FP_DESTRUCTION\n1:\n2:\n3:\nFires a destructive orb that explodes on contact with people and surfaces causing damage/kb/kd, can be deflected with Force Push.",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Force Destruction"
+  },
+  {
+    "id": "FP_DRAIN",
+    "name": "FP_DRAIN",
+    "overview": "Force Drain\nEAS_FP_DRAIN\n1:\n2:\n3:\nDrains the Force Pool of a target it hits, healing the user for a percentage of the drained Force Points, also costs the user their Force Points to use.",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Force Drain"
+  },
+  {
+    "id": "FP_GRIP",
+    "name": "FP_GRIP",
+    "overview": "Force Grip\nEAS_FP_GRIP\n1:\n2:\n3:\nAfter a brief period of \"locking\" the target begins to take damage, at low levels there is a slight speed debuff inflicted when locked on, at three, the user can lift up and move the target around in the air.",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Force Grip"
+  },
+  {
+    "id": "FP_HEAL",
+    "name": "FP_HEAL",
+    "overview": "Force Heal\nEAS_FP_HEAL\n1:\n2:\n3:\nUser heals self\nYes",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Force Heal"
+  },
+  {
+    "id": "FP_LEVITATION",
+    "name": "FP_LEVITATION",
+    "overview": "Force Jump\nEAS_FP_LEVITATION\n1:\n2:\n3:\nAllows for greater jumping height and accel.",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Force Jump"
+  },
+  {
+    "id": "FP_LIGHTNING",
+    "name": "FP_LIGHTNING",
+    "overview": "Force Lightning\nEAS_FP_LIGHTNING\n1:\n2:\n3:\nUser shoots lightning from fingertips, dealing small DoT and slowing target fire rate.",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Force Lightning"
+  },
+  {
+    "id": "FP_MINDTRICK",
+    "name": "FP_MINDTRICK",
+    "overview": "Description needed.\n## Level 1\n**Cost:** 50\nCost: 50\n## Level 2\n**Cost:** 30\nCost: 30\n## Level 3\n**Cost:** 30\nCost: 30",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Description needed."
+  },
+  {
+    "id": "FP_REDACTED_01",
+    "name": "FP_REDACTED_01",
+    "overview": "Description needed.\n## Level 1\n**Cost:** 20\nCost: 20\n## Level 2\n**Cost:** 20\nCost: 20\n## Level 3\n**Cost:** 20\nCost: 20",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Description needed."
+  },
+  {
+    "id": "FP_PROTECT",
+    "name": "FP_PROTECT",
+    "overview": "Force Protect\nEAS_FP_PROTECT\n1:\n2:\n3:\nProvides 50% damage? reduction while active.\nYes",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Force Protect"
+  },
+  {
+    "id": "FP_PULL",
+    "name": "FP_PULL",
+    "overview": "Force Pull\nEAS_FP_PULL\n1:\n2:\n3:\nYanks opponents toward you/knocks them over/pulls their weapon to the ground.",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Force Pull"
+  },
+  {
+    "id": "FP_PUSH",
+    "name": "FP_PUSH",
+    "overview": "Force Push\nEAS_FP_PUSH\n1:\n2:\n3:\nCan be used to push enemies back at low levels, over at higher levels and redirect certain weapons such as Rockets and grenades, it also allows the user to push Force Destruction away.",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Force Push"
+  },
+  {
+    "id": "FP_RAGE",
+    "name": "FP_RAGE",
+    "overview": "Force Dark Rage\nEAS_FP_RAGE\n1:\n2:\n3:\nUser gets increased fire rate/melee swing speed and movement speed. Has a set cost and a drain. Your level of MB_ATT_WOOKIEE_FURY determines damage reduction when under the effects of Force Rage.",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Force Dark Rage"
+  },
+  {
+    "id": "FP_SABERTHROW",
+    "name": "FP_SABERTHROW",
+    "overview": "(EX) Saber Throw\nEAS_FP_SABERTHROW\nUndefined/0: 30 damage \"axe throw\".\n1\n2\n3\nUser throws Lightsaber weapon. Can be recalled after a few seconds, unless MBclass is not Jedi/Sith.",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "(EX) Saber Throw"
+  },
+  {
+    "id": "FP_SABER_DEFENSE",
+    "name": "FP_SABER_DEFENSE",
+    "overview": "Saber Defense\n0: 1.6x incoming BP damage, BP does not regen\n1\n2\n3\nDetermines level of Saber Defense/bpmult. BP points can be manually tweaked when including a bpmultiplier.",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Saber Defense"
+  },
+  {
+    "id": "FP_SABER_OFFENSE",
+    "name": "FP_SABER_OFFENSE",
+    "overview": "Saber Offense\n}",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Saber Offense"
+  },
+  {
+    "id": "FP_SABER_THROW",
+    "name": "FP_SABER_THROW",
+    "overview": "Description needed.\n## Level 1\n**Cost:** 20\nCost: 20\n## Level 2\n**Cost:** 20\nCost: 20\n## Level 3\n**Cost:** 20\nCost: 20",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Description needed."
+  },
+  {
+    "id": "FP_SEE",
+    "name": "FP_SEE",
+    "overview": "Force Sense\nEAS_FP_SEE\n1:\n2:\n3:\nOn activation, a sound cue plays and the user can now see enemies on radar/through walls up to a certain distance.",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Force Sense"
+  },
+  {
+    "id": "FP_SPEED",
+    "name": "FP_SPEED",
+    "overview": "Force Speed\nEAS_FP_SPEED\n1:\n2:\n3:\nIncreases movement Speed, higher levels reduces the Force point cost per second.",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Force Speed"
+  },
+  {
+    "id": "FP_REDACTED_02",
+    "name": "FP_REDACTED_02",
+    "overview": "Description needed.\n## Level 1\n**Cost:** 20\nCost: 20\n## Level 2\n**Cost:** 20\nCost: 20\n## Level 3\n**Cost:** 20\nCost: 20",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Description needed."
+  },
+  {
+    "id": "FP_TEAM_FORCE",
+    "name": "FP_TEAM_FORCE",
+    "overview": "Force Energize\nEAS_FP_TEAM_FORCE\n1:\n2:\n3:\nRestores Resource of surrounding teammates. 50/33/25 depending on 1/2/3 total on hit, Radius 256/384/512. Fuel/Rage are resupplied at half effectiveness.",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Force Energize"
+  },
+  {
+    "id": "FP_TEAM_HEAL",
+    "name": "FP_TEAM_HEAL",
+    "overview": "Force Team Heal\nEAS_FP_TEAM_HEAL\n1:\n2:\n3:\nRecovers 25 HP at a radius of 256/384/512, costs 50/33/25 FP depending on 1/2/3 total on hit.",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Force Team Heal"
+  },
+  {
+    "id": "FP_TELEPATHY",
+    "name": "FP_TELEPATHY",
+    "overview": "Force Mind Trick\nEAS_FP_TELEPATHY\n1:\n2:\n3:\nCauses Temporary Invisibility, this is broken by activating a Lightsaber or Firing a weapon.\nYes",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Force Mind Trick"
+  },
+  {
+    "id": "HI_BINOCULARS",
+    "name": "\ud83e\udd85 Binoculars",
+    "overview": "Electrobinoculars that allow zooming in regardless of the equipped weapon.\n> **Uses:** Unlimited.",
+    "tips": [
+      "Instantly readies the **Projectile Rifle** for \"quickscopes\".",
+      "Essential for scouting and long-range coordination."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Electrobinoculars that allow zooming in regardless of the equipped weapon."
+  },
+  {
+    "id": "HI_CLOAK",
+    "name": "\ud83d\udc7b Cloaking Device",
+    "overview": "Personal cloaking generator.\n> **Uses:** Unlimited (Requires Resource).\n\n**\u2699\ufe0f Mechanics**\n*   **Activation:** Turns user semi-invisible.\n*   **Combat:** Can use all weapons and abilities while cloaked.\n*   **Drain:** Drains resource faster while moving.\n*   **Counter:** Smoke Grenades and Force Sense can help reveal cloaked players.",
+    "tips": [
+      "Effective for ambushes and escaping.",
+      "Not true invisibility; shimmering is visible."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Personal cloaking generator."
+  },
+  {
+    "id": "HI_EWEB",
+    "name": "\ud83d\udca5 Portable E-Web",
+    "overview": "Deployable heavy blaster cannon.\n> **Uses:** Unlimited until destroyed.\n\n**\u2699\ufe0f Mechanics**\n*   **Deploy:** Spawns a manned turret at a fixed point.\n*   **Firepower:** Fast rate of fire, high damage, unlimited ammo.\n*   **Movement:** Stationary. Can be slowly rotated.\n*   **Despawn:** Moving backward un-deploys the cannon (can be re-deployed later).\n*   **Vulnerability:** Destroyed after taking set damage. User cannot use other weapons while manned.",
+    "tips": [
+      "Great for locking down hallways.",
+      "Inherits weapon flags from the user's Blaster Rifle."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Deployable heavy blaster cannon."
+  },
+  {
+    "id": "HI_MEDPAC",
+    "name": "\ud83d\udc8a Medpac",
+    "overview": "Standard BioTech Bacta Canister.\n> **Uses:** 1-time use.\n\n**\u2699\ufe0f Mechanics**\n*   **Effect:** Heals user for **50 HP** over **10 seconds**.\n*   **Regen:** 5 HP per second.",
+    "tips": [
+      "Use during retreat or cover to recover from a skirmish."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Standard BioTech Bacta Canister."
+  },
+  {
+    "id": "HI_MEDPAC_BIG",
+    "name": "\ud83d\udc89 Advanced Medpac",
+    "overview": "\"Big Bacta\" rapid injector.\n> **Uses:** 1-time use.\n\n**\u2699\ufe0f Mechanics**\n*   **Effect:** Heals user for **50 HP instantly**.",
+    "tips": [
+      "Can be used mid-combat to survive a fatal blow."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "\"Big Bacta\" rapid injector."
+  },
+  {
+    "id": "HI_SEEKER",
+    "name": "\ud83d\udef8 Seeker Drone",
+    "overview": "Automated defense drone.\n> **Uses:** 1-time deployment.\n\n**\u2699\ufe0f Mechanics**\n*   **Behavior:** Orbits the player.\n*   **Combat:** Slowly fires at enemies. Has physical collision (can block shots).\n*   **Duration:** Destroys itself after X seconds, X damage taken, or X shots fired.\n*   **Death:** Explodes when destroyed, dealing damage to nearby enemies.",
+    "tips": [
+      "Good for distraction and minor DPS."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Automated defense drone."
+  },
+  {
+    "id": "HI_SENTRY_GUN",
+    "name": "\ud83d\udd2b Assault Sentry",
+    "overview": "Deployable automated turret.\n> **Uses:** 1-time deployment.\n\n**\u2699\ufe0f Mechanics**\n*   **Deploy:** Fixes to the ground/surface.\n*   **Combat:** Fires medium-fast bolts at enemies. Has collision.\n*   **Duration:** Destroys itself after X seconds, X damage taken, or X shots fired.\n*   **Death:** Explodes when destroyed.",
+    "tips": [
+      "Place around corners to ambush enemies or cover flanks."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Deployable automated turret."
+  },
+  {
+    "id": "HI_SHIELD",
+    "name": "\ud83d\udee1\ufe0f Forcefield",
+    "overview": "Deployable energy barrier.\n> **Uses:** 1-time deployment.\n\n**\u2699\ufe0f Mechanics**\n*   **Effect:** Creates a large shield wall.\n*   **Blocking:** Prevents enemies and weapon fire from passing.\n*   **Permeable:** Owner and allies can walk/shoot through it.\n*   **Duration:** Deactivates permanently after X seconds or X damage.",
+    "tips": [
+      "Critical for creating cover in open areas or blocking choke points."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Deployable energy barrier."
+  },
+  {
+    "id": "HI_SPAWNER",
+    "name": "\ud83d\udce2 Support Beacon (Spawner)",
+    "overview": "Spawns an allied NPC reinforcement.\n> **Uses:** 1-time use.\n\n**\u2699\ufe0f Mechanics**\n*   **Effect:** Spawns an NPC based on `MB_ATT_SPAWNER` rank.\n*   **Rank 1:** Weak reinforcement.\n*   **Rank 2:** Medium reinforcement.\n*   **Rank 3:** Strong reinforcement.",
+    "tips": [
+      "Use `MB_ATT_SPAWNER` to configure exactly *what* spawns."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Spawns an allied NPC reinforcement."
+  },
+  {
+    "id": "HI_STIMPACK",
+    "name": "\ud83d\udc89 Stimpak",
+    "overview": "Combat stimulant injector.\n> **Uses:** 1-time use.\n\n**\u2699\ufe0f Mechanics**\n*   **Health:** Grants **+30 HP** (Overheal possible).\n*   **Speed:** Increases movement speed by **1.2x**.\n*   **Duration:** Effects last **30 seconds**.\n*   **Fade:** Extra health is lost after duration expires.\n*   **Override:** Overrides existing Rally buffs (does not stack).",
+    "tips": [
+      "Use before a push or to escape a bad situation.",
+      "Locked in animation briefly upon use."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Combat stimulant injector."
+  },
+  {
+    "id": "MB_ATT_A280",
+    "name": "\ud83d\udd2b A280 Rifle",
+    "overview": "Heavy Blaster Rifle used by the Rebel Alliance. Hard-hitting but slower firing.\n> **Default:** None.",
+    "tips": [
+      "Similar to the E-11 but trades fire rate for raw stopping power per bolt.",
+      "Velocity is significantly higher than E-11 (8075 vs 6325), making it easier to hit moving targets."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Standard**. Good damage per shot.\n**Alt-Fire**: Burst fire (3 shots).",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Improved**. Faster refire rate.\n**Alt-Fire**: Tighter burst spread.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Elite**. High accuracy.\n**Alt-Fire**: \ud83c\udfaf **Sniper Mode**. High power, long range shots.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Damage": "**35**",
+      "Velocity": "8075 (Fast)",
+      "Ammo Cost": "2"
+    },
+    "tags": [],
+    "description": "Heavy Blaster Rifle used by the Rebel Alliance. Hard-hitting but slower firing."
+  },
+  {
+    "id": "MB_ATT_AMBAN",
+    "name": "\ud83d\udd2b Amban Sniper Rifle",
+    "overview": "Mandalorian phase-pulse blaster, capable of disintegrating targets.\n> **Default:** None.",
+    "tips": [
+      "**Disintegration**: The secondary fire is an instant-kill on most unarmored targets.",
+      "**Charge**: Requires careful timing to maximize secondary damage."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Primary**: Pulse fire.\n**Secondary**: Charged sniper shot.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Charge**: Faster charge rate for secondary.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Damage**: Primary pulse damage **+50%**.\n**Effect**: Secondary shot instantly disintegrates targets on kill.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Primary Damage": "**20** (Pulse) / **50** (Level 3 Pulse)",
+      "Secondary Damage": "**80** (Sniper) -> **143** (Max Charge)",
+      "Velocity": "9825 (Sniper)",
+      "Charge Time": "1000ms (1 second).",
+      "Ammo Cost": "1 (Primary) / 1 (Secondary)."
+    },
+    "tags": [],
+    "description": "Mandalorian phase-pulse blaster, capable of disintegrating targets."
+  },
+  {
+    "id": "MB_ATT_AMMO",
+    "name": "\ud83d\udd0b Ammo",
+    "overview": "Increases the starting ammunition pool for all equipped weapons.\n> **Default:** Varies by weapon (usually enough for ~2-3 reloads).",
+    "tips": [
+      "Critical for rapid-fire weapons like the **Clone Rifle** or **T-21**.",
+      "**SBDs** use Battery charge instead of Ammo, but this attribute increases their Battery capacity (`MB_ATT_RECHARGE` affects the regen rate)."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Extra Clips**. Good for prolonged firefights.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Heavy Loadout**. Significant ammo reserve.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Maximum Capacity**. Almost never run out of ammo.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Increases the starting ammunition pool for all equipped weapons."
+  },
+  {
+    "id": "MB_ATT_ANTI_MT",
+    "name": "\ud83d\udc7b Anti-Mind Trick",
+    "overview": "Resistance to Force Mind Trick (Invisibility).",
+    "tips": [
+      "Critical for sentry classes (SBD, Droideka) to prevent sneak attacks."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "** Mind Tricked enemies appear as **Shimmering Ghosts** (partially visible).",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "** Mind Tricked enemies are **Fully Visible** (immune to the effect).",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Resistance to Force Mind Trick (Invisibility)."
+  },
+  {
+    "id": "MB_ATT_AP_MULTIPLIER",
+    "name": "\u2694\ufe0f Attack Power Multiplier",
+    "overview": "Multiplies the Attack Power of saber attacks.\n> **Default:** 1.0\n\n**\u2699\ufe0f Mechanics**\n*   **1.0:** No change.\n*   **1.1:** +10% Attack Power.\n*   **0.9:** -10% Attack Power.",
+    "tips": [
+      "A higher value makes your saber attacks harder to block and increases overall damage potential.",
+      "Often used to balance a class with very fast attack speed (`MB_ATT_FP_SABER_OFFENSE`)."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Multiplies the Attack Power of saber attacks."
+  },
+  {
+    "id": "MB_ATT_ARC_RIFLE_GRENADELAUNCHER",
+    "name": "\ud83d\udca3 ARC Grenade Launcher",
+    "overview": "Underslung grenade launcher for the Westar M5.\n> **Requirement:** `MB_ATT_WESTARM5`.",
+    "tips": [
+      "Right-click to toggle between Rifle and Launcher mode.",
+      "Conflict: Cannot be equipped with `MB_ATT_ARC_RIFLE_SCOPE`. You must choose Scope OR Launcher."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**\n**Capacity**: ~3-6 shots.\n**Type**: EMP / Explosive mix.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**\n**Capacity**: Increased.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Ammo Cost": "Uses shared M5 ammo or separate pool? (Usually separate EMP grenades).",
+      "Damage": "Explosive."
+    },
+    "tags": [],
+    "description": "Underslung grenade launcher for the Westar M5."
+  },
+  {
+    "id": "MB_ATT_ARC_RIFLE_SCOPE",
+    "name": "MB_ATT_ARC_RIFLE_SCOPE",
+    "overview": "WESTAR-M5 Scope",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "WESTAR-M5 Scope"
+  },
+  {
+    "id": "MB_ATT_ARMOUR",
+    "name": "\ud83d\udee1\ufe0f Armor",
+    "overview": "Provides damage reduction. Armor takes damage before Health in most cases.\n> **Default:** 0 (Unarmored)",
+    "tips": [
+      "**Cortosis** (`MB_ATT_CORTOSIS`) is required to make Armor effective against Lightsabers. Without it, sabers cut right through.",
+      "**Blast Armor** (`MB_ATT_BLAST_ARMOUR`) increases effectiveness against explosions.",
+      "**Magnetic Plating** (`MB_ATT_MAGNETIC_PLATING`) increases effectiveness against blasters."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Light Armor**. Good for mobility classes.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Medium Armor**. Standard trooper protection.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Heavy Armor**. High protection but may incur stamina penalties on some classes.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Provides damage reduction. Armor takes damage before Health in most cases."
+  },
+  {
+    "id": "MB_ATT_ARMOUR_REGEN_AMOUNT",
+    "name": "MB_ATT_ARMOUR_REGEN_AMOUNT",
+    "overview": "Armor Regen\nArmor Regeneration. Requires ArmourRegenRate and rankArmourRegenAmount (Needs verification)",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Armor Regen"
+  },
+  {
+    "id": "MB_ATT_ASSEMBLE",
+    "name": "Assemble",
+    "overview": "Allows the soldier to respawn on a teammate who has the `Rally` attribute (e.g. Commander).\n**Class Specific:** Soldier, Clone Trooper, Rebel Soldier.",
+    "tips": [
+      "Vital for reinforcing the front lines without walking from spawn."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "When dead, click fire to cycle spawn points.\nCan spawn on any living Rally unit in a safe location.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Allows the soldier to respawn on a teammate who has the `Rally` attribute (e.g. Commander)."
+  },
+  {
+    "id": "MB_ATT_AS_MULTIPLIER",
+    "name": "\u2694\ufe0f Attack Speed Multiplier",
+    "overview": "Multiplies the base animation speed of saber attacks.\n> **Default:** 1.0\n\n**\u2699\ufe0f Mechanics**\n*   **1.0:** Normal animation speed.\n*   **1.1:** +10% Faster animations.\n*   **0.9:** -10% Slower animations.",
+    "tips": [
+      "Directly affects how quickly your saber swings (animSpeedScale in .sab editing).",
+      "Can make an otherwise slow style (like Strong) feel much faster."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Multiplies the base animation speed of saber attacks."
+  },
+  {
+    "id": "MB_ATT_BESKAR",
+    "name": "Beskar Armor",
+    "overview": "Legendary Mandalorian iron plating.\n**Class Specific:** Mandalorian.",
+    "tips": [
+      "Does not make you invincible, but significantly increases survival against lightsabers compared to normal armor."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "Light Beskar plating. Slight resistance to lightsabers.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "Medium Beskar plating. Can withstand glancing saber hits.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "Heavy Beskar plating.\nHigh resistance to lightsabers (takes reduced damage).\nHigh resistance to blasters.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Legendary Mandalorian iron plating."
+  },
+  {
+    "id": "MB_ATT_BLASTER",
+    "name": "\ud83d\udd2b E-11 Blaster",
+    "overview": "The standard **Imperial E-11 Blaster Rifle**. Versatile and effective at medium range.\n> **Default:** None.",
+    "tips": [
+      "The Level 3 Sniper Mode makes this weapon very deadly at long range.",
+      "A staple for Stormtrooper Commanders."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Standard**. Decent rate of fire.\n**Alt-Fire**: Rapid-fire spray (inaccurate).",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Improved**. Tighter spread. Higher rate of fire.\n**Alt-Fire**: More controlled rapid-fire.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Elite**. High accuracy while moving.\n**Alt-Fire**: \ud83c\udfaf **Sniper Mode**. Zooms in for high-precision shots.\n**Velocity**: 9825 (Sniper).\n**Damage**: High.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Primary Damage": "**36**",
+      "Secondary Damage": "**31**",
+      "Velocity": "6325 (Primary) / 4600 (Secondary)",
+      "Ammo Cost": "2 (Primary) / 3 (Secondary)"
+    },
+    "tags": [],
+    "description": "The standard **Imperial E-11 Blaster Rifle**. Versatile and effective at medium range."
+  },
+  {
+    "id": "MB_ATT_BLAST_ARMOUR",
+    "name": "\ud83d\udee1\ufe0f Blast Armor",
+    "overview": "Reinforced padding/plating designed to absorb kinetic shockwaves and shrapnel.\n> **Default:** None.\n\n**\u2699\ufe0f Mechanics**\n*   **Rank 1:**\n*   **Explosives:** High resistance (~50%?) to Grenades, Rockets, Thermal Detonators.\n*   **Snipers:** High resistance to Disruptor/Projectile Rifle shots (Wiki: \"% resistance to Sniper Rifles\").\n*   **Melee:** Slight resistance to Melee (Wiki: \"% resistance to Melee\").\n*   **Knockdown:** Increases threshold to be knocked down by explosions.",
+    "tips": [
+      "**Heavy Troopers:** Essential for \"Tank\" classes to survive grenade spam.",
+      "**SBD:** Adds the \"Blast Armor\" property to their hull."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Reinforced padding/plating designed to absorb kinetic shockwaves and shrapnel."
+  },
+  {
+    "id": "MB_ATT_BOWCASTER",
+    "name": "\ud83c\udff9 Bowcaster",
+    "overview": "Wookiee traditional weapon. Fires explosive quarrels.\n> **Default:** None.",
+    "tips": [
+      "Fully charged shots can one-hit kill if all bolts connect.",
+      "Bolts bounce off walls, allowing for trick shots."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Standard**. Can charge shots for higher damage and spread (3 bolts).\n**Alt-Fire**: Bouncing bolt.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Improved**. Faster charge time.\n**Spread**: 5 bolts when fully charged.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Master**.\n**Alt-Fire**: Scope? Or just tighter spread.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Damage": "**39** (Uncharged)",
+      "Max Charge": "**100+**",
+      "Velocity": "7625",
+      "Ammo Cost": "2"
+    },
+    "tags": [],
+    "description": "Wookiee traditional weapon. Fires explosive quarrels."
+  },
+  {
+    "id": "MB_ATT_BP_MULTIPLIER",
+    "name": "\ud83d\udee1\ufe0f Block Points Multiplier",
+    "overview": "Multiplies the maximum Block Points (stamina for blocking) of a saberist.\n> **Default:** 1.0\n\n**\u2699\ufe0f Mechanics**\n*   **1.0:** Normal BP.\n*   **1.1:** +10% BP.\n*   **0.9:** -10% BP.",
+    "tips": [
+      "A higher value allows you to block more incoming blaster fire or saber attacks before your guard breaks.",
+      "Combine with `MB_ATT_FP_SABER_DEFENSE` for maximum defensive capabilities."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Multiplies the maximum Block Points (stamina for blocking) of a saberist."
+  },
+  {
+    "id": "MB_ATT_BUNNY_HOP",
+    "name": "\ud83d\udc30 Bunny Hop",
+    "overview": "Alters the physics of jumping to allow momentum conservation.",
+    "tips": [
+      "**Speedsters:** Use Rank 2 for characters meant to race around the map (e.g. Sonic, Scout).",
+      "**Normal:** Regular MBII physics apply a 45% speed penalty on landing. This attribute removes that."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**\n**Style:** Siege/Base JKA.\n**Effect:** No movement penalty when landing. No added acceleration on jump.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**\n**Style:** FFA/Speed.\n**Effect:** **Added acceleration** on jump + No landing penalty. Allows gaining speed by hopping.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Alters the physics of jumping to allow momentum conservation."
+  },
+  {
+    "id": "MB_ATT_CCTRAINING",
+    "name": "\ud83e\uddf1 Close Combat Training",
+    "overview": "Specialized CQC (Close Quarters Combat) drills for soldiers.\n> **Class Specific:** Soldier.",
+    "tips": [
+      "Turns a standard Soldier into a mobile skirmisher.",
+      "Allows soldiers to outrun heavy classes."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**\n**Speed:** **1.2x** movement speed while using Melee/Fists.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**\n**Speed (Melee):** **1.2x**.\n**Speed (Gun):** **1.1x** movement speed with weapons.\n**Getup:** Improved Getup animation speed (1 -> 2).",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**\n**Speed:** **1.2x** all-around movement speed (Weapon or Melee).\n**Getup:** Improved Getup animation speed.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Specialized CQC (Close Quarters Combat) drills for soldiers."
+  },
+  {
+    "id": "MB_ATT_CLONEBLOBS",
+    "name": "Clone Blobs",
+    "overview": "Specialized ammunition for the DC-15A Clone Rifle. Grants Pulse (Ion) rounds.\n**Class Specific:** Clone Trooper, ARC Trooper.",
+    "tips": [
+      "Requires `MB_ATT_CLONERIFLE`.",
+      "Essential for anti-SBD/Droideka loadouts."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "3 Pulse/Ion rounds (Right-click to fire in Rifle mode).\nHigh damage to droids and shields.\nCauses knockdown on direct hit.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "6 Pulse/Ion rounds.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "9 Pulse/Ion rounds.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Specialized ammunition for the DC-15A Clone Rifle. Grants Pulse (Ion) rounds."
+  },
+  {
+    "id": "MB_ATT_CLONERIFLE",
+    "name": "\ud83d\udd2b Clone Rifle",
+    "overview": "DC-15A Blaster Rifle. The backbone of the Grand Army of the Republic.\n> **Default:** None.",
+    "tips": [
+      "Rely on volume of fire to suppress enemies.",
+      "The real power comes from **Clone Blobs** (`MB_ATT_CLONEBLOBS`) or **Concussion Blobs** (`MB_ATT_STRONGBLOBS`)."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Standard**. High rate of fire. Low damage.\n**Alt-Fire**: Fires loaded special ammo (Blobs).",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Improved**. Better accuracy and cooling.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Elite**. Maximum fire rate. No recoil?",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Damage": "**24** (Low per hit)",
+      "Rate of Fire": "Very Fast (900 RPM?)",
+      "Velocity": "4600",
+      "Ammo Cost": "1"
+    },
+    "tags": [],
+    "description": "DC-15A Blaster Rifle. The backbone of the Grand Army of the Republic."
+  },
+  {
+    "id": "MB_ATT_CLONE_PISTOL",
+    "name": "\ud83d\udd2b Clone Pistol",
+    "overview": "Standard DC-17 Blaster Pistol of the Clone Troopers.\n> **Default:** None.",
+    "tips": [
+      "Good for suppressing enemies.",
+      "Can be dual-wielded."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Standard**. Single-shot primary.\n**Alt-Fire**: Rapid-fire burst.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Accuracy**: Improved.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Recoil**: Reduced.\n**Spread**: Tighter spread.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Primary Damage": "**36**",
+      "Primary Fire Rate": "500ms",
+      "Primary Velocity": "6325",
+      "Primary Ammo Cost": "2",
+      "Secondary Fire Rate": "900ms (Auto-fire)",
+      "Secondary Ammo Cost": "3",
+      "Clip Size": "20 (Reloads after 20 shots)."
+    },
+    "tags": [],
+    "description": "Standard DC-17 Blaster Pistol of the Clone Troopers."
+  },
+  {
+    "id": "MB_ATT_CONCUSSION",
+    "name": "\ud83d\udca5 Concussion Rifle",
+    "overview": "A heavy rifle firing concussive blasts.\n> **Default:** None.",
+    "tips": [
+      "Excellent for crowd control and area denial.",
+      "Can knock down multiple enemies."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Standard**. Fires a spread of concussive pellets.\n**Alt-Fire**: Single concussive shot.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Damage**: Increased.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Splash**: Larger splash radius.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Primary Damage": "**40** (Pellet damage, multiple pellets)",
+      "Alt-Fire Damage": "**70** (Alt-Fire Shot)",
+      "Velocity": "3500 (Primary) / 1100 (Alt-Fire)",
+      "Splash Damage": "80",
+      "Splash Radius": "180",
+      "Ammo Cost": "10 (Primary) / 20 (Alt-Fire)"
+    },
+    "tags": [],
+    "description": "A heavy rifle firing concussive blasts."
+  },
+  {
+    "id": "MB_ATT_CORTOSIS",
+    "name": "\ud83d\udee1\ufe0f Cortosis",
+    "overview": "A rare, conductive material that shorts out lightsabers upon contact.\n> **Default:** None.\n\n**\u2699\ufe0f Mechanics**\n*   **Rank 1:**\n*   **Resistance:** Armor stops lightsabers. Damage is subtracted from Armor pool first.\n*   **Bleed:** Some damage may still bleed through to HP depending on saber damage vs armor value.\n*   **Rank 2:**\n*   **Stagger:** Causes the attacker's saber to recoil/stagger briefly on hit. (Wiki mentions \"Causes a brief stagger\").",
+    "tips": [
+      "**Anti-Jedi:** Mandatory for any class expected to survive melee combat (Mandalorians, MagnaGuards, Cortosis Droids).",
+      "**Weakness:** Does nothing against blasters."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "A rare, conductive material that shorts out lightsabers upon contact."
+  },
+  {
+    "id": "MB_ATT_CR2",
+    "name": "\ud83d\udd2b CR-2 Repeating Pistol",
+    "overview": "Rapid-fire repeating blaster pistol.\n> **Default:** None.",
+    "tips": [
+      "\"Bullet hose\" weapon. Good for suppression and close-quarters.",
+      "Can quickly drain an opponent's Block Points."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Standard**. High fire rate.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Accuracy**: Improved.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Recoil**: Reduced.\n**Fire Rate**: Maximum.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Damage": "**25** (Primary & Secondary)",
+      "Velocity": "4000",
+      "Ammo Cost": "2 (Primary & Secondary)"
+    },
+    "tags": [],
+    "description": "Rapid-fire repeating blaster pistol."
+  },
+  {
+    "id": "MB_ATT_CS_MULTIPLIER",
+    "name": "\u23f1\ufe0f Chain Speed Multiplier",
+    "overview": "Multiplies the speed at which saber combos can be chained.\n> **Default:** 1.0\n\n**\u2699\ufe0f Mechanics**\n*   **1.0:** Normal chain speed.\n*   **1.1:** +10% Faster chain speed.\n*   **0.9:** -10% Slower chain speed.",
+    "tips": [
+      "A higher value makes your saber attacks flow more smoothly and rapidly, allowing for more hits in a shorter time.",
+      "Crucial for aggressive duelists."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Multiplies the speed at which saber combos can be chained."
+  },
+  {
+    "id": "MB_ATT_DASH",
+    "name": "\ud83d\udca8 Dash",
+    "overview": "A quick, evasive burst of movement.\n> **Default:** Disabled.",
+    "tips": [
+      "Use `EAS_HI_DASH` to bind to a special ability key.",
+      "Excellent for closing gaps or avoiding incoming fire."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**\n**Cooldown:** 4 seconds.\n**Direction:** Can dash in 8 directions (WASD + Alt-fire).",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**\n**Cooldown:** 3 seconds.\n**Effect:** Immune to damage during the dash animation.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "A quick, evasive burst of movement."
+  },
+  {
+    "id": "MB_ATT_DASH_JUMP",
+    "name": "MB_ATT_DASH_JUMP",
+    "overview": "MB_ATT_DASH_JUMP\nDash Jump\nAllows for jumping at any point during a Dash. Has no effect unless paired with MB_ATT_DASH.",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "MB_ATT_DASH_JUMP"
+  },
+  {
+    "id": "MB_ATT_DEFLECT",
+    "name": "Saber Deflect",
+    "overview": "Chance to passively deflect blaster bolts while holding a lightsaber and blocking.\n**Class Specific:** Jedi, Sith.",
+    "tips": [
+      "Requires `MB_ATT_FP_SABER_DEFENSE` to be effective (you must be blocking).",
+      "Does not work if Force Pool is depleted."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "Low chance to deflect bolts back at shooter.\nMost bolts are just blocked (negligible FP drain).",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "Medium chance to deflect.\nImproved accuracy of deflected bolts.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "High chance to deflect.\nDeflected bolts are very accurate (auto-aim at shooter).\nEssential for fighting gunners at range.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Chance to passively deflect blaster bolts while holding a lightsaber and blocking."
+  },
+  {
+    "id": "MB_ATT_DEKA_DEPLOY",
+    "name": "\ud83e\udd16 Quick Deploy",
+    "overview": "Reduces the time it takes for a Droideka to fold/unfold.\n> **Class Specific:** Droideka.\n\n**\u2699\ufe0f Mechanics**\n*   **Rank 1:** Fast deploy.\n*   **Rank 2:** Near-instant deploy.",
+    "tips": [
+      "Crucial for escaping grenades or chasing targets."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Reduces the time it takes for a Droideka to fold/unfold."
+  },
+  {
+    "id": "MB_ATT_DEKA_HULL",
+    "name": "\ud83e\udd16 Droideka Hull",
+    "overview": "Physical armor plating for the Droideka chassis.\n> **Default:** Fragile (Paper thin).",
+    "tips": [
+      "Droidekas have very low base HP (~10-20). Without Hull upgrades or Shields, they are destroyed instantly.",
+      "Hull acts as Armor for the Droideka."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Light Plating**. Prevents instant death from stray shots.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Medium Plating**.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Heavy Plating**. High resistance to blaster fire when shield is down.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Physical armor plating for the Droideka chassis."
+  },
+  {
+    "id": "MB_ATT_DEKA_POWER",
+    "name": "\ud83e\udd16 Droideka Power",
+    "overview": "Main reactor output, affecting firepower and shield recharge.\n> **Class Specific:** Droideka.",
+    "tips": [
+      "Level 3 is essential for \"DPS Deka\" builds that want to melt enemies before their shields drop.",
+      "The Discharge cost of the `MB_ATT_SHOCKWAVE` is also reduced by this attribute."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Standard**. Normal fire rate. Normal shield recharge.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**High Output**. Increased fire rate. Faster shield recharge.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Overcharge**. **Rapid-fire** blasters. **Fastest** shield recharge. Increased damage per bolt.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Blaster Damage": "**25** (per shot)",
+      "Primary Velocity": "4025",
+      "Shield Recharge Rate": "**21** per tick.",
+      "Discharge Cost": "**200** (initial) / **50** (per rank reduction)."
+    },
+    "tags": [],
+    "description": "Main reactor output, affecting firepower and shield recharge."
+  },
+  {
+    "id": "MB_ATT_DEKA_SHIELD",
+    "name": "\ud83e\udd16 Droideka Shield",
+    "overview": "Personal energy shield generator for Droidekas.\n> **Default:** 0.",
+    "tips": [
+      "Shields **do not regenerate** while active. You must undeploy (ball mode) to recharge.",
+      "Must be stationary (deployed) to activate."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Standard**. ~400 Shield Points. Slow discharge.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Reinforced**. ~600 Shield Points.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Fortress**. ~800+ Shield Points. Can withstand heavy sustained fire.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Personal energy shield generator for Droidekas."
+  },
+  {
+    "id": "MB_ATT_DET_PACK",
+    "name": "\ud83d\udca3 Detonation Pack",
+    "overview": "Remotely detonated explosive charge.\n> **Default:** None.",
+    "tips": [
+      "Good for ambushes or destroying objectives.",
+      "Can be tricky to use against moving targets."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Single Pack**.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Two Packs**.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Damage": "High.",
+      "Splash Radius": "Large.",
+      "Deployment": "Can be thrown and detonated manually."
+    },
+    "tags": [],
+    "description": "Remotely detonated explosive charge."
+  },
+  {
+    "id": "MB_ATT_DEXTERITY",
+    "name": "\ud83c\udfc3 Dextrous Movement",
+    "overview": "Increases base movement speed and acrobatic capabilities.\n> **Default:** 0 (Normal human speed).",
+    "tips": [
+      "Crucial for survival against lightsaber users.",
+      "Combine with `MB_ATT_STAMINA` for extended mobility."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**\n**Speed:** Slightly increased run speed.\n**Acrobatics:** Basic rolls (Forward/Back/Side + Crouch).\n**Wall Run:** Short wall runs.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**\n**Speed:** Faster run speed.\n**Wall Run:** Longer duration.\n**Recovery:** \"Getup Rolls\" (recover quickly from knockdowns).",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**\n**Speed:** Maximum run speed.\n**Wall Run:** Infinite duration (stamina permitting).\n**Recovery:** \"Quick Getup\" (instant recovery from knockdowns).\n**Advanced Acros:** Flips, kicks (if class supports).",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Increases base movement speed and acrobatic capabilities."
+  },
+  {
+    "id": "MB_ATT_DISP_AMMO",
+    "name": "MB_ATT_DISP_AMMO",
+    "overview": "Ammo Dispenser\n1-3\nHold 'Use' key on allies to restore their Ammo at a set amount every 250ms.\n* Level 1: 2\n* Level 2: 4\n* Level 3: 6",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Ammo Dispenser"
+  },
+  {
+    "id": "MB_ATT_DISP_ARMOR",
+    "name": "MB_ATT_DISP_ARMOR",
+    "overview": "Armor Dispenser\n1-3\nHold 'Use' key on allies to restore their Armor at a set amount every 250ms.\n* Level 1: 2\n* Level 2: 4\n* Level 3: 6",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Armor Dispenser"
+  },
+  {
+    "id": "MB_ATT_DISP_BLOCK",
+    "name": "MB_ATT_DISP_BLOCK",
+    "overview": "BP Dispenser\n1-3\nHold 'Use' key on allies to restore their Block Points (BP) at a set amount every 250ms.\n* Level 1: 2\n* Level 2: 4\n* Level 3: 6",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "BP Dispenser"
+  },
+  {
+    "id": "MB_ATT_DISP_FORCE",
+    "name": "MB_ATT_DISP_FORCE",
+    "overview": "Resource Dispenser\n1-3\nHold 'Use' key on allies to restore their Resource at a set amount every 250ms.\n* Level 1: 2\n* Level 2: 4\n* Level 3: 6",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Resource Dispenser"
+  },
+  {
+    "id": "MB_ATT_DISP_HEALTH",
+    "name": "MB_ATT_DISP_HEALTH",
+    "overview": "Health Dispenser\n1-3\nHold 'Use' key on allies to restore their Health at a set amount every 250ms.\n* Level 1: 2\n* Level 2: 4\n* Level 3: 6",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Health Dispenser"
+  },
+  {
+    "id": "MB_ATT_DISRUPTOR",
+    "name": "\u26a1 Tenloss Disruptor",
+    "overview": "Illegal sniper rifle that disintegrates targets.\n> **Default:** None.",
+    "tips": [
+      "A fully charged headshot dissolves the enemy (no revive).",
+      "Body shots on unarmored targets are often lethal.",
+      "Ignores most armor damage reduction? (Needs verification)."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Scope:** Usable.\n**Charge:** Slow charge.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Charge:** Faster charge rate.\n**Efficiency:** Less ammo per shot?",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Master**. Fastest charge.\n**Penetration:** Can shoot through multiple enemies.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Primary Damage": "**31**",
+      "Sniper Damage": "**36** (Base) -> Charges up to **125+**",
+      "Velocity": "Instant (Hitscan) when scoped? No, extremely fast (Velocity 10000+).",
+      "Ammo Cost": "5 per shot."
+    },
+    "tags": [],
+    "description": "Illegal sniper rifle that disintegrates targets."
+  },
+  {
+    "id": "MB_ATT_DLT19",
+    "name": "\ud83d\udd2b DLT-19 Heavy Blaster Rifle",
+    "overview": "A heavy repeating blaster rifle with a high rate of fire.\n> **Default:** None.",
+    "tips": [
+      "Excellent for suppressing large groups of enemies.",
+      "The secondary fire can clear out entrenched positions."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Standard**. Rapid fire primary.\n**Alt-Fire**: Explosive shot.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Accuracy**: Improved.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Fire Rate**: Faster.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Primary Damage": "**26**",
+      "Secondary Damage": "**35** (Explosive Shot)",
+      "Primary Velocity": "4500",
+      "Secondary Velocity": "9500",
+      "Primary Ammo Cost": "4",
+      "Secondary Ammo Cost": "10",
+      "Clip Size": "60."
+    },
+    "tags": [],
+    "description": "A heavy repeating blaster rifle with a high rate of fire."
+  },
+  {
+    "id": "MB_ATT_DLT20A",
+    "name": "\ud83d\udd2b DLT-20A Blaster Rifle",
+    "overview": "Long-range blaster rifle, favored by some Imperial snipers and bounty hunters.\n> **Default:** None.",
+    "tips": [
+      "Higher velocity than the E-11 or A280, making it very effective at hitting distant targets.",
+      "The burst fire can melt opponents at close range."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Standard**. High damage per shot.\n**Alt-Fire**: Burst fire (5 shots).",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Improved**. Faster refire rate.\n**Alt-Fire**: Tighter burst spread.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Elite**. High accuracy.\n**Alt-Fire**: **Scoped Mode**.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Damage": "**31** (Primary)",
+      "Velocity": "8075",
+      "Ammo Cost": "2 (Primary)"
+    },
+    "tags": [],
+    "description": "Long-range blaster rifle, favored by some Imperial snipers and bounty hunters."
+  },
+  {
+    "id": "MB_ATT_DMG_TAKEN_MULTIPLIER",
+    "name": "\ud83d\udcaa Damage Taken Multiplier",
+    "overview": "Multiplies all incoming damage.\n> **Default:** 1.0\n\n**\u2699\ufe0f Mechanics**\n*   **1.0:** Normal damage taken.\n*   **0.9:** 10% Less damage taken.\n*   **1.1:** 10% More damage taken.",
+    "tips": [
+      "Jedi typically have a hidden 0.9 (10% damage reduction) in their base class.",
+      "Use this to fine-tune the durability of a class."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Multiplies all incoming damage."
+  },
+  {
+    "id": "MB_ATT_DODGE",
+    "name": "\ud83e\udd77 Dodge",
+    "overview": "Passive chance to completely evade incoming projectile damage.\n> **Default:** Disabled.",
+    "tips": [
+      "Used on agile characters like Heroes or Mandalorians.",
+      "Can be activated manually via `EAS_HI_DODGE` for a guaranteed dodge (at a cost)."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**\n**Chance:** Low.\n**Effect:** Evades sniper shots and projectile attacks.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**\n**Chance:** Medium.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**\n**Chance:** High.\n**Effect:** Can dodge blaster bolts from automatic weapons.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Passive chance to completely evade incoming projectile damage."
+  },
+  {
+    "id": "MB_ATT_EE3",
+    "name": "\ud83d\udd2b EE-3 Carbine Rifle",
+    "overview": "Boba Fett's iconic carbine. Fires in short, powerful bursts.\n> **Default:** None.",
+    "tips": [
+      "Known for its high burst damage.",
+      "The secondary fire is a single shot, good for accuracy."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Standard**. 3-shot burst.\n**Fire Rate**: Slow.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Fire Rate**: Improved.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Fire Rate**: Fastest.\n**Spread**: Reduced spread while moving.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Damage": "**33** (Primary & Secondary)",
+      "Velocity": "6750 (Primary) / 7000 (Secondary)",
+      "Primary Fire Rate": "1100ms (Base)",
+      "Burst Count": "3 shots.",
+      "Ammo Cost": "8 (Primary) / 2 (Secondary)"
+    },
+    "tags": [],
+    "description": "Boba Fett's iconic carbine. Fires in short, powerful bursts."
+  },
+  {
+    "id": "MB_ATT_EE4",
+    "name": "\ud83d\udd2b EE-4 Carbine Rifle",
+    "overview": "Short-range burst carbine, known for its rapid-fire capabilities.\n> **Default:** None.",
+    "tips": [
+      "The Level 3 sniper mode transforms it into a versatile weapon, similar to the E-11."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Standard**. 3-shot burst.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Fire Rate**: Faster.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Sniper Mode**: Unlocks secondary fire as a powerful sniper shot.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Primary Damage": "**36**",
+      "Sniper Damage": "**70**",
+      "Velocity": "6325 (Primary) / 9825 (Sniper)",
+      "Ammo Cost": "Unknown (Wiki says \"NOT CONNECTED\"). Need to estimate."
+    },
+    "tags": [],
+    "description": "Short-range burst carbine, known for its rapid-fire capabilities."
+  },
+  {
+    "id": "MB_ATT_E_22",
+    "name": "\ud83d\udd2b E-22 Heavy Blaster",
+    "overview": "Heavy Blaster Rifle used by Imperial Death Troopers.\n> **Default:** None.",
+    "tips": [
+      "Combines heavy damage with a decent fire rate.",
+      "The secondary fire is excellent for dislodging enemies."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Standard**. High damage.\n**Alt-Fire**: Slower, more powerful shot.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Fire Rate**: Improved.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Recoil**: Reduced.\n**Accuracy**: Improved while moving.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Primary Damage": "**33**",
+      "Secondary Damage": "**45**",
+      "Velocity": "8000 (Primary) / 6000 (Secondary)",
+      "Ammo Cost": "6 (Primary) / 8 (Secondary)"
+    },
+    "tags": [],
+    "description": "Heavy Blaster Rifle used by Imperial Death Troopers."
+  },
+  {
+    "id": "MB_ATT_FIREPOWER",
+    "name": "\ud83e\udd16 SBD Arm Blaster",
+    "overview": "The integrated wrist blaster of the Super Battle Droid.\n> **Class Specific:** SBD.",
+    "tips": [
+      "Your life depends on managing your Battery. Don't spray and pray unless you have Level 3."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Fire Rate:** Standard.\n**Accuracy:** Moderate.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Fire Rate:** Increased.\n**Battery:** More efficient usage.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Fire Rate:** **Rapid Fire**.\n**Damage:** Consistent high DPS.\n**Battery:** Highly efficient.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Damage": "**34**",
+      "Velocity": "4600",
+      "Ammo": "Drains Battery."
+    },
+    "tags": [],
+    "description": "The integrated wrist blaster of the Super Battle Droid."
+  },
+  {
+    "id": "MB_ATT_FIRE_GRENADES",
+    "name": "\ud83d\udd25 Fire Grenade",
+    "overview": "Incendiary grenade that creates a burning area of effect.\n> **Default:** None.",
+    "tips": [
+      "Good for area denial and flushing out enemies.",
+      "Deals damage over time, bypassing some armor."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Single Grenade**. Creates a small fire zone.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Two Grenades**.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Three Grenades**.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Direct Hit Damage": "**15**",
+      "Splash Damage": "**15**",
+      "Splash Radius": "**200** units",
+      "Burn Time": "~13 seconds (Primary) / 8 seconds (Secondary)",
+      "Burn Damage": "~2.22 per tick (every 30ms)."
+    },
+    "tags": [],
+    "description": "Incendiary grenade that creates a burning area of effect."
+  },
+  {
+    "id": "MB_ATT_FLAMETHROWER",
+    "name": "\ud83d\udd25 Flamethrower",
+    "overview": "Wrist-mounted flamethrower for close-quarters combat.\n> **Class Specific:** Mandalorian.\n\n**\u2699\ufe0f Mechanics**\n*   **Damage:** Fire damage (ignores armor/block).\n*   **Fuel:** Drains **400** units per second (`FLAMETHROWER_DEFUEL_RATE`).\n*   **Effect:** Ignites enemies (DoT).",
+    "tips": [
+      "Extremely effective against Jedi/Sith who get too close.",
+      "Consumes fuel rapidly."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Wrist-mounted flamethrower for close-quarters combat."
+  },
+  {
+    "id": "MB_ATT_FLECHETTE",
+    "name": "\ud83e\ude93 Flechette Launcher",
+    "overview": "Fires a burst of shrapnel or a bouncing explosive ball.\n> **Default:** None.",
+    "tips": [
+      "Versatile weapon for close to medium range.",
+      "Alt-Fire can clear rooms or hit enemies around corners."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Primary**: Short-range shotgun blast.\n**Alt-Fire**: Bouncing explosive ball.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Damage**: Increased.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Spread**: Tighter primary spread.\n**Alt-Fire**: Stronger explosion.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Primary Damage": "**12** (per pellet, 5 pellets = **60 total**)",
+      "Alt-Fire Damage": "**20-75** (Explosive ball)",
+      "Velocity": "6325",
+      "Ammo Cost": "1 (Primary) / 15 (Alt-Fire)"
+    },
+    "tags": [],
+    "description": "Fires a burst of shrapnel or a bouncing explosive ball."
+  },
+  {
+    "id": "MB_ATT_FLIPKICK",
+    "name": "\ud83d\udca5 Flipkick",
+    "overview": "A powerful acrobatic kick that knocks down opponents.\n> **Default:** Disabled.",
+    "tips": [
+      "**Mechanism:** Double jump off an opponent.",
+      "**Counter:** Blocked by high strength (`MB_ATT_WOOKIE_STRENGTH`) or Force Block."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**\n**Damage:** 9.\n**Effect:** Can knock down opponents (based on opponent's strength).",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**\n**Damage:** 12.\n**Effect:** Higher chance of knockdown.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**\n**Damage:** 15.\n**Effect:** Guaranteed knockdown against most targets.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "A powerful acrobatic kick that knocks down opponents."
+  },
+  {
+    "id": "MB_ATT_FLOAT_HOP",
+    "name": "\ud83c\udf88 Slow Faller",
+    "overview": "Anti-gravity stabilizers.\n\n**\u2699\ufe0f Mechanics**\n*   **Effect:** Slows the rate of descent in the air.\n*   **Fall Damage:** Reduces or eliminates fall damage.",
+    "tips": [
+      "Good for \"Bounty Hunter\" or \"Jet Trooper\" classes to simulate hovering without full flight."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Anti-gravity stabilizers."
+  },
+  {
+    "id": "MB_ATT_FORCEBLOCK",
+    "name": "\ud83d\udee1\ufe0f Force Block",
+    "overview": "Passive mental defense against hostile Force powers.\n> **Default:** 0 (Vulnerable to everything).",
+    "tips": [
+      "Does **not** block \"Force Destruction\" or \"Deadly Sight\" damage, only CC effects.",
+      "**Vital** for dueling other Force users. Without it, you will be ragdolled."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Resistant**. Resists Level 1 powers (Push/Pull/Grip). Reduces duration of effects.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Strong**. Resists Level 2 powers. Immune to Level 1 Grip/Lightning stun.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Immune**. Resists almost all Force powers. Push/Pull only nudge you slightly. Immune to Grip lift (still take damage). Immune to Lightning stun.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Passive mental defense against hostile Force powers."
+  },
+  {
+    "id": "MB_ATT_FORCEFOCUS",
+    "name": "\ud83d\udd2e Force Focus (Attunement)",
+    "overview": "Increases the maximum size of the Force Pool.\n> **Default:** 100 FP.",
+    "tips": [
+      "Allows for more ability usage before exhaustion.",
+      "Vital for Force-heavy builds (Consular/Sorcerer)."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "** **90 FP**.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "** **100 FP**.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "** **120 FP**.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Increases the maximum size of the Force Pool."
+  },
+  {
+    "id": "MB_ATT_FP_ABSORB",
+    "name": "\ud83e\uddfd Force Absorb",
+    "overview": "Absorbs hostile Force powers and converts them into Force Points.\n> **Default:** 0 FP Drain (Cannot absorb).",
+    "tips": [
+      "**Anti-Sith:** The hard counter to Force-heavy Sith.",
+      "**Active:** Must be activated to work (unlike Force Block which is passive)."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**10 FP** per absorption. Absorbs Push, Pull. Small FP returned.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**15 FP** per absorption. Absorbs Grip (Level 1/2), Lightning (Level 1/2). Medium FP returned.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**20 FP** per absorption. Absorbs almost all Force powers. High FP returned.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Absorbs hostile Force powers and converts them into Force Points."
+  },
+  {
+    "id": "MB_ATT_FP_DESTRUCTION",
+    "name": "Force Destruction",
+    "overview": "Concentrates Force energy into a devastating explosive ball.\n**Class Specific:** Sith (Dark Side, Special).",
+    "tips": [
+      "Requires both hands (cannot use saber).",
+      "Takes seconds to cast, leaving you open to snipers."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "Small blast radius.\nHigh damage.\nLong charge time.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "Large blast radius (Nuclear).\nInstakills almost anything in center.\nUser is vulnerable while charging.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Concentrates Force energy into a devastating explosive ball."
+  },
+  {
+    "id": "MB_ATT_FP_DRAIN",
+    "name": "\ud83e\udddb Force Drain",
+    "overview": "Siphons life energy from the target to the user.\n> **Class Specific:** Sith.",
+    "tips": [
+      "**Vampire:** Keeps you alive in a brawl.",
+      "**Anti-Jedi:** Draining their FP prevents them from Blocking or using Powers."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**\n**Target:** Single.\n**Effect:** Drains HP slowly. Heals user.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**\n**Target:** Single.\n**Effect:** Drains HP and FP (Force Points).",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**\n**Target:** Cone/Multi-target?\n**Effect:** Rapid Drain. Drains HP, FP, and Stamina.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Siphons life energy from the target to the user."
+  },
+  {
+    "id": "MB_ATT_FP_GRIP",
+    "name": "\u270a Force Grip",
+    "overview": "Chokes the target, lifting them into the air and dealing damage.\n> **Default:** 0 FP Drain.",
+    "tips": [
+      "**Counter:** Force Push/Pull can break the grip.",
+      "**Vulnerability:** Target can shoot back unless it is Rank 3 Crush vs non-Force user."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**\n**Movement:** Stationary.\n**Choke Damage:** **1** per tick.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**\n**Movement:** Slow walk.\n**Choke Damage:** **5** per tick.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**\n**Movement:** Full walk.\n**Effect:** **Crush**.\n**Choke Damage:** **8** per tick.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Initial Cost": "**0 FP**.",
+      "Drain Rate": "",
+      "Locking On": "**2-3 FP** per tick.",
+      "Holding": "**3 FP** per tick.",
+      "Lock Time": "280ms per level check."
+    },
+    "tags": [],
+    "description": "Chokes the target, lifting them into the air and dealing damage."
+  },
+  {
+    "id": "MB_ATT_FP_HEAL",
+    "name": "\u2764\ufe0f\u200d\ud83e\ude79 Force Heal",
+    "overview": "Allows the user to heal themselves using the Force.\n> **Default:** 0 FP Drain (Cannot heal).",
+    "tips": [
+      "Consumes Force Pool.",
+      "Cannot attack while healing.",
+      "Healing rate is often `20 HP/s`."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**30 FP** per tick. Heals **25 HP** over **5 seconds**. Must be stationary.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**20 FP** per tick. Heals **50 HP** over **5 seconds**. Can move slowly.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**15 FP** per tick. Heals **75 HP** over **5 seconds**. Can move at normal speed.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Allows the user to heal themselves using the Force."
+  },
+  {
+    "id": "MB_ATT_FP_LEVITATION",
+    "name": "\u2b06\ufe0f Force Jump",
+    "overview": "Enhances jump height and air control.\n> **Default:** 0 FP Drain (Cannot jump high).",
+    "tips": [
+      "Every Jedi needs at least Level 1.",
+      "Combine with `MB_ATT_DEXTERITY` for advanced acrobatics."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**10 FP** per jump. Increased jump height (**~2x** normal). Can wall run briefly.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**20 FP** per jump. Higher jump (**~4x** normal). Improved wall run.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**30 FP** per jump. Maximum jump height (**~8x** normal). Best air control. Can Force Jump off walls.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Enhances jump height and air control."
+  },
+  {
+    "id": "MB_ATT_FP_LIGHTNING",
+    "name": "\u26a1 Force Lightning",
+    "overview": "Unleashes bolts of electricity to damage and stun enemies.\n> **Default:** 0 FP Drain.",
+    "tips": [
+      "**High Drain:** Burns through FP very quickly.",
+      "**Stun:** Rank 3 is devastating against Gunners as it stops them from shooting back."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "** Single target spark. Low damage.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "** Sustained stream. Medium damage.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "** **Chain Lightning**. High damage. **Stuns** gunners (prevents firing).",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Initial Cost": "**15 FP**.",
+      "Drain Rate": "",
+      "Rank 1/2": "**60 FP/sec**.",
+      "Rank 3": "**50 FP/sec**.",
+      "Stun": "Stacks up to 8 times."
+    },
+    "tags": [],
+    "description": "Unleashes bolts of electricity to damage and stun enemies."
+  },
+  {
+    "id": "MB_ATT_FP_MIRALUKA",
+    "name": "MB_ATT_FP_MIRALUKA",
+    "overview": "Miraluka Vision\nRequires FP_SEE. Uses no resource and keeps Sense always on with no sound. Does not work with Deadly Sight.",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Miraluka Vision"
+  },
+  {
+    "id": "MB_ATT_FP_MULTIPLIER",
+    "name": "\ud83d\udd0b Force Pool Multiplier",
+    "overview": "Multiplies the total Force Point (FP) pool.\n> **Default:** 1.0\n\n**\u2699\ufe0f Mechanics**\n*   **1.0:** Normal FP.\n*   **1.1:** +10% FP.\n*   **0.9:** -10% FP.",
+    "tips": [
+      "Use to create Force-heavy or Force-light characters.",
+      "Combines with the `forcepool` field to determine total FP."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Multiplies the total Force Point (FP) pool."
+  },
+  {
+    "id": "MB_ATT_FP_PROTECT",
+    "name": "\ud83d\udee1\ufe0f Force Protect",
+    "overview": "Wraps the user in a protective Force barrier.\n> **Default:** 0 FP Drain (Cannot protect).",
+    "tips": [
+      "**Tanking:** Makes a Jedi incredibly hard to kill as long as they have Force Points.",
+      "**Weakness:** Does not stop Cortosis or Sniper headshots (direct damage)."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**20 FP** per tick. **25%** Damage Reduction.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**30 FP** per tick. **50%** Damage Reduction.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**40 FP** per tick. **75%** Damage Reduction. Very efficient FP usage.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Wraps the user in a protective Force barrier."
+  },
+  {
+    "id": "MB_ATT_FP_PULL",
+    "name": "\u2b05\ufe0f Force Pull",
+    "overview": "Telekinetic grip that pulls enemies closer or disarms them.\n> **Default:** 0 FP Drain (Cannot pull).",
+    "tips": [
+      "Deadly combo with Saber throw or melee.",
+      "Excellent for pulling enemies off ledges."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**20 FP**. Single target pull. Can pull weapons.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**30 FP**. Cone effect. Stronger pull force.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**40 FP**. **Force Pull**: 360-degree AoE. Massive pull force. High chance to disarm. Can knock down.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Telekinetic grip that pulls enemies closer or disarms them."
+  },
+  {
+    "id": "MB_ATT_FP_PUSH",
+    "name": "\u27a1\ufe0f Force Push",
+    "overview": "Telekinetic wave that knocks enemies back.\n> **Default:** 0 FP Drain (Cannot push).",
+    "tips": [
+      "Primary tool for crowd control and ledge kills.",
+      "Can deflect grenades and rockets."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**20 FP**. Single target push. Knocks down weak enemies.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**30 FP**. Cone effect (multiple targets). Stronger knockback.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**40 FP**. **Force Wave**: 360-degree area of effect (if stationary/crouched). Massive knockback. Can break through Force Block 1/2.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Telekinetic wave that knocks enemies back."
+  },
+  {
+    "id": "MB_ATT_FP_RAGE",
+    "name": "\ud83d\ude21 Dark Rage",
+    "overview": "Channels the Dark Side to fuel physical prowess and durability.\n> **Default:** 0 FP Drain (Cannot rage).",
+    "tips": [
+      "**Wookiee Fury** is the non-Force equivalent.",
+      "Essential for rushing into a room of enemies."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**40 FP** per second. **50%** Damage Reduction. Increased movement speed. Short duration.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**50 FP** per second. **50%** Damage Reduction. Medium duration.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**60 FP** per second. **50%** Damage Reduction. **+30%** Speed. Immune to Knockdown. Long duration.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Channels the Dark Side to fuel physical prowess and durability."
+  },
+  {
+    "id": "MB_ATT_FP_REPULSE",
+    "name": "\ud83d\udca5 Force Repulse",
+    "overview": "An omni-directional blast of Force energy.\n\n**\u2699\ufe0f Mechanics**\n*   **Effect:** Instant 360-degree knockback.\n*   **Damage:** None (Pure knockback).",
+    "tips": [
+      "**Get Off Me:** Best panic button when surrounded.",
+      "**Breaker:** Breaks grabs and grapples instantly."
+    ],
+    "levels": {},
+    "stats": {
+      "Cost": "**60 FP**.",
+      "Radius": "**1024** units.",
+      "Cooldown": "1 second."
+    },
+    "tags": [],
+    "description": "An omni-directional blast of Force energy."
+  },
+  {
+    "id": "MB_ATT_FP_SABERTHROW",
+    "name": "\u2694\ufe0f Saber Throw",
+    "overview": "Telekinetically throwing the lightsaber as a projectile.\n> **Default:** 0 (Cannot throw).",
+    "tips": [
+      "Leaves you **defenseless** (cannot block) while the saber is thrown.",
+      "High risk, high reward against gunners or unaware Jedi."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "Short distance throw.\nSaber spins flat.\nReturns automatically.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "Medium distance.\nCan control the saber's return path slightly.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "Long distance.\n**Steerable**: Can actively guide the saber while it is in the air.\nDrains Force Points continuously while airborne.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Telekinetically throwing the lightsaber as a projectile."
+  },
+  {
+    "id": "MB_ATT_FP_SABER_DEFENSE",
+    "name": "\u2694\ufe0f Saber Defense (Parry)",
+    "overview": "The ability to block incoming attacks with a lightsaber.\n*   **Damage Taken:** **1.6x** (60% more damage from sabers).\n*   **Regen:** **0** (No passive regen).",
+    "tips": [
+      "**Rank 3** is standard for any duelist.",
+      "**Rank 1** is \"Padawan\" level\u2014you will lose a stamina battle quickly."
+    ],
+    "levels": {
+      "0": {
+        "name": "Level 0",
+        "effect": "**",
+        "fp_cost": 0
+      },
+      "1": {
+        "name": "Level 1",
+        "effect": "**\n**Damage Taken:** **1.4x** (40% more damage).\n**Regen:** Low.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**\n**Damage Taken:** **1.0x** (Normal).\n**Regen:** Normal.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**\n**Damage Taken:** **1.0x**.\n**Perks:** BP cost halved for specials. Jumping drain reduced.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "BP Regen Rate": "400ms (0.4s).",
+      "BP Regen Amount": "",
+      "Rank 1": "**3 BP** per tick.",
+      "Rank 2/3": "**4 BP** per tick."
+    },
+    "tags": [],
+    "description": "The ability to block incoming attacks with a lightsaber."
+  },
+  {
+    "id": "MB_ATT_FP_SABER_OFFENSE",
+    "name": "\u2694\ufe0f Saber Offense",
+    "overview": "Skill with the lightsaber, influencing attack speed and style availability.\n> **Default:** 0 (Sluggish/No styles).",
+    "tips": [
+      "Level 3 is mandatory for any serious duelist, providing access to the most powerful styles.",
+      "Styles must still be selected in the **Saber Configuration** tab."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Medium Style (Yellow)** unlocked. Attack speed is **1.0x**.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Fast Style (Blue)** unlocked. Attack speed is **1.1x**.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Strong Style (Red)** unlocked. Attack speed is **1.2x**. Allows access to Desann/Tavion/Staff/Dual styles (if equipped).",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Skill with the lightsaber, influencing attack speed and style availability."
+  },
+  {
+    "id": "MB_ATT_FP_SEE",
+    "name": "\ud83d\udc41\ufe0f Force Sense",
+    "overview": "Heightens senses to detect enemies through obstacles.\n> **Default:** 0 FP Drain (Cannot see).",
+    "tips": [
+      "**Counter-Spy:** Essential for spotting disguised Spies (red aura).",
+      "**Wallhacks:** See enemies through walls (blue aura)."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "** See Rank 1 Invisible.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "** See Rank 2 Invisible.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "** See Rank 3 Invisible.\n**Sniper:** Can see laser sights.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Drain Rate": "**3 FP** per tick (Variable rate).",
+      "Initial Cost": "**20 FP** (All ranks)."
+    },
+    "tags": [],
+    "description": "Heightens senses to detect enemies through obstacles."
+  },
+  {
+    "id": "MB_ATT_FP_SPEED",
+    "name": "\u26a1 Force Speed",
+    "overview": "Temporarily increases movement speed.\n> **Default:** 0 FP Drain (Cannot speed).",
+    "tips": [
+      "Higher ranks cost *less* to activate.",
+      "Sprint (`Shift`) does not drain extra Force, but Speed drains continuously."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**\n**Initial Cost:** **20 FP**.\n**Speed:** **1.2x** Boost.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**\n**Initial Cost:** **15 FP**.\n**Speed:** **1.4x** Boost.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**\n**Initial Cost:** **10 FP**.\n**Speed:** **1.6x** Boost.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Drain Rate": "**16 FP/sec** (8 FP per 500ms).",
+      "Duration": "~60 seconds (if not drained)."
+    },
+    "tags": [],
+    "description": "Temporarily increases movement speed."
+  },
+  {
+    "id": "MB_ATT_FP_TEAM_FORCE",
+    "name": "\ud83e\udd1d Team Energize",
+    "overview": "Restores the Force Points / Energy of nearby allies.\n> **Class Specific:** Jedi (Light Side).",
+    "tips": [
+      "**Battery:** Turns you into a walking power plant.",
+      "**SBDs:** Can recharge SBD batteries (very powerful synergy)."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**\n**Effect:** Restores small amount of FP/Ammo to target.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**\n**Effect:** Restores medium amount.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**\n**Effect:** Fully restores FP and Energy to nearby allies.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Restores the Force Points / Energy of nearby allies."
+  },
+  {
+    "id": "MB_ATT_FP_TEAM_HEAL",
+    "name": "\ud83c\udfe5 Team Heal",
+    "overview": "Channels Force energy to heal nearby allies.\n> **Class Specific:** Jedi (Light Side).",
+    "tips": [
+      "**Medic Jedi:** Keeps the team alive during a push.",
+      "**Self:** Does *not* heal the user (use `FP_HEAL` for that)."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**\n**Target:** Single ally (aimed).\n**Heal:** ~30 HP.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**\n**Target:** Radius (small).\n**Heal:** ~50 HP.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**\n**Target:** Radius (large).\n**Heal:** ~50-75 HP to everyone nearby.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Channels Force energy to heal nearby allies."
+  },
+  {
+    "id": "MB_ATT_FP_TELEPATHY",
+    "name": "\ud83d\udc7b Mind Trick",
+    "overview": "Clouds the minds of enemies, making the user invisible or creating confusion.\n> **Default:** 0 FP Drain (Cannot trick).",
+    "tips": [
+      "Great for infiltration.",
+      "Jedi with \"Sense\" (`MB_ATT_FP_SEE`) can see through disguises."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**20 FP** per second. Invisible on Radar. Visible to the eye but translucent.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**30 FP** per second. More translucent. Can distract enemies.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**40 FP** per second. **Invisibility**: Almost completely invisible.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Clouds the minds of enemies, making the user invisible or creating confusion."
+  },
+  {
+    "id": "MB_ATT_FRAGS",
+    "name": "\ud83d\udca5 Frag Grenade",
+    "overview": "Standard fragmentation grenade.\n> **Default:** None.",
+    "tips": [
+      "Good all-purpose explosive.",
+      "Can be used with `MB_ATT_QUICKTHROW` for rapid deployment."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Single Grenade**. Standard blast.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Two Grenades**.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Three Grenades**.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Direct Hit Damage": "**100**",
+      "Splash Damage": "**100**",
+      "Splash Radius": "**256** units",
+      "Fuse Time": "~3 seconds."
+    },
+    "tags": [],
+    "description": "Standard fragmentation grenade."
+  },
+  {
+    "id": "MB_ATT_FUEL",
+    "name": "\u26fd Fuel",
+    "overview": "Determines the fuel capacity for Mandalorian or Jet Trooper flight systems.\n> **Default:** 0.",
+    "tips": [
+      "Also consumed by **Flamethrower** and **Wrist Lasers**.",
+      "Managing fuel is the core skill of any Mandalorian player."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Reserve Tank**. Short hops only. Good for reaching ledges.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Standard Tank**. Moderate flight time.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Extended Tank**. Long duration flight. Can hover for tactical advantage.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Determines the fuel capacity for Mandalorian or Jet Trooper flight systems."
+  },
+  {
+    "id": "MB_ATT_GETUPS",
+    "name": "\ud83e\udd38 Getup Ranks",
+    "overview": "Determines the speed and animation of recovery from knockdowns.\n> **Default:** Varies by class.",
+    "tips": [
+      "Crucial for aggressive classes that are often in the thick of combat.",
+      "Combines with `MB_ATT_KNOCKDOWN_ROLL` for maximum recovery speed."
+    ],
+    "levels": {
+      "0": {
+        "name": "Level 0",
+        "effect": "** Standard slow getup.",
+        "fp_cost": 0
+      },
+      "1": {
+        "name": "Level 1",
+        "effect": "** Faster getup animation.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "** Near-instant recovery.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "** Allows shooting/melee immediately after recovery.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Determines the speed and animation of recovery from knockdowns."
+  },
+  {
+    "id": "MB_ATT_GRAPPLE_HOOK",
+    "name": "\ud83e\ude9d Grapple Hook",
+    "overview": "Equips the character with a grappling hook.\n> **Default:** Disabled.",
+    "tips": [
+      "Use `EAS_HI_GRAPPLEHOOK` to bind to a special ability key.",
+      "Allows for unique movement and positioning.",
+      "Can pull enemies into melee range."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**\n**Basic Hook:** Short range.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**\n**Improved Hook:** Medium range. Faster reel-in.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**\n**Advanced Hook:** Long range. Can pull enemies closer.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Equips the character with a grappling hook."
+  },
+  {
+    "id": "MB_ATT_GRAPPLE_HOP",
+    "name": "\ud83e\udd38 Grapple Hop",
+    "overview": "Momentum boost for grappling hooks.\n\n**\u2699\ufe0f Mechanics**\n*   **Effect:** The first jump after detaching a grappling hook retains momentum (Bunny Hop).\n*   **Requirement:** Must have `MB_ATT_GRAPPLE_HOOK` and `EAS_HI_GRAPPLEHOOK`.",
+    "tips": [
+      "Allows for \"Spiderman\" swinging maneuvers."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Momentum boost for grappling hooks."
+  },
+  {
+    "id": "MB_ATT_GUN_DEFENSE",
+    "name": "\ud83d\udee1\ufe0f Blaster Defense",
+    "overview": "Passive ability to block blaster bolts with a lightsaber.\n> **Default:** Rank 0 (Glass Canon).",
+    "tips": [
+      "**Rank 3** is essential for surviving against Heavy Repeaters or Miniguns.",
+      "Without this, a Jedi melts under fire."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "** Poor defense. Good for emergencies.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "** Standard defense.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "** **Master**. Highly efficient blocking. Increased block radius on projectiles (+30%).",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "FP Drain Multiplier": "",
+      "Rank 0": "**2.5x** (Blocks drain massive FP).",
+      "Rank 1": "**1.2x** (20% more drain).",
+      "Rank 2": "**1.0x** (Standard drain).",
+      "Rank 3": "**0.85x** (15% less drain)."
+    },
+    "tags": [],
+    "description": "Passive ability to block blaster bolts with a lightsaber."
+  },
+  {
+    "id": "MB_ATT_HACK_MULTIPLIER",
+    "name": "\u2699\ufe0f Hack Multiplier",
+    "overview": "Multiplies the speed at which hacking objectives are completed.\n> **Default:** 1.0\n\n**\u2699\ufe0f Mechanics**\n*   **1.0:** Normal hacking speed.\n*   **0.5:** 2x Faster hacking.\n*   **2.0:** 2x Slower hacking.",
+    "tips": [
+      "A value of `0.25` combined with `CFL_FASTHACKING` can make hacking almost instantaneous.",
+      "Crucial for Slicer/Tech classes."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Multiplies the speed at which hacking objectives are completed."
+  },
+  {
+    "id": "MB_ATT_HEALING",
+    "name": "\u2764\ufe0f Healing",
+    "overview": "Ability to heal self or teammates using a Bacta Canister or Force Heal logic (non-Jedi).\n> **Default:** None.",
+    "tips": [
+      "Commonly given to **Soldiers**, **Commanders**, or **Scientists**.",
+      "Interruptible by taking damage."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Self Heal**. Hold 'Use' on self to apply bacta. Slow.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Triage**. Can heal adjacent teammates. Faster rate.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Combat Medic**. Fast healing for self and allies.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Ability to heal self or teammates using a Bacta Canister or Force Heal logic (non-Jedi)."
+  },
+  {
+    "id": "MB_ATT_HEALTH",
+    "name": "\u2764\ufe0f Extra Health",
+    "overview": "Adds bonus health **on top of** the class's base health.\n> **Default Base Health:** 100 (Soldier, Jedi, etc.) to ~400 (Wookiee/SBD).",
+    "tips": [
+      "Use this to create \"Tank\" variants of standard classes.",
+      "For **Wookiees**, use `MB_ATT_WOOKIE_HEALTH` instead as it scales differently with their strength.",
+      "Usually better to adjust `MaxHealth` in the profile tab for precise control (e.g. set to 150), but this attribute is useful for quick preset buffs."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "Adds **+?** Health.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "Adds **+?** Health.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "Adds **+?** Health.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Adds bonus health **on top of** the class's base health."
+  },
+  {
+    "id": "MB_ATT_HEAVY_PISTOL",
+    "name": "\ud83d\udd2b Heavy Pistol",
+    "overview": "Powerful, high-caliber blaster pistol.\n> **Default:** None.",
+    "tips": [
+      "A hard-hitting sidearm, capable of quickly dispatching enemies.",
+      "Good for a \"Sheriff\" or \"Lawman\" type character."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Standard**. High damage per shot.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Accuracy**: Improved.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Fire Rate**: Faster.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Damage": "**55** (Primary & Secondary)",
+      "Primary Fire Rate": "500ms",
+      "Primary Velocity": "4000",
+      "Secondary Fire Rate": "900ms",
+      "Clip Size": "15."
+    },
+    "tags": [],
+    "description": "Powerful, high-caliber blaster pistol."
+  },
+  {
+    "id": "MB_ATT_HULL_STRENGTH",
+    "name": "Hull Strength",
+    "overview": "Armor plating for Super Battle Droids.\n**Class Specific:** SBD.",
+    "tips": [
+      "SBDs rely almost entirely on Hull Strength as they have no Shields and cannot dodge effectively.",
+      "Combine with `MB_ATT_CORTOSIS` or `MB_ATT_MAGNETIC_PLATING` for maximum durability."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "Light Plating (~100-200 Armor).",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "Medium Plating (~300-400 Armor).",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "Heavy Plating (Up to 900+ Armor depending on model/config).\nMakes the SBD a walking tank.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Armor plating for Super Battle Droids."
+  },
+  {
+    "id": "MB_ATT_INAIR_FORCE_REGEN",
+    "name": "MB_ATT_INAIR_FORCE_REGEN",
+    "overview": "Aerial Force Regen\nAllows Force Points to regen while in the air.",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Aerial Force Regen"
+  },
+  {
+    "id": "MB_ATT_IONRIFLE",
+    "name": "\ud83d\udd2b Ion Rifle",
+    "overview": "Specialized weapon designed to disable droids and disrupt energy shields.\n> **Default:** None.",
+    "tips": [
+      "Essential for anti-droid loadouts.",
+      "Can be used to temporarily disable Droideka shields or SBDs."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Standard**. Disables droids briefly.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Charge**: Can charge shots for area-of-effect disable.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Master**. Faster charge. Increased disable duration.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Damage": "Low (to organics), High (to droids/shields).",
+      "Velocity": "Medium.",
+      "Ammo Cost": "High."
+    },
+    "tags": [],
+    "description": "Specialized weapon designed to disable droids and disrupt energy shields."
+  },
+  {
+    "id": "MB_ATT_JETPACK",
+    "name": "\ud83d\ude80 Jetpack",
+    "overview": "Grants the ability to fly. Requires **Fuel** (`MB_ATT_FUEL`) to operate.\n> **Default:** Disabled.",
+    "tips": [
+      "**Flamethrower** and **Wrist Rocket** can be used while flying.",
+      "**Knockdown effects** (Rocket explosions, Force Push) can disable the jetpack temporarily (\"Jetpack Down\").",
+      "Fuel regenerates slowly when on the ground (unless disabled by class flags)."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Enabled**.\n**Double-Jump** to activate.\n**Hold Jump** to ascend.\n**Crouch** to descend (while flying) or hover.\nConsumes Fuel while active.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Grants the ability to fly. Requires **Fuel** (`MB_ATT_FUEL`) to operate."
+  },
+  {
+    "id": "MB_ATT_KB_TAKEN_MULTIPLIER",
+    "name": "\ud83e\udea8 Knockback Taken Multiplier",
+    "overview": "Multiplies how much knockback the character receives from sources like Force Push, explosions, or melee.\n> **Default:** 1.0\n\n**\u2699\ufe0f Mechanics**\n*   **1.0:** Normal knockback.\n*   **0.5:** Half knockback (50% reduction).\n*   **2.0:** Double knockback.",
+    "tips": [
+      "A lower value makes the character feel heavier and more resistant to crowd control.",
+      "Crucial for \"Tank\" classes or characters that operate on ledges."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Multiplies how much knockback the character receives from sources like Force Push, explosions, or melee."
+  },
+  {
+    "id": "MB_ATT_KNOCKDOWN_ROLL",
+    "name": "\ud83d\udca8 Knockdown Roll",
+    "overview": "Converts a standard knockdown into a quick roll.\n> **Default:** Disabled.\n\n**\u2699\ufe0f Mechanics**\n*   **Effect:** Instead of being stunned and falling, the character performs a fast recovery roll.\n*   **Resource:** Does not cost any resource.\n*   **Benefit:** Reduces vulnerability to follow-up attacks.",
+    "tips": [
+      "Excellent for highly mobile classes that need to recover quickly from crowd control effects."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Converts a standard knockdown into a quick roll."
+  },
+  {
+    "id": "MB_ATT_LIGHTS_BEACON",
+    "name": "\ud83d\udd26 Light's Beacon",
+    "overview": "Shares personal Force buffs with nearby allies.\n\n**\u2699\ufe0f Mechanics**\n*   **Effect:** Using **Absorb**, **Protect**, **Heal**, or **Mind Trick** applies a percentage of the effect to nearby teammates.\n*   **Range:** Medium radius.",
+    "tips": [
+      "Turns a Jedi Consular into a massive force multiplier."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Shares personal Force buffs with nearby allies."
+  },
+  {
+    "id": "MB_ATT_MAGNETIC_PLATING",
+    "name": "\ud83d\udee1\ufe0f Magnetic Plating",
+    "overview": "A specialized armor coating that disperses directed energy (blaster) fire.\n> **Default:** None.\n\n**\u2699\ufe0f Mechanics**\n*   **Blaster Resistance:** **50%** (Roughly). reduces incoming blaster damage significantly.\n*   **Deflection:** Randomly deflects shots harmlessly away.\n*   **Weakness:** Provides **0%** protection against:\n*   Melee / Lightsabers.\n*   Explosives / Concussion.\n*   Slugthrowers (Projectile Rifle).",
+    "tips": [
+      "**SBDs:** The defining defense of the Super Battle Droid.",
+      "**Visuals:** Often rendered with a metallic/blue shader effect."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "A specialized armor coating that disperses directed energy (blaster) fire."
+  },
+  {
+    "id": "MB_ATT_MANDO_PISTOL",
+    "name": "\ud83d\udd2b WESTAR-34 Pistol",
+    "overview": "Mandalorian sidearm. Often dual-wielded.\n> **Default:** None.",
+    "tips": [
+      "With `CFL_AKIMBOPISTOL3`, becomes very powerful.",
+      "Excellent for bounty hunters and Mandalorians."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Standard**. Single-shot primary.\n**Alt-Fire**: Charged shot.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Accuracy**: Improved.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Damage**: Charged shot deals significantly more damage.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Damage": "**36** (Base) -> **62** (Charged)",
+      "Velocity": "6325",
+      "Primary Fire Rate": "500ms",
+      "Primary Ammo Cost": "2",
+      "Secondary Fire Rate": "800ms (Charged shot)",
+      "Secondary Ammo Cost": "4",
+      "Clip Size": "20."
+    },
+    "tags": [],
+    "description": "Mandalorian sidearm. Often dual-wielded."
+  },
+  {
+    "id": "MB_ATT_MINIGUN",
+    "name": "\ud83d\udd2b Minigun",
+    "overview": "Portable rotary blaster cannon with an extremely high rate of fire.\n> **Default:** None.",
+    "tips": [
+      "Excellent for suppressing large groups and area denial.",
+      "Highly effective against vehicles and droids.",
+      "User is slowed (`HELD_SLOW`) while firing."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Standard**. Requires spin-up.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Spin-up**: Faster.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Accuracy**: Improved.\n**Sustain**: Longer sustained fire without overheating.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Damage": "**20** (per shot)",
+      "Fire Rate": "120ms (Spin-up delay) -> 80ms (Sustained fire)",
+      "Velocity": "6325",
+      "Ammo Cost": "1",
+      "Clip Size": "150"
+    },
+    "tags": [],
+    "description": "Portable rotary blaster cannon with an extremely high rate of fire."
+  },
+  {
+    "id": "MB_ATT_PISTOL",
+    "name": "\ud83d\udd2b Pistol",
+    "overview": "The standard **DL-44 Blaster Pistol**. Reliable sidearm with decent damage and accuracy.\n> **Default:** None.",
+    "tips": [
+      "Level 3 Pistol is a viable primary weapon for aggressive \"Run & Gun\" styles (Hero/Bounty Hunter).",
+      "Often overlooked, but has higher DPS than many rifles at close range."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Basic**. Standard accuracy and fire rate.\n**Alt-Fire**: Charged shot.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Improved**. Increased fire rate. Better accuracy.\n**Alt-Fire**: Charge time reduced.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Elite**. Maximum fire rate.\n**Damage:** Base damage increased to **50**.\n**Perfect Accuracy** even while moving.\n**Alt-Fire**: Charged shot is extremely powerful and charges quickly.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Damage": "**34** (Standard), **50** (Level 3/Charged?)",
+      "Charge": "Can charge up to **62** damage.",
+      "Velocity": "6325 units/sec.",
+      "Ammo Cost": "1 per shot."
+    },
+    "tags": [],
+    "description": "The standard **DL-44 Blaster Pistol**. Reliable sidearm with decent damage and accuracy."
+  },
+  {
+    "id": "MB_ATT_PLX1",
+    "name": "\ud83d\ude80 PLX-1 Portable Missile Launcher",
+    "overview": "A compact rocket launcher, often equipped with guided missiles.\n> **Default:** None.",
+    "tips": [
+      "Functionally very similar to `MB_ATT_ROCKET_LAUNCHER`, but potentially has different cosmetic overrides or specific class access.",
+      "Often seen with ARC Troopers."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Standard**. Unguided rocket.\n**Alt-Fire**: Guided mode (requires manual steering).",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Guided**: Improved guidance system.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Fast Reload**: Significantly reduced reload time.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Direct Hit Damage": "**250**",
+      "Splash Damage": "**200**",
+      "Splash Radius": "**200** units",
+      "Velocity": "1610 (Slow)",
+      "Ammo Cost": "1",
+      "Clip Size": "1 (Single Shot)",
+      "Reload Time": "~2.5 seconds."
+    },
+    "tags": [],
+    "description": "A compact rocket launcher, often equipped with guided missiles."
+  },
+  {
+    "id": "MB_ATT_POISON_DART",
+    "name": "\ud83d\udc89 Poison Dart",
+    "overview": "Launcher for neurotoxin darts that damage over time and blur vision.\n> **Default:** 0.",
+    "tips": [
+      "**Headshots** deal bonus initial damage.",
+      "Poison can be cured by **Healing** (Bacta or Force Heal)."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**3 Darts**. Minor DoT. Slight screen blur.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**6 Darts**. Moderate DoT. Significant screen blur.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**9 Darts**. **Lethal DoT**. Severe disorientation (drunk effect). Can kill low HP targets easily.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Launcher for neurotoxin darts that damage over time and blur vision."
+  },
+  {
+    "id": "MB_ATT_PULSE_GRENADES",
+    "name": "\u26a1 Pulse Grenade",
+    "overview": "EMP grenade, designed to disable electronics and drain energy.\n> **Default:** None.",
+    "tips": [
+      "Highly effective against droids and Jedi (drains FP).",
+      "Can cause targets to drop weapons if their energy is drained."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Single Grenade**. Drains droid battery / energy shields.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Two Grenades**.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Three Grenades**.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Direct Hit Damage": "**75** (to organics, estimate)",
+      "Splash Damage": "**60** (estimate)",
+      "Splash Radius": "**300** units",
+      "Fuse Time": "~3 seconds."
+    },
+    "tags": [],
+    "description": "EMP grenade, designed to disable electronics and drain energy."
+  },
+  {
+    "id": "MB_ATT_QUICKTHROW",
+    "name": "\ud83d\udca3 Quick Throw",
+    "overview": "Ability to throw grenades instantly without switching weapons.\n> **Default:** Disabled.",
+    "tips": [
+      "Crucial for comboing gunfire with explosives. Shoot -> Throw -> Shoot.",
+      "Requires grenades in inventory to work."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Enabled**. Press \"Special Class Ability 1\" to throw currently selected grenade.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Enhanced**. Increases throw velocity and range. Shorter animation time.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Ability to throw grenades instantly without switching weapons."
+  },
+  {
+    "id": "MB_ATT_QUICKTOSS",
+    "name": "MB_ATT_QUICKTOSS",
+    "overview": "Quick-Toss\nEAS_HI_QUICKTOSS\nQuickthrow secondary fire Frags or Pulse Grenades when they are not the active weapon.\n(Hold 'Use' to Quickthrow primaries)",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "orphan"
+    ],
+    "description": "Quick-Toss",
+    "orphan": true
+  },
+  {
+    "id": "MB_ATT_RADAR",
+    "name": "\ud83d\udce1 Radar",
+    "overview": "Advanced sensor array that detects nearby enemies.\n> **Default:** None.",
+    "tips": [
+      "**Consumes Battery/Energy** while active.",
+      "Can be jammed by **Redacted Skill** or specific counter-measures.",
+      "Invaluable for SBDs to prevent flanking."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Active**. Enables a minimap radar in the top right. Shows enemy positions (red dots) within a certain radius, even through walls.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Advanced sensor array that detects nearby enemies."
+  },
+  {
+    "id": "MB_ATT_RALLY",
+    "name": "Rally",
+    "overview": "Passive aura that buffs nearby allies.\n**Class Specific:** Commander, ARC Trooper.",
+    "tips": [
+      "The Commander must be alive for the Rally effect to persist."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "Nearby allies gain faster health/armor regeneration.\nNearby allies gain improved suppression resistance.\nRequired for `MB_ATT_ASSEMBLE` to work for teammates.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Passive aura that buffs nearby allies."
+  },
+  {
+    "id": "MB_ATT_RECHARGE",
+    "name": "\u26a1 Battery Recharge",
+    "overview": "Determines how fast energy-based weapons or droid batteries regenerate.\n> **Default:** Normal (Slow/Steady).",
+    "tips": [
+      "Vital for **Super Battle Droids** (`MB_CLASS_SBD`) who rely on battery for both weapons and ammo.",
+      "Also affects **Droideka** shield regeneration if `MB_ATT_DEKA_POWER` is not sufficient."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "Faster recharge delay (starts recharging sooner).",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "Increased recharge rate.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Rapid Recharge**. Essential for SBDs to sustain fire.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Determines how fast energy-based weapons or droid batteries regenerate."
+  },
+  {
+    "id": "MB_ATT_REPEATER",
+    "name": "\ud83d\udd2b Imperial Heavy Repeater",
+    "overview": "The standard heavy repeating blaster rifle for Imperial forces. Effective for suppression.\n> **Default:** None.",
+    "tips": [
+      "Excellent for **suppression** and crowd control.",
+      "The Alt-Fire is good for dislodging enemies from cover."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Fire Rate**: High.\n**Alt-Fire**: Concussion Grenade Launcher (slow fire).",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Accuracy**: Improved.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Recoil**: Reduced.\n**Alt-Fire**: Faster reload/fire rate for concussion rounds.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Damage": "**26** (Primary)",
+      "Alt-Fire Damage": "**40** (Explosive Blob)",
+      "Alt-Fire Splash Damage": "**26**",
+      "Alt-Fire Splash Radius": "**128** units.",
+      "Primary Rate of Fire": "100ms per shot (Extremely fast).",
+      "Velocity": "2600",
+      "Ammo Cost": "1 (Primary) / 10 (Alt-Fire)",
+      "Clip Size": "150 (Primary) / 10 (Alt-Fire)."
+    },
+    "tags": [],
+    "description": "The standard heavy repeating blaster rifle for Imperial forces. Effective for suppression."
+  },
+  {
+    "id": "MB_ATT_ROCKET",
+    "name": "Wrist Rocket",
+    "overview": "Mandalorian Wrist-Mounted Rocket Launcher.\n**Class Specific:** Mandalorian.",
+    "tips": [
+      "Has a minimum arming distance (won't explode point-blank to prevent suicide).",
+      "Can be fired while flying (Jetpack)."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "Unlocks the Wrist Rocket ability (Special Class Ability 2).\nSingle-use projectile (unless ammo replenished).\nHigh explosive damage (instakill on direct hit for most classes).\nKnocks down enemies in radius.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Mandalorian Wrist-Mounted Rocket Launcher."
+  },
+  {
+    "id": "MB_ATT_ROCKET_LAUNCHER",
+    "name": "\ud83d\ude80 Rocket Launcher",
+    "overview": "Merr-Sonn Missile System. Fires unguided rockets.\n> **Default:** None.",
+    "tips": [
+      "**Anti-Vehicle:** Excellent against vehicles and droids.",
+      "**Area Denial:** Effective for flushing enemies out of cover.",
+      "**Danger:** High risk of self-damage in close quarters."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Standard**. Unguided rocket.\n**Alt-Fire**: Guided mode (requires manual steering).",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Blast Radius**: Increased.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Damage**: Increased.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Direct Hit Damage": "**250**",
+      "Splash Damage": "**200**",
+      "Splash Radius": "**200** units",
+      "Velocity": "1610 (Slow)",
+      "Ammo Cost": "1",
+      "Clip Size": "1 (Single Shot)",
+      "Reload Time": "~2.5 seconds (inferred from PLX1)"
+    },
+    "tags": [],
+    "description": "Merr-Sonn Missile System. Fires unguided rockets."
+  },
+  {
+    "id": "MB_ATT_ROF_MULTIPLIER",
+    "name": "\ud83d\udd2b Rate of Fire Multiplier",
+    "overview": "Multiplies the weapon's base rate of fire.\n> **Default:** 1.0\n\n**\u2699\ufe0f Mechanics**\n*   **1.0:** Normal ROF.\n*   **1.1:** +10% Faster ROF.\n*   **0.9:** -10% Slower ROF.",
+    "tips": [
+      "Often used to balance a weapon with very high damage or custom ammo.",
+      "Affects all weapons."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Multiplies the weapon's base rate of fire."
+  },
+  {
+    "id": "MB_ATT_ROSHTAUNT",
+    "name": "\ud83e\uddea Toxic Taunt",
+    "overview": "Weaponized arrogance.\n\n**\u2699\ufe0f Mechanics**\n*   **Trigger:** Pressing the Taunt key.\n*   **Effect:** Deals **1 True Damage** to all Jedi/Sith in a large radius.\n*   **Utility:** Can kill low-hp enemies or stop shield regeneration.",
+    "tips": [
+      "\"Rosh Penin\" meme attribute.",
+      "Surprisingly effective for interrupting healing."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Weaponized arrogance."
+  },
+  {
+    "id": "MB_ATT_SABER_COMBO",
+    "name": "\ud83e\udd77 EX Saber Training",
+    "overview": "Advanced combo fluidity.",
+    "tips": [
+      "For true \"Swordmaster\" duelist characters."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "** Allows a combo swing in any direction *except* the current one.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "** Allows a combo swing even in the *same* direction (Infinite chain).",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Advanced combo fluidity."
+  },
+  {
+    "id": "MB_ATT_SABER_COMBO_NONE",
+    "name": "\ud83e\udd3a No Saber Training",
+    "overview": "Unrefined lightsaber combat.\n\n**\u2699\ufe0f Mechanics**\n*   **Effect:** Can swing the saber freely (spam click) *until* contact is made.\n*   **Contact:** Upon hitting an enemy/object, the swing delay increases (OJP Style).",
+    "tips": [
+      "Simulates a non-Force user trying to wield a lightsaber (e.g. Han Solo, Finn)."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Unrefined lightsaber combat."
+  },
+  {
+    "id": "MB_ATT_SABER_DAMAGE",
+    "name": "\u2694\ufe0f Saber Damage",
+    "overview": "Increases the base damage of lightsaber swings.\n> **Default:** 0 (Uses .sab file values).",
+    "tips": [
+      "This attribute is directly added to the base damage defined in the `.sab` file.",
+      "Often used by Sith \"Juggernaut\" builds to ensure high damage output across all saber styles."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "Adds **+5** damage per swing.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "Adds **+10** damage per swing.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "Adds **+15** damage per swing.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Increases the base damage of lightsaber swings."
+  },
+  {
+    "id": "MB_ATT_SABER_MAXCHAIN",
+    "name": "\u2694\ufe0f Saber Max Chain",
+    "overview": "Sets the maximum number of swings in a lightsaber combo.\n> **Default:** Varies by saber style (usually 3-5).",
+    "tips": [
+      "Higher values allow for longer, more sustained offensive combos.",
+      "Styles like **Fast** (`SS_FAST`) benefit greatly from higher chain limits."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "Max Chain **3**",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "Max Chain **5**",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "Max Chain **7**\n**Level X**: Up to **10** (max in UI).",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Sets the maximum number of swings in a lightsaber combo."
+  },
+  {
+    "id": "MB_ATT_SBD_CANNON",
+    "name": "\ud83e\udd16 SBD Arm Cannon",
+    "overview": "Integrated arm blaster for Super Battle Droids.\n> **Class Specific:** SBD.",
+    "tips": [
+      "SBDs cannot pick up other weapons. This is their primary tool.",
+      "The Alt-Fire cannon blast is powerful for suppressing groups."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Basic blaster fire**.\n**Alt-Fire**: Low power slap.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Increased fire rate** and accuracy.\n**Alt-Fire**: \"Knockdown\" slap (slower).",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**High fire rate**.\n**Alt-Fire**: Powerful cannon blast (consumes battery).",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Damage": "**28** (Direct Hit)",
+      "Splash Damage": "**30**",
+      "Splash Radius": "**100** units",
+      "Velocity": "3500",
+      "Charge Time": "600ms (Max)"
+    },
+    "tags": [],
+    "description": "Integrated arm blaster for Super Battle Droids."
+  },
+  {
+    "id": "MB_ATT_SHIELD_PROJ",
+    "name": "\ud83d\udee1\ufe0f Shield Projector",
+    "overview": "Determines the coverage and integrity of the Droideka's projected shield.\n> **Class Specific:** Droideka.\n\n**\u2699\ufe0f Mechanics**\n*   **Rank 1:** Basic coverage.\n*   **Rank 2:** Improved integrity.\n*   **Rank 3:** Maximum projection stability.",
+    "tips": [
+      "Separate from `MB_ATT_DEKA_SHIELD` (which is raw HP). This affects the *quality* or specific mechanics of the projection? (Needs verification, often used in tandem)."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Determines the coverage and integrity of the Droideka's projected shield."
+  },
+  {
+    "id": "MB_ATT_SHIELD_RECHARGE",
+    "name": "MB_ATT_SHIELD_RECHARGE",
+    "overview": "Armor Regen\nShield regeneration with the same bounds as heal. see: armourRegenAmount\narmourRegenRate\narmourRegenCap",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Armor Regen"
+  },
+  {
+    "id": "MB_ATT_SHIELD_RECHARGE2",
+    "name": "MB_ATT_SHIELD_RECHARGE2",
+    "overview": "Armor Regen: X/Xs uncapped\nShield regeneration without bounds, Levels determine speed of regen. see: armourRegenAmount\narmourRegenRate\narmourRegenCap",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Armor Regen: X/Xs uncapped"
+  },
+  {
+    "id": "MB_ATT_SHOCKWAVE",
+    "name": "\ud83d\udca5 Shockwave",
+    "overview": "A defensive discharge of energy.\n> **Class Specific:** Droideka.\n\n**\u2699\ufe0f Mechanics**\n*   **Trigger:** Special Class Ability.\n*   **Effect:** Releases a 360-degree shockwave.\n*   **Result:** Knocks back enemies, deflects grenades/rockets.\n*   **Cost:** Drains Shield/Battery.",
+    "tips": [
+      "**Panic Button:** Use when a Jedi gets too close or grenades land under you."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "A defensive discharge of energy."
+  },
+  {
+    "id": "MB_ATT_SHOTGUN",
+    "name": "\ud83d\udd2b Shotgun",
+    "overview": "Close-range scattergun, effective in tight spaces.\n> **Default:** None.",
+    "tips": [
+      "Devastating at close range.",
+      "Can be used to clear rooms quickly."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Standard**. Fires a spread of pellets.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Damage**: Increased.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Spread**: Tighter spread, better range.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Pellet Damage": "**23** (5 pellets = **115 total**)",
+      "Splash Damage": "0 (No splash)",
+      "Velocity": "6325",
+      "Ammo Cost": "5 (Primary) / 12 (Alt-Fire)",
+      "Spread": "High at range."
+    },
+    "tags": [],
+    "description": "Close-range scattergun, effective in tight spaces."
+  },
+  {
+    "id": "MB_ATT_SPAWNER",
+    "name": "MB_ATT_SPAWNER",
+    "overview": "MB_ATT_SPAWNER\n(name of spawn)\nEAS_HI_SPAWNER\n1:\n2:\n3:\nOn activation, spawns an allied NPC based on MBClass and ATT rank.\nUse in conjuction with HI_SPAWNER\n}",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "MB_ATT_SPAWNER"
+  },
+  {
+    "id": "MB_ATT_REDACTED_23",
+    "name": "\ud83d\udd75\ufe0f Redacted Skill",
+    "overview": "Allows the Spy to impersonate enemy units.\n> **Default:** None.",
+    "tips": [
+      "**Attacking breaks the disguise** instantly.",
+      "Jedi/Sith with **Force Sense** (`MB_ATT_FP_SEE`) can see through disguises (red aura)."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Grunt**. Can disguise as basic enemy soldiers. Weapon is hidden (appears to hold enemy weapon).",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Elite**. Can disguise as elite units (e.g. Commander, ARC). Harder to detect visually.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Infiltrator**. Can disguise as **Jedi/Sith**. Mimics saber sounds and blocking animations. Only detected by touch or attacking.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Allows the Spy to impersonate enemy units."
+  },
+  {
+    "id": "MB_ATT_STAMINA",
+    "name": "\ud83c\udfc3 Stamina",
+    "overview": "Determines the size of the \"Stamina Bar\" used for sprinting (`Shift`), wall-running, and acrobatics.\n> **Default:** 0 (Base movement only).",
+    "tips": [
+      "**Heavy Armor** drains stamina faster.",
+      "Required for **ARC Troopers** (`MB_ATT_DEXTERITY`) to perform advanced rolls and flips.",
+      "If you have **Dexterity 3** but **Stamina 0**, you can perform moves but will tire out instantly."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Low**. Short sprints. Good for repositioning.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Medium**. Extended sprints. Capable of tactical wall-runs.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**High**. Athletic marathon runner. Can sprint across large map sections.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Determines the size of the \"Stamina Bar\" used for sprinting (`Shift`), wall-running, and acrobatics."
+  },
+  {
+    "id": "MB_ATT_STRONGBLOBS",
+    "name": "Concussion Blobs",
+    "overview": "High-impact concussion rounds for the DC-15A Clone Rifle.\n**Class Specific:** Clone Trooper, ARC Trooper.",
+    "tips": [
+      "Requires `MB_ATT_CLONERIFLE`.",
+      "Cannot be equipped simultaneously with Clone Blobs (Ion) on some server configs, but FA allows overrides."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "3 Concussion rounds.\nLarge explosion radius.\nKnocks down enemies in a wide area.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "6 Concussion rounds.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "9 Concussion rounds.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "High-impact concussion rounds for the DC-15A Clone Rifle."
+  },
+  {
+    "id": "MB_ATT_SUPPLYDROP",
+    "name": "MB_ATT_SUPPLYDROP",
+    "overview": "Ammo Drop\nEAS_HI_SUPPLYDROP\n'Use' key old ammo drop",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Ammo Drop"
+  },
+  {
+    "id": "MB_ATT_T21",
+    "name": "\ud83d\udca3 T-21 Heavy Blaster",
+    "overview": "A devastating repeating blaster with high damage and splash.\n> **Default:** None.",
+    "tips": [
+      "Primary fire deals massive damage (78!), capable of 2-shotting standard soldiers.",
+      "Very high ammo cost."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Heavy**. Slow movement while firing.\n**Damage**. High per-shot damage.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Efficiency**. Better ammo consumption.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Master**. Faster movement? (Check `HELD_SLOW` flag).\n**Secondary**: Rapid fire suppression mode.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Primary Damage": "**78**",
+      "Secondary Damage": "**34**",
+      "Velocity": "5600",
+      "Ammo Cost": "8 per shot."
+    },
+    "tags": [],
+    "description": "A devastating repeating blaster with high damage and splash."
+  },
+  {
+    "id": "MB_ATT_THERMALS",
+    "name": "\ud83d\udca3 Thermal Detonator",
+    "overview": "A powerful explosive device.\n> **Default:** None.",
+    "tips": [
+      "A fully charged thermal can clear a room or one-shot most unarmored targets.",
+      "Use `CFL_REALTD` for an ultra-powerful, cinematic version."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Single Grenade**. Standard blast.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Two Grenades**.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Three Grenades**.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Direct Hit Damage": "**100** (Estimate from `FRAG_GRENADE_DAMAGE`)",
+      "Splash Damage": "**100** (Estimate)",
+      "Splash Radius": "**256** units (Estimate)",
+      "Fuse Time": "~3 seconds."
+    },
+    "tags": [],
+    "description": "A powerful explosive device."
+  },
+  {
+    "id": "MB_ATT_TRACKING_BEACON",
+    "name": "MB_ATT_TRACKING_BEACON",
+    "overview": "MB_ATT_TRACKING_BEACON\nTracking Beacon\n1-99\nSee tracked enemies that allies have darted.",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "MB_ATT_TRACKING_BEACON"
+  },
+  {
+    "id": "MB_ATT_TRACKING_DART",
+    "name": "\ud83c\udfaf Tracking Dart",
+    "overview": "Launcher for tracking beacons that tag enemies for the entire team.\n> **Default:** 0.",
+    "tips": [
+      "Tagged enemies have a **green triangle** over their head.",
+      "Wall-hacks for the whole team! Invaluable for coordination."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**3 Darts**. Tag lasts **10s**. Visible through walls.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**6 Darts**. Tag lasts **20s**.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**9 Darts**. Tag lasts **30s**. Splash radius can tag Jedi even if they block the dart itself.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Launcher for tracking beacons that tag enemies for the entire team."
+  },
+  {
+    "id": "MB_ATT_TRAD_BOWCASTER",
+    "name": "\ud83c\udff9 Traditional Bowcaster",
+    "overview": "A more conventional Bowcaster, firing a single, powerful bolt.\n> **Default:** None.",
+    "tips": [
+      "High damage potential, especially with charged shots.",
+      "Less spread than the standard Bowcaster, making it more accurate."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Standard**. Single-bolt primary.\n**Alt-Fire**: Charged shot.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Accuracy**: Improved.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Charge**: Faster charge rate.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Damage": "**40** (Uncharged) -> **100** (Charged)",
+      "Primary Velocity": "7000",
+      "Secondary Velocity": "7000",
+      "Ammo Cost": "1",
+      "Charge Time": "~1.2 seconds."
+    },
+    "tags": [],
+    "description": "A more conventional Bowcaster, firing a single, powerful bolt."
+  },
+  {
+    "id": "MB_ATT_TRIP_MINES",
+    "name": "\ud83e\ude9a Trip Mine",
+    "overview": "Deployable laser trip mines.\n> **Default:** None.",
+    "tips": [
+      "Excellent for securing flanks or objective points.",
+      "Can be shot by enemies to clear them safely."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Single Mine**.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Two Mines**.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Damage": "100+ (Lethal)",
+      "Trigger Radius": "Small.",
+      "Deployment": "Sticks to surfaces."
+    },
+    "tags": [],
+    "description": "Deployable laser trip mines."
+  },
+  {
+    "id": "MB_ATT_USE_DISTANCE",
+    "name": "\u270b Extended Interaction",
+    "overview": "Increases the range at which the character can interact with objects.\n\n**\u2699\ufe0f Mechanics**\n*   **Base Range:** 64 Units.\n*   **Effect:** Adds **+32 Units** per Rank.\n*   **Rank 1:** 96 Units.\n*   **Rank 2:** 128 Units.",
+    "tips": [
+      "Also increases the range of **Dispensing** abilities (giving ammo/health to allies)."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Increases the range at which the character can interact with objects."
+  },
+  {
+    "id": "MB_ATT_WATER_BREATHING",
+    "name": "\ud83e\udd3f Underwater Breathing",
+    "overview": "Rebreather implant or gear.\n\n**\u2699\ufe0f Mechanics**\n*   **Effect:** Immunity to drowning damage while submerged.",
+    "tips": [
+      "Situational; only useful on maps with water (e.g., Manaan, Naboo)."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Rebreather implant or gear."
+  },
+  {
+    "id": "MB_ATT_WESTARM5",
+    "name": "\ud83d\udd2b Westar M5",
+    "overview": "Heavy ARC Trooper Rifle. Modular and powerful.\n> **Default:** None.",
+    "tips": [
+      "The **Sniper Mode** hits extremely hard (69 damage), capable of 2-shotting many classes.",
+      "Requires `MB_ATT_ARC_RIFLE_SCOPE` to use the sniper mode."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Standard**. Automatic fire.\n**Scope:** Can attach scope for sniper mode.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Improved**. Higher accuracy.\n**Sprint:** Can fire while sprinting (if Stamina 2+).",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Primary Damage": "**30**",
+      "Sniper Damage": "**69**",
+      "Velocity": "4600 (Primary) / 9825 (Sniper)",
+      "Ammo Cost": "2 (Primary) / ~12 (Sniper)"
+    },
+    "tags": [],
+    "description": "Heavy ARC Trooper Rifle. Modular and powerful."
+  },
+  {
+    "id": "MB_ATT_WHISTLINGBIRD",
+    "name": "\ud83d\udd2b Whistling Birds",
+    "overview": "Miniature seeking missiles launcher.\n> **Class Specific:** Mandalorian.",
+    "tips": [
+      "Ideal for crowd control or hitting elusive targets like Jedi."
+    ],
+    "levels": {},
+    "stats": {
+      "Damage": "**33** per bird.",
+      "Count": "12 (Rank 1) / 6 (Rank 2). (Wait, rank 2 has less? Or is it batches? Wiki says Rank 1 unlocks it).",
+      "Velocity": "600 (Slow tracking).",
+      "Force Drain (Close/Far)": "**16/14**",
+      "Force Drain Blocking (Close/Far)": "**12/10**"
+    },
+    "tags": [],
+    "description": "Miniature seeking missiles launcher."
+  },
+  {
+    "id": "MB_ATT_WOOKIEE_FURY",
+    "name": "Wookiee Fury",
+    "overview": "Enables a berserk state where the Wookiee deals massive damage but takes more damage.\n**Class Specific:** Wookiee.",
+    "tips": [
+      "High risk, high reward. Use to break through enemy lines."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "Can activate Fury (Special Class Ability).\nIncreased Melee damage.\nScreen turns red.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "Improved Fury.\nFaster movement speed while active.\nAttacks charge faster.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Enables a berserk state where the Wookiee deals massive damage but takes more damage."
+  },
+  {
+    "id": "MB_ATT_WOOKIE_HEALTH",
+    "name": "\u2764\ufe0f Wookiee Health",
+    "overview": "Increases base HP for Wookiee classes to simulate their natural hardiness.\n> **Default:** ~100-150 depending on class config.",
+    "tips": [
+      "Wookiees cannot wear armor (`MB_ATT_ARMOUR` does nothing for them), so **Health is their only defense**.",
+      "A Level 3 Wookiee has more HP than a Droideka has Shields+Hull combined."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**+100 HP** (Total ~200-250).",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**+250 HP** (Total ~350-400).",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**+400 HP** (Total ~500+).",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Increases base HP for Wookiee classes to simulate their natural hardiness."
+  },
+  {
+    "id": "MB_ATT_WOOKIE_STRENGTH",
+    "name": "\ud83d\udcaa Wookiee Strength",
+    "overview": "Increases physical strength, melee damage, and resistance to crowd control.\n> **Default:** Normal (Human strength).",
+    "tips": [
+      "Level 3 makes a Wookiee a terrifying anti-Jedi juggernaut.",
+      "Combine with **Wookiee Health** for maximum tankiness."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**Damage**: Increased Melee damage.\n**Stability**: Slight knockback resistance.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**Damage**: Heavy Melee damage.\n**Speed**: Faster movement while holding Melee.\n**\ud83d\udeab Immunity**: Cannot be knocked down by normal explosions or kicks.",
+        "fp_cost": 0
+      },
+      "3": {
+        "name": "Level 3",
+        "effect": "**Damage**: **Lethal**. 1-hit kill potential on weak enemies.\n**Speed**: Agile Brawler.\n**\ud83d\udeab Immunity**: Immune to **Force Grip** (except Crush), **Lightning Stun**, and **Force Push/Pull** knockback.\n**Shove**: Running into enemies pushes them aside.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {},
+    "tags": [],
+    "description": "Increases physical strength, melee damage, and resistance to crowd control."
+  },
+  {
+    "id": "MB_ATT_WRISTLASER",
+    "name": "\ud83d\udd2b Wrist Laser",
+    "overview": "Rapid-fire wrist mounted blaster.\n> **Class Specific:** Mandalorian.",
+    "tips": [
+      "Good for suppressing Jedi (drains block points) or finishing low HP targets.",
+      "Can be used while flying."
+    ],
+    "levels": {},
+    "stats": {
+      "Damage": "**65** per shot (High).",
+      "Ammo": "4 Shots max (`MAX_WRIST_LASER_SHOTS`).",
+      "Cooldown": "**6 seconds** after depletion.",
+      "Force Drain (Close/Far)": "**19/15**",
+      "Force Drain Blocking (Close/Far)": "**15/12**"
+    },
+    "tags": [],
+    "description": "Rapid-fire wrist mounted blaster."
+  },
+  {
+    "id": "MB_ATT_FP_BLIND",
+    "name": "MB_ATT_FP_BLIND",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_REDACTED_01",
+    "name": "MB_ATT_REDACTED_01",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_FP_DEADLYSIGHT",
+    "name": "MB_ATT_FP_DEADLYSIGHT",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_REDACTED_02",
+    "name": "MB_ATT_REDACTED_02",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_REDACTED_03",
+    "name": "MB_ATT_REDACTED_03",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_REDACTED_04",
+    "name": "MB_ATT_REDACTED_04",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_SWORD",
+    "name": "MB_ATT_SWORD",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_DURABILITY",
+    "name": "MB_ATT_DURABILITY",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_SENTRY",
+    "name": "MB_ATT_SENTRY",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_LASERCOVER",
+    "name": "MB_ATT_LASERCOVER",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_ACROBACY",
+    "name": "MB_ATT_ACROBACY",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_DRONE",
+    "name": "MB_ATT_DRONE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_WPFLAMETHROWER",
+    "name": "MB_ATT_WPFLAMETHROWER",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_PROJECTILE_RIFLE",
+    "name": "MB_ATT_PROJECTILE_RIFLE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_POWER",
+    "name": "MB_ATT_POWER",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_REGEN",
+    "name": "MB_ATT_REGEN",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_STM_MULTIPLIER",
+    "name": "MB_ATT_STM_MULTIPLIER",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_KB_GIVEN_MULTIPLIER",
+    "name": "MB_ATT_KB_GIVEN_MULTIPLIER",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_DMG_GIVEN_MULTIPLIER",
+    "name": "MB_ATT_DMG_GIVEN_MULTIPLIER",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_BASESPEED",
+    "name": "MB_ATT_BASESPEED",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_SABERTHROW_DAMAGE",
+    "name": "MB_ATT_SABERTHROW_DAMAGE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_SABERSPECIAL_DAMAGE",
+    "name": "MB_ATT_SABERSPECIAL_DAMAGE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_MODELSCALE_MULTIPLIER",
+    "name": "MB_ATT_MODELSCALE_MULTIPLIER",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_ROF_MELEE_MULTIPLIER",
+    "name": "MB_ATT_ROF_MELEE_MULTIPLIER",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_HEALTH_REGEN_CAP",
+    "name": "MB_ATT_HEALTH_REGEN_CAP",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_HEALTH_REGEN_AMOUNT",
+    "name": "MB_ATT_HEALTH_REGEN_AMOUNT",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_HEALTH_REGEN_RATE",
+    "name": "MB_ATT_HEALTH_REGEN_RATE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_ARMOUR_REGEN_CAP",
+    "name": "MB_ATT_ARMOUR_REGEN_CAP",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_ARMOUR_REGEN_RATE",
+    "name": "MB_ATT_ARMOUR_REGEN_RATE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_RESOURCE_REGEN_CAP",
+    "name": "MB_ATT_RESOURCE_REGEN_CAP",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_RESOURCE_REGEN_AMOUNT",
+    "name": "MB_ATT_RESOURCE_REGEN_AMOUNT",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_RESOURCE_REGEN_RATE",
+    "name": "MB_ATT_RESOURCE_REGEN_RATE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_BLOCK_REGEN_CAP",
+    "name": "MB_ATT_BLOCK_REGEN_CAP",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_BLOCK_REGEN_AMOUNT",
+    "name": "MB_ATT_BLOCK_REGEN_AMOUNT",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_BLOCK_REGEN_RATE",
+    "name": "MB_ATT_BLOCK_REGEN_RATE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_RESPAWNS",
+    "name": "MB_ATT_RESPAWNS",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_FUELREGEN",
+    "name": "MB_ATT_FUELREGEN",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_TURN_RATE",
+    "name": "MB_ATT_TURN_RATE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_FIRERATE",
+    "name": "MB_ATT_FIRERATE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_WOOKIE_BALANCE",
+    "name": "MB_ATT_WOOKIE_BALANCE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_ET_CCTRAINING",
+    "name": "MB_ATT_ET_CCTRAINING",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_WOOKIEE_AGILITY",
+    "name": "MB_ATT_WOOKIEE_AGILITY",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_ZOOM",
+    "name": "MB_ATT_ZOOM",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_REDACTED_25",
+    "name": "MB_ATT_REDACTED_25",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_CRYOBAN_GRENADES",
+    "name": "MB_ATT_CRYOBAN_GRENADES",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_SONIC_DETONATOR",
+    "name": "MB_ATT_SONIC_DETONATOR",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_QUICKDRAW",
+    "name": "MB_ATT_QUICKDRAW",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_MICRO_GRENADES",
+    "name": "MB_ATT_MICRO_GRENADES",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_REDACTED_14",
+    "name": "MB_ATT_REDACTED_14",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_REDACTED_15",
+    "name": "MB_ATT_REDACTED_15",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_REDACTED_16",
+    "name": "MB_ATT_REDACTED_16",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_REDACTED_17",
+    "name": "MB_ATT_REDACTED_17",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_REDACTED_18",
+    "name": "MB_ATT_REDACTED_18",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_REDACTED_19",
+    "name": "MB_ATT_REDACTED_19",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_REDACTED_20",
+    "name": "MB_ATT_REDACTED_20",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_REDACTED_21",
+    "name": "MB_ATT_REDACTED_21",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_REDACTED_22",
+    "name": "MB_ATT_REDACTED_22",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_STEALTH",
+    "name": "MB_ATT_STEALTH",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_BACKSTAB",
+    "name": "MB_ATT_BACKSTAB",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_VIEWBASEDDRAIN",
+    "name": "MB_ATT_VIEWBASEDDRAIN",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_REDACTED_24",
+    "name": "MB_ATT_REDACTED_24",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_IMP_PISTOL",
+    "name": "MB_ATT_IMP_PISTOL",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_KNIFE",
+    "name": "MB_ATT_KNIFE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_ELECTRO_STAFF",
+    "name": "MB_ATT_ELECTRO_STAFF",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_DC_CARBINE",
+    "name": "MB_ATT_DC_CARBINE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_DEMP2",
+    "name": "MB_ATT_DEMP2",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_THROWER",
+    "name": "MB_ATT_THROWER",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_BRYAR_OLD",
+    "name": "MB_ATT_BRYAR_OLD",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_STUN_BATON",
+    "name": "MB_ATT_STUN_BATON",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_BASE_TD",
+    "name": "MB_ATT_BASE_TD",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_UGL",
+    "name": "MB_ATT_UGL",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_UGL_BURST",
+    "name": "MB_ATT_UGL_BURST",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_UGL_IMPACT",
+    "name": "MB_ATT_UGL_IMPACT",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_UGL_BURST_MIXED",
+    "name": "MB_ATT_UGL_BURST_MIXED",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_MGL",
+    "name": "MB_ATT_MGL",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_MGL_IMPACT",
+    "name": "MB_ATT_MGL_IMPACT",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_MGL_BURST",
+    "name": "MB_ATT_MGL_BURST",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_STICKY_BOMBS",
+    "name": "MB_ATT_STICKY_BOMBS",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_HULL_REPAIR",
+    "name": "MB_ATT_HULL_REPAIR",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_SECURITY_INTERFACE",
+    "name": "MB_ATT_SECURITY_INTERFACE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_DEKA_FIREPOWER",
+    "name": "MB_ATT_DEKA_FIREPOWER",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_CLOAK",
+    "name": "MB_ATT_CLOAK",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_STIMPACK",
+    "name": "MB_ATT_STIMPACK",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_BASESEEKER",
+    "name": "MB_ATT_BASESEEKER",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_SHOCKFIELD",
+    "name": "MB_ATT_SHOCKFIELD",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_BACTA",
+    "name": "MB_ATT_BACTA",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_BACTA_BIG",
+    "name": "MB_ATT_BACTA_BIG",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_BINOCULARS",
+    "name": "MB_ATT_BINOCULARS",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_EWEB",
+    "name": "MB_ATT_EWEB",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_FORCEFIELD",
+    "name": "MB_ATT_FORCEFIELD",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_MEDI_PACK",
+    "name": "MB_ATT_MEDI_PACK",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_AMMO_PACK",
+    "name": "MB_ATT_AMMO_PACK",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_FORCEATTUNE",
+    "name": "MB_ATT_FORCEATTUNE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_SABER_FAST",
+    "name": "MB_ATT_SABER_FAST",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_SABER_MEDIUM",
+    "name": "MB_ATT_SABER_MEDIUM",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_SABER_STRONG",
+    "name": "MB_ATT_SABER_STRONG",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_SABER_DOUBLES",
+    "name": "MB_ATT_SABER_DOUBLES",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_SABER_MASTERY",
+    "name": "MB_ATT_SABER_MASTERY",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_SS_YELLOWSTYLE",
+    "name": "MB_ATT_SS_YELLOWSTYLE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_SS_BLUESTYLE",
+    "name": "MB_ATT_SS_BLUESTYLE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_SS_REDSTYLE",
+    "name": "MB_ATT_SS_REDSTYLE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_SS_PURPLESTYLE",
+    "name": "MB_ATT_SS_PURPLESTYLE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_SS_CYANSTYLE",
+    "name": "MB_ATT_SS_CYANSTYLE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_SS_GREENSTYLE",
+    "name": "MB_ATT_SS_GREENSTYLE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_SS_DUALSTYLE",
+    "name": "MB_ATT_SS_DUALSTYLE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_SS_STAFFSTYLE",
+    "name": "MB_ATT_SS_STAFFSTYLE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_GUNBASH",
+    "name": "MB_ATT_GUNBASH",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_REDACTED_06",
+    "name": "MB_ATT_REDACTED_06",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_ASTRO_JUMPJETS",
+    "name": "MB_ATT_ASTRO_JUMPJETS",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_HEAT_DUMPS",
+    "name": "MB_ATT_HEAT_DUMPS",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_WELDING_LASER",
+    "name": "MB_ATT_WELDING_LASER",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_SHOCK_ARM",
+    "name": "MB_ATT_SHOCK_ARM",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_FIRE_EXTINGUISHER",
+    "name": "MB_ATT_FIRE_EXTINGUISHER",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_DATA_SPIKES",
+    "name": "MB_ATT_DATA_SPIKES",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_WRIST_AMMO",
+    "name": "MB_ATT_WRIST_AMMO",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_DROP_HEALTH",
+    "name": "MB_ATT_DROP_HEALTH",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_DROP_AMMO",
+    "name": "MB_ATT_DROP_AMMO",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_DROP_ARMOR",
+    "name": "MB_ATT_DROP_ARMOR",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_DROP_FORCE",
+    "name": "MB_ATT_DROP_FORCE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_DROP_BLOCK",
+    "name": "MB_ATT_DROP_BLOCK",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_STIM_HEALTH",
+    "name": "MB_ATT_STIM_HEALTH",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_STIM_AMMO",
+    "name": "MB_ATT_STIM_AMMO",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_STIM_ARMOR",
+    "name": "MB_ATT_STIM_ARMOR",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_STIM_FORCE",
+    "name": "MB_ATT_STIM_FORCE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_STIM_BLOCK",
+    "name": "MB_ATT_STIM_BLOCK",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_THROWER_LIGHTNING",
+    "name": "MB_ATT_THROWER_LIGHTNING",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_THROWER_ICE",
+    "name": "MB_ATT_THROWER_ICE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_THROWER_POISON",
+    "name": "MB_ATT_THROWER_POISON",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_THROWER_PLASMA",
+    "name": "MB_ATT_THROWER_PLASMA",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_THROWER_FLAME",
+    "name": "MB_ATT_THROWER_FLAME",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_REMOTE_DETONATE",
+    "name": "MB_ATT_REMOTE_DETONATE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_ENV_PROT",
+    "name": "MB_ATT_ENV_PROT",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_ROUNDSPAWNER",
+    "name": "MB_ATT_ROUNDSPAWNER",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_REPEATER_NADES",
+    "name": "MB_ATT_REPEATER_NADES",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_FLECHETTE_NADES",
+    "name": "MB_ATT_FLECHETTE_NADES",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_SPEEDLUNGE",
+    "name": "MB_ATT_SPEEDLUNGE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_BARGE",
+    "name": "MB_ATT_BARGE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "MB_ATT_SABER",
+    "name": "MB_ATT_SABER",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  }
+]

@@ -1,0 +1,841 @@
+[
+  {
+    "id": "WP_PULSE_NADE",
+    "name": "\ud83d\udca3 Pulse Grenade",
+    "overview": "EMP Grenade.",
+    "tips": [
+      "Paired with `MB_ATT_PULSE_GRENADES`."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "EMP Grenade.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_FRAG_NADE",
+    "name": "\ud83d\udca5 Frag Grenade",
+    "overview": "Fragmentation Grenade.",
+    "tips": [
+      "Paired with `MB_ATT_FRAGS`."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Fragmentation Grenade.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_T21",
+    "name": "\ud83d\udd2b T-21 Heavy Blaster",
+    "overview": "Heavy Repeating Blaster.",
+    "tips": [
+      "Paired with `MB_ATT_T21`.",
+      "Slows movement while firing."
+    ],
+    "levels": {},
+    "stats": {
+      "Damage": "**78** (Primary) / **34** (Secondary)",
+      "Velocity": "5600 (Primary) / 5100 (Secondary)",
+      "Ammo Cost": "8",
+      "Force Drain (Close/Far)": "**26/18** (Primary), **11/8** (Secondary)",
+      "Force Drain Blocking (Close/Far)": "**18/14** (Primary), **9/6** (Secondary)"
+    },
+    "tags": [],
+    "description": "Heavy Repeating Blaster.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_SONIC_NADE",
+    "name": "\ud83d\udcab Sonic Grenade",
+    "overview": "Stun Grenade.",
+    "tips": [
+      "Paired with `MB_ATT_SONIC_DETONATOR`."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Stun Grenade.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_DET_PACK",
+    "name": "\ud83d\udca3 Detonation Pack",
+    "overview": "Remote explosive charge.",
+    "tips": [
+      "Paired with `MB_ATT_DET_PACK`.",
+      "Throw with Primary, Detonate with Secondary."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Remote explosive charge.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_DEMP2",
+    "name": "\u26a1 DEMP 2",
+    "overview": "Pulse rifle specialized against droids.",
+    "tips": [
+      "Paired with `MB_ATT_DEMP2`.",
+      "Devastating against SBDs and Droidekas."
+    ],
+    "levels": {},
+    "stats": {
+      "Effect": "Ion damage.",
+      "Alt-Fire": "Chargeable blast."
+    },
+    "tags": [],
+    "description": "Pulse rifle specialized against droids.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_SABER",
+    "name": "\u2694\ufe0f Lightsaber",
+    "overview": "The elegant weapon of a more civilized age.\n\n**\ud83d\udcca Damage Potential (Base)**\n*   **Fast (Blue):** ~120\n*   **Medium (Yellow):** ~240\n*   **Strong (Red):** ~520 (Massive)\n*   **Staff/Duals:** ~260\n*   **Cyan:** ~120\n*   **Purple (Desann):** ~400",
+    "tips": [
+      "**Blue/Cyan:** Fast swings, low damage. Use for defense or whittling down opponents.",
+      "**Red:** Slow, telegraphed swings. One hit kills almost anything.",
+      "**Purple:** Heavy, wide swings. Good for crowd control.",
+      "**Staff:** Excellent defense, rapid hits."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "The elegant weapon of a more civilized age.",
+    "category": "Melee/Force"
+  },
+  {
+    "id": "WP_CLONE_RIFLE",
+    "name": "\ud83d\udd2b Clone Rifle",
+    "overview": "DC-15A Blaster Rifle.",
+    "tips": [
+      "Paired with `MB_ATT_CLONERIFLE`.",
+      "Can fire Ion/Concussion blobs."
+    ],
+    "levels": {},
+    "stats": {
+      "Damage": "**24**",
+      "Velocity": "4600",
+      "Ammo Cost": "1",
+      "Force Drain (Close/Far)": "**9/6** (Primary)",
+      "Force Drain Blocking (Close/Far)": "**8/4** (Primary)"
+    },
+    "tags": [],
+    "description": "DC-15A Blaster Rifle.",
+    "category": "Rifles"
+  },
+  {
+    "id": "WP_CR2",
+    "name": "\ud83d\udd2b CR-2",
+    "overview": "Repeating Blaster Pistol.",
+    "tips": [
+      "Paired with `MB_ATT_CR2`.",
+      "Extremely high rate of fire."
+    ],
+    "levels": {},
+    "stats": {
+      "Damage": "**25**",
+      "Velocity": "4000",
+      "Ammo Cost": "2",
+      "Force Drain (Close/Far)": "**8/6**",
+      "Force Drain Blocking (Close/Far)": "**7/5**"
+    },
+    "tags": [],
+    "description": "Repeating Blaster Pistol.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_DISRUPTOR",
+    "name": "\u26a1 Tenloss Disruptor Rifle",
+    "overview": "Illegal sniper rifle capable of disintegration.",
+    "tips": [
+      "Paired with `MB_ATT_DISRUPTOR`.",
+      "Can shoot through shields at high charge."
+    ],
+    "levels": {},
+    "stats": {
+      "Damage": "**31** (Primary) / **36** (Secondary Base)",
+      "Charge Max": "~125+ (Secondary)",
+      "Ammo Cost": "5 (Primary) / 6 (Secondary)",
+      "Force Drain (Close/Far)": "**26/14** (Primary)",
+      "Force Drain Blocking (Close/Far)": "**17/11** (Primary)"
+    },
+    "tags": [],
+    "description": "Illegal sniper rifle capable of disintegration.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_FLECHETTE",
+    "name": "\ud83e\ude93 Flechette Launcher",
+    "overview": "Golan Arms Flechette Launcher.",
+    "tips": [
+      "Paired with `MB_ATT_FLECHETTE`."
+    ],
+    "levels": {},
+    "stats": {
+      "Primary": "Shotgun spread.",
+      "Secondary": "Explosive mines."
+    },
+    "tags": [],
+    "description": "Golan Arms Flechette Launcher.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_BOWCASTER",
+    "name": "\ud83c\udff9 Wookiee Bowcaster",
+    "overview": "Traditional Wookiee weapon firing explosive quarrels.",
+    "tips": [
+      "Paired with `MB_ATT_BOWCASTER`.",
+      "Shots bounce off walls."
+    ],
+    "levels": {},
+    "stats": {
+      "Damage": "**39** (Uncharged) / **100** (Charged Cap)",
+      "Velocity": "7625",
+      "Ammo Cost": "2",
+      "Force Drain (Close/Far)": "**12/9** (Primary)",
+      "Force Drain Blocking (Close/Far)": "**11/7** (Primary)",
+      "Charged FP Drain": "**30 + Multiplier**"
+    },
+    "tags": [],
+    "description": "Traditional Wookiee weapon firing explosive quarrels.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_CONCUSSION",
+    "name": "\ud83d\udca5 Concussion Rifle",
+    "overview": "Trandoshan Heavy Rifle.",
+    "tips": [
+      "Paired with `MB_ATT_CONCUSSION`.",
+      "Primary fires a spread, secondary fires a beam."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Trandoshan Heavy Rifle.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_BLASTER",
+    "name": "\ud83d\udd2b E-11 Blaster Rifle",
+    "overview": "Standard Imperial issue rifle.",
+    "tips": [
+      "Paired with `MB_ATT_BLASTER`.",
+      "Versatile medium-range weapon."
+    ],
+    "levels": {},
+    "stats": {
+      "Damage": "**36** (Primary) / **31** (Secondary)",
+      "Fire Rate": "350ms (Primary) / 200ms (Secondary)",
+      "Velocity": "6325 (Primary) / 4600 (Secondary)",
+      "Ammo Cost": "2 (Primary) / 3 (Secondary)",
+      "Force Drain (Close/Far)": "**13/9** (Primary), **9/7** (Secondary)",
+      "Force Drain Blocking (Close/Far)": "**11/7** (Primary), **7/5** (Secondary)"
+    },
+    "tags": [],
+    "description": "Standard Imperial issue rifle.",
+    "category": "Rifles"
+  },
+  {
+    "id": "WP_EE3",
+    "name": "\ud83d\udd2b EE-3 Carbine",
+    "overview": "Boba Fett's blaster.",
+    "tips": [
+      "Paired with `MB_ATT_EE3`.",
+      "High burst damage."
+    ],
+    "levels": {},
+    "stats": {
+      "Damage": "**33** (Primary & Secondary)",
+      "Velocity": "6750 (Primary) / 7000 (Secondary)",
+      "Fire Rate": "1100ms (Burst delay) / 275ms (Secondary)",
+      "Ammo Cost": "8 (Primary) / 2 (Secondary)",
+      "Force Drain (Close/Far)": "**10/9** (Primary), **13/8** (Secondary)",
+      "Force Drain Blocking (Close/Far)": "**10/7** (Primary), **12/6** (Secondary)"
+    },
+    "tags": [],
+    "description": "Boba Fett's blaster.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_A280",
+    "name": "\ud83d\udd2b A280 Rifle",
+    "overview": "Rebel Heavy Blaster Rifle.",
+    "tips": [
+      "Paired with `MB_ATT_A280`.",
+      "Hard hitting, accurate."
+    ],
+    "levels": {},
+    "stats": {
+      "Damage": "**35**",
+      "Velocity": "8075",
+      "Ammo Cost": "2",
+      "Force Drain (Close/Far)": "**16/11** (Primary), **11/8** (Secondary)",
+      "Force Drain Blocking (Close/Far)": "**13/7** (Primary), **10/6** (Secondary)"
+    },
+    "tags": [],
+    "description": "Rebel Heavy Blaster Rifle.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_SHOTGUN",
+    "name": "\ud83d\udd2b Shotgun",
+    "overview": "Scattergun.",
+    "tips": [
+      "Paired with `MB_ATT_SHOTGUN`.",
+      "Close range devastation."
+    ],
+    "levels": {},
+    "stats": {
+      "Pellet Damage": "**23** (5 pellets = 115 total)",
+      "Velocity": "6325",
+      "Ammo Cost": "1",
+      "Force Drain (Close/Far)": "**32/22**",
+      "Force Drain Blocking (Close/Far)": "**15/22**"
+    },
+    "tags": [],
+    "description": "Scattergun.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_CRYO_NADE",
+    "name": "\u2744\ufe0f Cryo Grenade",
+    "overview": "Freezing Grenade.",
+    "tips": [
+      "Paired with `MB_ATT_CRYOBAN_GRENADES`."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Freezing Grenade.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_BRYAR_PISTOL",
+    "name": "\ud83d\udd2b DL-44 Blaster Pistol",
+    "overview": "The standard sidearm for many classes.",
+    "tips": [
+      "Paired with `MB_ATT_PISTOL` levels.",
+      "Reliable accurate fire."
+    ],
+    "levels": {},
+    "stats": {
+      "Damage": "**34** (Standard) / **50** (Level 3)",
+      "Charge Damage": "Up to **62** (Standard) / **75** (Level 3)",
+      "Velocity": "6325",
+      "Ammo Cost": "1",
+      "Force Drain (Close/Far)": "**13/9** (Primary), **13/9** (Secondary)",
+      "Force Drain Blocking (Close/Far)": "**11/6** (Primary), **11/6** (Secondary)"
+    },
+    "tags": [],
+    "description": "The standard sidearm for many classes.",
+    "category": "Sidearms"
+  },
+  {
+    "id": "WP_REAL_TD",
+    "name": "\u2622\ufe0f Real Thermal Detonator",
+    "overview": "Canon-accurate Thermal Detonator (Nuke).",
+    "tips": [
+      "Paired with `CFL_REALTD` usually? Or just `WP_REAL_TD` in weapon list.",
+      "Use with caution."
+    ],
+    "levels": {},
+    "stats": {
+      "Damage": "**Instakill**.",
+      "Radius": "Massive."
+    },
+    "tags": [],
+    "description": "Canon-accurate Thermal Detonator (Nuke).",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_TRIP_MINE",
+    "name": "\ud83e\ude9a Trip Mine",
+    "overview": "Laser-actuated mine.",
+    "tips": [
+      "Paired with `MB_ATT_TRIP_MINES`.",
+      "Sticks to walls."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Laser-actuated mine.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_E_22",
+    "name": "\ud83d\udd2b E-22",
+    "overview": "Imperial Heavy Blaster.",
+    "tips": [
+      "Paired with `MB_ATT_E_22`."
+    ],
+    "levels": {},
+    "stats": {
+      "Damage": "**33** (Primary) / **45** (Secondary)",
+      "Velocity": "8000 (Primary) / 6000 (Secondary)",
+      "Ammo Cost": "6 (Primary) / 8 (Secondary)",
+      "Force Drain (Close/Far)": "**13/9** (Primary), **14/11** (Secondary)",
+      "Force Drain Blocking (Close/Far)": "**11/7** (Primary), **13/9** (Secondary)"
+    },
+    "tags": [],
+    "description": "Imperial Heavy Blaster.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_TRAD_BOWCASTER",
+    "name": "\ud83c\udff9 Traditional Bowcaster",
+    "overview": "Solid projectile bowcaster.",
+    "tips": [
+      "Paired with `MB_ATT_TRAD_BOWCASTER`.",
+      "Does not fire spread shots like the standard Bowcaster."
+    ],
+    "levels": {},
+    "stats": {
+      "Damage": "**40** (Uncharged)",
+      "Charge Cap": "**100**",
+      "Velocity": "7000",
+      "Ammo Cost": "1",
+      "Force Drain (Close/Far)": "**12/9** (Primary), **25/14** (Secondary)",
+      "Force Drain Blocking (Close/Far)": "**11/7** (Primary), **20/12** (Secondary)"
+    },
+    "tags": [],
+    "description": "Solid projectile bowcaster.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_CLONE_PISTOL",
+    "name": "\ud83d\udd2b Clone Pistol",
+    "overview": "DC-17 Hand Blaster.",
+    "tips": [
+      "Paired with `MB_ATT_CLONE_PISTOL`.",
+      "Rapid fire secondary."
+    ],
+    "levels": {},
+    "stats": {
+      "Damage": "**36**",
+      "Velocity": "6325",
+      "Fire Rate": "500ms (Primary) / 900ms (Secondary)",
+      "Ammo Cost": "2 (Primary) / 3 (Secondary)",
+      "Force Drain (Close/Far)": "**13/9** (Primary)",
+      "Force Drain Blocking (Close/Far)": "**11/6** (Primary)"
+    },
+    "tags": [],
+    "description": "DC-17 Hand Blaster.",
+    "category": "Sidearms"
+  },
+  {
+    "id": "WP_M5",
+    "name": "\ud83d\udd2b Westar M5",
+    "overview": "ARC Trooper Rifle.",
+    "tips": [
+      "Paired with `MB_ATT_WESTARM5`.",
+      "Versatile modular weapon."
+    ],
+    "levels": {},
+    "stats": {
+      "Damage": "**30** (Primary) / **69** (Sniper)",
+      "Velocity": "4600 (Primary) / 9825 (Sniper)",
+      "Ammo Cost": "2 (Primary) / ~13 (Sniper)",
+      "Fire Rate": "200ms (Primary) / 650ms (Sniper)",
+      "Force Drain (Close/Far)": "**12/8** (Primary), **24/18** (Sniper)",
+      "Force Drain Blocking (Close/Far)": "**9/6** (Primary), **18/12** (Sniper)"
+    },
+    "tags": [],
+    "description": "ARC Trooper Rifle.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_SBD",
+    "name": "\ud83d\udd2b SBD Arm Blaster",
+    "overview": "Wrist-mounted blaster for Super Battle Droids.",
+    "tips": [
+      "Paired with `MB_ATT_FIREPOWER`.",
+      "Drains battery."
+    ],
+    "levels": {},
+    "stats": {
+      "Damage": "**34**",
+      "Velocity": "4600",
+      "Ammo Cost": "1",
+      "Force Drain (Close/Far)": "**9/6**",
+      "Force Drain Blocking (Close/Far)": "**8/5**"
+    },
+    "tags": [],
+    "description": "Wrist-mounted blaster for Super Battle Droids.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_EE4",
+    "name": "\ud83d\udd2b EE-4 Carbine",
+    "overview": "Short range burst blaster.",
+    "tips": [
+      "Paired with `MB_ATT_EE4`.",
+      "Can be toggled to Sniper mode at Level 3."
+    ],
+    "levels": {},
+    "stats": {
+      "Damage": "**36** (Primary) / **70** (Sniper)",
+      "Velocity": "6325 (Primary) / 9825 (Sniper)",
+      "Ammo Cost": "26 (Sniper)",
+      "Force Drain (Close/Far)": "**13/8** (Primary), **43/29** (Sniper)",
+      "Force Drain Blocking (Close/Far)": "**12/6** (Primary), **36/24** (Sniper)"
+    },
+    "tags": [],
+    "description": "Short range burst blaster.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_REPEATER",
+    "name": "\ud83d\udd2b Heavy Repeater",
+    "overview": "Imperial Heavy Repeater.",
+    "tips": [
+      "Paired with `MB_ATT_REPEATER`.",
+      "Has a concussion grenade launcher alt-fire."
+    ],
+    "levels": {},
+    "stats": {
+      "Damage": "**26** (Primary)",
+      "Fire Rate": "Very Fast."
+    },
+    "tags": [],
+    "description": "Imperial Heavy Repeater.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_AMBAN",
+    "name": "\ud83d\udd2b Amban Sniper",
+    "overview": "Mandalorian Phase-Pulse Rifle.",
+    "tips": [
+      "Paired with `MB_ATT_AMBAN`.",
+      "Disintegrates targets on kill with secondary fire."
+    ],
+    "levels": {},
+    "stats": {
+      "Damage": "**20** (Pulse) / **80-143** (Sniper Charge)",
+      "Velocity": "9825",
+      "Ammo Cost": "1",
+      "Force Drain (Close/Far)": "**40/30** (Base)",
+      "Force Drain Blocking (Close/Far)": "**30/24** (Base)"
+    },
+    "tags": [],
+    "description": "Mandalorian Phase-Pulse Rifle.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_DLT20A",
+    "name": "\ud83d\udd2b DLT-20A",
+    "overview": "Long range blaster rifle.",
+    "tips": [
+      "Paired with `MB_ATT_DLT20A`.",
+      "Excellent range and velocity."
+    ],
+    "levels": {},
+    "stats": {
+      "Damage": "**31**",
+      "Velocity": "8075",
+      "Ammo Cost": "2",
+      "Force Drain (Close/Far)": "**16/11** (Primary), **11/8** (Secondary)",
+      "Force Drain Blocking (Close/Far)": "**13/7** (Primary), **10/6** (Secondary)"
+    },
+    "tags": [],
+    "description": "Long range blaster rifle.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_THERMAL",
+    "name": "\ud83d\udca3 Thermal Detonator",
+    "overview": "Standard Thermal Detonator grenade.",
+    "tips": [
+      "Paired with `MB_ATT_THERMALS`."
+    ],
+    "levels": {},
+    "stats": {
+      "Damage": "High explosive.",
+      "Timer": "3 seconds."
+    },
+    "tags": [],
+    "description": "Standard Thermal Detonator grenade.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_HEAVY_PISTOL",
+    "name": "\ud83d\udd2b Heavy Pistol",
+    "overview": "High caliber blaster pistol.",
+    "tips": [
+      "Paired with `MB_ATT_HEAVY_PISTOL`."
+    ],
+    "levels": {},
+    "stats": {
+      "Damage": "**55**",
+      "Velocity": "4000",
+      "Fire Rate": "500ms (Primary) / 900ms (Secondary)",
+      "Ammo Cost": "15? (Check ammo index).",
+      "Force Drain (Close/Far)": "**18/13** (Primary & Secondary)",
+      "Force Drain Blocking (Close/Far)": "**14/10** (Primary & Secondary)"
+    },
+    "tags": [],
+    "description": "High caliber blaster pistol.",
+    "category": "Sidearms"
+  },
+  {
+    "id": "WP_STUN_BATON",
+    "name": "\u26a1 Stun Baton",
+    "overview": "A melee weapon that delivers an electric shock.\n> **Default:** None.",
+    "tips": [
+      "Often used as a \"Prison Guard\" or \"Riot Trooper\" weapon.",
+      "Can bypass some block mechanics? (Needs verification)."
+    ],
+    "levels": {
+      "1": {
+        "name": "Level 1",
+        "effect": "**\n**Damage**: 25.\n**Pulse**: No shock pulse.",
+        "fp_cost": 0
+      },
+      "2": {
+        "name": "Level 2",
+        "effect": "**\n**Damage**: 25.\n**Pulse**: Emits a shock pulse effect on hit.",
+        "fp_cost": 0
+      }
+    },
+    "stats": {
+      "Damage": "**25** (Standard)",
+      "Effect": "Mini-stun on hit.",
+      "Reach": "Short."
+    },
+    "tags": [],
+    "description": "A melee weapon that delivers an electric shock.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_ROCKET_LAUNCHER",
+    "name": "Rocket Launcher",
+    "overview": "PLX-1 Portable Missile System.\n\n**Characteristics**\n*   **Primary**: Dumb-fire rocket. High explosive damage.\n*   **Secondary**: Guided rocket (requires tracking/lock-on).\n\n**Use Cases**\n*   Anti-vehicle, Anti-SBD, and crowd clearing.\n*   Dangerous in close quarters.",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "PLX-1 Portable Missile System.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_MANDO_PISTOL",
+    "name": "\ud83d\udd2b Westar Pistol",
+    "overview": "Mandalorian Westar-34.",
+    "tips": [
+      "Paired with `MB_ATT_MANDO_PISTOL`.",
+      "Accurate and deadly."
+    ],
+    "levels": {},
+    "stats": {
+      "Damage": "**36**",
+      "Velocity": "6325",
+      "Fire Rate": "500ms (Primary) / 800ms (Secondary)",
+      "Ammo Cost": "2 (Primary) / 4 (Secondary)",
+      "Force Drain (Close/Far)": "**13/9** (Primary)",
+      "Force Drain Blocking (Close/Far)": "**11/6** (Primary)"
+    },
+    "tags": [],
+    "description": "Mandalorian Westar-34.",
+    "category": "Sidearms"
+  },
+  {
+    "id": "WP_DLT19",
+    "name": "\ud83d\udd2b DLT-19",
+    "overview": "Heavy Repeating Blaster.",
+    "tips": [
+      "Paired with `MB_ATT_DLT19`."
+    ],
+    "levels": {},
+    "stats": {
+      "Damage": "**26** (Primary) / **35** (Secondary)",
+      "Velocity": "4500 (Primary) / 9500 (Secondary)",
+      "Ammo Cost": "4 (Primary) / 10 (Secondary)",
+      "Force Drain (Close/Far)": "**9/6** (Primary), **14/11** (Secondary)",
+      "Force Drain Blocking (Close/Far)": "**8/4** (Primary), **13/9** (Secondary)"
+    },
+    "tags": [],
+    "description": "Heavy Repeating Blaster.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_MINIGUN",
+    "name": "\ud83d\udd2b Minigun",
+    "overview": "Z-6 Rotary Blaster Cannon.",
+    "tips": [
+      "Paired with `MB_ATT_MINIGUN`.",
+      "Requires spin-up time."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Z-6 Rotary Blaster Cannon.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_PROJ",
+    "name": "\ud83d\udd2b Projectile Rifle",
+    "overview": "Slugthrower Sniper Rifle.",
+    "tips": [
+      "Paired with `MB_ATT_PROJECTILE_RIFLE`.",
+      "Effective against Jedi and Shielded opponents.",
+      "Bypasses shields (partially)."
+    ],
+    "levels": {},
+    "stats": {
+      "Damage": "**160**",
+      "Velocity": "10500",
+      "Ammo Cost": "1",
+      "Force Drain (Close/Far)": "**50/40**",
+      "Force Drain Blocking (Close/Far)": "**40/30**"
+    },
+    "tags": [],
+    "description": "Slugthrower Sniper Rifle.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_FIRE_NADE",
+    "name": "\ud83d\udd25 Fire Grenade",
+    "overview": "Incendiary Grenade.",
+    "tips": [
+      "Paired with `MB_ATT_FIRE_GRENADES`."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Incendiary Grenade.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_MELEE",
+    "name": "Melee",
+    "overview": "Hand-to-hand combat.\n\n**Characteristics**\n*   **Punch**: Standard attack.\n*   **Kick**: Alt-fire (if class allows).\n*   **Wookiee**: With `MB_ATT_WOOKIE_STRENGTH`, this becomes a lethal weapon.\n\n**Use Cases**\n*   Last resort for most classes.\n*   Primary weapon for Wookiees and SBDs.",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [],
+    "description": "Hand-to-hand combat.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_DC_CARBINE",
+    "name": "WP_DC_CARBINE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "WP_THROWER",
+    "name": "WP_THROWER",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "WP_PLX1",
+    "name": "WP_PLX1",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "WP_CONC_NADE",
+    "name": "WP_CONC_NADE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "WP_WELD_PULSE",
+    "name": "WP_WELD_PULSE",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "WP_WELD_BEAM",
+    "name": "WP_WELD_BEAM",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "WP_BRYAR_OLD",
+    "name": "WP_BRYAR_OLD",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "WP_UGL",
+    "name": "WP_UGL",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "WP_MGL",
+    "name": "WP_MGL",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "WP_EMPLACED_GUN",
+    "name": "WP_EMPLACED_GUN",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  },
+  {
+    "id": "WP_TURRET",
+    "name": "WP_TURRET",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
+  }
+]

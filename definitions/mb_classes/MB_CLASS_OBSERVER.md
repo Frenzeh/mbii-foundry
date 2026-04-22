@@ -1,0 +1,7 @@
+# MB_CLASS_OBSERVER
+
+`MB_CLASS_OBSERVER`
+
+Spectator
+
+}

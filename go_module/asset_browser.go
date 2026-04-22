@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"image"
+	"image/color"
 	"image/jpeg"
 	"image/png"
 	"io"
@@ -19,7 +20,9 @@ import (
 	"time" // Added for TappableButton
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
@@ -92,6 +95,11 @@ type AssetBrowser struct {
 
 	onAssetSelected func(asset *AssetEntry)
 	onAssetDouble   func(asset *AssetEntry) // New double-click handler
+
+	// Tracks the currently-selected GridItem so we can clear its
+	// highlight when another item is clicked. Cleared on every
+	// loadGrid / loadFS.
+	selectedItem *GridItem
 
 	md3viewPath string
 	loadLock    sync.Mutex
@@ -594,6 +602,9 @@ func (ab *AssetBrowser) ensureDirectory(dirMap map[string]*AssetEntry, path, pk3
 
 func (ab *AssetBrowser) loadGrid(dir *AssetEntry) {
 	ab.currentDir = dir
+	// Clear any selected-item pointer — the widget's about to be
+	// destroyed when we rebuild the grid.
+	ab.selectedItem = nil
 
 	ab.grid.Objects = nil
 	ab.grid.Refresh()
@@ -669,7 +680,11 @@ func NewTappableButton(label string, icon fyne.Resource, tapped func()) *Tappabl
 	return btn
 }
 
-// GridItem is a custom widget for asset display
+// GridItem is a custom widget for asset display. Implements
+// desktop.Hoverable so the background tints on mouse-over, and tracks
+// Selected state so the tapped item renders with a primary-color
+// highlight. The AssetBrowser is responsible for clearing the prior
+// selection when a new item is tapped (see createGridItem).
 type GridItem struct {
 	widget.BaseWidget
 	Text           string
@@ -677,6 +692,16 @@ type GridItem struct {
 	OnTapped       func()
 	OnDoubleTapped func()
 	ViewMode       ViewMode
+
+	// TypeBadge is a short tag (MBCH / SAB / VEH / etc.) rendered
+	// centered on the icon in grid view so file types are distinguishable
+	// at a glance without mangling the filename with a "[MBCH] " prefix.
+	// Empty string = no badge.
+	TypeBadge string
+
+	selected   bool
+	hovering   bool
+	background *canvas.Rectangle
 }
 
 func NewGridItem(text string, icon fyne.Resource, tapped func()) *GridItem {
@@ -686,27 +711,37 @@ func NewGridItem(text string, icon fyne.Resource, tapped func()) *GridItem {
 }
 
 func (g *GridItem) CreateRenderer() fyne.WidgetRenderer {
+	g.background = canvas.NewRectangle(color.Transparent)
+	g.background.CornerRadius = 4
+
 	img := widget.NewIcon(g.Icon)
 	lbl := widget.NewLabel(g.Text)
 	lbl.TextStyle = fyne.TextStyle{Monospace: true}
 
-	var c *fyne.Container
+	var iconArea fyne.CanvasObject = img
+	// Grid-view type badge: render a compact centered label on top of
+	// the document icon. List view skips this since the extension is
+	// already visible in the filename.
+	if g.TypeBadge != "" && g.ViewMode != ViewModeList {
+		badge := canvas.NewText(g.TypeBadge, theme.ForegroundColor())
+		badge.TextStyle = fyne.TextStyle{Bold: true, Monospace: true}
+		badge.TextSize = 11
+		badge.Alignment = fyne.TextAlignCenter
+		iconArea = container.NewStack(img, container.NewCenter(badge))
+	}
+
+	var content *fyne.Container
 	if g.ViewMode == ViewModeList {
 		lbl.Alignment = fyne.TextAlignLeading
-		c = container.NewHBox(img, lbl)
+		content = container.NewHBox(iconArea, lbl)
 	} else {
 		lbl.Alignment = fyne.TextAlignCenter
 		lbl.Wrapping = fyne.TextTruncate
-		c = container.NewBorder(nil, lbl, nil, nil, img)
+		content = container.NewBorder(nil, lbl, nil, nil, iconArea)
 	}
-
-	// Add a background for hover effect?
-	// For now simple transparent item.
-	// To add hover: wrap in a custom container or use Hoverable.
-	// Standard widget.Button handles this nicely.
-	// But we had layout issues.
-	// Let's stick to basic clickability first.
-	return widget.NewSimpleRenderer(c)
+	// Stack background behind the content so click/hover feedback
+	// shows without affecting layout.
+	return widget.NewSimpleRenderer(container.NewStack(g.background, content))
 }
 
 func (g *GridItem) Tapped(_ *fyne.PointEvent) {
@@ -721,19 +756,66 @@ func (g *GridItem) DoubleTapped(_ *fyne.PointEvent) {
 	}
 }
 
+// SetSelected highlights the item with the primary theme color. Caller
+// (AssetBrowser) clears the previous selection before setting a new
+// one so only one GridItem is highlighted at a time.
+func (g *GridItem) SetSelected(selected bool) {
+	if g.selected == selected {
+		return
+	}
+	g.selected = selected
+	g.updateBackground()
+}
+
+// --- desktop.Hoverable ------------------------------------------------
+
+func (g *GridItem) MouseIn(*desktop.MouseEvent) {
+	g.hovering = true
+	g.updateBackground()
+}
+
+func (g *GridItem) MouseOut() {
+	g.hovering = false
+	g.updateBackground()
+}
+
+func (g *GridItem) MouseMoved(*desktop.MouseEvent) {}
+
+func (g *GridItem) updateBackground() {
+	if g.background == nil {
+		return
+	}
+	switch {
+	case g.selected:
+		// Primary-tinted fill for selection — clearly differentiates
+		// from hover. Alpha 96 keeps the label readable.
+		g.background.FillColor = tintWithAlpha(CurrentThemeColor, 96)
+	case g.hovering:
+		g.background.FillColor = tintWithAlpha(CurrentThemeColor, 38)
+	default:
+		g.background.FillColor = color.Transparent
+	}
+	g.background.Refresh()
+}
+
+func tintWithAlpha(c color.Color, alpha uint8) color.Color {
+	r, gr, b, _ := c.RGBA()
+	return color.RGBA{R: uint8(r >> 8), G: uint8(gr >> 8), B: uint8(b >> 8), A: alpha}
+}
+
 // createGridItem creates a clickable item for the asset grid.
 //
 // Visual treatment:
-//   - Parent ("..") entries get a dedicated up-arrow icon + "⬆ Up" label,
-//     so navigating up the tree is obvious instead of buried in a folder
-//     that looks like every other folder.
-//   - Known MBII file types get a [MBCH] / [SAB] / [VEH] / [SIEGE]
-//     prefix on the display name so users can distinguish them at a
-//     glance without waiting for Fyne to render per-type icons. Images
-//     and models still use their dedicated icons.
+//   - Parent ("..") entries get a dedicated up-arrow icon + "⬆ Up" label.
+//   - Image/model files get their own theme icons.
+//   - Other known MBII file types get a type badge (MBCH / SAB / VEH /
+//     SIEGE / MBTC / SKIN / …) overlaid on the icon in grid view; in
+//     list view there's no overlay since the extension is already in
+//     the filename.
 func (ab *AssetBrowser) createGridItem(entry *AssetEntry, isParent bool) fyne.CanvasObject {
 	var icon fyne.Resource = theme.FileIcon()
 	displayName := entry.Name
+	var typeBadge string // only populated for the grid-view overlay
 
 	switch {
 	case isParent:
@@ -746,18 +828,30 @@ func (ab *AssetBrowser) createGridItem(entry *AssetEntry, isParent bool) fyne.Ca
 	case entry.Type == AssetTypeModel:
 		icon = theme.ComputerIcon()
 	default:
-		// Prefix the name with the asset type for quick scanning.
-		if tag := assetTypeTag(entry); tag != "" {
-			displayName = "[" + tag + "] " + entry.Name
+		// In grid view, render the type as a badge over the icon so
+		// users can tell an .mbch from a .sab at a glance without the
+		// filename getting mangled by a "[MBCH] " prefix. In list view
+		// the filename is shown in full — no badge needed.
+		if ab.viewMode == ViewModeGrid {
+			typeBadge = assetTypeTag(entry)
 		}
 	}
 
-	item := NewGridItem(displayName, icon, func() {
+	item := NewGridItem(displayName, icon, nil)
+	item.ViewMode = ab.viewMode
+	item.TypeBadge = typeBadge
+	item.OnTapped = func() {
+		// Highlight this item; clear any previous selection so only
+		// one item shows the primary-tinted background.
+		if ab.selectedItem != nil && ab.selectedItem != item {
+			ab.selectedItem.SetSelected(false)
+		}
+		item.SetSelected(true)
+		ab.selectedItem = item
 		if ab.onAssetSelected != nil {
 			ab.onAssetSelected(entry)
 		}
-	})
-	item.ViewMode = ab.viewMode
+	}
 
 	item.OnDoubleTapped = func() {
 		if entry.IsDir || isParent {

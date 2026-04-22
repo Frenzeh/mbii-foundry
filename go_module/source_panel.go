@@ -38,6 +38,12 @@ func NewSourcePanel(a *App) *SourcePanel {
 	// (via markDirty() hooks) gets priority for instant updates;
 	// this ticker is the safety net for editors that lack those
 	// hooks (500ms matches kitsu's MBCH editor cadence).
+	//
+	// All the actual work must happen inside fyne.Do: GenerateSource
+	// reads Fyne widgets which is only safe on the UI thread. The
+	// previous version called GenerateSource from the goroutine
+	// directly and crashed the app on first MBCH open once the
+	// ticker fired.
 	go func() {
 		ticker := time.NewTicker(500 * time.Millisecond)
 		defer ticker.Stop()
@@ -46,11 +52,16 @@ func NewSourcePanel(a *App) *SourcePanel {
 			if sp.provider == nil {
 				continue
 			}
-			cur := sp.provider.GenerateSource()
-			if cur != last {
-				last = cur
-				fyne.Do(sp.refresh)
-			}
+			fyne.Do(func() {
+				if sp.provider == nil {
+					return
+				}
+				cur := sp.provider.GenerateSource()
+				if cur != last {
+					last = cur
+					sp.refresh()
+				}
+			})
 		}
 	}()
 

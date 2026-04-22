@@ -155,6 +155,28 @@ func (ip *InfoPanel) ShowInfo(key, context string) {
 	var def string
 	var found bool
 
+	// Before anything else, check the markdown file for this key. If the
+	// .md has more than a stub's worth of content, it's the canonical
+	// source of truth — JSON `overview`/`description` fields lose to it.
+	// This lets non-coders edit definitions/*.md via GitHub's web UI and
+	// see their changes show up in the app, instead of getting shadowed
+	// by stale or thin JSON content.
+	preferMarkdown := func(preferredKey string) (string, bool) {
+		const stubBytes = 200
+		const stubMarker = "*Stub — a human needs to document this.*"
+		md, ok := GetDefinition(preferredKey)
+		if !ok || md == "" {
+			return "", false
+		}
+		if strings.Contains(md, stubMarker) {
+			return "", false
+		}
+		if len(md) < stubBytes {
+			return "", false
+		}
+		return md, true
+	}
+
 	// Helper to format rich doc
 	formatRich := func(desc, overview string, tips []string, levels map[string]LevelDoc, stats map[string]string, tags []string) string {
 		var sb strings.Builder
@@ -238,12 +260,16 @@ func (ip *InfoPanel) ShowInfo(key, context string) {
 		return strings.TrimSpace(desc) != "" || strings.TrimSpace(overview) != ""
 	}
 
-	// 1. JSON Data Lookup (Priority)
+	// 1. JSON Data Lookup (Priority) — but markdown wins when richer.
 	var resolvedID string
 	for _, attr := range GetAttributes() {
 		if attr.ID == key || attr.Name == key {
 			resolvedID = attr.ID
-			if hasContent(attr.Description, attr.Overview) {
+			if md, ok := preferMarkdown(attr.ID); ok {
+				def = md
+				key = attr.Name
+				found = true
+			} else if hasContent(attr.Description, attr.Overview) {
 				def = formatRich(attr.Description, attr.Overview, attr.Tips, attr.Levels, nil, attr.Tags)
 				key = attr.Name
 				found = true
@@ -255,7 +281,11 @@ func (ip *InfoPanel) ShowInfo(key, context string) {
 		for _, w := range GetWeapons() {
 			if w.ID == key || w.Name == key {
 				resolvedID = w.ID
-				if hasContent(w.Description, w.Overview) {
+				if md, ok := preferMarkdown(w.ID); ok {
+					def = md
+					key = w.Name
+					found = true
+				} else if hasContent(w.Description, w.Overview) {
 					def = formatRich(w.Description, w.Overview, w.Tips, nil, w.Stats, w.Tags)
 					key = w.Name
 					found = true
@@ -268,7 +298,11 @@ func (ip *InfoPanel) ShowInfo(key, context string) {
 		for _, c := range GetClasses() {
 			if c.ID == key || c.Name == key {
 				resolvedID = c.ID
-				if strings.TrimSpace(c.Description) != "" {
+				if md, ok := preferMarkdown(c.ID); ok {
+					def = md
+					key = c.Name
+					found = true
+				} else if strings.TrimSpace(c.Description) != "" {
 					def = c.Description
 					key = c.Name
 					found = true
@@ -281,7 +315,11 @@ func (ip *InfoPanel) ShowInfo(key, context string) {
 		for _, f := range GetClassFlags() {
 			if f.ID == key || f.Name == key {
 				resolvedID = f.ID
-				if hasContent(f.Description, f.Overview) {
+				if md, ok := preferMarkdown(f.ID); ok {
+					def = md
+					key = f.Name
+					found = true
+				} else if hasContent(f.Description, f.Overview) {
 					def = formatRich(f.Description, f.Overview, nil, nil, nil, nil)
 					key = f.Name
 					found = true
@@ -294,7 +332,11 @@ func (ip *InfoPanel) ShowInfo(key, context string) {
 		for _, s := range GetSaberStyles() {
 			if s.ID == key || s.Name == key {
 				resolvedID = s.ID
-				if hasContent(s.Description, s.Overview) {
+				if md, ok := preferMarkdown(s.ID); ok {
+					def = md
+					key = s.Name
+					found = true
+				} else if hasContent(s.Description, s.Overview) {
 					def = formatRich(s.Description, s.Overview, nil, nil, nil, nil)
 					key = s.Name
 					found = true
@@ -307,7 +349,11 @@ func (ip *InfoPanel) ShowInfo(key, context string) {
 		for _, g := range GetGlossary() {
 			if g.ID == key || g.Name == key {
 				resolvedID = g.ID
-				if hasContent(g.Description, g.Overview) {
+				if md, ok := preferMarkdown(g.ID); ok {
+					def = md
+					key = g.Name
+					found = true
+				} else if hasContent(g.Description, g.Overview) {
 					def = formatRich(g.Description, g.Overview, nil, nil, nil, nil)
 					key = g.Name
 					found = true

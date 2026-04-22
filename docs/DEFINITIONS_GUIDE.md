@@ -61,7 +61,24 @@ When in doubt, **test the thing in-game** before rewriting its description.
 
 ---
 
-## Anatomy of a good definition
+## What "good" looks like now
+
+**Update (2026-04-22):** the bar raised. Prose-only descriptions like "Legendary Mandalorian iron plating" read as lore, but what a balance designer actually needs are **numbers**: damage multipliers per level, FP costs, cooldowns, what's NOT affected, source-code references. Flavor prose without stats is no longer considered a complete definition.
+
+The reference template is [`definitions/attributes/MB_ATT_BESKAR.md`](../definitions/attributes/MB_ATT_BESKAR.md). Every new or revised definition should follow its shape where applicable:
+
+1. `# <emoji> <Display Name>` — one-line title
+2. `` `<ENUM_ID>` `` — the exact enum as it appears in source
+3. One plain-English line summarizing what it does (for new players)
+4. Any class-specific / unlock requirements as bold metadata
+5. **`### Mechanics` or a stats table** — the mandatory part. Actual multipliers / costs / thresholds / rates. One row per level if it's a leveled attribute.
+6. `### What isn't affected` or exclusions — as important as the positive effects. Balance designers need to know the edges.
+7. `### Related` — cross-links to interacting attributes (`MB_ATT_ARMOUR`, `CFL_*`, etc.)
+8. `### Source references` — file + line ranges in the MBII C source so future reviewers can verify. Even a single `game/bg_weapons.h:1065-1084` is valuable.
+
+Run `tools/audit-definitions.py` to see the current quality rating for every entry; the report is checked in at `docs/DEFINITION_QUALITY_AUDIT.md`.
+
+## Anatomy of a good definition — older format
 
 Compare a stub:
 
@@ -73,7 +90,7 @@ Compare a stub:
 *Stub — a human needs to document this.*
 ```
 
-…to a polished entry like `MB_ATT_AMMO.md`:
+…to an earlier "prose-polished" entry like `MB_ATT_AMMO.md`:
 
 ```markdown
 # 🔋 Ammo

@@ -13,24 +13,24 @@ import (
 )
 
 var KnownRankAttributes = []string{
-	"rankHealth", "rankArmor", "rankAP", "rankBP", "rankCS", "rankAS", "rankROF", "rankSTM", 
-	"rankKbTaken", "rankKbGiven", "rankDmgTaken", "rankDmgGiven", "rankBaseSpeed", 
-	"rankSaberDamage", "rankSaberThrowDamage", "rankModelScale", "rankROFMelee", 
-	"rankHealthRegenAmount", "rankHealthRegenRate", "rankHealthRegenCap", 
-	"rankArmourRegenAmount", "rankArmourRegenRate", "rankArmourRegenCap", 
-	"rankBlockRegenAmount", "rankBlockRegenRate", "rankBlockRegenCap", 
-	"rankResourceRegenAmount", "rankResourceRegenRate", "rankResourceRegenCap", 
+	"rankHealth", "rankArmor", "rankAP", "rankBP", "rankCS", "rankAS", "rankROF", "rankSTM",
+	"rankKbTaken", "rankKbGiven", "rankDmgTaken", "rankDmgGiven", "rankBaseSpeed",
+	"rankSaberDamage", "rankSaberThrowDamage", "rankModelScale", "rankROFMelee",
+	"rankHealthRegenAmount", "rankHealthRegenRate", "rankHealthRegenCap",
+	"rankArmourRegenAmount", "rankArmourRegenRate", "rankArmourRegenCap",
+	"rankBlockRegenAmount", "rankBlockRegenRate", "rankBlockRegenCap",
+	"rankResourceRegenAmount", "rankResourceRegenRate", "rankResourceRegenCap",
 	"rankForcePool", "rankForceRegen",
 }
 
 type PointBuyUI struct {
-	editor *MBCHEditor
+	editor    *MBCHEditor
 	container *fyne.Container
-	
+
 	skillEntries []*widget.Entry
 	nameEntries  []*widget.Entry
 	rankEntries  []*widget.Entry
-	
+
 	rankAttrContainer *fyne.Container
 }
 
@@ -51,17 +51,20 @@ func (p *PointBuyUI) createUI() {
 	grid.Add(widget.NewLabelWithStyle("Rank", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}))
 
 	for i := 0; i < 15; i++ {
-		skill := widget.NewEntry(); skill.SetPlaceHolder(fmt.Sprintf("SKILL_%d", i))
+		skill := widget.NewEntry()
+		skill.SetPlaceHolder(fmt.Sprintf("SKILL_%d", i))
 		skill.OnChanged = p.makeSkillEntryOnChanged(i)
 		p.skillEntries[i] = skill
 		grid.Add(skill)
 
-		name := widget.NewEntry(); name.SetPlaceHolder("Display Name")
+		name := widget.NewEntry()
+		name.SetPlaceHolder("Display Name")
 		name.OnChanged = p.makeNameEntryOnChanged(i)
 		p.nameEntries[i] = name
 		grid.Add(name)
 
-		rank := widget.NewEntry(); rank.SetPlaceHolder("0-5")
+		rank := widget.NewEntry()
+		rank.SetPlaceHolder("0-5")
 		rank.OnChanged = p.makeRankEntryOnChanged(i)
 		p.rankEntries[i] = rank
 		grid.Add(rank)
@@ -69,7 +72,7 @@ func (p *PointBuyUI) createUI() {
 
 	// Rank Attributes Section
 	p.rankAttrContainer = container.NewVBox()
-	
+
 	addRankAttrBtn := widget.NewButtonWithIcon("Add Rank Attribute", theme.ContentAddIcon(), func() {
 		p.showAddRankAttrDialog()
 	})
@@ -88,7 +91,7 @@ func (p *PointBuyUI) showAddRankAttrDialog() {
 	keySelect.PlaceHolder = "Select or type attribute (e.g., rankHealth)"
 	valueEntry := widget.NewEntry()
 	valueEntry.PlaceHolder = "Comma-separated values (e.g., 100,120,150)"
-	
+
 	dialog.ShowCustomConfirm("Add Rank Attribute", "Add", "Cancel", container.NewVBox(
 		widget.NewLabel("Attribute Name:"),
 		keySelect,
@@ -105,23 +108,23 @@ func (p *PointBuyUI) showAddRankAttrDialog() {
 
 func (p *PointBuyUI) refreshRankAttributes() {
 	p.rankAttrContainer.Objects = nil
-	
+
 	for key, val := range p.editor.character.RankAttributes {
 		k := key // capture for closure
-		
+
 		entry := widget.NewEntry()
 		entry.SetText(val)
 		entry.OnChanged = func(s string) {
 			p.editor.character.RankAttributes[k] = s
 			p.editor.markDirty()
 		}
-		
+
 		delBtn := widget.NewButtonWithIcon("", theme.DeleteIcon(), func() {
 			delete(p.editor.character.RankAttributes, k)
 			p.refreshRankAttributes()
 			p.editor.markDirty()
 		})
-		
+
 		row := container.NewBorder(nil, nil, widget.NewLabel(k), delBtn, entry)
 		p.rankAttrContainer.Add(row)
 	}
@@ -172,11 +175,11 @@ func (p *PointBuyUI) makeRankEntryOnChanged(index int) func(string) {
 
 		if !valid {
 			p.editor.lastError = fmt.Sprintf("Invalid rank format for skill %d. Must be integer(s) (e.g., '-1' or '0,5,10').", index)
-			// Don't revert text immediately to allow user to correct it, 
-			// but don't save invalid state to struct if strictness is desired. 
+			// Don't revert text immediately to allow user to correct it,
+			// but don't save invalid state to struct if strictness is desired.
 			// For now, we update the struct but leave the error in lastError so they see it.
 		}
-		
+
 		p.editor.character.CustomRanks[index] = s
 	}
 }

@@ -15,12 +15,12 @@ type AttributeDef struct {
 	MaxLevel    int    `json:"max_level"`
 	Category    string `json:"category"` // "General", "Weapons", "Force", "Saber", "Class Specific", "Advanced"
 	Description string `json:"description"`
-	
+
 	// Rich Documentation
-	Overview string           `json:"overview,omitempty"`
+	Overview string              `json:"overview,omitempty"`
 	Levels   map[string]LevelDoc `json:"levels,omitempty"` // map[string] because JSON keys are strings
-	Tips     []string         `json:"tips,omitempty"`
-	Tags     []string         `json:"tags,omitempty"`
+	Tips     []string            `json:"tips,omitempty"`
+	Tags     []string            `json:"tags,omitempty"`
 }
 
 type ClassDef struct {

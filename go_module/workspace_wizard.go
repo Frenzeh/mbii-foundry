@@ -39,36 +39,36 @@ func (a *App) showWorkspaceSetupWizard() {
 	// 2. Status / Log
 	logLabel := widget.NewLabel("Ready to initialize.")
 	logLabel.Wrapping = fyne.TextWrapWord
-	
+
 	progressBar := widget.NewProgressBarInfinite()
 	progressBar.Hide()
 
 	// 3. Action
 	var setupWindow fyne.Window
-	
+
 	setupBtn := widget.NewButton("Initialize Workspace", func() {
 		targetPath := pathEntry.Text
 		if targetPath == "" {
 			dialog.ShowError(fmt.Errorf("Please select a destination folder."), a.mainWindow)
 			return
 		}
-		
+
 		// Update Config
 		a.config.TextAssetsPath = targetPath
 		a.saveConfig()
-		
+
 		// Re-init Manager with new path
 		a.githubManager = NewGitHubManager(a.config.GitHubToken, targetPath)
-		
+
 		// Start Process
 		progressBar.Show()
 		logLabel.SetText("Starting setup...")
-		
+
 		go func() {
 			err := a.githubManager.SetupWorkspace(func(msg string) {
 				logLabel.SetText(msg)
 			})
-			
+
 			if err == nil {
 				logLabel.SetText("Detecting development branch...")
 				branch, errBranch := a.githubManager.DetectDevelopmentBranch()
@@ -78,9 +78,9 @@ func (a *App) showWorkspaceSetupWizard() {
 					logLabel.SetText("Warning: Defaulting to master. (" + errBranch.Error() + ")")
 				}
 			}
-			
+
 			progressBar.Hide()
-			
+
 			if err != nil {
 				dialog.ShowError(err, a.mainWindow)
 				logLabel.SetText("Error: " + err.Error())

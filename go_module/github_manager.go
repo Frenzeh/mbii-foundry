@@ -18,38 +18,38 @@ import (
 
 // GitHubManager handles all interactions with GitHub and local Git repo
 type GitHubManager struct {
-	client      *github.Client
-	token       string
-	user        *github.User
-	repoPath    string
+	client        *github.Client
+	token         string
+	user          *github.User
+	repoPath      string
 	baseRepoOwner string
 	baseRepoName  string
-	
+
 	UpstreamBranch string // The branch we track (e.g., master or buildTest/...)
 }
 
 func NewGitHubManager(token string, repoPath string) *GitHubManager {
 	mgr := &GitHubManager{
-		token:         token,
-		repoPath:      repoPath,
-		baseRepoOwner: "MovieBattles", // Verified upstream owner
-		baseRepoName:  "TextAssets",   // Verified upstream repo
-		UpstreamBranch: "master",      // Default, can be auto-detected
+		token:          token,
+		repoPath:       repoPath,
+		baseRepoOwner:  "MovieBattles", // Verified upstream owner
+		baseRepoName:   "TextAssets",   // Verified upstream repo
+		UpstreamBranch: "master",       // Default, can be auto-detected
 	}
-	
+
 	if token != "" {
 		ctx := context.Background()
 		ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 		tc := oauth2.NewClient(ctx, ts)
 		mgr.client = github.NewClient(tc)
-		
+
 		// Fetch user info
 		u, _, err := mgr.client.Users.Get(ctx, "")
 		if err == nil {
 			mgr.user = u
 		}
 	}
-	
+
 	return mgr
 }
 
@@ -59,15 +59,17 @@ func (m *GitHubManager) DetectDevelopmentBranch() (string, error) {
 	// Since we might not have the repo cloned yet, or we want fresh info,
 	// we can use the GitHub API if authenticated, or git ls-remote.
 	// Using GitHub API is cleaner here since we have the client.
-	
-	if m.client == nil { return "master", nil }
-	
+
+	if m.client == nil {
+		return "master", nil
+	}
+
 	ctx := context.Background()
 	branches, _, err := m.client.Repositories.ListBranches(ctx, m.baseRepoOwner, m.baseRepoName, &github.BranchListOptions{ListOptions: github.ListOptions{PerPage: 100}})
 	if err != nil {
 		return "master", err
 	}
-	
+
 	var buildTestBranches []string
 	for _, b := range branches {
 		name := *b.Name
@@ -75,7 +77,7 @@ func (m *GitHubManager) DetectDevelopmentBranch() (string, error) {
 			buildTestBranches = append(buildTestBranches, name)
 		}
 	}
-	
+
 	// If found, which one?
 	// For now, let's pick the last one alphabetically or just the first?
 	// Ideally we check commit dates, but that's expensive.
@@ -88,7 +90,7 @@ func (m *GitHubManager) DetectDevelopmentBranch() (string, error) {
 		m.UpstreamBranch = buildTestBranches[0]
 		return m.UpstreamBranch, nil
 	}
-	
+
 	m.UpstreamBranch = "master"
 	return "master", nil
 }
@@ -97,17 +99,17 @@ func (m *GitHubManager) DetectDevelopmentBranch() (string, error) {
 // Returns: verification_uri, user_code, interval (seconds), device_code
 func (m *GitHubManager) DeviceFlowStart() (string, string, int, string, error) {
 	// Note: go-github doesn't directly support Device Flow initiation helpers typically found in generic OAuth libs,
-	// but we can request the code manually or use a helper. 
+	// but we can request the code manually or use a helper.
 	// For simplicity, we'll simulate the standard GitHub flow request:
 	// POST https://github.com/login/device/code
 	// client_id = <CLIENT_ID> (We need a client ID for MBII Foundry app registration)
-	
+
 	// Since we don't have a registered Client ID for MBII Foundry yet in this context,
 	// we will simulate the flow or require a Personal Access Token (PAT) for MVP.
 	// However, the prompt asked for "Super New User Friendly".
 	// The best SNUF way without a backend is PAT with a very good guide, OR Device Flow if we register an App.
 	// For this prototype, I'll assume we prompt for PAT or use a placeholder Client ID.
-	
+
 	return "", "", 0, "", fmt.Errorf("device flow requires registered Client ID")
 }
 
@@ -118,7 +120,7 @@ func (m *GitHubManager) DeviceFlowStart() (string, string, int, string, error) {
 // 4. Sets upstream remote
 func (m *GitHubManager) SetupWorkspace(progressCallback func(string)) error {
 	ctx := context.Background()
-	
+
 	if m.client == nil {
 		return fmt.Errorf("not logged in")
 	}
@@ -127,7 +129,7 @@ func (m *GitHubManager) SetupWorkspace(progressCallback func(string)) error {
 	progressCallback("Checking for existing fork...")
 	// List forks? Or just try to get repo User/TextAssets
 	repo, _, err := m.client.Repositories.Get(ctx, *m.user.Login, m.baseRepoName)
-	
+
 	forkURL := ""
 	if err != nil {
 		// Not found, create fork
@@ -155,7 +157,7 @@ func (m *GitHubManager) SetupWorkspace(progressCallback func(string)) error {
 		}
 	} else {
 		progressCallback("Cloning repository (this may take a while)...")
-		
+
 		// Auth for Clone
 		auth := &http.BasicAuth{
 			Username: "oauth2", // Use oauth2 as username for tokens
@@ -176,8 +178,10 @@ func (m *GitHubManager) SetupWorkspace(progressCallback func(string)) error {
 	// 3. Configure Upstream
 	progressCallback("Configuring upstream remote...")
 	r, err := git.PlainOpen(m.repoPath)
-	if err != nil { return err }
-	
+	if err != nil {
+		return err
+	}
+
 	_, err = r.CreateRemote(&config.RemoteConfig{
 		Name: "upstream",
 		URLs: []string{"https://github.com/" + m.baseRepoOwner + "/" + m.baseRepoName + ".git"},
@@ -194,10 +198,14 @@ func (m *GitHubManager) SetupWorkspace(progressCallback func(string)) error {
 // This effectively does: git checkout master && git pull upstream master
 func (m *GitHubManager) SyncUpdates() error {
 	r, err := git.PlainOpen(m.repoPath)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	w, err := r.Worktree()
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	// 1. Checkout Master/UpstreamBranch
 	err = w.Checkout(&git.CheckoutOptions{
@@ -212,36 +220,46 @@ func (m *GitHubManager) SyncUpdates() error {
 	// Note: We authenticate with the user's token even for public upstream if needed,
 	// or just basic http.
 	err = w.Pull(&git.PullOptions{
-		RemoteName: "upstream",
+		RemoteName:    "upstream",
 		ReferenceName: plumbing.NewBranchReferenceName(m.UpstreamBranch),
-		Auth:       &http.BasicAuth{Username: "oauth2", Password: m.token},
-		SingleBranch: true,
+		Auth:          &http.BasicAuth{Username: "oauth2", Password: m.token},
+		SingleBranch:  true,
 	})
-	
+
 	if err != nil && err != git.NoErrAlreadyUpToDate {
 		return fmt.Errorf("failed to pull upstream: %v", err)
 	}
-	
+
 	return nil
 }
 
 // IsClean checks if the working directory is clean
 func (m *GitHubManager) IsClean() (bool, error) {
 	r, err := git.PlainOpen(m.repoPath)
-	if err != nil { return false, err }
+	if err != nil {
+		return false, err
+	}
 	w, err := r.Worktree()
-	if err != nil { return false, err }
+	if err != nil {
+		return false, err
+	}
 	status, err := w.Status()
-	if err != nil { return false, err }
+	if err != nil {
+		return false, err
+	}
 	return status.IsClean(), nil
 }
 
 // SwitchToUpstream switches to the tracked upstream branch
 func (m *GitHubManager) SwitchToUpstream() error {
 	r, err := git.PlainOpen(m.repoPath)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	w, err := r.Worktree()
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	return w.Checkout(&git.CheckoutOptions{
 		Branch: plumbing.NewBranchReferenceName(m.UpstreamBranch),
 	})
@@ -250,12 +268,18 @@ func (m *GitHubManager) SwitchToUpstream() error {
 // StageAndCommit adds all changes and commits them
 func (m *GitHubManager) StageAndCommit(message string) error {
 	r, err := git.PlainOpen(m.repoPath)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	w, err := r.Worktree()
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	_, err = w.Add(".")
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	_, err = w.Commit(message, &git.CommitOptions{
 		Author: &object.Signature{
@@ -270,7 +294,9 @@ func (m *GitHubManager) StageAndCommit(message string) error {
 // PushCurrentBranch pushes the current branch to origin
 func (m *GitHubManager) PushCurrentBranch() error {
 	r, err := git.PlainOpen(m.repoPath)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	return r.Push(&git.PushOptions{
 		RemoteName: "origin",
@@ -281,11 +307,15 @@ func (m *GitHubManager) PushCurrentBranch() error {
 // OpenPullRequest creates a PR from current branch to upstream base
 func (m *GitHubManager) OpenPullRequest(title, body string) (string, error) {
 	branch, err := m.GetCurrentBranch()
-	if err != nil { return "", err }
-	
+	if err != nil {
+		return "", err
+	}
+
 	// Determine Head prefix
 	r, err := git.PlainOpen(m.repoPath)
-	if err != nil { return "", err }
+	if err != nil {
+		return "", err
+	}
 	remote, err := r.Remote("origin")
 	headPrefix := *m.user.Login
 	if err == nil && len(remote.Config().URLs) > 0 {
@@ -299,26 +329,34 @@ func (m *GitHubManager) OpenPullRequest(title, body string) (string, error) {
 	newPR := &github.NewPullRequest{
 		Title:               github.String(title),
 		Head:                github.String(headPrefix + ":" + branch),
-		Base:                github.String(m.UpstreamBranch), 
+		Base:                github.String(m.UpstreamBranch),
 		Body:                github.String(body + "\n\n*Created with MBII Foundry*"),
 		MaintainerCanModify: github.Bool(true),
 	}
 
 	pr, _, err := m.client.PullRequests.Create(ctx, m.baseRepoOwner, m.baseRepoName, newPR)
-	if err != nil { return "", err }
+	if err != nil {
+		return "", err
+	}
 	return *pr.HTMLURL, nil
 }
 
 // CreateBranch creates a new branch from current HEAD
 func (m *GitHubManager) CreateBranch(branchName string) error {
 	r, err := git.PlainOpen(m.repoPath)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	w, err := r.Worktree()
-	if err != nil { return err }
-	
+	if err != nil {
+		return err
+	}
+
 	headRef, err := r.Head()
-	if err != nil { return err }
-	
+	if err != nil {
+		return err
+	}
+
 	return w.Checkout(&git.CheckoutOptions{
 		Hash:   headRef.Hash(),
 		Branch: plumbing.NewBranchReferenceName(branchName),
@@ -334,22 +372,34 @@ func (m *GitHubManager) CreateContribution(branchName, title, description string
 	m.SwitchToUpstream()
 	// Ignore error: if we can't switch (conflict), we might just branch off current.
 
-	if err := m.CreateBranch(branchName); err != nil { return "", err }
-	if err := m.StageAndCommit(title); err != nil { return "", err }
-	if err := m.PushCurrentBranch(); err != nil { return "", err }
+	if err := m.CreateBranch(branchName); err != nil {
+		return "", err
+	}
+	if err := m.StageAndCommit(title); err != nil {
+		return "", err
+	}
+	if err := m.PushCurrentBranch(); err != nil {
+		return "", err
+	}
 	return m.OpenPullRequest(title, description)
 }
 
 // GetStatus returns a list of modified files
 func (m *GitHubManager) GetStatus() ([]string, error) {
 	r, err := git.PlainOpen(m.repoPath)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 
 	w, err := r.Worktree()
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 
 	status, err := w.Status()
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 
 	var changedFiles []string
 	for file, s := range status {
@@ -363,10 +413,14 @@ func (m *GitHubManager) GetStatus() ([]string, error) {
 // GetCurrentBranch returns the name of the currently checked out branch
 func (m *GitHubManager) GetCurrentBranch() (string, error) {
 	r, err := git.PlainOpen(m.repoPath)
-	if err != nil { return "", err }
+	if err != nil {
+		return "", err
+	}
 
 	head, err := r.Head()
-	if err != nil { return "", err }
+	if err != nil {
+		return "", err
+	}
 
 	if head.Name().IsBranch() {
 		return head.Name().Short(), nil
@@ -377,10 +431,14 @@ func (m *GitHubManager) GetCurrentBranch() (string, error) {
 // CheckoutBranch switches to an existing branch
 func (m *GitHubManager) CheckoutBranch(branchName string) error {
 	r, err := git.PlainOpen(m.repoPath)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	w, err := r.Worktree()
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	return w.Checkout(&git.CheckoutOptions{
 		Branch: plumbing.NewBranchReferenceName(branchName),

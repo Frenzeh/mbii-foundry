@@ -12,23 +12,23 @@ import (
 )
 
 type AttributeGrid struct {
-	container *fyne.Container
-	content   *fyne.Container
-	values    map[string]int
-	onChange  func(string)
-	onHover   func(string, string)
+	container   *fyne.Container
+	content     *fyne.Container
+	values      map[string]int
+	onChange    func(string)
+	onHover     func(string, string)
 	resolveIcon func(string) fyne.Resource // New callback
-	
-	filter    string
-	search    *widget.Entry
+
+	filter string
+	search *widget.Entry
 }
 
 func NewAttributeGrid(initialStr string, onChange func(string), onHover func(string, string), resolveIcon func(string) fyne.Resource) *AttributeGrid {
 	InitDefinitions() // Ensure docs are loaded
 	ag := &AttributeGrid{
-		values:   parseAttributesString(initialStr),
-		onChange: onChange,
-		onHover:  onHover,
+		values:      parseAttributesString(initialStr),
+		onChange:    onChange,
+		onHover:     onHover,
 		resolveIcon: resolveIcon,
 	}
 	ag.createUI()
@@ -38,34 +38,34 @@ func NewAttributeGrid(initialStr string, onChange func(string), onHover func(str
 func (ag *AttributeGrid) createUI() {
 	// Group by Category
 	categories := make(map[string][]AttributeDef)
-	attributes := GetAttributes() 
+	attributes := GetAttributes()
 	for _, attr := range attributes {
 		categories[attr.Category] = append(categories[attr.Category], attr)
 	}
 
 	// Order of categories
 	catOrder := []string{"General", "Weapons", "Class Specific", "Force", "Saber"}
-	
+
 	// Re-use existing container if possible, or create new
 	var content *fyne.Container
-	
+
 	if ag.container != nil {
 		content = ag.content
 		content.Objects = nil // Clear existing grid items
 	} else {
 		content = container.NewVBox()
 		ag.content = content
-		
+
 		ag.search = widget.NewEntry()
 		ag.search.SetPlaceHolder("Filter Attributes...")
 		ag.search.OnChanged = func(s string) {
 			ag.filter = s
 			ag.Refresh() // Rerender grid
 		}
-		
+
 		scroll := container.NewVScroll(content)
 		// scroll.SetMinSize(fyne.NewSize(0, 300)) // handled by parent layout mostly
-		
+
 		ag.container = container.NewBorder(ag.search, nil, nil, nil, scroll)
 	}
 
@@ -73,19 +73,23 @@ func (ag *AttributeGrid) createUI() {
 
 	for _, catName := range catOrder {
 		attrs, ok := categories[catName]
-		if !ok { continue }
-		
+		if !ok {
+			continue
+		}
+
 		// Filter attributes for this category
 		var visibleAttrs []AttributeDef
 		for _, attr := range attrs {
-			if filterLower == "" || 
-			   strings.Contains(strings.ToLower(attr.Name), filterLower) || 
-			   strings.Contains(strings.ToLower(attr.ID), filterLower) {
+			if filterLower == "" ||
+				strings.Contains(strings.ToLower(attr.Name), filterLower) ||
+				strings.Contains(strings.ToLower(attr.ID), filterLower) {
 				visibleAttrs = append(visibleAttrs, attr)
 			}
 		}
-		
-		if len(visibleAttrs) == 0 { continue }
+
+		if len(visibleAttrs) == 0 {
+			continue
+		}
 
 		// Category Header
 		header := widget.NewLabelWithStyle(catName, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
@@ -115,7 +119,7 @@ func (ag *AttributeGrid) createAttributeItem(attr AttributeDef) fyne.CanvasObjec
 	w := NewAttributeToggleWidget(attr, currentVal, func(newVal int) {
 		ag.updateValue(attr.ID, newVal)
 	}, ag.onHover, icon)
-	
+
 	return w
 }
 
@@ -149,8 +153,10 @@ func (ag *AttributeGrid) TriggerChange() {
 
 func parseAttributesString(s string) map[string]int {
 	res := make(map[string]int)
-	if s == "" { return res }
-	
+	if s == "" {
+		return res
+	}
+
 	// Format: MB_ATT_X,1|MB_ATT_Y,2
 	parts := strings.Split(s, "|")
 	for _, part := range parts {

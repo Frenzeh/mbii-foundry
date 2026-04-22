@@ -20,9 +20,9 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-	"fyne.io/fyne/v2/layout"
 	"github.com/ftrvxmtrx/tga"
 	"github.com/nfnt/resize"
 )
@@ -45,14 +45,14 @@ const (
 )
 
 var QuickNavPaths = map[string]string{
-	"Player Models":       "models/players",
-	"Weapons":             "models/weapons2",
-	"Characters (MBCH)":   "ext_data/mb2/character",
-	"Sabers (SAB)":        "ext_data/sabers",
-	"Vehicles (VEH)":      "ext_data/vehicles",
-	"GFX - 2D":            "gfx/2d",
-	"GFX - HUD":           "gfx/hud",
-	"Effects":             "effects",
+	"Player Models":     "models/players",
+	"Weapons":           "models/weapons2",
+	"Characters (MBCH)": "ext_data/mb2/character",
+	"Sabers (SAB)":      "ext_data/sabers",
+	"Vehicles (VEH)":    "ext_data/vehicles",
+	"GFX - 2D":          "gfx/2d",
+	"GFX - HUD":         "gfx/hud",
+	"Effects":           "effects",
 }
 
 type AssetEntry struct {
@@ -76,12 +76,12 @@ type AssetBrowser struct {
 	searchEntry    *widget.Entry
 	statusLabel    *widget.Label
 	topBar         *fyne.Container // Exposed for visibility toggling
-	
+
 	// View Controls
 	viewModeSelect *widget.Select
 	zoomSlider     *widget.Slider
 	sortSelect     *widget.Select
-	
+
 	gamedataPath   string
 	textAssetsPath string // New
 	pk3Files       []string
@@ -89,30 +89,32 @@ type AssetBrowser struct {
 	assets         map[string]*AssetEntry
 	rootEntries    []*AssetEntry
 	currentDir     *AssetEntry
-	
+
 	onAssetSelected func(asset *AssetEntry)
 	onAssetDouble   func(asset *AssetEntry) // New double-click handler
-	
+
 	md3viewPath string
 	loadLock    sync.Mutex
-	
+
 	favorites     []string
 	favoritesFile string
-	
+
 	viewMode ViewMode
 	sortMode SortMode
 	iconSize float32
-	
+
 	vfs *VirtualFileSystem
 }
 
 type ViewMode string
+
 const (
 	ViewModeGrid ViewMode = "Grid"
 	ViewModeList ViewMode = "List"
 )
 
 type SortMode string
+
 const (
 	SortNameAsc  SortMode = "Name (A-Z)"
 	SortNameDesc SortMode = "Name (Z-A)"
@@ -133,11 +135,11 @@ func NewAssetBrowser(gamedataPath, textAssetsPath string) *AssetBrowser {
 		iconSize:       100.0,
 		vfs:            NewVirtualFileSystem(gamedataPath, textAssetsPath),
 	}
-	
+
 	configDir, _ := os.UserConfigDir()
 	ab.favoritesFile = filepath.Join(configDir, "mbii-fa-creator", "favorites.json")
 	ab.loadFavorites()
-	
+
 	ab.loadConfig()
 	ab.scanPK3Files()
 	ab.createUI()
@@ -154,7 +156,9 @@ func (ab *AssetBrowser) SetPaths(gamedata, textAssets string) {
 
 func (ab *AssetBrowser) loadFavorites() {
 	data, err := os.ReadFile(ab.favoritesFile)
-	if err == nil { json.Unmarshal(data, &ab.favorites) }
+	if err == nil {
+		json.Unmarshal(data, &ab.favorites)
+	}
 }
 
 func (ab *AssetBrowser) saveFavorites() {
@@ -163,7 +167,11 @@ func (ab *AssetBrowser) saveFavorites() {
 }
 
 func (ab *AssetBrowser) addToFavorites(path string) {
-	for _, f := range ab.favorites { if f == path { return } }
+	for _, f := range ab.favorites {
+		if f == path {
+			return
+		}
+	}
 	ab.favorites = append(ab.favorites, path)
 	ab.saveFavorites()
 	ab.refreshSources()
@@ -173,7 +181,9 @@ func (ab *AssetBrowser) loadConfig() {
 	configPath := filepath.Join(ab.gamedataPath, "..", "mbii-foundry_config.json")
 	data, err := os.ReadFile(configPath)
 	if err == nil {
-		var config struct { MD3ViewPath string `json:"md3view_path"` }
+		var config struct {
+			MD3ViewPath string `json:"md3view_path"`
+		}
 		json.Unmarshal(data, &config)
 		ab.md3viewPath = config.MD3ViewPath
 	}
@@ -181,14 +191,16 @@ func (ab *AssetBrowser) loadConfig() {
 
 func (ab *AssetBrowser) scanPK3Files() {
 	ab.pk3Files = []string{}
-	if ab.gamedataPath == "" { return }
-	
+	if ab.gamedataPath == "" {
+		return
+	}
+
 	// Search candidate directories
 	candidates := []string{ab.gamedataPath} // The path itself
 	candidates = append(candidates, filepath.Join(ab.gamedataPath, "MBII"))
 	candidates = append(candidates, filepath.Join(ab.gamedataPath, "MBIITest"))
 	candidates = append(candidates, filepath.Join(ab.gamedataPath, "base"))
-	
+
 	// Also check parent if user selected MBII folder directly
 	parent := filepath.Dir(ab.gamedataPath)
 	if filepath.Base(ab.gamedataPath) == "MBII" || filepath.Base(ab.gamedataPath) == "MBIITest" {
@@ -212,7 +224,7 @@ func (ab *AssetBrowser) scanPK3Files() {
 
 func (ab *AssetBrowser) refreshSources() {
 	sources := []string{"Home", "Computer", "All Game Data (Virtual)", "--- Locations ---"}
-	
+
 	// 1. Detect Cloud Storage (macOS specific mainly, but useful)
 	homeDir, _ := os.UserHomeDir()
 	cloudStoragePath := filepath.Join(homeDir, "Library", "CloudStorage")
@@ -233,13 +245,13 @@ func (ab *AssetBrowser) refreshSources() {
 			}
 		}
 	}
-	
+
 	// 3. Workspace Root (Parent of gamedata)
 	if ab.gamedataPath != "" {
 		workspace := filepath.Dir(ab.gamedataPath)
 		sources = append(sources, "Workspace: "+filepath.Base(workspace))
 	}
-	
+
 	if ab.textAssetsPath != "" {
 		sources = append(sources, "TextAssets")
 	}
@@ -249,12 +261,14 @@ func (ab *AssetBrowser) refreshSources() {
 		sources = append(sources, "--- Favorites ---")
 		sources = append(sources, ab.favorites...)
 	}
-	
+
 	sources = append(sources, "--- PK3s ---")
 	pk3Names := make([]string, len(ab.pk3Files))
-	for i, p := range ab.pk3Files { pk3Names[i] = filepath.Base(p) }
+	for i, p := range ab.pk3Files {
+		pk3Names[i] = filepath.Base(p)
+	}
 	sources = append(sources, pk3Names...)
-	
+
 	ab.sourceSelect.Options = sources
 	ab.sourceSelect.Refresh()
 }
@@ -267,7 +281,7 @@ func (ab *AssetBrowser) createUI() {
 			homeDir, _ := os.UserHomeDir()
 			ab.loadFS(homeDir)
 		} else if s == "Computer" {
-			ab.loadFS("/") 
+			ab.loadFS("/")
 		} else if s == "TextAssets" {
 			if ab.textAssetsPath != "" {
 				ab.loadFS(ab.textAssetsPath)
@@ -297,18 +311,22 @@ func (ab *AssetBrowser) createUI() {
 					break
 				}
 			}
-			if isFav { return }
+			if isFav {
+				return
+			}
 
 			// Check PK3s
-			for _, p := range ab.pk3Files { 
-				if filepath.Base(p) == s { 
+			for _, p := range ab.pk3Files {
+				if filepath.Base(p) == s {
 					ab.loadPK3(p)
 					return
-				} 
+				}
 			}
-			
+
 			// Fallback: try to load as path if it looks like one
-			if filepath.IsAbs(s) { ab.loadFS(s) }
+			if filepath.IsAbs(s) {
+				ab.loadFS(s)
+			}
 		}
 	})
 	ab.sourceSelect.PlaceHolder = "Select Source..."
@@ -322,25 +340,35 @@ func (ab *AssetBrowser) createUI() {
 	favBtn.Importance = widget.LowImportance
 
 	navOptions := make([]string, 0, len(QuickNavPaths))
-	for k := range QuickNavPaths { navOptions = append(navOptions, k) }
+	for k := range QuickNavPaths {
+		navOptions = append(navOptions, k)
+	}
 	sort.Strings(navOptions)
 	ab.quickNavSelect = widget.NewSelect(navOptions, func(s string) {
-		if path, ok := QuickNavPaths[s]; ok { ab.navigateToPath(path) }
+		if path, ok := QuickNavPaths[s]; ok {
+			ab.navigateToPath(path)
+		}
 	})
 	ab.quickNavSelect.PlaceHolder = "Quick Nav..."
 
-	ab.searchEntry = widget.NewEntry(); ab.searchEntry.SetPlaceHolder("Search..."); ab.searchEntry.OnChanged = func(s string) { ab.filterGrid(s) }
+	ab.searchEntry = widget.NewEntry()
+	ab.searchEntry.SetPlaceHolder("Search...")
+	ab.searchEntry.OnChanged = func(s string) { ab.filterGrid(s) }
 
 	// View Controls
 	ab.viewModeSelect = widget.NewSelect([]string{string(ViewModeGrid), string(ViewModeList)}, func(s string) {
 		ab.viewMode = ViewMode(s)
-		if ab.currentDir != nil { ab.loadGrid(ab.currentDir) }
+		if ab.currentDir != nil {
+			ab.loadGrid(ab.currentDir)
+		}
 	})
 	ab.viewModeSelect.SetSelected(string(ab.viewMode))
-	
+
 	ab.sortSelect = widget.NewSelect([]string{string(SortNameAsc), string(SortNameDesc), string(SortSizeAsc), string(SortSizeDesc), string(SortType)}, func(s string) {
 		ab.sortMode = SortMode(s)
-		if ab.currentDir != nil { ab.loadGrid(ab.currentDir) }
+		if ab.currentDir != nil {
+			ab.loadGrid(ab.currentDir)
+		}
 	})
 	ab.sortSelect.SetSelected(string(ab.sortMode))
 
@@ -354,7 +382,7 @@ func (ab *AssetBrowser) createUI() {
 	ab.topBar = container.NewVBox(
 		container.NewBorder(nil, nil, nil, favBtn, ab.sourceSelect),
 		container.NewGridWithColumns(3, ab.quickNavSelect, ab.viewModeSelect, ab.sortSelect),
-		container.NewBorder(nil, nil, widget.NewLabel("Zoom"), nil, ab.zoomSlider), 
+		container.NewBorder(nil, nil, widget.NewLabel("Zoom"), nil, ab.zoomSlider),
 		ab.searchEntry,
 	)
 
@@ -363,18 +391,28 @@ func (ab *AssetBrowser) createUI() {
 			entry := ab.assets[id]
 			if id == "" { // Root
 				ids := []widget.TreeNodeID{}
-				for _, e := range ab.rootEntries { if e.IsDir { ids = append(ids, e.Path) } }
+				for _, e := range ab.rootEntries {
+					if e.IsDir {
+						ids = append(ids, e.Path)
+					}
+				}
 				return ids
 			}
 			if entry != nil {
 				ids := []widget.TreeNodeID{}
-				for _, child := range entry.Children { if child.IsDir { ids = append(ids, child.Path) } }
+				for _, child := range entry.Children {
+					if child.IsDir {
+						ids = append(ids, child.Path)
+					}
+				}
 				return ids
 			}
 			return nil
 		},
 		func(id widget.TreeNodeID) bool { return true },
-		func(branch bool) fyne.CanvasObject { return container.NewHBox(widget.NewIcon(theme.FolderIcon()), widget.NewLabel("Dir")) },
+		func(branch bool) fyne.CanvasObject {
+			return container.NewHBox(widget.NewIcon(theme.FolderIcon()), widget.NewLabel("Dir"))
+		},
 		func(id widget.TreeNodeID, branch bool, obj fyne.CanvasObject) {
 			if entry, ok := ab.assets[id]; ok {
 				obj.(*fyne.Container).Objects[1].(*widget.Label).SetText(entry.Name)
@@ -396,7 +434,9 @@ func (ab *AssetBrowser) createUI() {
 				}
 			} else {
 				// Single click on file in tree, select it
-				if ab.onAssetSelected != nil { ab.onAssetSelected(entry) }
+				if ab.onAssetSelected != nil {
+					ab.onAssetSelected(entry)
+				}
 			}
 		}
 	}
@@ -423,18 +463,27 @@ func (ab *AssetBrowser) updateGridSize() {
 func (ab *AssetBrowser) sortAssets(assets []*AssetEntry) {
 	sort.Slice(assets, func(i, j int) bool {
 		a, b := assets[i], assets[j]
-		// Always keep directories first? 
-		if a.IsDir != b.IsDir { return a.IsDir }
-		
+		// Always keep directories first?
+		if a.IsDir != b.IsDir {
+			return a.IsDir
+		}
+
 		switch ab.sortMode {
-		case SortNameAsc: return strings.ToLower(a.Name) < strings.ToLower(b.Name)
-		case SortNameDesc: return strings.ToLower(a.Name) > strings.ToLower(b.Name)
-		case SortSizeAsc: return a.Size < b.Size
-		case SortSizeDesc: return a.Size > b.Size
-		case SortType: 
-			if a.Type != b.Type { return a.Type < b.Type }
+		case SortNameAsc:
 			return strings.ToLower(a.Name) < strings.ToLower(b.Name)
-		default: return strings.ToLower(a.Name) < strings.ToLower(b.Name)
+		case SortNameDesc:
+			return strings.ToLower(a.Name) > strings.ToLower(b.Name)
+		case SortSizeAsc:
+			return a.Size < b.Size
+		case SortSizeDesc:
+			return a.Size > b.Size
+		case SortType:
+			if a.Type != b.Type {
+				return a.Type < b.Type
+			}
+			return strings.ToLower(a.Name) < strings.ToLower(b.Name)
+		default:
+			return strings.ToLower(a.Name) < strings.ToLower(b.Name)
 		}
 	})
 }
@@ -457,14 +506,19 @@ func (ab *AssetBrowser) loadPK3(pk3Path string) {
 	ab.grid.Objects = nil
 
 	reader, err := zip.OpenReader(pk3Path)
-	if err != nil { ab.statusLabel.SetText("Error opening PK3"); return }
+	if err != nil {
+		ab.statusLabel.SetText("Error opening PK3")
+		return
+	}
 	defer reader.Close()
 
 	dirMap := make(map[string]*AssetEntry)
 
 	for _, file := range reader.File {
 		path := file.Name
-		if strings.HasSuffix(path, "/") { continue }
+		if strings.HasSuffix(path, "/") {
+			continue
+		}
 
 		entry := &AssetEntry{
 			Name: filepath.Base(path), Path: path, Size: int64(file.UncompressedSize64),
@@ -474,7 +528,9 @@ func (ab *AssetBrowser) loadPK3(pk3Path string) {
 
 		dir := filepath.Dir(path)
 		ab.ensureDirectory(dirMap, dir, pk3Path)
-		if parent, ok := dirMap[dir]; ok { parent.Children = append(parent.Children, entry) }
+		if parent, ok := dirMap[dir]; ok {
+			parent.Children = append(parent.Children, entry)
+		}
 	}
 
 	for _, entry := range dirMap {
@@ -483,14 +539,16 @@ func (ab *AssetBrowser) loadPK3(pk3Path string) {
 		}
 		ab.assets[entry.Path] = entry
 	}
-	
+
 	ab.statusLabel.SetText(fmt.Sprintf("Loaded %d assets", len(ab.assets)))
 	ab.tree.Refresh()
 }
 
 func (ab *AssetBrowser) ensureDirectory(dirMap map[string]*AssetEntry, path, pk3Source string) {
-	if _, exists := dirMap[path]; exists || path == "." { return }
-	
+	if _, exists := dirMap[path]; exists || path == "." {
+		return
+	}
+
 	entry := &AssetEntry{Name: filepath.Base(path), Path: path, Type: AssetTypeOther, PK3Source: pk3Source, IsDir: true, Children: []*AssetEntry{}}
 	dirMap[path] = entry
 	ab.assets[path] = entry
@@ -508,26 +566,28 @@ func (ab *AssetBrowser) ensureDirectory(dirMap map[string]*AssetEntry, path, pk3
 
 func (ab *AssetBrowser) loadGrid(dir *AssetEntry) {
 	ab.currentDir = dir
-	
+
 	ab.grid.Objects = nil
 	ab.grid.Refresh()
-	
+
 	ab.loadLock.Lock()
 	defer ab.loadLock.Unlock()
-	
+
 	var objects []fyne.CanvasObject
-	
+
 	// Add ".." (Parent Directory) if not at root
 	if dir.Path != "" && dir.Path != "." {
 		if ab.currentPK3 != "" {
 			parentPath := filepath.Dir(dir.Path)
-			if parentPath == "." { parentPath = "" } // Fix parent of top-level folders
+			if parentPath == "." {
+				parentPath = ""
+			} // Fix parent of top-level folders
 			parentDir := ab.assets[parentPath]
-			
+
 			// For VFS, ensure we have a parent entry even if not cached
 			if parentDir == nil && ab.currentPK3 == "VFS" {
 				parentDir = &AssetEntry{Name: "(Parent)", Path: parentPath, IsDir: true, PK3Source: "VFS"}
-			} else if parentDir == nil { 
+			} else if parentDir == nil {
 				parentDir = &AssetEntry{Name: "(Parent)", Path: parentPath, IsDir: true, PK3Source: ab.currentPK3}
 			}
 			objects = append(objects, ab.createGridItem(parentDir, true))
@@ -542,7 +602,7 @@ func (ab *AssetBrowser) loadGrid(dir *AssetEntry) {
 	for _, child := range children {
 		objects = append(objects, ab.createGridItem(child, false))
 	}
-	
+
 	ab.updateGridSize() // Ensure layout is correct
 	ab.grid.Objects = objects
 	ab.grid.Refresh()
@@ -601,7 +661,7 @@ func (g *GridItem) CreateRenderer() fyne.WidgetRenderer {
 	img := widget.NewIcon(g.Icon)
 	lbl := widget.NewLabel(g.Text)
 	lbl.TextStyle = fyne.TextStyle{Monospace: true}
-	
+
 	var c *fyne.Container
 	if g.ViewMode == ViewModeList {
 		lbl.Alignment = fyne.TextAlignLeading
@@ -611,8 +671,8 @@ func (g *GridItem) CreateRenderer() fyne.WidgetRenderer {
 		lbl.Wrapping = fyne.TextTruncate
 		c = container.NewBorder(nil, lbl, nil, nil, img)
 	}
-	
-	// Add a background for hover effect? 
+
+	// Add a background for hover effect?
 	// For now simple transparent item.
 	// To add hover: wrap in a custom container or use Hoverable.
 	// Standard widget.Button handles this nicely.
@@ -622,11 +682,15 @@ func (g *GridItem) CreateRenderer() fyne.WidgetRenderer {
 }
 
 func (g *GridItem) Tapped(_ *fyne.PointEvent) {
-	if g.OnTapped != nil { g.OnTapped() }
+	if g.OnTapped != nil {
+		g.OnTapped()
+	}
 }
 
 func (g *GridItem) DoubleTapped(_ *fyne.PointEvent) {
-	if g.OnDoubleTapped != nil { g.OnDoubleTapped() }
+	if g.OnDoubleTapped != nil {
+		g.OnDoubleTapped()
+	}
 }
 
 // createGridItem creates a clickable item for the asset grid
@@ -641,10 +705,12 @@ func (ab *AssetBrowser) createGridItem(entry *AssetEntry, isParent bool) fyne.Ca
 	}
 
 	item := NewGridItem(entry.Name, icon, func() {
-		if ab.onAssetSelected != nil { ab.onAssetSelected(entry) }
+		if ab.onAssetSelected != nil {
+			ab.onAssetSelected(entry)
+		}
 	})
 	item.ViewMode = ab.viewMode
-	
+
 	item.OnDoubleTapped = func() {
 		if entry.IsDir || isParent {
 			if entry.PK3Source == "" {
@@ -655,10 +721,12 @@ func (ab *AssetBrowser) createGridItem(entry *AssetEntry, isParent bool) fyne.Ca
 				ab.loadGrid(entry)
 			}
 		} else {
-			if ab.onAssetDouble != nil { ab.onAssetDouble(entry) }
+			if ab.onAssetDouble != nil {
+				ab.onAssetDouble(entry)
+			}
 		}
 	}
-	
+
 	return item
 }
 
@@ -678,16 +746,20 @@ func (ab *AssetBrowser) LoadIconResource(path string) fyne.Resource {
 		return fyne.NewStaticResource(filepath.Base(path), data)
 	}
 
-	if ab.vfs == nil { return nil }
-	
+	if ab.vfs == nil {
+		return nil
+	}
+
 	// 2. Load from VFS
 	rc, err := ab.vfs.ReadFile(path)
-	if err != nil { return nil }
+	if err != nil {
+		return nil
+	}
 	defer rc.Close()
-	
+
 	var img image.Image
 	ext := strings.ToLower(filepath.Ext(path))
-	
+
 	if ext == ".tga" {
 		img, err = tga.Decode(rc)
 	} else if ext == ".jpg" || ext == ".jpeg" {
@@ -698,9 +770,11 @@ func (ab *AssetBrowser) LoadIconResource(path string) fyne.Resource {
 		// Shaders? Not handled yet
 		return nil
 	}
-	
-	if err != nil || img == nil { return nil }
-	
+
+	if err != nil || img == nil {
+		return nil
+	}
+
 	// 3. Resize to Icon Size (e.g. 64x64 or 128x128)
 	// Larger for quality, smaller for speed. 128 is good.
 	// Use Thumbnail to preserve aspect ratio
@@ -708,11 +782,13 @@ func (ab *AssetBrowser) LoadIconResource(path string) fyne.Resource {
 
 	// 4. Encode to PNG and Cache
 	var buf bytes.Buffer
-	if err := png.Encode(&buf, img); err != nil { return nil }
-	
+	if err := png.Encode(&buf, img); err != nil {
+		return nil
+	}
+
 	data := buf.Bytes()
 	os.WriteFile(cachePath, data, 0644)
-	
+
 	return fyne.NewStaticResource(filepath.Base(path)+".png", data)
 }
 
@@ -731,13 +807,17 @@ func (ab *AssetBrowser) loadImage(asset *AssetEntry) image.Image {
 	} else if asset.PK3Source != "" && asset.PK3Source != "VFS" {
 		// Legacy PK3 loading
 		reader, err := zip.OpenReader(asset.PK3Source)
-		if err != nil { return nil }
+		if err != nil {
+			return nil
+		}
 		defer reader.Close()
-		
+
 		for _, f := range reader.File {
 			if f.Name == asset.Path {
 				rc, err := f.Open()
-				if err != nil { return nil }
+				if err != nil {
+					return nil
+				}
 				defer rc.Close()
 				return decodeImage(rc, asset.Name)
 			}
@@ -777,26 +857,30 @@ func (ab *AssetBrowser) filterGrid(text string) {
 	}
 
 	ab.grid.Objects = nil
-	
+
 	ab.loadLock.Lock()
 	defer ab.loadLock.Unlock()
-	
+
 	var objects []fyne.CanvasObject
 	textLower := strings.ToLower(text)
-	
+
 	count := 0
 	maxResults := 100
 
 	for _, entry := range ab.assets {
-		if count >= maxResults { break }
-		if entry.IsDir { continue }
-		
+		if count >= maxResults {
+			break
+		}
+		if entry.IsDir {
+			continue
+		}
+
 		if strings.Contains(strings.ToLower(entry.Name), textLower) {
 			objects = append(objects, ab.createGridItem(entry, false)) // Use new item creator
 			count++
 		}
 	}
-	
+
 	ab.grid.Objects = objects
 	ab.grid.Refresh()
 }
@@ -809,7 +893,7 @@ func (ab *AssetBrowser) navigateToPath(path string) {
 }
 
 func (ab *AssetBrowser) SetOnAssetSelected(f func(*AssetEntry)) { ab.onAssetSelected = f }
-func (ab *AssetBrowser) SetOnAssetDouble(f func(*AssetEntry)) { ab.onAssetDouble = f } // New method
+func (ab *AssetBrowser) SetOnAssetDouble(f func(*AssetEntry))   { ab.onAssetDouble = f } // New method
 
 func (ab *AssetBrowser) GetSelectedAsset() *AssetEntry {
 	// This method is primarily used by the custom file picker logic.
@@ -820,25 +904,27 @@ func (ab *AssetBrowser) GetSelectedAsset() *AssetEntry {
 func (ab *AssetBrowser) Refresh() { ab.scanPK3Files() }
 
 func (ab *AssetBrowser) loadVFS(path string) {
-	if ab.vfs == nil { return }
-	
+	if ab.vfs == nil {
+		return
+	}
+
 	// Ensure VFS is indexed (lazy load)
 	if len(ab.vfs.Index) == 0 {
 		ab.statusLabel.SetText("Indexing Game Assets...")
 		ab.vfs.Refresh()
 	}
-	
+
 	ab.currentPK3 = "VFS" // Marker
 	ab.assets = make(map[string]*AssetEntry)
 	ab.rootEntries = []*AssetEntry{}
 	ab.grid.Objects = nil
-	
+
 	contents, ok := ab.vfs.Directories[path]
 	if !ok && path != "" {
 		ab.statusLabel.SetText("Path not found in VFS")
-		return 
+		return
 	}
-	
+
 	// Create entries
 	for _, src := range contents {
 		entry := &AssetEntry{
@@ -855,12 +941,12 @@ func (ab *AssetBrowser) loadVFS(path string) {
 		ab.assets[entry.Path] = entry
 		ab.rootEntries = append(ab.rootEntries, entry)
 	}
-	
+
 	// Sort
 	ab.sortAssets(ab.rootEntries)
-	
+
 	ab.statusLabel.SetText(fmt.Sprintf("VFS: %s (%d items)", path, len(ab.rootEntries)))
-	
+
 	// Dummy entry for grid loading
 	dummyDir := &AssetEntry{Path: path, IsDir: true, Children: ab.rootEntries, PK3Source: "VFS"}
 	ab.loadGrid(dummyDir)
@@ -872,7 +958,7 @@ func (ab *AssetBrowser) loadFS(path string) {
 	ab.currentPK3 = "" // Not in a PK3
 	ab.assets = make(map[string]*AssetEntry)
 	ab.rootEntries = []*AssetEntry{}
-	
+
 	ab.grid.Objects = nil
 	ab.grid.Refresh()
 
@@ -887,40 +973,44 @@ func (ab *AssetBrowser) loadFS(path string) {
 	var fileEntries []*AssetEntry
 
 	for _, e := range entries {
-		if strings.HasPrefix(e.Name(), ".") { continue } // Skip hidden
-		
+		if strings.HasPrefix(e.Name(), ".") {
+			continue
+		} // Skip hidden
+
 		fullPath := filepath.Join(path, e.Name())
 		info, _ := e.Info()
 		size := int64(0)
 		isDir := e.IsDir()
-		
+
 		// Check symlinks
-		if !isDir && (e.Type() & os.ModeSymlink != 0) {
+		if !isDir && (e.Type()&os.ModeSymlink != 0) {
 			if targetInfo, err := os.Stat(fullPath); err == nil {
 				isDir = targetInfo.IsDir()
 			}
 		}
 
-		if info != nil { size = info.Size() }
-		
-		entry := &AssetEntry{
-			Name: e.Name(),
-			Path: fullPath,
-			Size: size,
-			Type: detectAssetType(fullPath),
-			PK3Source: "",
-			IsDir: isDir,
+		if info != nil {
+			size = info.Size()
 		}
-		
+
+		entry := &AssetEntry{
+			Name:      e.Name(),
+			Path:      fullPath,
+			Size:      size,
+			Type:      detectAssetType(fullPath),
+			PK3Source: "",
+			IsDir:     isDir,
+		}
+
 		ab.assets[fullPath] = entry
-		
+
 		if isDir {
 			dirEntries = append(dirEntries, entry)
 		} else {
 			fileEntries = append(fileEntries, entry)
 		}
 	}
-	
+
 	// Sort separately
 	// Use unified sorter
 	ab.sortAssets(dirEntries)
@@ -934,12 +1024,12 @@ func (ab *AssetBrowser) loadFS(path string) {
 		}
 		ab.rootEntries = append(ab.rootEntries, parentEntry)
 	}
-	
+
 	ab.rootEntries = append(ab.rootEntries, dirEntries...)
 	ab.rootEntries = append(ab.rootEntries, fileEntries...)
 
 	ab.statusLabel.SetText(fmt.Sprintf("Loaded %d items", len(ab.rootEntries)))
-	
+
 	// Hack: Set currentDir to a dummy entry containing these children
 	dummyDir := &AssetEntry{Path: path, IsDir: true, Children: ab.rootEntries}
 	ab.loadGrid(dummyDir)
@@ -948,11 +1038,17 @@ func (ab *AssetBrowser) loadFS(path string) {
 func detectAssetType(path string) AssetType {
 	ext := strings.ToLower(filepath.Ext(path))
 	switch ext {
-	case ".glm", ".md3": return AssetTypeModel
-	case ".jpg", ".tga", ".png": return AssetTypeTexture
-	case ".mbch": return AssetTypeCharacter
-	case ".sab": return AssetTypeSaber
-	case ".veh": return AssetTypeVehicle
-	default: return AssetTypeOther
+	case ".glm", ".md3":
+		return AssetTypeModel
+	case ".jpg", ".tga", ".png":
+		return AssetTypeTexture
+	case ".mbch":
+		return AssetTypeCharacter
+	case ".sab":
+		return AssetTypeSaber
+	case ".veh":
+		return AssetTypeVehicle
+	default:
+		return AssetTypeOther
 	}
 }

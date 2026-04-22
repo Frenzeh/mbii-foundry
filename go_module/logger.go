@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -41,7 +42,9 @@ func LogError(format string, v ...interface{}) {
 }
 
 func ShowError(err error, win fyne.Window) {
-	if err == nil { return }
+	if err == nil {
+		return
+	}
 	LogError("UI Error: %v", err)
 	dialog.ShowError(err, win)
 }
@@ -52,7 +55,7 @@ func SafeExecute(fn func(), win fyne.Window) {
 			stack := string(debug.Stack())
 			LogError("PANIC: %v\nStack: %s", r, stack)
 			msg := fmt.Sprintf("An unexpected error occurred:\n%v\n\nSee mbii-foundry.log for details.", r)
-			dialog.ShowError(fmt.Errorf(msg), win)
+			dialog.ShowError(errors.New(msg), win)
 		}
 	}()
 	fn()

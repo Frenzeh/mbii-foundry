@@ -2,25 +2,25 @@ package main
 
 import (
 	"fmt"
-	"path/filepath"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-	"fyne.io/fyne/v2/layout"
 )
 
 type BulkEditor struct {
 	container *container.Split
-	
+
 	files     []string
 	selection map[string]bool
-	
-	fileList  *widget.List
+
+	fileList    *widget.List
 	fieldSelect *widget.Select
 	valueEntry  *widget.Entry
 	applyBtn    *widget.Button
@@ -29,7 +29,7 @@ type BulkEditor struct {
 func NewBulkEditor() *BulkEditor {
 	be := &BulkEditor{
 		selection: make(map[string]bool),
-		files:     []string{}, 
+		files:     []string{},
 	}
 	be.createUI()
 	return be
@@ -46,7 +46,7 @@ func (be *BulkEditor) createUI() {
 			check := obj.(*fyne.Container).Objects[0].(*widget.Check)
 			check.Checked = be.selection[path]
 			check.OnChanged = func(b bool) { be.selection[path] = b }
-			
+
 			label := obj.(*fyne.Container).Objects[1].(*widget.Label)
 			label.SetText(filepath.Base(path))
 		},
@@ -55,7 +55,7 @@ func (be *BulkEditor) createUI() {
 	be.fieldSelect = widget.NewSelect([]string{"MaxHealth", "MaxArmor", "Speed", "ForcePool"}, nil)
 	be.valueEntry = widget.NewEntry()
 	be.valueEntry.SetPlaceHolder("New Value")
-	
+
 	be.applyBtn = widget.NewButtonWithIcon("Apply to Selected", theme.ConfirmIcon(), be.applyChanges)
 
 	controls := container.NewVBox(
@@ -97,21 +97,25 @@ func (be *BulkEditor) applyChanges() {
 
 func (be *BulkEditor) processFile(path string) error {
 	content, err := os.ReadFile(path)
-	if err != nil { return err } 
-	
+	if err != nil {
+		return err
+	}
+
 	lines := strings.Split(string(content), "\n")
 	var newLines []string
-	
+
 	fieldMap := map[string]string{
 		"MaxHealth": "maxhealth",
-		"MaxArmor": "maxarmor",
-		"Speed": "speed",
+		"MaxArmor":  "maxarmor",
+		"Speed":     "speed",
 		"ForcePool": "forcepool",
 	}
-	
+
 	targetKey := fieldMap[be.fieldSelect.Selected]
-	if targetKey == "" { return fmt.Errorf("invalid field") }
-	
+	if targetKey == "" {
+		return fmt.Errorf("invalid field")
+	}
+
 	val := be.valueEntry.Text
 
 	for _, line := range lines {
@@ -122,6 +126,6 @@ func (be *BulkEditor) processFile(path string) error {
 		}
 		newLines = append(newLines, line)
 	}
-	
+
 	return os.WriteFile(path, []byte(strings.Join(newLines, "\n")), 0644)
 }

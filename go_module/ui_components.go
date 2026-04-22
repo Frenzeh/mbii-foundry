@@ -75,9 +75,8 @@ func (h *HoverLabel) MouseIn(*desktop.MouseEvent) {
 	}
 }
 
-func (h *HoverLabel) MouseOut() {}
+func (h *HoverLabel) MouseOut()                      {}
 func (h *HoverLabel) MouseMoved(*desktop.MouseEvent) {}
-
 
 // MultiSelectWidget allows selecting multiple options from a list.
 type MultiSelectWidget struct {
@@ -169,12 +168,12 @@ func (ms *MultiSelectWidget) showSelectionDialog() {
 
 	// Manual implementation for filtering
 	containerBox := container.NewVBox()
-	
+
 	// Helper to render the list
 	renderList := func(filter string) {
 		containerBox.Objects = nil
 		filter = strings.ToLower(filter)
-		
+
 		// Sort options for stability
 		sortedOptions := make([]string, len(ms.options))
 		copy(sortedOptions, ms.options)
@@ -188,20 +187,20 @@ func (ms *MultiSelectWidget) showSelectionDialog() {
 					currentSelections[o] = b
 				})
 				chk.Checked = currentSelections[o]
-				
+
 				// Use HoverLabel for text
 				lbl := NewHoverLabel(o, func() {
 					if ms.onHover != nil {
 						ms.onHover(o)
 					}
 				})
-				
+
 				containerBox.Add(container.NewHBox(chk, lbl))
 			}
 		}
 		containerBox.Refresh()
 	}
-	
+
 	renderList("") // Initial render
 
 	searchEntry := widget.NewEntry()

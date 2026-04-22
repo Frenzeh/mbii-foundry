@@ -5,23 +5,23 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-	
+
 	"github.com/Frenzeh/mbii-foundry/parsers"
 )
 
 type ForceInfoUI struct {
-	editor *MBCHEditor
+	editor    *MBCHEditor
 	container *container.Split
-	
-	forceList *widget.List
+
+	forceList  *widget.List
 	detailForm *widget.Form
-	
+
 	forceToReplaceEntry *widget.Entry
-	iconEntry *widget.Entry
+	iconEntry           *widget.Entry
 	forcePowerNameEntry *widget.Entry
-	startSoundEntry *widget.Entry
-	loopSoundEntry *widget.Entry
-	
+	startSoundEntry     *widget.Entry
+	loopSoundEntry      *widget.Entry
+
 	currentForceIndex int
 }
 
@@ -45,22 +45,27 @@ func (ui *ForceInfoUI) createUI() {
 		ui.currentForceIndex = id
 		ui.loadForceDetails(id)
 	}
-	
+
 	addBtn := widget.NewButtonWithIcon("Add", theme.ContentAddIcon(), ui.addForce)
 	removeBtn := widget.NewButtonWithIcon("Remove", theme.ContentRemoveIcon(), ui.removeForce)
-	
+
 	listPane := container.NewBorder(
 		container.NewHBox(addBtn, removeBtn),
 		nil, nil, nil,
 		ui.forceList,
 	)
 
-	ui.forceToReplaceEntry = widget.NewEntry(); ui.forceToReplaceEntry.OnChanged = ui.onDetailChanged
-	ui.iconEntry = widget.NewEntry(); ui.iconEntry.OnChanged = ui.onDetailChanged
-	ui.forcePowerNameEntry = widget.NewEntry(); ui.forcePowerNameEntry.OnChanged = ui.onDetailChanged
-	ui.startSoundEntry = widget.NewEntry(); ui.startSoundEntry.OnChanged = ui.onDetailChanged
-	ui.loopSoundEntry = widget.NewEntry(); ui.loopSoundEntry.OnChanged = ui.onDetailChanged
-	
+	ui.forceToReplaceEntry = widget.NewEntry()
+	ui.forceToReplaceEntry.OnChanged = ui.onDetailChanged
+	ui.iconEntry = widget.NewEntry()
+	ui.iconEntry.OnChanged = ui.onDetailChanged
+	ui.forcePowerNameEntry = widget.NewEntry()
+	ui.forcePowerNameEntry.OnChanged = ui.onDetailChanged
+	ui.startSoundEntry = widget.NewEntry()
+	ui.startSoundEntry.OnChanged = ui.onDetailChanged
+	ui.loopSoundEntry = widget.NewEntry()
+	ui.loopSoundEntry.OnChanged = ui.onDetailChanged
+
 	ui.detailForm = widget.NewForm(
 		widget.NewFormItem("Force To Replace", ui.forceToReplaceEntry),
 		widget.NewFormItem("Icon", ui.iconEntry),
@@ -68,7 +73,7 @@ func (ui *ForceInfoUI) createUI() {
 		widget.NewFormItem("Start Sound", ui.startSoundEntry),
 		widget.NewFormItem("Loop Sound", ui.loopSoundEntry),
 	)
-	
+
 	ui.container = container.NewHSplit(listPane, container.NewVScroll(ui.detailForm))
 	ui.container.SetOffset(0.3)
 }
@@ -106,7 +111,7 @@ func (ui *ForceInfoUI) loadForceDetails(index int) {
 		ui.clearDetails()
 		return
 	}
-	
+
 	fi := ui.editor.character.ForceOverrides[index]
 	ui.forceToReplaceEntry.SetText(fi.ForceToReplace)
 	ui.iconEntry.SetText(fi.Icon)
@@ -124,8 +129,10 @@ func (ui *ForceInfoUI) clearDetails() {
 }
 
 func (ui *ForceInfoUI) onDetailChanged(s string) {
-	if ui.currentForceIndex == -1 || ui.currentForceIndex >= len(ui.editor.character.ForceOverrides) { return }
-	
+	if ui.currentForceIndex == -1 || ui.currentForceIndex >= len(ui.editor.character.ForceOverrides) {
+		return
+	}
+
 	fi := &ui.editor.character.ForceOverrides[ui.currentForceIndex]
 	fi.ForceToReplace = ui.forceToReplaceEntry.Text
 	fi.Icon = ui.iconEntry.Text

@@ -35,7 +35,7 @@ func (hc *HolocronClient) CheckAvailability() bool {
 		return false
 	}
 	defer resp.Body.Close()
-	
+
 	hc.Available = resp.StatusCode == 200
 	return hc.Available
 }
@@ -91,38 +91,44 @@ func (hc *HolocronClient) ShareFile(filename string, content string, fileType st
 	}
 
 	url := fmt.Sprintf("%s/api/share", hc.BaseURL)
-	
+
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
-	
+
 	// Add file content
 	part, err := writer.CreateFormFile("file", filename)
-	if err != nil { return "", err }
+	if err != nil {
+		return "", err
+	}
 	part.Write([]byte(content))
-	
+
 	// Add file type
 	writer.WriteField("type", fileType)
 	writer.Close()
 
 	client := &http.Client{Timeout: 2 * time.Second}
 	req, err := http.NewRequest("POST", url, body)
-	if err != nil { return "", err }
-	
+	if err != nil {
+		return "", err
+	}
+
 	req.Header.Set("Content-Type", writer.FormDataContentType())
-	
+
 	resp, err := client.Do(req)
-	if err != nil { return "", err }
+	if err != nil {
+		return "", err
+	}
 	defer resp.Body.Close()
 
 	respBody, _ := io.ReadAll(resp.Body)
-	
+
 	if resp.StatusCode != 200 {
 		return "", fmt.Errorf("upload failed: %s", string(respBody))
 	}
 
 	var result map[string]interface{}
 	json.Unmarshal(respBody, &result)
-	
+
 	if msg, ok := result["message"].(string); ok {
 		return msg, nil
 	}

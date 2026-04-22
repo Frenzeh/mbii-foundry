@@ -33,7 +33,7 @@ func (a *App) showSubmissionWizard() {
 	// 2. Prepare Form
 	currentBranch, _ := a.githubManager.GetCurrentBranch()
 	isAdvancedUser := currentBranch != "master" && currentBranch != a.githubManager.UpstreamBranch
-	
+
 	// Mode Selection (if on feature branch)
 	modeSelect := widget.NewSelect([]string{"Create New Request (Recommended)", "Update Current Branch"}, nil)
 	if isAdvancedUser {
@@ -45,16 +45,16 @@ func (a *App) showSubmissionWizard() {
 
 	titleEntry := widget.NewEntry()
 	titleEntry.PlaceHolder = "Brief summary of changes (e.g., Fix Clone Stats)"
-	
+
 	// Pre-fill title if updating existing branch?
 	if isAdvancedUser {
 		titleEntry.SetText("Update " + currentBranch)
 	}
-	
+
 	descEntry := widget.NewMultiLineEntry()
 	descEntry.PlaceHolder = "Detailed description of what you changed and why..."
 	descEntry.SetMinRowsVisible(5)
-	
+
 	prCheck := widget.NewCheck("Create Pull Request", nil)
 	prCheck.Checked = true
 
@@ -68,7 +68,7 @@ func (a *App) showSubmissionWizard() {
 
 	// 3. Submit Action
 	var subWindow fyne.Window
-	
+
 	submitBtn := widget.NewButtonWithIcon("Submit Contribution", theme.MailSendIcon(), func() {
 		if titleEntry.Text == "" {
 			dialog.ShowError(fmt.Errorf("Please provide a title/message."), a.mainWindow)
@@ -81,7 +81,7 @@ func (a *App) showSubmissionWizard() {
 		go func() {
 			var err error
 			var resultMsg string
-			
+
 			if modeSelect.Selected == "Update Current Branch" {
 				// Advanced Path: Commit -> Push -> Optional PR
 				err = a.githubManager.StageAndCommit(titleEntry.Text)
@@ -104,19 +104,21 @@ func (a *App) showSubmissionWizard() {
 				timestamp := time.Now().Format("20060102-150405")
 				safeTitle := strings.ReplaceAll(strings.ToLower(titleEntry.Text), " ", "-")
 				branchName := fmt.Sprintf("contrib/%s-%s", safeTitle, timestamp)
-				
+
 				var url string
 				url, err = a.githubManager.CreateContribution(branchName, titleEntry.Text, descEntry.Text)
 				resultMsg = "Pull Request created successfully!\n\n" + url
 			}
 
 			progress.Hide()
-			
+
 			if err != nil {
 				dialog.ShowError(err, a.mainWindow)
 			} else {
 				dialog.ShowInformation("Success!", resultMsg, a.mainWindow)
-				if subWindow != nil { subWindow.Close() }
+				if subWindow != nil {
+					subWindow.Close()
+				}
 			}
 		}()
 	})

@@ -1,0 +1,120 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            name: linux-amd64
+            binary: mbii-foundry
+            archive_ext: tar.gz
+          - os: macos-latest
+            name: macos-universal
+            binary: mbii-foundry
+            archive_ext: zip
+          - os: windows-latest
+            name: windows-amd64
+            binary: mbii-foundry.exe
+            archive_ext: zip
+    defaults:
+      run:
+        working-directory: go_module
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+          cache-dependency-path: go_module/go.sum
+
+      - name: Install Fyne system deps (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgl1-mesa-dev xorg-dev libasound2-dev \
+            libxxf86vm-dev libxrandr-dev libxinerama-dev \
+            libxcursor-dev libxi-dev
+
+      - name: Build (non-Windows)
+        if: runner.os != 'Windows'
+        run: go build -v -o ${{ matrix.binary }} -ldflags="-s -w"
+
+      - name: Build (Windows, GUI mode)
+        if: runner.os == 'Windows'
+        run: go build -v -o ${{ matrix.binary }} -ldflags="-s -w -H windowsgui"
+
+      - name: Package macOS .app bundle
+        if: runner.os == 'macOS'
+        working-directory: .
+        run: |
+          APP_BUNDLE="MBII Foundry.app"
+          mkdir -p "$APP_BUNDLE/Contents/MacOS" "$APP_BUNDLE/Contents/Resources"
+          cp go_module/mbii-foundry "$APP_BUNDLE/Contents/MacOS/"
+          cp macos/Info.plist "$APP_BUNDLE/Contents/"
+          cp macos/AppIcon.icns "$APP_BUNDLE/Contents/Resources/"
+          codesign -s - -f --deep "$APP_BUNDLE" || true
+          zip -qr "mbii-foundry-${{ matrix.name }}.zip" "$APP_BUNDLE"
+
+      - name: Package Linux tarball
+        if: runner.os == 'Linux'
+        working-directory: .
+        run: |
+          mkdir -p dist
+          cp go_module/mbii-foundry dist/
+          cp README.md LICENSE USER_GUIDE.md dist/
+          cp -r data definitions schemas templates dist/
+          tar -czf "mbii-foundry-${{ matrix.name }}.tar.gz" -C dist .
+
+      - name: Package Windows zip
+        if: runner.os == 'Windows'
+        working-directory: .
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path dist -Force | Out-Null
+          Copy-Item go_module/mbii-foundry.exe dist/
+          Copy-Item README.md, LICENSE, USER_GUIDE.md dist/
+          Copy-Item -Recurse data, definitions, schemas, templates dist/
+          Compress-Archive -Path dist/* -DestinationPath "mbii-foundry-${{ matrix.name }}.zip" -Force
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mbii-foundry-${{ matrix.name }}
+          path: |
+            mbii-foundry-${{ matrix.name }}.*
+
+  release:
+    name: Publish Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: List artifacts
+        run: ls -la artifacts/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-alpha') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-rc') }}

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Definitions Contribution Guide
+    url: https://github.com/Frenzeh/mbii-foundry/blob/main/docs/DEFINITIONS_GUIDE.md
+    about: Fixing enum descriptions — walk through the editing and submission flow here.
+  - name: MBII Discord
+    url: https://discord.gg/
+    about: Real-time questions about MBII gameplay and modding. (Update URL when public.)

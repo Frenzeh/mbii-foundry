@@ -294,15 +294,16 @@ func (a *App) setupUI() {
 	// updateMainLayout hides the whole label/icon pair for regular users.
 	a.holocronStatus = widget.NewIcon(theme.CancelIcon())
 
-	// Layout
+	// Left sidebar: just Assets now. The Info panel moved off the sidebar
+	// in favor of the right-side live-source view. Hover descriptions
+	// still fire — but via a transient tooltip popup (see
+	// showHoverTooltip) instead of a dedicated pane. The full Reference
+	// Library is still accessible via the 📖 toolbar button, which opens
+	// the InfoPanel as a modal.
 	assetsTab := container.NewTabItem("Assets", a.assetBrowser.GetContent())
 	assetsTab.Icon = theme.FolderOpenIcon()
 
-	infoTab := container.NewTabItem("Info", a.infoPanel.GetContent())
-	infoTab.Icon = theme.InfoIcon()
-
-	// Info first (default)
-	a.sideTabs = container.NewAppTabs(infoTab, assetsTab)
+	a.sideTabs = container.NewAppTabs(assetsTab)
 	a.sideTabs.SetTabLocation(container.TabLocationBottom)
 
 	// Initial "Home" Tab
@@ -390,6 +391,76 @@ func (a *App) toggleSidebar() {
 	a.mainWindow.Content().Refresh() // Force refresh of main window content
 }
 
+// showHoverTooltip is called from editors when the user hovers a field
+// with a known key (enum ID, attribute name, etc.). Pops up a small
+// transient panel near the bottom of the window with the resolved
+// markdown. Replaces the old "Context" tab on the right sidebar.
+func (a *App) showHoverTooltip(key, context string) {
+	if key == "" || a.infoPanel == nil {
+		return
+	}
+	// Reuse InfoPanel's lookup pipeline — same resolution logic as the
+	// full Library, just rendered into a transient popup.
+	a.infoPanel.ShowInfo(key, context)
+	// The InfoPanel's GetContent() is the Context+Library tabs. We
+	// can't stick that whole thing in a popup (too big). Render a
+	// compact popup with just the title + first paragraph.
+	go func() {
+		// Tiny delay to let ShowInfo's markdown settle.
+		time.Sleep(30 * time.Millisecond)
+		fyne.Do(func() {
+			a.renderHoverPopup(key, context)
+		})
+	}()
+}
+
+// Track the current hover popup so successive hovers replace it
+// instead of stacking.
+var currentHoverPopup *widget.PopUp
+
+func (a *App) renderHoverPopup(key, context string) {
+	// Dismiss any previous popup so hovers don't stack.
+	if currentHoverPopup != nil {
+		currentHoverPopup.Hide()
+		currentHoverPopup = nil
+	}
+
+	title := widget.NewLabelWithStyle(key, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	if context != "" {
+		title.SetText(key + " · " + context)
+	}
+
+	// Pull the rendered markdown from the InfoPanel (already resolved
+	// by ShowInfo above). We reuse it rather than re-resolving.
+	content := widget.NewRichText(a.infoPanel.content.Segments...)
+	content.Wrapping = fyne.TextWrapWord
+	scroll := container.NewVScroll(content)
+	scroll.SetMinSize(fyne.NewSize(360, 180))
+
+	card := container.NewBorder(title, nil, nil, nil, scroll)
+	pop := widget.NewPopUp(card, a.mainWindow.Canvas())
+	pop.Resize(fyne.NewSize(380, 220))
+	// Anchor to the bottom-right of the canvas so it doesn't cover the
+	// field the user is hovering.
+	canvasSize := a.mainWindow.Canvas().Size()
+	pos := fyne.NewPos(canvasSize.Width-400, canvasSize.Height-260)
+	pop.ShowAtPosition(pos)
+	currentHoverPopup = pop
+}
+
+// showLibraryModal opens the InfoPanel in a full-size dialog so users
+// can browse every known enum without dedicating sidebar space to it.
+func (a *App) showLibraryModal() {
+	if a.infoPanel == nil {
+		return
+	}
+	content := a.infoPanel.GetContent()
+	win := a.fyneApp.NewWindow("Reference Library")
+	win.SetContent(content)
+	win.Resize(fyne.NewSize(700, 700))
+	win.Show()
+}
+
 func (a *App) toggleSourcePanel() {
 	a.config.SourcePanelVisible = !a.config.SourcePanelVisible
 	if a.config.SourcePanelOffset <= 0 {
@@ -416,7 +487,7 @@ func (a *App) createNewFile(title string, editor interface{}) {
 
 	if ed, ok := editor.(Editor); ok {
 		ed.SetAssetBrowser(a.assetBrowser)
-		ed.SetOnHover(a.infoPanel.ShowInfo)
+		ed.SetOnHover(a.showHoverTooltip)
 		ed.SetHolocronClient(a.holocronClient)
 
 		tab := container.NewTabItem("Untitled "+title, ed.GetContent())
@@ -571,6 +642,7 @@ func (a *App) createToolbar() fyne.CanvasObject {
 		layout.NewSpacer(),
 
 		// Tools & View (Right)
+		btn(theme.DocumentIcon(), func() { a.showLibraryModal() }, "Reference Library (browse all enums + docs)"),
 		btn(theme.SettingsIcon(), func() { a.showPreferences() }, "Preferences"),
 		btn(theme.InfoIcon(), func() { a.showLogs() }, "Show Debug Logs"),
 		btn(theme.HelpIcon(), func() { a.showAbout() }, "About MBII Foundry"),
@@ -738,7 +810,7 @@ func (a *App) openFile() {
 			}
 
 			editor.SetAssetBrowser(a.assetBrowser)
-			editor.SetOnHover(a.infoPanel.ShowInfo)
+			editor.SetOnHover(a.showHoverTooltip)
 			editor.SetHolocronClient(a.holocronClient)
 
 			tab := container.NewTabItem(title, editor.GetContent())

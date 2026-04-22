@@ -244,6 +244,21 @@ func (e *VEHEditor) MarkClean()                     {}
 func (e *VEHEditor) SetOnDirtyChanged(f func(bool)) {}
 func (e *VEHEditor) IsDirty() bool                  { return false }
 
+// SourceProvider impl — SourcePanel's timer fallback handles refresh
+// since VEH doesn't have a markDirty/onChanged propagation chain yet.
+func (e *VEHEditor) GenerateSource() string {
+	if e.vehicle == nil {
+		return ""
+	}
+	e.updateVehicleFromUI()
+	content, err := parsers.GenerateVEH(e.vehicle)
+	if err != nil {
+		return "// generate error: " + err.Error()
+	}
+	return content
+}
+func (e *VEHEditor) SetOnSourceChanged(f func()) {}
+
 func (e *VEHEditor) WriteContent(w io.Writer) {
 	e.SaveToWriter(w)
 }

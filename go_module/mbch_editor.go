@@ -556,7 +556,20 @@ func (e *MBCHEditor) createUI() {
 
 	limitsForm := widget.NewForm(widget.NewFormItem("Class Limit", e.classLimitEntry), widget.NewFormItem("Respawn Time", e.respawnTimeEntry), widget.NewFormItem("Extra Lives", e.extraLivesEntry))
 	customBuildForm := widget.NewForm(widget.NewFormItem("", e.isCustomCheck), widget.NewFormItem("MB Points", e.mbPointsEntry))
-	profileTab := container.NewVBox(widget.NewCard("Identity", "", profileForm), widget.NewCard("Game Limits", "", limitsForm), widget.NewCard("Custom Build", "", customBuildForm), widget.NewCard("Description", "", e.descriptionEntry))
+	// Accordion instead of a stack of cards — users can collapse
+	// sections they aren't editing, making the scrollable area much
+	// shorter when you only care about a few fields. First item
+	// starts open so the common-case "edit name/class" flow is
+	// friction-free.
+	profileAccordion := widget.NewAccordion(
+		widget.NewAccordionItem("Identity", profileForm),
+		widget.NewAccordionItem("Game Limits", limitsForm),
+		widget.NewAccordionItem("Custom Build", customBuildForm),
+		widget.NewAccordionItem("Description", e.descriptionEntry),
+	)
+	profileAccordion.MultiOpen = true
+	profileAccordion.Open(0)
+	profileTab := container.NewVBox(profileAccordion)
 
 	statsForm := widget.NewForm(widget.NewFormItem("Max Health", e.healthEntry), widget.NewFormItem("Max Armor", e.armorEntry), widget.NewFormItem("Force Pool", e.forcePoolEntry), widget.NewFormItem("Force Regen", e.forceRegenEntry), widget.NewFormItem("Speed", e.speedEntry))
 
@@ -581,13 +594,19 @@ func (e *MBCHEditor) createUI() {
 		widget.NewFormItem("AS Mult", e.asMultEntry),
 		widget.NewFormItem("Class Flags", e.classFlagsSelect), // Use MultiSelect
 	)
-	combatAccordion := widget.NewAccordion(widget.NewAccordionItem("Saber Configuration", saberForm), widget.NewAccordionItem("Advanced Multipliers & Flags", advForm))
-
-	loadoutTab := container.NewVBox(
-		widget.NewCard("Vital Statistics", "", statsForm),
-		widget.NewCard("Raw Data", "", equipForm),
-		combatAccordion,
+	// Merge all Stats & Sabers sections into one accordion so the layout
+	// is consistent across tabs and users can collapse any section they
+	// don't care about in a given editing session.
+	statsAccordion := widget.NewAccordion(
+		widget.NewAccordionItem("Vital Statistics", statsForm),
+		widget.NewAccordionItem("Raw Data", equipForm),
+		widget.NewAccordionItem("Saber Configuration", saberForm),
+		widget.NewAccordionItem("Advanced Multipliers & Flags", advForm),
 	)
+	statsAccordion.MultiOpen = true
+	statsAccordion.Open(0) // Vital Statistics open by default
+
+	loadoutTab := container.NewVBox(statsAccordion)
 
 	weaponTab := e.weaponInfoUI.GetContent()
 	forceTab := e.forceInfoUI.GetContent()

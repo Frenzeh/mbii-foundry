@@ -1,8 +1,0 @@
-# Every file in this repo is owned by Frenzeh. Combined with branch
-# protection rules on `main` ("Require review from Code Owners"), this
-# means every change to main must be approved by Frenzeh — no matter
-# who opens the PR.
-#
-# See SECURITY.md for the full access model.
-
-* @Frenzeh

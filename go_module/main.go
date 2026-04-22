@@ -37,6 +37,7 @@ type App struct {
 
 	assetBrowser *AssetBrowser
 	infoPanel    *InfoPanel
+	sourcePanel  *SourcePanel
 
 	fileManager   *FileManager
 	githubManager *GitHubManager
@@ -69,6 +70,10 @@ type AppConfig struct {
 	SidebarOffset   float32      `json:"sidebar_offset"`
 	SidebarVisible  bool         `json:"sidebar_visible"`
 	SetupWizardSeen bool         `json:"setup_wizard_seen"`
+
+	// Right-side live source panel. Remembered across sessions.
+	SourcePanelVisible bool    `json:"source_panel_visible"`
+	SourcePanelOffset  float32 `json:"source_panel_offset"` // 0 = collapsed, 1 = full
 
 	// Pinned folder paths — shown as quick-select shortcuts in file pickers
 	// and path-entry fields so users don't have to navigate to the same
@@ -263,12 +268,23 @@ func (a *App) setupUI() {
 	a.assetBrowser = NewAssetBrowser(a.config.GamedataPath, a.config.TextAssetsPath)
 	a.infoPanel = NewInfoPanel()
 	a.infoPanel.SetHolocronClient(a.holocronClient)
+	a.sourcePanel = NewSourcePanel(a)
 
 	a.modpackManager = NewModpackManager(a)
 
 	// DocTabs setup
 	a.docTabs = container.NewDocTabs()
 	a.docTabs.OnClosed = a.closeTab
+	a.docTabs.OnSelected = func(tab *container.TabItem) {
+		// When the user switches tabs, point the live source panel
+		// at the newly-active editor. Home/welcome tabs aren't
+		// editors and show a placeholder in the source pane.
+		if editor, ok := a.editors[tab]; ok {
+			a.sourcePanel.SetActiveEditor(editor)
+		} else {
+			a.sourcePanel.SetActiveEditor(nil)
+		}
+	}
 	a.docTabs.SetTabLocation(container.TabLocationTop)
 
 	a.statusLabel = widget.NewLabel("Ready")
@@ -308,12 +324,24 @@ func (a *App) updateMainLayout() {
 	toggleBtn := widget.NewButtonWithIcon("", toggleIcon, func() { a.toggleSidebar() })
 	toggleBtn.Importance = widget.LowImportance
 
+	// Source-panel toggle. Icon flips open-eye / closed-eye style —
+	// using Fyne's built-ins since we don't ship custom icons.
+	var sourceIcon fyne.Resource = theme.VisibilityOffIcon()
+	if a.config.SourcePanelVisible {
+		sourceIcon = theme.VisibilityIcon()
+	}
+	sourceBtn := widget.NewButtonWithIcon("", sourceIcon, func() { a.toggleSourcePanel() })
+	sourceBtn.Importance = widget.LowImportance
+
 	// StatusBar container. The Holocron status indicator only surfaces in
 	// dev mode (set MBII_FOUNDRY_DEV=1); regular users see a clean status
 	// bar with no mention of internal tooling.
 	statusBarItems := []fyne.CanvasObject{
 		a.statusLabel,
 		layout.NewSpacer(),
+		widget.NewLabel("Source:"),
+		sourceBtn,
+		widget.NewSeparator(),
 		toggleBtn,
 	}
 	if a.holocronClient != nil {
@@ -325,14 +353,24 @@ func (a *App) updateMainLayout() {
 	}
 	statusBar := container.NewHBox(statusBarItems...)
 
-	var centerContent fyne.CanvasObject
-
+	// Layered center: docTabs (required), side panels (optional).
+	// The source panel lives on the right, sidebar on the left. Either
+	// or both can be hidden independently — persisted in config so
+	// preferences stick across launches.
+	var centerContent fyne.CanvasObject = a.docTabs
 	if a.sidebarVisible {
-		a.split = container.NewHSplit(a.docTabs, a.sideTabs)
-		a.split.SetOffset(float64(a.config.SidebarOffset)) // Use configured offset
+		a.split = container.NewHSplit(centerContent, a.sideTabs)
+		a.split.SetOffset(float64(a.config.SidebarOffset))
 		centerContent = a.split
-	} else {
-		centerContent = a.docTabs
+	}
+	if a.config.SourcePanelVisible && a.sourcePanel != nil {
+		sourceSplit := container.NewHSplit(centerContent, a.sourcePanel.GetContent())
+		offset := a.config.SourcePanelOffset
+		if offset <= 0 || offset >= 1 {
+			offset = 0.6
+		}
+		sourceSplit.SetOffset(float64(offset))
+		centerContent = sourceSplit
 	}
 
 	a.mainWindow.SetContent(container.NewBorder(
@@ -350,6 +388,24 @@ func (a *App) toggleSidebar() {
 	a.saveConfig()
 	a.updateMainLayout()
 	a.mainWindow.Content().Refresh() // Force refresh of main window content
+}
+
+func (a *App) toggleSourcePanel() {
+	a.config.SourcePanelVisible = !a.config.SourcePanelVisible
+	if a.config.SourcePanelOffset <= 0 {
+		a.config.SourcePanelOffset = 0.6
+	}
+	a.saveConfig()
+	a.updateMainLayout()
+	a.mainWindow.Content().Refresh()
+	// Refresh the source panel to sync to the currently-active tab.
+	if a.config.SourcePanelVisible && a.sourcePanel != nil {
+		if tab := a.docTabs.Selected(); tab != nil {
+			if editor, ok := a.editors[tab]; ok {
+				a.sourcePanel.SetActiveEditor(editor)
+			}
+		}
+	}
 }
 
 func (a *App) createNewFile(title string, editor interface{}) {

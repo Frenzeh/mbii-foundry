@@ -53,14 +53,15 @@ var ClassFlags = []string{
 // Removed "CFL_SINGLE_ROCKET", "CFL_CUSTOMSKEL", "CFL_EXTRAFLAMEDAMAGE", "CFL_ICETHROWER", "CFL_MIRALUKA", "CFL_FORCEBLINDING", "CFL_SHOTGUN", "CFL_CONCUSSIONRIFLE", "CFL_DEADLYSIGHT", "CFL_WFLAMETHROWER", "CFL_SELFDESTRUCT" as they were commented out or conditional defines in bg_saga.h
 
 type MBCHEditor struct {
-	character      *parsers.MBCHCharacter
-	currentPath    string
-	container      *fyne.Container
-	fileManager    *FileManager
-	lastError      string
-	onHover        func(string, string)
-	isDirty        bool
-	onDirtyChanged func(bool)
+	character       *parsers.MBCHCharacter
+	currentPath     string
+	container       *fyne.Container
+	fileManager     *FileManager
+	lastError       string
+	onHover         func(string, string)
+	isDirty         bool
+	onDirtyChanged  func(bool)
+	onSourceChanged func()
 
 	nameEntry        *ValidatedEntry
 	classSelect      *widget.Select
@@ -148,12 +149,27 @@ func (e *MBCHEditor) MarkClean() {
 	}
 }
 
+// SourceProvider implementation — lets the right-pane live-source view
+// render this editor's current state.
+func (e *MBCHEditor) GenerateSource() string {
+	e.updateCharacterFromUI()
+	content, err := parsers.GenerateMBCH(e.character)
+	if err != nil {
+		return "// generate error: " + err.Error()
+	}
+	return content
+}
+func (e *MBCHEditor) SetOnSourceChanged(f func()) { e.onSourceChanged = f }
+
 func (e *MBCHEditor) markDirty() {
 	if !e.isDirty {
 		e.isDirty = true
 		if e.onDirtyChanged != nil {
 			e.onDirtyChanged(true)
 		}
+	}
+	if e.onSourceChanged != nil {
+		e.onSourceChanged()
 	}
 }
 

@@ -15,6 +15,7 @@ type WeaponGrid struct {
 	selected    map[string]bool
 	onChange    func(string)
 	onHover     func(string, string)
+	onUnhover   func()
 	resolveIcon func(string) fyne.Resource
 
 	filter string
@@ -38,6 +39,14 @@ func NewWeaponGrid(initialStr string, onChange func(string), onHover func(string
 	wg.createUI()
 	return wg
 }
+
+// SetOnUnhover registers a callback that fires when the mouse leaves
+// a weapon row. Paired with the onHover already in the constructor,
+// this lets the info panel revert its hover-view to whatever the
+// user last interacted with — otherwise the panel sticks on the
+// last weapon the mouse passed over, even after the user has moved
+// on to a different field.
+func (wg *WeaponGrid) SetOnUnhover(f func()) { wg.onUnhover = f }
 
 func (wg *WeaponGrid) parseString(s string) {
 	wg.selected = make(map[string]bool)
@@ -139,12 +148,18 @@ func (wg *WeaponGrid) createUI() {
 				}
 			}
 
-			// Wrap in HoverContainer
+			// Wrap in HoverContainer. Pair the enter event with a
+			// leave event so the info panel's sticky context reverts
+			// when the mouse moves off the row — otherwise the panel
+			// would freeze on whatever weapon the mouse last grazed.
 			hoverContainer := NewHoverContainer(row, func() {
 				if wg.onHover != nil {
 					wg.onHover(weaponID, w.Description)
 				}
 			})
+			if wg.onUnhover != nil {
+				hoverContainer.SetOnLeave(wg.onUnhover)
+			}
 
 			catGrid.Add(hoverContainer)
 		}
@@ -186,18 +201,31 @@ func (wg *WeaponGrid) GetContent() fyne.CanvasObject {
 	return wg.container
 }
 
-// HoverContainer wraps a widget and detects mouse hover
+// HoverContainer wraps a widget and detects mouse enter/leave.
+// Pairs MouseIn with MouseOut so the info panel's sticky/hover
+// contract works: MouseIn pushes a transient hover into the panel,
+// MouseOut reverts it to whatever the user last interacted with.
+// Without the MouseOut half, the panel would freeze on the last
+// hovered row and never go back to "what am I editing?".
 type HoverContainer struct {
 	widget.BaseWidget
-	content fyne.CanvasObject
-	onHover func()
+	content  fyne.CanvasObject
+	onHover  func()
+	onLeave  func()
 }
 
+// NewHoverContainer constructs a hover-aware wrapper. onHover fires
+// on MouseIn; onLeave fires on MouseOut. Either may be nil.
 func NewHoverContainer(content fyne.CanvasObject, onHover func()) *HoverContainer {
 	h := &HoverContainer{content: content, onHover: onHover}
 	h.ExtendBaseWidget(h)
 	return h
 }
+
+// SetOnLeave wires a MouseOut callback after construction — keeps
+// the NewHoverContainer signature backward-compatible with older
+// call sites that don't need the leave event.
+func (h *HoverContainer) SetOnLeave(f func()) { h.onLeave = f }
 
 func (h *HoverContainer) CreateRenderer() fyne.WidgetRenderer {
 	return widget.NewSimpleRenderer(h.content)
@@ -208,5 +236,9 @@ func (h *HoverContainer) MouseIn(*desktop.MouseEvent) {
 		h.onHover()
 	}
 }
-func (h *HoverContainer) MouseOut()                      {}
+func (h *HoverContainer) MouseOut() {
+	if h.onLeave != nil {
+		h.onLeave()
+	}
+}
 func (h *HoverContainer) MouseMoved(*desktop.MouseEvent) {}

@@ -54,12 +54,17 @@ var classIconAliases = map[string]string{
 
 // ClassIconPicker is the composite widget that mbch_editor embeds in
 // place of classSelect. Selected holds the current MB_CLASS_* ID;
-// onChange fires whenever the user picks a different card.
+// onChange fires on selection, onHover/onUnhover on mouse enter/leave
+// of a card — the latter pair drives the info panel's transient
+// preview state so pointing at a card gives a peek at its docs
+// without committing it as sticky.
 type ClassIconPicker struct {
 	widget.BaseWidget
 
-	selected string
-	onChange func(string)
+	selected  string
+	onChange  func(string)
+	onHover   func(id, context string)
+	onUnhover func()
 
 	cards     []*classCard
 	container *fyne.Container
@@ -70,6 +75,14 @@ func NewClassIconPicker(onChange func(string)) *ClassIconPicker {
 	p.ExtendBaseWidget(p)
 	p.buildCards()
 	return p
+}
+
+// SetHoverHandlers wires transient-preview callbacks. onHover fires
+// with the hovered card's class ID, onUnhover on mouse-out. Both
+// optional — nil disables the preview behavior.
+func (p *ClassIconPicker) SetHoverHandlers(onHover func(id, context string), onUnhover func()) {
+	p.onHover = onHover
+	p.onUnhover = onUnhover
 }
 
 func (p *ClassIconPicker) buildCards() {
@@ -199,11 +212,17 @@ func (c *classCard) Tapped(*fyne.PointEvent) {
 func (c *classCard) MouseIn(*desktop.MouseEvent) {
 	c.hovered = true
 	c.applyStyle()
+	if c.owner.onHover != nil {
+		c.owner.onHover(c.def.ID, "Class Definition")
+	}
 }
 
 func (c *classCard) MouseOut() {
 	c.hovered = false
 	c.applyStyle()
+	if c.owner.onUnhover != nil {
+		c.owner.onUnhover()
+	}
 }
 
 func (c *classCard) MouseMoved(*desktop.MouseEvent) {}

@@ -634,110 +634,58 @@ func (a *App) toggleSidebar() {
 	a.mainWindow.Content().Refresh() // Force refresh of main window content
 }
 
-// showHoverTooltip is called from editors when the user hovers or
-// focuses a field with a known key. Pops up a small transient panel
-// anchored to the currently-focused widget so the user's eye doesn't
-// have to travel across the screen. Disabled entirely if the user
-// flipped HoverTooltipsDisabled in Preferences.
-func (a *App) showHoverTooltip(key, context string) {
+// showStickyContext is called when the user INTERACTS with a field —
+// clicks/focuses an entry, picks a class card, selects a weapon, etc.
+// The info panel saves this key as its "sticky" view: transient
+// hovers can overlay it, but mouse-out reverts here. Think of it as
+// the panel's home base — "what am I currently editing?"
+func (a *App) showStickyContext(key, context string) {
 	if key == "" || a.infoPanel == nil {
 		return
 	}
 	if a.config.HoverTooltipsDisabled {
 		return
 	}
-	// Reuse InfoPanel's lookup pipeline — same resolution logic as the
-	// full Library, just rendered into a transient popup.
-	a.infoPanel.ShowInfo(key, context)
-	// Tiny delay lets ShowInfo's markdown settle before we snapshot
-	// it into the popup.
-	go func() {
-		time.Sleep(30 * time.Millisecond)
-		fyne.Do(func() {
-			a.renderHoverPopup(key, context)
-		})
-	}()
+	a.infoPanel.ShowSticky(key, context)
 }
 
-// Track the current hover popup so successive hovers replace it
-// instead of stacking.
-var currentHoverPopup *widget.PopUp
-
-func (a *App) renderHoverPopup(key, context string) {
-	// Dismiss any previous popup so hovers don't stack.
-	if currentHoverPopup != nil {
-		currentHoverPopup.Hide()
-		currentHoverPopup = nil
+// showHoverContext is called on mouseover of hoverable targets (grid
+// rows, pick cards, etc.). Renders the target's info without
+// mutating sticky state — a subsequent clearHoverContext reverts.
+//
+// Previously this was showHoverTooltip, which ALSO spawned a small
+// popup next to the focused widget. The popup duplicated the info
+// panel's content and felt redundant once the panel itself became
+// the primary context surface. Popup removed.
+func (a *App) showHoverContext(key, context string) {
+	if key == "" || a.infoPanel == nil {
+		return
 	}
-
-	title := widget.NewLabelWithStyle(key, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	if context != "" {
-		title.SetText(key + " · " + context)
+	if a.config.HoverTooltipsDisabled {
+		return
 	}
-
-	// Pull the rendered markdown from the InfoPanel (already resolved
-	// by ShowInfo above). We reuse it rather than re-resolving.
-	content := widget.NewRichText(a.infoPanel.content.Segments...)
-	content.Wrapping = fyne.TextWrapWord
-	// Smaller default — less disruptive than the old 380×220.
-	scroll := container.NewVScroll(content)
-	scroll.SetMinSize(fyne.NewSize(320, 140))
-
-	card := container.NewBorder(title, nil, nil, nil, scroll)
-	pop := widget.NewPopUp(card, a.mainWindow.Canvas())
-	pop.Resize(fyne.NewSize(340, 180))
-
-	// Anchor near the focused widget when possible — puts the tooltip
-	// next to the thing the user is editing instead of the screen
-	// corner. Fall back to bottom-right only when no focused widget
-	// is findable (Home tab, etc.).
-	canvas := a.mainWindow.Canvas()
-	pos := a.tooltipAnchor(canvas)
-	pop.ShowAtPosition(pos)
-	currentHoverPopup = pop
+	a.infoPanel.ShowHover(key, context)
 }
 
-// tooltipAnchor returns a good position for a hover popup. Tries the
-// currently-focused widget's bottom-right corner first; falls back to
-// the canvas bottom-right if there's no focused object.
-func (a *App) tooltipAnchor(canvas fyne.Canvas) fyne.Position {
-	const (
-		popupW = float32(340)
-		popupH = float32(180)
-	)
-	canvasSize := canvas.Size()
-	fallback := fyne.NewPos(canvasSize.Width-popupW-20, canvasSize.Height-popupH-20)
+// clearHoverContext reverts the panel to its sticky state after a
+// hover target's MouseOut. Cheap no-op when the panel isn't
+// currently showing a hover — InfoPanel.ClearHover guards on its
+// own showingHover flag.
+func (a *App) clearHoverContext() {
+	if a.infoPanel == nil {
+		return
+	}
+	a.infoPanel.ClearHover()
+}
 
-	focused := canvas.Focused()
-	if focused == nil {
-		return fallback
-	}
-	// Focusable may or may not also be a CanvasObject. Try to extract
-	// position via fyne.CanvasObject interface.
-	obj, ok := focused.(fyne.CanvasObject)
-	if !ok {
-		return fallback
-	}
-	absPos := fyne.CurrentApp().Driver().AbsolutePositionForObject(obj)
-	size := obj.Size()
-
-	// Prefer: below and slightly right of the focused widget. If that
-	// would push offscreen, fall back to left or above.
-	x := absPos.X + size.Width + 10
-	y := absPos.Y
-	if x+popupW > canvasSize.Width {
-		// Not enough room to the right — try below.
-		x = absPos.X
-		y = absPos.Y + size.Height + 6
-	}
-	if y+popupH > canvasSize.Height {
-		// Try above.
-		y = absPos.Y - popupH - 6
-	}
-	if x < 0 || y < 0 {
-		return fallback
-	}
-	return fyne.NewPos(x, y)
+// showHoverTooltip is kept as a thin shim for existing editors that
+// invoke the old name via SetOnHover(a.showHoverTooltip). Treating
+// every such call as a hover-style update (not sticky) matches the
+// historical behavior — these sites used to produce the transient
+// popup, not a panel commit. Sticky updates happen at explicit
+// interaction sites that have been migrated to showStickyContext.
+func (a *App) showHoverTooltip(key, context string) {
+	a.showHoverContext(key, context)
 }
 
 // showLibraryModal opens the InfoPanel in a full-size dialog so users

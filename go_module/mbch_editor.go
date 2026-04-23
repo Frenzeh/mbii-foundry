@@ -139,6 +139,22 @@ func (e *MBCHEditor) SetOnHover(f func(string, string)) {
 		}
 	}
 }
+
+// interact is the sticky-context channel: every OnFocus / OnChanged
+// / class-pick / saber-pick call in the editor routes through here,
+// so the info panel pins that field as the current work surface.
+// Transient hovers (grid rows, pick cards) still go through
+// e.onHover, which in turn hits the app's hover-context path —
+// MouseOut reverts to the sticky view.
+//
+// Guarded on e.app because NewMBCHEditor is sometimes called during
+// tests / CLI contexts where app is nil.
+func (e *MBCHEditor) interact(key, context string) {
+	if e.app == nil {
+		return
+	}
+	e.app.showStickyContext(key, context)
+}
 func (e *MBCHEditor) SetAssetBrowser(ab *AssetBrowser) {
 	e.assetBrowser = ab
 	if ab != nil && ab.vfs != nil {
@@ -184,9 +200,9 @@ func (e *MBCHEditor) markDirty() {
 
 func (e *MBCHEditor) attachParser(entry *widget.Entry) {
 	entry.OnChanged = func(s string) {
-		if e.onHover == nil {
-			return
-		}
+		// User is actively typing/editing. That's an interaction —
+		// the token they just wrote is the thing they're working on,
+		// so pin it as sticky (not a transient hover).
 		tokens := strings.Split(s, "|")
 		if len(tokens) > 0 {
 			last := strings.TrimSpace(tokens[len(tokens)-1])
@@ -199,7 +215,7 @@ func (e *MBCHEditor) attachParser(entry *widget.Entry) {
 			if len(parts) > 1 {
 				context = "Level " + strings.TrimSpace(parts[1])
 			}
-			e.onHover(key, context)
+			e.interact(key, context)
 		}
 	}
 }
@@ -260,7 +276,7 @@ func (e *MBCHEditor) createUI() {
 	e.nameEntry = NewValidatedEntry(noOpVal)
 	e.nameEntry.SetPlaceHolder("e.g. my_jedi_master")
 	e.nameEntry.OnChanged = func(s string) { e.markDirty() }
-	e.nameEntry.OnFocus = func() { e.onHover("name", "") }
+	e.nameEntry.OnFocus = func() { e.interact("name", "") }
 
 	// Class picker — visual icon-card row replacing the old flat
 	// widget.Select dropdown. "Pick a class" is fundamentally a
@@ -269,14 +285,17 @@ func (e *MBCHEditor) createUI() {
 	e.classPicker = NewClassIconPicker(func(id string) {
 		e.character.MBClass = id
 		e.markDirty()
-		e.onHover(id, "Class Definition")
+		e.interact(id, "Class Definition")
 		e.updateIconPreview()
 	})
+	if e.app != nil {
+		e.classPicker.SetHoverHandlers(e.app.showHoverContext, e.app.clearHoverContext)
+	}
 
 	e.modelEntry = NewValidatedEntry(noOpVal)
 	e.modelEntry.SetPlaceHolder("e.g. cultist")
 	e.modelEntry.OnChanged = func(s string) { e.markDirty(); e.updateIconPreview() }
-	e.modelEntry.OnFocus = func() { e.onHover("model", "") }
+	e.modelEntry.OnFocus = func() { e.interact("model", "") }
 
 	previewBtn := NewTooltipButton("", theme.VisibilityIcon(), func() { e.launchModelPreview(e.modelEntry.Text) }, "Preview Model (requires md3view)")
 	browseModelBtn := NewTooltipButton("", theme.FolderOpenIcon(), func() {
@@ -287,15 +306,15 @@ func (e *MBCHEditor) createUI() {
 
 	e.skinEntry = NewValidatedEntry(noOpVal)
 	e.skinEntry.OnChanged = func(s string) { e.markDirty(); e.updateIconPreview() }
-	e.skinEntry.OnFocus = func() { e.onHover("skin", "") }
+	e.skinEntry.OnFocus = func() { e.interact("skin", "") }
 
 	e.uiShaderEntry = NewValidatedEntry(noOpVal)
 	e.uiShaderEntry.OnChanged = func(s string) { e.markDirty(); e.updateIconPreview() }
-	e.uiShaderEntry.OnFocus = func() { e.onHover("uishader", "") }
+	e.uiShaderEntry.OnFocus = func() { e.interact("uishader", "") }
 
 	e.soundsetEntry = NewValidatedEntry(noOpVal)
 	e.soundsetEntry.OnChanged = func(s string) { e.markDirty() }
-	e.soundsetEntry.OnFocus = func() { e.onHover("soundset", "") }
+	e.soundsetEntry.OnFocus = func() { e.interact("soundset", "") }
 
 	browseIconBtn := NewTooltipButton("", theme.FolderOpenIcon(), func() {
 		if e.app != nil {
@@ -341,27 +360,32 @@ func (e *MBCHEditor) createUI() {
 		e.markDirty()
 	}, e.onHover, e.resolveIconResource)
 
-	// Initialize Weapon Grid
+	// Initialize Weapon Grid. onHover fires on row-enter (transient
+	// info-panel display), onUnhover on row-leave (revert to
+	// sticky). Without the leave-side wire the panel would freeze
+	// on the last-hovered weapon.
 	e.weaponGrid = NewWeaponGrid("", func(s string) {
 		e.weaponsEntry.SetText(s)
 		e.markDirty()
 	}, e.onHover, e.resolveWeaponIconResource)
+	if e.app != nil {
+		e.weaponGrid.SetOnUnhover(e.app.clearHoverContext)
+	}
 
-	// Text -> Grid binding
+	// Text -> Grid binding. OnChanged reflects active typing — treat
+	// the token the user just finished as a sticky interaction.
 	e.attributesEntry.OnChanged = func(s string) {
-		if e.onHover != nil {
-			tokens := strings.Split(s, "|")
-			if len(tokens) > 0 {
-				last := strings.TrimSpace(tokens[len(tokens)-1])
-				parts := strings.Split(last, ",")
-				key := strings.TrimSpace(parts[0])
-				if len(key) >= 3 {
-					context := ""
-					if len(parts) > 1 {
-						context = "Level " + strings.TrimSpace(parts[1])
-					}
-					e.onHover(key, context)
+		tokens := strings.Split(s, "|")
+		if len(tokens) > 0 {
+			last := strings.TrimSpace(tokens[len(tokens)-1])
+			parts := strings.Split(last, ",")
+			key := strings.TrimSpace(parts[0])
+			if len(key) >= 3 {
+				context := ""
+				if len(parts) > 1 {
+					context = "Level " + strings.TrimSpace(parts[1])
 				}
+				e.interact(key, context)
 			}
 		}
 		e.attrGrid.values = parseAttributesString(s)
@@ -381,7 +405,7 @@ func (e *MBCHEditor) createUI() {
 	})
 	e.healthEntry.SetText("100")
 	e.healthEntry.OnChanged = func(s string) { e.markDirty() }
-	e.healthEntry.OnFocus = func() { e.onHover("maxhealth", "") }
+	e.healthEntry.OnFocus = func() { e.interact("maxhealth", "") }
 
 	e.armorEntry = NewValidatedEntry(func(s string) error {
 		if _, err := strconv.Atoi(s); err != nil {
@@ -391,7 +415,7 @@ func (e *MBCHEditor) createUI() {
 	})
 	e.armorEntry.SetText("0")
 	e.armorEntry.OnChanged = func(s string) { e.markDirty() }
-	e.armorEntry.OnFocus = func() { e.onHover("maxarmor", "") }
+	e.armorEntry.OnFocus = func() { e.interact("maxarmor", "") }
 
 	e.forcePoolEntry = NewValidatedEntry(func(s string) error {
 		if _, err := strconv.Atoi(s); err != nil {
@@ -401,7 +425,7 @@ func (e *MBCHEditor) createUI() {
 	})
 	e.forcePoolEntry.SetText("0")
 	e.forcePoolEntry.OnChanged = func(s string) { e.markDirty() }
-	e.forcePoolEntry.OnFocus = func() { e.onHover("forcepool", "") }
+	e.forcePoolEntry.OnFocus = func() { e.interact("forcepool", "") }
 
 	e.forceRegenEntry = NewValidatedEntry(func(s string) error {
 		if _, err := strconv.ParseFloat(s, 64); err != nil {
@@ -411,7 +435,7 @@ func (e *MBCHEditor) createUI() {
 	})
 	e.forceRegenEntry.SetText("1.0")
 	e.forceRegenEntry.OnChanged = func(s string) { e.markDirty() }
-	e.forceRegenEntry.OnFocus = func() { e.onHover("forceregen", "") } // Mapped to glossary key? Glossary has 'rateOfFire', 'speed'. 'forceregen' might be missing. I'll check.
+	e.forceRegenEntry.OnFocus = func() { e.interact("forceregen", "") } // Mapped to glossary key? Glossary has 'rateOfFire', 'speed'. 'forceregen' might be missing. I'll check.
 
 	e.speedEntry = NewValidatedEntry(func(s string) error {
 		if _, err := strconv.ParseFloat(s, 64); err != nil {
@@ -421,7 +445,7 @@ func (e *MBCHEditor) createUI() {
 	})
 	e.speedEntry.SetText("1.0")
 	e.speedEntry.OnChanged = func(s string) { e.markDirty() }
-	e.speedEntry.OnFocus = func() { e.onHover("speed", "") }
+	e.speedEntry.OnFocus = func() { e.interact("speed", "") }
 
 	e.apMultEntry = NewValidatedEntry(func(s string) error {
 		if _, err := strconv.ParseFloat(s, 64); err != nil {
@@ -430,7 +454,7 @@ func (e *MBCHEditor) createUI() {
 		return nil
 	})
 	e.apMultEntry.SetText("1.0")
-	e.apMultEntry.OnFocus = func() { e.onHover("MB_ATT_AP_MULTIPLIER", "") }
+	e.apMultEntry.OnFocus = func() { e.interact("MB_ATT_AP_MULTIPLIER", "") }
 
 	e.bpMultEntry = NewValidatedEntry(func(s string) error {
 		if _, err := strconv.ParseFloat(s, 64); err != nil {
@@ -439,7 +463,7 @@ func (e *MBCHEditor) createUI() {
 		return nil
 	})
 	e.bpMultEntry.SetText("1.0")
-	e.bpMultEntry.OnFocus = func() { e.onHover("MB_ATT_BP_MULTIPLIER", "") }
+	e.bpMultEntry.OnFocus = func() { e.interact("MB_ATT_BP_MULTIPLIER", "") }
 
 	e.csMultEntry = NewValidatedEntry(func(s string) error {
 		if _, err := strconv.ParseFloat(s, 64); err != nil {
@@ -448,7 +472,7 @@ func (e *MBCHEditor) createUI() {
 		return nil
 	})
 	e.csMultEntry.SetText("1.0")
-	e.csMultEntry.OnFocus = func() { e.onHover("MB_ATT_CS_MULTIPLIER", "") }
+	e.csMultEntry.OnFocus = func() { e.interact("MB_ATT_CS_MULTIPLIER", "") }
 
 	e.asMultEntry = NewValidatedEntry(func(s string) error {
 		if _, err := strconv.ParseFloat(s, 64); err != nil {
@@ -457,15 +481,15 @@ func (e *MBCHEditor) createUI() {
 		return nil
 	})
 	e.asMultEntry.SetText("1.0")
-	e.asMultEntry.OnFocus = func() { e.onHover("MB_ATT_AS_MULTIPLIER", "") }
+	e.asMultEntry.OnFocus = func() { e.interact("MB_ATT_AS_MULTIPLIER", "") }
 
 	e.saber1Entry = NewValidatedEntry(noOpVal)
 	e.saber1Entry.OnChanged = func(s string) { e.markDirty() }
-	e.saber1Entry.OnFocus = func() { e.onHover("WP_SABER", "Saber 1 Hilt") }
+	e.saber1Entry.OnFocus = func() { e.interact("WP_SABER", "Saber 1 Hilt") }
 
 	e.saber2Entry = NewValidatedEntry(noOpVal)
 	e.saber2Entry.OnChanged = func(s string) { e.markDirty() }
-	e.saber2Entry.OnFocus = func() { e.onHover("WP_SABER", "Saber 2 Hilt") }
+	e.saber2Entry.OnFocus = func() { e.interact("WP_SABER", "Saber 2 Hilt") }
 
 	e.saberColorSelect = widget.NewSelect(SaberColors, func(s string) {
 		parts := strings.Split(s, " - ")
@@ -497,7 +521,7 @@ func (e *MBCHEditor) createUI() {
 		return nil
 	})
 	e.classLimitEntry.SetText("-1")
-	e.classLimitEntry.OnFocus = func() { e.onHover("classNumberLimit", "") }
+	e.classLimitEntry.OnFocus = func() { e.interact("classNumberLimit", "") }
 
 	e.respawnTimeEntry = NewValidatedEntry(func(s string) error {
 		if _, err := strconv.Atoi(s); err != nil {
@@ -506,7 +530,7 @@ func (e *MBCHEditor) createUI() {
 		return nil
 	})
 	e.respawnTimeEntry.SetText("0")
-	e.respawnTimeEntry.OnFocus = func() { e.onHover("respawnCustomTime", "") }
+	e.respawnTimeEntry.OnFocus = func() { e.interact("respawnCustomTime", "") }
 
 	e.extraLivesEntry = NewValidatedEntry(func(s string) error {
 		if _, err := strconv.Atoi(s); err != nil {
@@ -515,7 +539,7 @@ func (e *MBCHEditor) createUI() {
 		return nil
 	})
 	e.extraLivesEntry.SetText("0")
-	e.extraLivesEntry.OnFocus = func() { e.onHover("extralives", "") }
+	e.extraLivesEntry.OnFocus = func() { e.interact("extralives", "") }
 
 	e.isCustomCheck = widget.NewCheck("Enable Custom Build", func(b bool) {
 		if b {
@@ -531,21 +555,21 @@ func (e *MBCHEditor) createUI() {
 		return nil
 	})
 	e.mbPointsEntry.SetText("0")
-	e.mbPointsEntry.OnFocus = func() { e.onHover("mbPoints", "") }
+	e.mbPointsEntry.OnFocus = func() { e.interact("mbPoints", "") }
 	e.isCustomCheck.OnChanged = func(b bool) {
 		if b {
 			e.character.IsCustomBuild = 1
 		} else {
 			e.character.IsCustomBuild = 0
 		}
-		e.onHover("isCustomBuild", "")
+		e.interact("isCustomBuild", "")
 	}
 
 	e.descriptionEntry = NewValidatedEntry(noOpVal)
 	e.descriptionEntry.MultiLine = true
 	e.descriptionEntry.Wrapping = fyne.TextWrapWord
 	e.descriptionEntry.SetMinRowsVisible(10)
-	e.descriptionEntry.OnFocus = func() { e.onHover("description", "") }
+	e.descriptionEntry.OnFocus = func() { e.interact("description", "") }
 	e.descriptionEntry.OnChanged = func(s string) { e.markDirty() }
 
 	// MultiSelect for Class Flags

@@ -22,6 +22,18 @@ type InfoPanel struct {
 	keys []string
 
 	holocronClient *HolocronClient
+
+	// Sticky state = what the user last INTERACTED with (clicked,
+	// focused, edited). Hover state is transient — appears while
+	// the mouse is over a target, reverts to sticky on mouse-out.
+	// The user's mental model is: "the panel shows what I'm
+	// currently working on, unless I'm peeking at something else."
+	stickyKey     string
+	stickyContext string
+	// showingHover tells ClearHover whether there's anything to revert
+	// from — lets us avoid re-rendering sticky when the panel is
+	// already showing sticky.
+	showingHover bool
 }
 
 func NewInfoPanel() *InfoPanel {
@@ -144,6 +156,52 @@ func (ip *InfoPanel) filterList(text string) {
 
 func (ip *InfoPanel) GetContent() fyne.CanvasObject {
 	return ip.container
+}
+
+// ShowSticky is called when the user has INTERACTED with a field
+// (clicked, focused, edited). Saves the key as the panel's sticky
+// view and renders it. Subsequent hover-outs revert here.
+func (ip *InfoPanel) ShowSticky(key, context string) {
+	if key == "" {
+		return
+	}
+	ip.stickyKey = key
+	ip.stickyContext = context
+	ip.showingHover = false
+	ip.ShowInfo(key, context)
+}
+
+// ShowHover is called on mouseover of a hoverable target. Renders
+// the hover content without mutating sticky state. ClearHover will
+// restore whatever sticky was showing.
+func (ip *InfoPanel) ShowHover(key, context string) {
+	if key == "" {
+		return
+	}
+	// Don't clobber the sticky render if the hover is actually the
+	// same key — avoids a flicker when the user mouses off and back
+	// onto the same row.
+	if ip.stickyKey == key && ip.stickyContext == context && !ip.showingHover {
+		return
+	}
+	ip.showingHover = true
+	ip.ShowInfo(key, context)
+}
+
+// ClearHover reverts the panel to its last-interacted (sticky)
+// state. Called on mouse-out of hover targets. Noop when nothing
+// sticky has been set (e.g. app just launched, user hasn't touched
+// a field yet) — the panel just stays on whatever hover was
+// showing until the user interacts.
+func (ip *InfoPanel) ClearHover() {
+	if !ip.showingHover {
+		return
+	}
+	ip.showingHover = false
+	if ip.stickyKey == "" {
+		return
+	}
+	ip.ShowInfo(ip.stickyKey, ip.stickyContext)
 }
 
 func (ip *InfoPanel) ShowInfo(key, context string) {

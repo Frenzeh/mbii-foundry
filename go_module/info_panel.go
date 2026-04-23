@@ -48,6 +48,12 @@ func (ip *InfoPanel) SetHolocronClient(client *HolocronClient) {
 
 func (ip *InfoPanel) createUI() {
 	ip.title = widget.NewLabelWithStyle("Information", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	// Long hovered IDs (e.g. "MB_ATT_ARC_RIFLE_GRENADELAUNCHER") used
+	// to push the Label's MinSize wider than the sidebar, which
+	// flexed the HSplit divider rightward every time the user hovered
+	// a new field — the "jumpy rail" pain. Wrap forces long titles
+	// onto a second line instead of forcing horizontal growth.
+	ip.title.Wrapping = fyne.TextWrapWord
 
 	welcomeMsg := `
 ### Info Panel
@@ -59,6 +65,13 @@ This panel provides real-time documentation and context for the field you're edi
 *   **Switch** to the "Reference Library" tab to browse all available topics.
 `
 	ip.content = widget.NewRichTextFromMarkdown(welcomeMsg)
+	// Rich text defaults to wrapping off, which means any markdown
+	// with a long inline code span or URL extends the text horizontally
+	// and asks the parent container for more width. In the sidebar
+	// that translates to the HSplit divider jumping right whenever
+	// the user hovers a new attribute. Wrap-word keeps content
+	// bounded by the sidebar's current width.
+	ip.content.Wrapping = fyne.TextWrapWord
 
 	ip.search = NewInputEntry()
 	ip.search.SetPlaceHolder("Search help...")

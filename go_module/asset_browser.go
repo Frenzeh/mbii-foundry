@@ -149,6 +149,22 @@ func NewAssetBrowser(gamedataPath, textAssetsPath string) *AssetBrowser {
 
 	ab.loadConfig()
 	ab.scanPK3Files()
+	// Kick an initial VFS refresh in the background so icon resolvers
+	// (portrait preview, weapon rows, attribute grid) have a populated
+	// index the moment the app opens. Historically the VFS only got
+	// indexed when the user browsed through the Files sidebar, which
+	// meant the character portrait showed a placeholder until then.
+	// The refresh walks PK3s + TextAssets once; after that everything
+	// is cache-hit. Guarded behind a non-empty gamedata path so fresh
+	// installs (no gamedata configured yet) don't spawn a pointless
+	// goroutine.
+	if gamedataPath != "" {
+		go func() {
+			if err := ab.vfs.Refresh(); err != nil {
+				LogInfo("Initial VFS index failed: %v", err)
+			}
+		}()
+	}
 	ab.createUI()
 	return ab
 }
@@ -159,6 +175,15 @@ func (ab *AssetBrowser) SetPaths(gamedata, textAssets string) {
 	ab.vfs = NewVirtualFileSystem(gamedata, textAssets)
 	ab.scanPK3Files() // Re-scan if gamedata changed
 	ab.refreshSources()
+	// Re-index in the background so editors see the new content
+	// without the user having to navigate to the Files sidebar.
+	if gamedata != "" {
+		go func() {
+			if err := ab.vfs.Refresh(); err != nil {
+				LogInfo("VFS re-index after path change failed: %v", err)
+			}
+		}()
+	}
 }
 
 func (ab *AssetBrowser) loadFavorites() {

@@ -87,12 +87,18 @@ func (p *ClassIconPicker) SetHoverHandlers(onHover func(id, context string), onU
 }
 
 func (p *ClassIconPicker) buildCards() {
-	// 14 live classes laid out 5-per-row → 3 rows (5+5+4). Better
-	// use of vertical space in the Profile tab than a single long
-	// strip, and keeps each card larger/readable without shrinking
-	// the icons. GridWithColumns distributes width evenly, so the
-	// row width flexes with the form pane.
-	grid := container.NewGridWithColumns(5)
+	// 14 live classes laid out as a compact icon grid via GridWrap
+	// rather than GridWithColumns. GridWithColumns divided the full
+	// Profile-pane width evenly across 5 slots, leaving each card
+	// mostly empty whitespace at typical window sizes. GridWrap
+	// gives each card a fixed 110×84 cell and flows rows naturally
+	// — tighter visual density, no wasted space, still wraps to a
+	// sensible number of rows on narrow windows.
+	const (
+		cardW = float32(110)
+		cardH = float32(84)
+	)
+	grid := container.New(layout.NewGridWrapLayout(fyne.NewSize(cardW, cardH)))
 	for _, c := range GetClasses() {
 		card := newClassCard(c, p)
 		p.cards = append(p.cards, card)

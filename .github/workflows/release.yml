@@ -44,6 +44,11 @@ jobs:
         # "upgrade available" forever or never showing it. Fail fast
         # and force the person tagging to bump AppVersion in the same
         # commit.
+        #
+        # working-directory is scoped to the repo root here (overriding
+        # the job-level `go_module` default) so the grep path reads
+        # naturally; otherwise we'd double up as go_module/go_module/…
+        working-directory: .
         run: |
           TAG="${GITHUB_REF_NAME#v}"
           APPVER=$(grep -E '^\s*AppVersion\s*=' go_module/main.go \

@@ -58,7 +58,7 @@ type SourcePanel struct {
 
 	container *fyne.Container
 
-	provider SourceProvider
+	provider  SourceProvider
 	editorRef Editor
 
 	// True while the user has pending edits in the Entry. While true,

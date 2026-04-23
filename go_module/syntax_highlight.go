@@ -196,8 +196,8 @@ func highlightedSegments(src string) []widget.RichTextSegment {
 	return segs
 }
 
-func isSynDigit(c byte) bool     { return c >= '0' && c <= '9' }
-func isSynLetter(c byte) bool    { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') }
+func isSynDigit(c byte) bool      { return c >= '0' && c <= '9' }
+func isSynLetter(c byte) bool     { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') }
 func isSynIdentStart(c byte) bool { return isSynLetter(c) || c == '_' }
 func isSynIdentPart(c byte) bool {
 	return isSynIdentStart(c) || isSynDigit(c)

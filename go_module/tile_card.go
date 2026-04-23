@@ -128,10 +128,10 @@ func (c *TileCard) applyStyle() {
 
 // cardRestingFill / cardHoverFill — subtle layered tints designed to
 // read as "there's a surface here" without demanding attention.
-func cardRestingFill() color.Color  { return color.NRGBA{R: 255, G: 255, B: 255, A: 8} }
-func cardHoverFill() color.Color    { return tintWithAlpha(CurrentThemeColor, 36) }
+func cardRestingFill() color.Color   { return color.NRGBA{R: 255, G: 255, B: 255, A: 8} }
+func cardHoverFill() color.Color     { return tintWithAlpha(CurrentThemeColor, 36) }
 func cardRestingBorder() color.Color { return color.NRGBA{R: 255, G: 255, B: 255, A: 28} }
-func cardHoverBorder() color.Color  { return tintWithAlpha(CurrentThemeColor, 180) }
+func cardHoverBorder() color.Color   { return tintWithAlpha(CurrentThemeColor, 180) }
 
 // fixedWidthSpacer claims exactly `width` pixels horizontally and
 // renders `child` stretched to fill. Used for the card's left-edge

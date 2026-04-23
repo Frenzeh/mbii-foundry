@@ -32,6 +32,11 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+// layout import used by the card builder below (GridWrapLayout for
+// the icon cell). Kept even though the picker currently uses
+// GridWithColumns — re-enters use if we swap back.
+var _ = layout.NewSpacer
+
 // classIconAliases maps MB_CLASS_* enum values to the basename of
 // their embedded class icon. Sourced by inspecting
 // assets/icons/classes/ after extraction from MBAssets2.pk3's
@@ -87,18 +92,14 @@ func (p *ClassIconPicker) SetHoverHandlers(onHover func(id, context string), onU
 }
 
 func (p *ClassIconPicker) buildCards() {
-	// 14 live classes laid out as a compact icon grid via GridWrap
-	// rather than GridWithColumns. GridWithColumns divided the full
-	// Profile-pane width evenly across 5 slots, leaving each card
-	// mostly empty whitespace at typical window sizes. GridWrap
-	// gives each card a fixed 110×84 cell and flows rows naturally
-	// — tighter visual density, no wasted space, still wraps to a
-	// sensible number of rows on narrow windows.
-	const (
-		cardW = float32(110)
-		cardH = float32(84)
-	)
-	grid := container.New(layout.NewGridWrapLayout(fyne.NewSize(cardW, cardH)))
+	// Back to GridWithColumns(7). GridWrap with a fixed cell size
+	// was reporting a MinSize that pinned the outer HSplit dividers
+	// and made the sidebar / source rails undraggable below the
+	// implied grid width. Columns-based grid flexes with container
+	// width and carries MinSize(one card). 7 columns = 2 rows of 7
+	// which visually hugs the icons tighter than the original 5×3
+	// while still letting the HSplit dragger through.
+	grid := container.NewGridWithColumns(7)
 	for _, c := range GetClasses() {
 		card := newClassCard(c, p)
 		p.cards = append(p.cards, card)

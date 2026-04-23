@@ -132,10 +132,16 @@ func NewSourcePanel(a *App) *SourcePanel {
 	}
 
 	// Stack wraps both views; Show/Hide flips which is visible.
-	sp.viewHost = container.NewStack(
-		container.NewScroll(sp.highlighted),
-		container.NewScroll(sp.editor),
-	)
+	// SetMinSize on each inner Scroll enforces a floor of 240px so
+	// the HSplit rail can't drag the source pane so narrow that
+	// TextWrapBreak degrades to one-character-per-line (the "vertical
+	// alphabet soup" case). 240px is about 30 monospace chars at
+	// body size — enough for most tokens to lay out meaningfully.
+	highlightScroll := container.NewScroll(sp.highlighted)
+	highlightScroll.SetMinSize(fyne.NewSize(240, 0))
+	editorScroll := container.NewScroll(sp.editor)
+	editorScroll.SetMinSize(fyne.NewSize(240, 0))
+	sp.viewHost = container.NewStack(highlightScroll, editorScroll)
 	sp.viewHost.Objects[1].Hide() // editor hidden initially
 
 	copyBtn := widget.NewButtonWithIcon("", theme.ContentCopyIcon(), func() {

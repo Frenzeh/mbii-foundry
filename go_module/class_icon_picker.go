@@ -92,14 +92,19 @@ func (p *ClassIconPicker) SetHoverHandlers(onHover func(id, context string), onU
 }
 
 func (p *ClassIconPicker) buildCards() {
-	// Back to GridWithColumns(7). GridWrap with a fixed cell size
-	// was reporting a MinSize that pinned the outer HSplit dividers
-	// and made the sidebar / source rails undraggable below the
-	// implied grid width. Columns-based grid flexes with container
-	// width and carries MinSize(one card). 7 columns = 2 rows of 7
-	// which visually hugs the icons tighter than the original 5×3
-	// while still letting the HSplit dragger through.
-	grid := container.NewGridWithColumns(7)
+	// GridWrap wraps cards to additional rows naturally as the pane
+	// narrows instead of clipping the trailing columns. Previously
+	// avoided because GridWrap's MinSize appeared to pin the outer
+	// HSplit dividers — but that's since been resolved by wrapping
+	// every MBCH editor tab in a bi-directional Scroll
+	// (wrapForTab), which caps MinSize cascade at the tab's
+	// boundary. GridWrap is safe again and avoids the equal-column
+	// clipping GridWithColumns produced at narrow widths.
+	const (
+		cardW = float32(110)
+		cardH = float32(84)
+	)
+	grid := container.New(layout.NewGridWrapLayout(fyne.NewSize(cardW, cardH)))
 	for _, c := range GetClasses() {
 		card := newClassCard(c, p)
 		p.cards = append(p.cards, card)

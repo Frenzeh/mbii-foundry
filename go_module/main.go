@@ -213,7 +213,10 @@ func (h FoundryTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant)
 		case theme.ColorNameScrollBar:
 			return tintWithAlpha(CurrentThemeColor, 70)
 		case theme.ColorNameShadow:
-			return color.NRGBA{R: 0, G: 0, B: 0, A: 40}
+			// Light mode runs softer shadows by default since black
+			// on near-white is visually loud. Drop further from 40
+			// (16%) to 20 (8%) to match the dark-mode toning.
+			return color.NRGBA{R: 0, G: 0, B: 0, A: 20}
 		case theme.ColorNameMenuBackground:
 			return blendColors(color.RGBA{R: 246, G: 246, B: 246, A: 255}, CurrentThemeColor, 0.02)
 		case theme.ColorNameHeaderBackground:
@@ -267,7 +270,13 @@ func (h FoundryTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant)
 	case theme.ColorNameScrollBar:
 		return tintWithAlpha(CurrentThemeColor, 80)
 	case theme.ColorNameShadow:
-		return color.NRGBA{R: 0, G: 0, B: 0, A: 140}
+		// Softer than the default. Fyne paints ColorNameShadow around
+		// HSplit dividers, button borders, and popup drop-shadows;
+		// alpha 140 (55%) gave the rails a heavy-handed halo that
+		// read as UI chrome more than functional affordance. 55
+		// (22%) keeps the divider discoverable without dominating.
+		// Touch target is unchanged — this is purely visual.
+		return color.NRGBA{R: 0, G: 0, B: 0, A: 55}
 	case theme.ColorNameMenuBackground:
 		return blendColors(color.RGBA{R: 32, G: 32, B: 32, A: 255}, CurrentThemeColor, 0.05)
 	case theme.ColorNameHeaderBackground:

@@ -15,21 +15,81 @@ func NewIconResolver(vfs *VirtualFileSystem) *IconResolver {
 	return &IconResolver{vfs: vfs}
 }
 
-// ResolveWeaponIcon finds the icon for a WP_ ID
+// weaponIconAliases maps WP_* enum values to the actual HUD icon
+// filename MBII uses. Source of truth: item defs in moviebattles/
+// game/bg_misc.c, where each weapon_* entry ships with its in-HUD
+// icon path. MBII's filenames are *not* derivable from the enum
+// (e.g. WP_CLONE_PISTOL → "clonepistol", WP_THROWER → "cr-24_flamerifle")
+// so we keep an explicit map. When bg_misc.c changes, regenerate by
+// grep'ing `"gfx/hud/w_icon_"` lines paired with the WP_* at the
+// end of each row.
+//
+// Keys are the full WP_* enum name. Values are the basename without
+// extension — ResolveWeaponIcon prepends "gfx/hud/" so embedded-icon
+// lookup (which keys on basename) still works.
+var weaponIconAliases = map[string]string{
+	// Default picks from bg_misc.c's weapon_* item defs.
+	"WP_NONE":          "w_icon_melee",
+	"WP_STUN_BATON":    "w_icon_stunbaton",
+	"WP_MELEE":         "w_icon_melee",
+	"WP_SABER":         "w_icon_lightsaber",
+	"WP_BRYAR_PISTOL":  "w_icon_blaster_pistol",
+	"WP_CLONE_PISTOL":  "w_icon_clonepistol",
+	"WP_MANDO_PISTOL":  "w_icon_westar",
+	"WP_BLASTER":       "w_icon_e11",
+	"WP_DC_CARBINE":    "w_icon_dc-15s",
+	"WP_CR2":           "w_icon_cr2pistol",
+	"WP_E_22":          "w_icon_e_22",
+	"WP_HEAVY_PISTOL":  "w_icon_imp_pistol",
+	"WP_DLT19":         "w_icon_dlt19scoped",
+	"WP_TRAD_BOWCASTER": "w_icon_wbowcaster1",
+	"WP_DISRUPTOR":     "w_icon_disruptor",
+	"WP_BOWCASTER":     "w_icon_bowcaster",
+	"WP_REPEATER":      "w_icon_repeater",
+	"WP_CLONE_RIFLE":   "w_icon_clonerifle",
+	"WP_THROWER":       "w_icon_cr-24_flamerifle",
+	"WP_MINIGUN":       "w_icon_rotary_cannon",
+	"WP_DEMP2":         "w_icon_demp2",
+	"WP_SHOTGUN":       "w_icon_cp-50_repeater",
+	"WP_FLECHETTE":     "w_icon_flechette",
+	"WP_A280":          "w_icon_a280",
+	"WP_DLT20A":        "w_icon_dlt20a",
+	"WP_M5":            "w_icon_cw-w5",
+	"WP_T21":           "w_icon_t-21",
+	"WP_ROCKET_LAUNCHER": "w_icon_merrsonn",
+	"WP_PLX1":          "w_icon_plx-1",
+	"WP_THERMAL":       "w_icon_thermal",
+	"WP_FRAG_NADE":     "w_icon_fraggrenade",
+	"WP_REAL_TD":       "w_icon_realtd",
+	"WP_TRIP_MINE":     "w_icon_tripmine",
+	"WP_PULSE_NADE":    "w_icon_rpgren",
+	"WP_FIRE_NADE":     "w_icon_plasma",
+	"WP_SONIC_NADE":    "w_icon_sonic_det",
+	"WP_CRYO_NADE":     "w_icon_cryobangrenade",
+	"WP_CONC_NADE":     "w_icon_v-59_conc",
+	"WP_DET_PACK":      "w_icon_detpack",
+	"WP_CONCUSSION":    "w_icon_c_rifle",
+	"WP_SBD":           "w_icon_sbdarm",
+	"WP_WELD_PULSE":    "w_icon_blaster_pistol",
+	"WP_WELD_BEAM":     "w_icon_blaster_pistol",
+	"WP_BRYAR_OLD":     "w_icon_briar",
+	"WP_EE3":           "w_icon_ee-3",
+	"WP_EE4":           "w_icon_ee-4",
+	"WP_AMBAN":         "w_icon_mandorifle",
+	"WP_PROJ":          "w_icon_proj_rifle",
+	"WP_UGL":           "w_icon_relby_v10",
+	"WP_MGL":           "w_icon_upl",
+}
+
+// ResolveWeaponIcon finds the HUD icon path for a WP_ ID. Looks up
+// the alias map first (authoritative — MBII's filenames rarely match
+// the enum suffix) and falls back to the naive "gfx/hud/w_icon_<lower>"
+// pattern for IDs that aren't in the table yet (new custom weapons,
+// experimental enums).
 func (ir *IconResolver) ResolveWeaponIcon(wpID string) string {
-	// Standard pattern: gfx/hud/w_icon_{name}
-	// e.g. WP_BLASTER_PISTOL -> w_icon_blaster_pistol
-
-	// Special overrides
-	overrides := map[string]string{
-		"WP_MELEE": "gfx/hud/w_icon_melee",
-		"WP_SABER": "gfx/hud/w_icon_lightsaber",
+	if alias, ok := weaponIconAliases[wpID]; ok {
+		return "gfx/hud/" + alias
 	}
-	if val, ok := overrides[wpID]; ok {
-		return val
-	}
-
-	// General case
 	suffix := strings.ToLower(strings.TrimPrefix(wpID, "WP_"))
 	return fmt.Sprintf("gfx/hud/w_icon_%s", suffix)
 }

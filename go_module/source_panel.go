@@ -102,15 +102,20 @@ func NewSourcePanel(a *App) *SourcePanel {
 	sp.byteCount = widget.NewLabel("")
 	sp.byteCount.TextStyle = fyne.TextStyle{Italic: true, Monospace: true}
 
-	// Highlighted view (default).
+	// Highlighted view (default). TextWrapBreak wraps at any
+	// character boundary, which matters for MBCH source — long
+	// tokens (MB_ATT_POISON_DART, full PK3 paths) are single
+	// "words" to TextWrapWord so they wouldn't wrap at all and
+	// would clip at the pane edge. Break lets them wrap mid-token
+	// so nothing important gets hidden behind the right edge.
 	sp.highlighted = widget.NewRichText()
-	sp.highlighted.Wrapping = fyne.TextWrapOff
+	sp.highlighted.Wrapping = fyne.TextWrapBreak
 	sp.setPlaceholder("Select a file to see its live source here.")
 
-	// Edit view (hidden until toggled).
+	// Edit view (hidden until toggled). Same break-wrap reasoning.
 	sp.editor = widget.NewMultiLineEntry()
 	sp.editor.TextStyle = fyne.TextStyle{Monospace: true}
-	sp.editor.Wrapping = fyne.TextWrapOff
+	sp.editor.Wrapping = fyne.TextWrapBreak
 	sp.editor.OnChanged = func(s string) {
 		if sp.provider == nil {
 			return

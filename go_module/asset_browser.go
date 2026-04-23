@@ -209,6 +209,32 @@ func (ab *AssetBrowser) addToFavorites(path string) {
 	ab.refreshSources()
 }
 
+// removeFromFavorites drops a path from the favorites list + persists.
+// No-op when the path isn't currently favorited — so UI callers can
+// fire this without checking first.
+func (ab *AssetBrowser) removeFromFavorites(path string) {
+	for i, f := range ab.favorites {
+		if f == path {
+			ab.favorites = append(ab.favorites[:i], ab.favorites[i+1:]...)
+			ab.saveFavorites()
+			ab.refreshSources()
+			return
+		}
+	}
+}
+
+// IsFavorited reports whether a path is currently in the favorites
+// list. Used by the file-picker to render the correct toggle state
+// on its "favorite this folder" button.
+func (ab *AssetBrowser) IsFavorited(path string) bool {
+	for _, f := range ab.favorites {
+		if f == path {
+			return true
+		}
+	}
+	return false
+}
+
 func (ab *AssetBrowser) loadConfig() {
 	configPath := filepath.Join(ab.gamedataPath, "..", "mbii-foundry_config.json")
 	data, err := os.ReadFile(configPath)

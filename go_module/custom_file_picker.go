@@ -24,6 +24,12 @@ type CustomFilePicker struct {
 	selectButton *widget.Button
 	cancelButton *widget.Button
 
+	// syncFavBtn keeps the "Favorite/Unfavorite" button in the nav
+	// bar in step with whatever folder the browser is currently in.
+	// Called from refreshPathBar on every folder change + directly
+	// from the button's own handler after toggling state.
+	syncFavBtn func()
+
 	sources     []string
 	initialPath string // New field to store the initial path
 }
@@ -83,41 +89,9 @@ func (cfp *CustomFilePicker) createUI() {
 		cfp.window.Close()
 	})
 
-	// Sidebar Sources
-	cfp.sources = []string{"Home", "Computer", "--- Locations ---"}
-
-	// Helper to add sources from AssetBrowser's logic (reusing detection logic for consistent UI)
-	homeDir, _ := os.UserHomeDir()
-	cloudStoragePath := filepath.Join(homeDir, "Library", "CloudStorage")
-	if entries, err := os.ReadDir(cloudStoragePath); err == nil {
-		for _, e := range entries {
-			if e.IsDir() {
-				cfp.sources = append(cfp.sources, "Cloud: "+e.Name())
-			}
-		}
-	}
-	if entries, err := os.ReadDir("/Volumes"); err == nil {
-		for _, e := range entries {
-			if e.IsDir() && !strings.HasPrefix(e.Name(), ".") && e.Name() != "Macintosh HD" {
-				cfp.sources = append(cfp.sources, "Volume: "+e.Name())
-			}
-		}
-	}
-	if cfp.browser.gamedataPath != "" {
-		workspace := filepath.Dir(cfp.browser.gamedataPath)
-		cfp.sources = append(cfp.sources, "Workspace: "+filepath.Base(workspace))
-	}
-
-	if len(cfp.browser.favorites) > 0 {
-		cfp.sources = append(cfp.sources, "--- Favorites ---")
-		cfp.sources = append(cfp.sources, cfp.browser.favorites...)
-	}
-	cfp.sources = append(cfp.sources, "--- PK3s ---")
-	pk3Names := make([]string, len(cfp.browser.pk3Files))
-	for i, p := range cfp.browser.pk3Files {
-		pk3Names[i] = filepath.Base(p)
-	}
-	cfp.sources = append(cfp.sources, pk3Names...)
+	// Initial source list. Rebuilt in-place by rebuildSources so we
+	// don't double-maintain the construction logic.
+	cfp.rebuildSources()
 
 	cfp.sidebar = widget.NewList(
 		func() int { return len(cfp.sources) },
@@ -287,10 +261,56 @@ func (cfp *CustomFilePicker) createUI() {
 	sortLabel := widget.NewLabelWithStyle("Sort",
 		fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 
+	// Favorite toggle — adds the current directory to the sidebar's
+	// Favorites section (AssetBrowser.addToFavorites persists via
+	// favorites.json), or removes it if already pinned. Icon swaps
+	// between filled (favorited) and outline (not) to communicate
+	// current state. Persisted list surfaces in the sidebar + also
+	// in the main editor's browser, so pinning here benefits both.
+	var favBtn *widget.Button
+	syncFavBtn := func() {
+		if cfp.browser.currentDir == nil || cfp.browser.currentDir.Path == "" {
+			favBtn.Disable()
+			favBtn.SetIcon(theme.FolderOpenIcon())
+			favBtn.SetText("")
+			return
+		}
+		favBtn.Enable()
+		if cfp.browser.IsFavorited(cfp.browser.currentDir.Path) {
+			favBtn.SetIcon(theme.ConfirmIcon())
+			favBtn.SetText("Unfavorite")
+		} else {
+			favBtn.SetIcon(theme.ContentAddIcon())
+			favBtn.SetText("Favorite")
+		}
+	}
+	favBtn = widget.NewButtonWithIcon("Favorite", theme.ContentAddIcon(), func() {
+		if cfp.browser.currentDir == nil || cfp.browser.currentDir.Path == "" {
+			return
+		}
+		path := cfp.browser.currentDir.Path
+		if cfp.browser.IsFavorited(path) {
+			cfp.browser.removeFromFavorites(path)
+		} else {
+			cfp.browser.addToFavorites(path)
+		}
+		cfp.rebuildSources()
+		syncFavBtn()
+	})
+	favBtn.Importance = widget.LowImportance
+	syncFavBtn()
+	// Keep button state in sync as the user navigates — we hook into
+	// refreshPathBar since that's called on every folder change.
+	prevRefresh := cfp.refreshPathBar
+	_ = prevRefresh // kept to avoid "declared and not used" if we
+	// later need to chain; actual chaining done in refreshPathBar
+	// itself by calling syncFavBtn at end.
+	cfp.syncFavBtn = syncFavBtn
+
 	topNav := container.NewBorder(
 		nil, nil,
 		container.NewHBox(upBtn, homeBtn, refreshBtn),
-		container.NewHBox(sortLabel, sortSelect, viewBtn),
+		container.NewHBox(sortLabel, sortSelect, favBtn, viewBtn),
 		container.NewScroll(cfp.pathBar),
 	)
 
@@ -352,6 +372,59 @@ func (cfp *CustomFilePicker) refreshPathBar() {
 		cfp.pathBar.Add(btn)
 	}
 	cfp.pathBar.Refresh()
+
+	// Favorite-toggle button in the nav bar mirrors the current folder;
+	// update it whenever the breadcrumb rebuilds (= on every folder
+	// change).
+	if cfp.syncFavBtn != nil {
+		cfp.syncFavBtn()
+	}
+}
+
+// rebuildSources regenerates the sidebar's Sources list from current
+// state — standard locations + cloud drives + volumes + workspace +
+// favorites + PK3s. Called at init and whenever favorites change so
+// a newly-pinned folder shows up in the sidebar immediately.
+func (cfp *CustomFilePicker) rebuildSources() {
+	homeDir, _ := os.UserHomeDir()
+
+	cfp.sources = []string{"Home", "Computer", "--- Locations ---"}
+
+	cloudStoragePath := filepath.Join(homeDir, "Library", "CloudStorage")
+	if entries, err := os.ReadDir(cloudStoragePath); err == nil {
+		for _, e := range entries {
+			if e.IsDir() {
+				cfp.sources = append(cfp.sources, "Cloud: "+e.Name())
+			}
+		}
+	}
+	if entries, err := os.ReadDir("/Volumes"); err == nil {
+		for _, e := range entries {
+			if e.IsDir() && !strings.HasPrefix(e.Name(), ".") && e.Name() != "Macintosh HD" {
+				cfp.sources = append(cfp.sources, "Volume: "+e.Name())
+			}
+		}
+	}
+	if cfp.browser.gamedataPath != "" {
+		workspace := filepath.Dir(cfp.browser.gamedataPath)
+		cfp.sources = append(cfp.sources, "Workspace: "+filepath.Base(workspace))
+	}
+
+	if len(cfp.browser.favorites) > 0 {
+		cfp.sources = append(cfp.sources, "--- Favorites ---")
+		cfp.sources = append(cfp.sources, cfp.browser.favorites...)
+	}
+
+	cfp.sources = append(cfp.sources, "--- PK3s ---")
+	pk3Names := make([]string, len(cfp.browser.pk3Files))
+	for i, p := range cfp.browser.pk3Files {
+		pk3Names[i] = filepath.Base(p)
+	}
+	cfp.sources = append(cfp.sources, pk3Names...)
+
+	if cfp.sidebar != nil {
+		cfp.sidebar.Refresh()
+	}
 }
 
 // goUp navigates one level up from the current directory, wrapping the

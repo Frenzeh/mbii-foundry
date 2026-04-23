@@ -25,7 +25,13 @@ import (
 )
 
 const (
-	AppVersion = "2.0"
+	// AppVersion MUST track the latest shipped release tag (without the
+	// leading "v"). The UpdateChecker compares this string against the
+	// GitHub Releases API's tag_name to decide whether to show the Home
+	// screen's "new version available" banner. Bump this before tagging
+	// a release — if they drift, testers get a stale banner or none at
+	// all.
+	AppVersion = "0.3.0-alpha"
 	AppName    = "MBII Foundry"
 )
 
@@ -65,6 +71,12 @@ type App struct {
 	// Holocron Integration
 	holocronClient *HolocronClient
 	holocronStatus *widget.Icon // Visual indicator
+
+	// Update Checker — hits GitHub Releases in the background on
+	// startup + caches result for 6h in $CONFIG/update_cache.json.
+	// WelcomeScreen reads this to decide whether to render the "new
+	// version available" banner.
+	updateChecker *UpdateChecker
 }
 
 var CurrentThemeColor color.Color = color.RGBA{R: 0, G: 128, B: 255, A: 255} // Default Blue
@@ -339,7 +351,21 @@ func main() {
 		editors:        make(map[*container.TabItem]Editor),
 		holocronClient: NewHolocronClient(),
 		fileManager:    NewFileManager(appConfigDir),
+		updateChecker:  NewUpdateChecker(appConfigDir),
 	}
+
+	// Kick off the version check in the background. CheckAsync uses the
+	// 6h cache first and only hits the network when the cache is stale,
+	// so relaunches within the same session are free. When the result
+	// lands, nudge the Home/welcome tab so the banner picks it up — if
+	// the user is already mid-edit on another tab, nothing visibly
+	// changes until they navigate back to Home.
+	application.updateChecker.CheckAsync(func(info *UpdateInfo) {
+		if info == nil || !info.IsNewer {
+			return
+		}
+		fyne.Do(application.refreshWelcomeBanner)
+	})
 
 	// Initialize GitHub Manager if token exists
 	if application.config.GitHubToken != "" {
@@ -899,6 +925,30 @@ func (a *App) openFileFromPath(filePath string) {
 		a.docTabs.Refresh()
 
 		a.updateStatus(fmt.Sprintf("Opened %s", title))
+	}
+}
+
+// refreshWelcomeBanner rebuilds the Home tab so the update banner picks
+// up the latest UpdateChecker result. Called from the CheckAsync
+// completion callback; no-op if the Home tab isn't currently in the
+// tab strip (the user has it closed and opened some editors).
+//
+// We rebuild the whole welcome tab rather than mutating the existing
+// one because the banner is baked into WelcomeScreen.GetContent at
+// construction — cheaper in code to rebuild than to plumb a live
+// reference back through every render path.
+func (a *App) refreshWelcomeBanner() {
+	if a.docTabs == nil {
+		return
+	}
+	for _, tab := range a.docTabs.Items {
+		if tab.Text != "Home" {
+			continue
+		}
+		ws := NewWelcomeScreen(a)
+		tab.Content = ws.GetContent()
+		a.docTabs.Refresh()
+		return
 	}
 }
 

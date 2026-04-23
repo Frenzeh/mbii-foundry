@@ -76,6 +76,21 @@ type UpdateChecker struct {
 func NewUpdateChecker(configDir string) *UpdateChecker {
 	uc := &UpdateChecker{configDir: configDir}
 	uc.loadCache() // best-effort; stale cache is fine, CheckAsync refreshes
+	// Dev-only preview: set FOUNDRY_DEV_FAKE_UPDATE=1 to populate the
+	// checker with a synthetic "new release available" so the Home
+	// footer callout renders without needing to ship a real release.
+	// Useful when iterating on the UI; disabled in regular runs.
+	if os.Getenv("FOUNDRY_DEV_FAKE_UPDATE") == "1" {
+		uc.info = &UpdateInfo{
+			TagName:     "v99.0.0-dev",
+			Name:        "Fake Release for UI Preview",
+			HTMLURL:     "https://github.com/" + updateOwner + "/" + updateRepo + "/releases",
+			PublishedAt: time.Now().Add(-2 * time.Hour),
+			IsNewer:     true,
+			CurrentVer:  AppVersion,
+			CheckedAt:   time.Now(),
+		}
+	}
 	return uc
 }
 

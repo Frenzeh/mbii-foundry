@@ -66,13 +66,14 @@ type MBCHEditor struct {
 	onDirtyChanged  func(bool)
 	onSourceChanged func()
 
-	nameEntry        *ValidatedEntry
-	classSelect      *widget.Select
-	modelEntry       *ValidatedEntry
+	nameEntry   *ValidatedEntry
+	classPicker *ClassIconPicker // replaces the previous widget.Select
+	modelEntry  *ValidatedEntry
 	skinEntry        *ValidatedEntry
 	uiShaderEntry    *ValidatedEntry
 	soundsetEntry    *ValidatedEntry
-	iconPreview      *widget.Icon // New
+	iconPreview      *widget.Icon // Portrait of the current model+skin (or explicit UI shader)
+	portraitSource   *widget.Label // Shows whether the portrait is "auto" or an "override" so authors can tell quickly
 	weaponsEntry     *widget.Entry
 	attributesEntry  *widget.Entry
 	forcePowersEntry *widget.Entry
@@ -261,18 +262,16 @@ func (e *MBCHEditor) createUI() {
 	e.nameEntry.OnChanged = func(s string) { e.markDirty() }
 	e.nameEntry.OnFocus = func() { e.onHover("name", "") }
 
-	// Populate classes dynamically
-	var classOptions []string
-	for _, c := range GetClasses() {
-		classOptions = append(classOptions, c.ID)
-	}
-
-	e.classSelect = widget.NewSelect(classOptions, func(s string) {
-		e.character.MBClass = s
+	// Class picker — visual icon-card row replacing the old flat
+	// widget.Select dropdown. "Pick a class" is fundamentally a
+	// visual act (players recognize SBD or Wookie by the icon
+	// before the name), so the picker leads with the art.
+	e.classPicker = NewClassIconPicker(func(id string) {
+		e.character.MBClass = id
 		e.markDirty()
-		e.onHover(s, "Class Definition")
+		e.onHover(id, "Class Definition")
+		e.updateIconPreview()
 	})
-	e.classSelect.PlaceHolder = "Select a Class..."
 
 	e.modelEntry = NewValidatedEntry(noOpVal)
 	e.modelEntry.SetPlaceHolder("e.g. cultist")
@@ -304,9 +303,24 @@ func (e *MBCHEditor) createUI() {
 		}
 	}, "Browse for Icon")
 
-	// Icon Preview
+	// Icon Preview — the character's portrait, pulled from the VFS
+	// (not extracted; there are thousands of player-model variants,
+	// each their own mb2_icon_<skin>.tga inside its model folder).
+	// AssetBrowser.LoadIconResource already caches decoded PNGs to
+	// $TMPDIR/mbii-fa-cache/ so subsequent renders are free.
+	//
+	// Resolution priority (see IconResolver.ResolveClassIcon):
+	//   1. UI Shader field non-empty → treat as explicit override
+	//      (the author pointed at a specific shader/path)
+	//   2. else → convention: models/players/<model>/mb2_icon_<skin>
+	//
+	// The portraitSource label mirrors this so authors can see at a
+	// glance whether the rendered portrait is from their override or
+	// the convention — useful when the icon "looks wrong" and you
+	// need to know where to intervene.
 	e.iconPreview = widget.NewIcon(theme.FileImageIcon())
-	// e.iconPreview.SetMinSize(fyne.NewSize(64, 64)) // Bigger preview
+	e.portraitSource = widget.NewLabel("")
+	e.portraitSource.TextStyle = fyne.TextStyle{Italic: true}
 
 	e.weaponsEntry = NewMultiLineInputEntry()
 	e.attributesEntry = NewMultiLineInputEntry()
@@ -547,13 +561,19 @@ func (e *MBCHEditor) createUI() {
 		e.onHover(opt, "")
 	})
 
-	// Icon preview row skipped — with no shader loaded it just
-	// shows a stray file-icon placeholder next to the Name field
-	// and reads as a broken "save" button. Preview surface will
-	// return as a real image when we have shader → image rendering.
+	// Profile form. Class picker gets its own row because it's a
+	// visual strip, not a single inline input. Icon preview (64px)
+	// is a peer to the Name field on the right so the current
+	// character's portrait is visible while editing.
 	profileForm := widget.NewForm(
 		widget.NewFormItem("Name", e.nameEntry),
-		widget.NewFormItem("MB Class", e.classSelect),
+		widget.NewFormItem("MB Class", e.classPicker),
+		widget.NewFormItem("Portrait",
+			container.NewHBox(
+				container.NewGridWrap(fyne.NewSize(64, 64), e.iconPreview),
+				e.portraitSource,
+			),
+		),
 		widget.NewFormItem("Model", container.NewBorder(nil, nil, nil, container.NewHBox(browseModelBtn, previewBtn), e.modelEntry)),
 		widget.NewFormItem("Skin", e.skinEntry),
 		widget.NewFormItem("UI Shader", container.NewBorder(nil, nil, nil, browseIconBtn, e.uiShaderEntry)),
@@ -815,7 +835,7 @@ func (e *MBCHEditor) updateUI() {
 	LogInfo("Updating UI for Character: %s", e.character.Name)
 	// Standard updates
 	e.nameEntry.SetText(e.character.Name)
-	e.classSelect.SetSelected(e.character.MBClass)
+	e.classPicker.SetSelected(e.character.MBClass)
 	e.modelEntry.SetText(e.character.Model)
 	e.skinEntry.SetText(e.character.Skin)
 	e.uiShaderEntry.SetText(e.character.UIShader)
@@ -867,7 +887,7 @@ func (e *MBCHEditor) updateCharacterFromUI() {
 
 	// Basic
 	e.character.Name = e.nameEntry.Text
-	e.character.MBClass = e.classSelect.Selected
+	e.character.MBClass = e.classPicker.Selected()
 	e.character.Model = e.modelEntry.Text
 	e.character.Skin = e.skinEntry.Text
 	e.character.UIShader = e.uiShaderEntry.Text
@@ -963,7 +983,7 @@ func parseEntryFloat(entry *ValidatedEntry, min, max float64) float64 {
 }
 
 func (e *MBCHEditor) updateIconPreview() {
-	if e.iconResolver == nil || e.assetBrowser == nil || e.iconPreview == nil {
+	if e.iconPreview == nil {
 		return
 	}
 
@@ -971,14 +991,35 @@ func (e *MBCHEditor) updateIconPreview() {
 	skin := e.skinEntry.Text
 	uishader := e.uiShaderEntry.Text
 
+	// Derive the source label up front so we can set it regardless
+	// of whether the load actually succeeds — the label tells the
+	// author what the editor is *trying* to load, which is useful
+	// even if the VFS can't find it.
+	source := "auto"
+	if uishader != "" && uishader != "default" {
+		source = "override"
+	}
+	if e.portraitSource != nil {
+		e.portraitSource.SetText(source)
+	}
+
+	// If we don't have an asset browser / resolver yet (editor is
+	// still being built, or running in a VFS-less test context),
+	// leave the placeholder in place. Nothing else to do.
+	if e.iconResolver == nil || e.assetBrowser == nil {
+		return
+	}
+
 	path := e.iconResolver.ResolveClassIcon(model, skin, uishader)
 	if path != "" {
-		res := e.assetBrowser.LoadIconResource(path)
-		if res != nil {
+		if res := e.assetBrowser.LoadIconResource(path); res != nil {
 			e.iconPreview.SetResource(res)
 			return
 		}
 	}
+	// Nothing resolved — fall back to a generic placeholder so the
+	// 64px slot still reads as "this is the portrait area" instead
+	// of going blank.
 	e.iconPreview.SetResource(theme.FileImageIcon())
 }
 

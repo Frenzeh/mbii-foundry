@@ -48,7 +48,7 @@ type App struct {
 	assetBrowser *AssetBrowser
 	infoPanel    *InfoPanel
 	sourcePanel  *SourcePanel
-	activityBar  *SidebarHeader // top-of-sidebar horizontal activity switcher (legacy field name)
+	activityBar  *SidebarHeader  // top-of-sidebar horizontal activity switcher (legacy field name)
 	sidebarHost  *fyne.Container // swap target for the active activity's content
 
 	fileManager   *FileManager
@@ -1153,6 +1153,7 @@ func (a *App) createToolbar() fyne.CanvasObject {
 		// a modal.
 		btn(theme.SettingsIcon(), func() { a.showPreferences() }, "Preferences"),
 		btn(theme.InfoIcon(), func() { a.showLogs() }, "Show Debug Logs"),
+		btn(theme.ViewRefreshIcon(), func() { a.checkForUpdatesNow() }, "Check for updates"),
 		btn(theme.HelpIcon(), func() { a.showAbout() }, "About MBII Foundry"),
 	)
 
@@ -1646,6 +1647,62 @@ func (a *App) showPreferences() {
 func (a *App) saveConfig() {
 	data, _ := json.MarshalIndent(a.config, "", "  ")
 	os.WriteFile(a.configPath, data, 0644)
+}
+
+// checkForUpdatesNow is the toolbar action. Forces a fresh GitHub
+// check (bypasses the 6h cache), tells the user what it found, and
+// — if a newer release exists — rebuilds the Home tab so the
+// footer callout becomes visible without them having to relaunch.
+//
+// Progress feedback is lightweight: a modal progress dialog while
+// the HTTP request is in flight (typically <1s), replaced by a
+// result dialog. Using the dialog package rather than an inline
+// status pill keeps the action discoverable even when the user
+// isn't already looking at Home.
+func (a *App) checkForUpdatesNow() {
+	if a.updateChecker == nil {
+		dialog.ShowInformation("Updates",
+			"The update checker isn't initialized — this usually means the "+
+				"build is running in a stripped-down dev mode.",
+			a.mainWindow)
+		return
+	}
+
+	progress := dialog.NewCustomWithoutButtons("Checking for updates",
+		container.NewPadded(container.NewVBox(
+			widget.NewLabel("Contacting GitHub…"),
+			widget.NewProgressBarInfinite(),
+		)), a.mainWindow)
+	progress.Resize(fyne.NewSize(360, 120))
+	progress.Show()
+
+	a.updateChecker.ForceCheckAsync(func(info *UpdateInfo) {
+		fyne.Do(func() {
+			progress.Hide()
+
+			if info == nil {
+				dialog.ShowError(
+					fmt.Errorf("couldn't reach GitHub. Check your internet "+
+						"connection and try again."),
+					a.mainWindow)
+				return
+			}
+			if !info.IsNewer {
+				dialog.ShowInformation("You're up to date",
+					fmt.Sprintf("Foundry v%s is the latest release.", AppVersion),
+					a.mainWindow)
+				return
+			}
+			// New version — rebuild Home so the footer callout shows it
+			// immediately, then confirm with a dialog that points the
+			// user at Home if they're on a different tab.
+			a.refreshWelcomeBanner()
+			dialog.ShowInformation("Update available",
+				fmt.Sprintf("Foundry %s is out. Head to the Home tab "+
+					"to install it.", info.TagName),
+				a.mainWindow)
+		})
+	})
 }
 
 func (a *App) showAbout() {

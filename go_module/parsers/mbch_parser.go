@@ -526,22 +526,22 @@ func GenerateMBCH(char *MBCHCharacter) (string, error) {
 		fmt.Fprintf(&sb, "\tforcepool\t\t%d\n", char.ForcePool)
 	}
 	if char.ForceRegen != 1.0 {
-		fmt.Fprintf(&sb, "\tforceregen\t\t%.1f\n", char.ForceRegen)
+		fmt.Fprintf(&sb, "\tforceregen\t\t%g\n", char.ForceRegen)
 	}
 	if char.Speed != 1.0 {
-		fmt.Fprintf(&sb, "\tspeed\t\t\t%.1f\n", char.Speed)
+		fmt.Fprintf(&sb, "\tspeed\t\t\t%g\n", char.Speed)
 	}
 	if char.APMultiplier != 1.0 {
-		fmt.Fprintf(&sb, "\tAPmultiplier\t\t%.1f\n", char.APMultiplier)
+		fmt.Fprintf(&sb, "\tAPmultiplier\t\t%g\n", char.APMultiplier)
 	}
 	if char.BPMultiplier != 1.0 {
-		fmt.Fprintf(&sb, "\tBPmultiplier\t\t%.1f\n", char.BPMultiplier)
+		fmt.Fprintf(&sb, "\tBPmultiplier\t\t%g\n", char.BPMultiplier)
 	}
 	if char.CSMultiplier != 1.0 {
-		fmt.Fprintf(&sb, "\tCSmultiplier\t\t%.1f\n", char.CSMultiplier)
+		fmt.Fprintf(&sb, "\tCSmultiplier\t\t%g\n", char.CSMultiplier)
 	}
 	if char.ASMultiplier != 1.0 {
-		fmt.Fprintf(&sb, "\tASMultiplier\t\t%.1f\n", char.ASMultiplier)
+		fmt.Fprintf(&sb, "\tASMultiplier\t\t%g\n", char.ASMultiplier)
 	}
 	if char.Saber1 != "" {
 		fmt.Fprintf(&sb, "\tsaber1\t\t\t%s\n", char.Saber1)
@@ -676,7 +676,7 @@ func GenerateMBCH(char *MBCHCharacter) (string, error) {
 			fmt.Fprintf(&sb, "\tclipSize\t\t%d\n", wi.ClipSize)
 		}
 		if wi.ReloadTimeModifier > 0 {
-			fmt.Fprintf(&sb, "\treloadTimeModifier\t%.1f\n", wi.ReloadTimeModifier)
+			fmt.Fprintf(&sb, "\treloadTimeModifier\t%g\n", wi.ReloadTimeModifier)
 		}
 		writeExtraFields(&sb, wi.ExtraFields)
 		fmt.Fprintln(&sb, "}")

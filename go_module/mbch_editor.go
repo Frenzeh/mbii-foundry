@@ -98,9 +98,11 @@ type MBCHEditor struct {
 	descriptionEntry *ValidatedEntry
 	sourceView       *widget.RichText // Correct type
 
-	pointBuyUI     *PointBuyUI
-	weaponInfoUI   *WeaponInfoUI
-	forceInfoUI    *ForceInfoUI
+	pointBuyUI      *PointBuyUI
+	weaponInfoUI    *WeaponInfoUI
+	forceInfoUI     *ForceInfoUI
+	weaponFlagsUI   *WeaponFlagsEditor  // WP_*Flags HELD_* grid (separate from WeaponInfoUI overrides)
+	skinVariantsUI  *SkinVariantsEditor // model_N / skin_N / uishader_N tuples + RGB overrides
 	assetBrowser   *AssetBrowser
 	iconResolver   *IconResolver
 	holocronClient *HolocronClient
@@ -681,6 +683,24 @@ func (e *MBCHEditor) createUI() {
 	forceTab := e.forceInfoUI.GetContent()
 	pointBuyTab := e.pointBuyUI.GetContent()
 
+	// Weapon flags editor — WP_*Flags HELD_* modifiers. Own tab so
+	// the checkbox grid has breathing room; "Weapon Mods" already
+	// has WeaponInfo blocks (different concept: model/sound/ammo
+	// overrides). Mixing the two in one tab would confuse both.
+	if e.weaponFlagsUI == nil {
+		e.weaponFlagsUI = NewWeaponFlagsEditor(e)
+	}
+	flagsTab := container.NewVScroll(e.weaponFlagsUI.GetContent())
+
+	// Skin variants editor — model_N / skin_N / uishader_N tuples
+	// for multi-skin characters (Rebel trooper has 20 variants for
+	// different unit types, Luke has era variants, etc.). Currently
+	// riding through ExtraFields; this panel makes them first-class.
+	if e.skinVariantsUI == nil {
+		e.skinVariantsUI = NewSkinVariantsEditor(e)
+	}
+	skinsTab := container.NewVScroll(e.skinVariantsUI.GetContent())
+
 	// Source View — kept allocated so the updateSourceView helper
 	// stays safe to call, but no longer rendered as a tab: the right-
 	// pane live Source panel (with syntax highlighting + validated
@@ -691,6 +711,8 @@ func (e *MBCHEditor) createUI() {
 		container.NewTabItem("Profile", container.NewVScroll(profileTab)),
 		container.NewTabItem("Attributes", attrScroll),
 		container.NewTabItem("Inventory", weaponScroll),
+		container.NewTabItem("Flags", flagsTab),
+		container.NewTabItem("Skins", skinsTab),
 		container.NewTabItem("Stats & Sabers", container.NewVScroll(loadoutTab)),
 		container.NewTabItem("Weapon Mods", weaponTab),
 		container.NewTabItem("Force Mods", forceTab),
@@ -903,6 +925,12 @@ func (e *MBCHEditor) updateUI() {
 	e.descriptionEntry.SetText(e.character.Description)
 
 	e.pointBuyUI.UpdateUI()
+	if e.weaponFlagsUI != nil {
+		e.weaponFlagsUI.Refresh()
+	}
+	if e.skinVariantsUI != nil {
+		e.skinVariantsUI.Refresh()
+	}
 	e.weaponInfoUI.UpdateUI()
 	e.forceInfoUI.UpdateUI()
 

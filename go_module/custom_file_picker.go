@@ -219,7 +219,10 @@ func (cfp *CustomFilePicker) createUI() {
 	// Navigation toolbar — explicit Up / Home / Refresh buttons so users
 	// aren't hunting for a ".. (Up)" folder entry in the grid. Uses Fyne's
 	// built-in theme icons for portability across macOS/Windows/Linux.
-	upBtn := widget.NewButtonWithIcon("Up", theme.NavigateBackIcon(), cfp.goUp)
+	// Up uses MoveUpIcon (↑) — NavigateBackIcon (←) previously confused
+	// the direction since "up a directory" and "back through history"
+	// are distinct concepts.
+	upBtn := widget.NewButtonWithIcon("Up", theme.MoveUpIcon(), cfp.goUp)
 	upBtn.Importance = widget.LowImportance
 	homeBtn := widget.NewButtonWithIcon("Home", theme.HomeIcon(), func() {
 		home, _ := os.UserHomeDir()
@@ -235,24 +238,59 @@ func (cfp *CustomFilePicker) createUI() {
 	})
 	refreshBtn.Importance = widget.LowImportance
 
-	// View mode toggle (grid/list) exposed here since ShowTopBar(false)
-	// hid the in-browser control.
-	viewToggle := widget.NewSelect([]string{"Grid", "List"}, func(mode string) {
-		if mode == "List" {
-			cfp.browser.viewMode = ViewModeList
+	// View mode: icon toggle (grid ↔ list) instead of a dropdown.
+	// Matches the pattern the main sidebar uses. We keep a single
+	// button whose icon swaps to reflect the *current* state, so
+	// users see "I'm in grid mode" at a glance. Clicking flips the
+	// mode and the icon together.
+	var viewBtn *widget.Button
+	syncViewBtn := func() {
+		if cfp.browser.viewMode == ViewModeList {
+			viewBtn.SetIcon(theme.GridIcon()) // icon shows what pressing would switch TO
+			viewBtn.SetText("Grid")
 		} else {
+			viewBtn.SetIcon(theme.ListIcon())
+			viewBtn.SetText("List")
+		}
+	}
+	viewBtn = widget.NewButtonWithIcon("", theme.ListIcon(), func() {
+		if cfp.browser.viewMode == ViewModeList {
 			cfp.browser.viewMode = ViewModeGrid
+		} else {
+			cfp.browser.viewMode = ViewModeList
 		}
 		if cfp.browser.currentDir != nil {
 			cfp.browser.loadGrid(cfp.browser.currentDir)
 		}
+		syncViewBtn()
 	})
-	viewToggle.Selected = "Grid"
+	viewBtn.Importance = widget.LowImportance
+	syncViewBtn()
+
+	// Sort bar — exposes the same sort modes the main asset browser
+	// has so users can order by name/size/type without leaving the
+	// file picker. The picker hides ShowTopBar(false) so we re-
+	// expose sort here explicitly. Reload the grid on change so the
+	// new order applies immediately.
+	sortSelect := widget.NewSelect([]string{
+		string(SortNameAsc), string(SortNameDesc),
+		string(SortSizeAsc), string(SortSizeDesc),
+		string(SortType),
+	}, func(s string) {
+		cfp.browser.sortMode = SortMode(s)
+		if cfp.browser.currentDir != nil {
+			cfp.browser.loadGrid(cfp.browser.currentDir)
+		}
+	})
+	sortSelect.SetSelected(string(cfp.browser.sortMode))
+
+	sortLabel := widget.NewLabelWithStyle("Sort",
+		fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 
 	topNav := container.NewBorder(
 		nil, nil,
 		container.NewHBox(upBtn, homeBtn, refreshBtn),
-		viewToggle,
+		container.NewHBox(sortLabel, sortSelect, viewBtn),
 		container.NewScroll(cfp.pathBar),
 	)
 

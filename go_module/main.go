@@ -1,9 +1,11 @@
 package main
 
 import (
+	"archive/zip"
 	"encoding/json"
 	"fmt"
 	"image/color"
+	"io"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -437,14 +439,13 @@ func (a *App) setupUI() {
 	// updateMainLayout hides the whole label/icon pair for regular users.
 	a.holocronStatus = widget.NewIcon(theme.CancelIcon())
 
-	// Double-click-to-open for file-system assets. Active both in the
-	// sidebar asset browser (when "Files" activity is selected) and in
-	// any future pop-out dialog.
+	// Double-click-to-open for assets in the sidebar browser. Both
+	// filesystem and PK3-embedded entries are supported — the latter
+	// route through openFileFromAsset which extracts the entry to a
+	// temp file and clears currentPath so the user's next Save prompts
+	// Save-As rather than trying to write back into the archive.
 	a.assetBrowser.SetOnAssetDouble(func(asset *AssetEntry) {
-		if asset == nil || asset.IsDir || asset.Path == "" || asset.PK3Source != "" {
-			return
-		}
-		a.openFileFromPath(asset.Path)
+		a.openFileFromAsset(asset)
 	})
 
 	// Activity bar: VS-Code-style vertical icon strip on the far left.
@@ -901,6 +902,95 @@ func (a *App) openFileFromPath(filePath string) {
 	}
 }
 
+// openFileFromAsset opens a file represented by an AssetEntry. Handles
+// both filesystem-backed entries (PK3Source empty) and PK3-embedded
+// entries (PK3Source is the on-disk .pk3, Path is the logical path
+// inside that archive). For PK3-backed files the entry bytes are
+// extracted to a temp file which the editor then reads through its
+// normal LoadFile path; currentPath is cleared afterwards so the user's
+// next Save forces Save-As — writing back into a .pk3 in place isn't
+// something Foundry supports and shouldn't silently overwrite.
+//
+// VFS-backed entries (PK3Source == "VFS") are paths that live in the
+// merged virtual file system; the editors' LoadFile already falls back
+// to VFS when os.Open fails, so we route those straight through the
+// normal path-based open.
+func (a *App) openFileFromAsset(asset *AssetEntry) {
+	if asset == nil || asset.IsDir || asset.Path == "" {
+		return
+	}
+
+	if asset.PK3Source == "" || asset.PK3Source == "VFS" {
+		a.openFileFromPath(asset.Path)
+		return
+	}
+
+	reader, err := zip.OpenReader(asset.PK3Source)
+	if err != nil {
+		ShowError(fmt.Errorf("couldn't open %s: %w", filepath.Base(asset.PK3Source), err), a.mainWindow)
+		return
+	}
+	defer reader.Close()
+
+	wanted := strings.ReplaceAll(asset.Path, "\\", "/")
+	var zf *zip.File
+	for _, f := range reader.File {
+		if strings.ReplaceAll(f.Name, "\\", "/") == wanted {
+			zf = f
+			break
+		}
+	}
+	if zf == nil {
+		ShowError(fmt.Errorf("%s not found inside %s", asset.Path, filepath.Base(asset.PK3Source)), a.mainWindow)
+		return
+	}
+
+	rc, err := zf.Open()
+	if err != nil {
+		ShowError(fmt.Errorf("couldn't read %s: %w", asset.Path, err), a.mainWindow)
+		return
+	}
+	data, err := io.ReadAll(rc)
+	rc.Close()
+	if err != nil {
+		ShowError(fmt.Errorf("couldn't read %s: %w", asset.Path, err), a.mainWindow)
+		return
+	}
+
+	tmp, err := os.CreateTemp("", "foundry-pk3-*"+filepath.Ext(asset.Name))
+	if err != nil {
+		ShowError(fmt.Errorf("couldn't create temp file: %w", err), a.mainWindow)
+		return
+	}
+	tmpPath := tmp.Name()
+	if _, err := tmp.Write(data); err != nil {
+		tmp.Close()
+		os.Remove(tmpPath)
+		ShowError(fmt.Errorf("couldn't write temp file: %w", err), a.mainWindow)
+		return
+	}
+	tmp.Close()
+	defer os.Remove(tmpPath)
+
+	a.openFileFromPath(tmpPath)
+	tab := a.docTabs.Selected()
+	if tab == nil {
+		return
+	}
+	ed, ok := a.editors[tab]
+	if !ok {
+		return
+	}
+	// Clear the synthetic temp path so the user's next Save falls through
+	// to Save-As and lands somewhere they actually expect. Rename the tab
+	// to the PK3-source-qualified form so the read-only origin is clear.
+	ed.SetCurrentPath("")
+	tab.Text = asset.Name + "  ·  " + filepath.Base(asset.PK3Source)
+	a.docTabs.Refresh()
+	a.updateStatus(fmt.Sprintf("Opened %s (from %s — Save As to persist)",
+		asset.Name, filepath.Base(asset.PK3Source)))
+}
+
 func (a *App) closeTab(tab *container.TabItem) {
 	// Check for unsaved changes
 	if editor, ok := a.editors[tab]; ok {
@@ -1142,52 +1232,15 @@ func (a *App) openFile() {
 	pickerBrowser := NewAssetBrowser(a.config.GamedataPath, a.config.TextAssetsPath)
 	cfp := NewCustomFilePicker(filePickerWindow, pickerBrowser)
 
-	cfp.Show(func(filePath string) {
-		if filePath == "" {
-			return
-		}
-
-		ext := strings.ToLower(filepath.Ext(filePath))
-
-		var editor Editor
-		var title string
-
-		switch ext {
-		case ".mbch":
-			editor = NewMBCHEditor(a)
-			title = filepath.Base(filePath)
-		case ".sab":
-			editor = NewSABEditor(a)
-			title = filepath.Base(filePath)
-		case ".veh":
-			editor = NewVEHEditor(a)
-			title = filepath.Base(filePath)
-		case ".siege":
-			editor = NewSiegeEditor(a)
-			title = filepath.Base(filePath)
-		default:
-			dialog.ShowInformation("Unknown File Type", "Could not determine editor for this file.", a.mainWindow)
-			return
-		}
-
-		if editor != nil {
-			err := editor.LoadFile(filePath)
-			if err != nil {
-				ShowError(fmt.Errorf("Failed to load file: %v", err), a.mainWindow)
-				return
-			}
-
-			editor.SetAssetBrowser(a.assetBrowser)
-			editor.SetOnHover(a.showHoverTooltip)
-			editor.SetHolocronClient(a.holocronClient)
-
-			tab := container.NewTabItem(title, editor.GetContent())
-			a.docTabs.Append(tab)
-			a.docTabs.Select(tab)
-			a.editors[tab] = editor
-
-			a.updateStatus(fmt.Sprintf("Opened %s", title))
-		}
+	// Route every picker selection through openFileFromAsset. That
+	// covers filesystem entries (normal path open) *and* PK3-embedded
+	// entries (extract to temp, load, clear currentPath) with the
+	// same editor/source-panel wiring createNewFile does — previously
+	// this flow registered the editors map after Append and never
+	// called SetActiveEditor, which left the Source panel stuck on
+	// its "Select a file…" placeholder after a successful open.
+	cfp.Show(func(asset *AssetEntry) {
+		a.openFileFromAsset(asset)
 	})
 }
 
@@ -1786,8 +1839,9 @@ func (a *App) showFilePickerForEntry(entry *widget.Entry, title string, filter A
 		cfp.SetInitialPath(initialPath)
 	}
 
-	cfp.Show(func(filePath string) {
-		if filePath != "" {
+	cfp.Show(func(asset *AssetEntry) {
+		if asset != nil && asset.Path != "" {
+			filePath := asset.Path
 			// Convert absolute path to relative game path if it's within gamedata
 			if strings.HasPrefix(filePath, a.config.GamedataPath) {
 				relativePath := strings.TrimPrefix(filePath, a.config.GamedataPath+string(os.PathSeparator))

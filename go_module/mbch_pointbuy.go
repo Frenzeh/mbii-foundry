@@ -100,6 +100,11 @@ type PointBuyUI struct {
 
 	// Rank modifiers (applies across archetypes).
 	rankAttrContainer *fyne.Container
+
+	// Edit / Simulate tab strip. Simulator is read-only and lets
+	// the author test-drive the budget the way a real player would.
+	modeTabs  *container.AppTabs
+	simulator *PointBuySimulator
 }
 
 func NewPointBuyUI(editor *MBCHEditor) *PointBuyUI {
@@ -187,14 +192,33 @@ func (p *PointBuyUI) createUI() {
 		p.showAddRankAttrDialog()
 	})
 
+	// Simulator pane — renders the editor's data as click-to-buy
+	// rank pills against the live mbPoints ceiling. Rebuilt on tab
+	// change or when the edit data mutates.
+	p.simulator = NewPointBuySimulator(p)
+
+	// Edit / Simulate tabs. Edit holds the archetype + slot editor;
+	// Simulate lets the author play the build to test balance.
+	p.modeTabs = container.NewAppTabs(
+		container.NewTabItem("Edit", p.archetypeHost),
+		container.NewTabItem("Simulate", p.simulator.GetContent()),
+	)
+	// Refresh simulator state each time its tab gains focus so
+	// recent edits propagate without requiring a file reload.
+	p.modeTabs.OnSelected = func(tab *container.TabItem) {
+		if tab == p.modeTabs.Items[1] { // Simulate
+			p.simulator.Refresh()
+		}
+	}
+
 	p.container = container.NewVBox(
 		widget.NewCard("Point Buy Budget",
 			"Toggle Custom Build, set total mbPoints, and pick how many archetypes the class offers (1–3).",
 			container.NewPadded(headerForm),
 		),
-		widget.NewCard("Archetypes & Skill Slots",
-			"Each archetype has 15 slots mirroring the in-game loadout menu. Pick an MB_ATT, name it, list comma-separated per-rank costs, and optionally add a description for the tooltip.",
-			p.archetypeHost,
+		widget.NewCard("Build & Simulator",
+			"Edit the archetype / slot layout, then flip to Simulate to play the build like an in-game player would (click a rank pill to \"buy\" it; over-budget pills disable).",
+			p.modeTabs,
 		),
 		widget.NewCard("Rank Modifiers",
 			"Per-rank stat overrides (rankHealth, rankAP, rankROF, …). Values are comma-separated per rank. Shared across all archetypes.",
@@ -545,41 +569,90 @@ func (p *PointBuyUI) showAddRankAttrDialog() {
 
 func (p *PointBuyUI) refreshRankAttributes() {
 	p.rankAttrContainer.Objects = nil
-	if p.editor.character.RankAttributes == nil {
+	if p.editor.character.RankAttributes == nil || len(p.editor.character.RankAttributes) == 0 {
+		p.rankAttrContainer.Refresh()
 		return
 	}
-	keys := make([]string, 0, len(p.editor.character.RankAttributes))
-	for k := range p.editor.character.RankAttributes {
-		keys = append(keys, k)
+
+	// Group modifiers by domain so the list doesn't read as a
+	// 30-row alphabetical soup. Order is: Core (the "everybody
+	// uses this" stats) → Combat → Regen → Resource → Other.
+	groups := []struct {
+		name string
+		keys []string
+	}{
+		{"Core", nil},
+		{"Combat", nil},
+		{"Regen", nil},
+		{"Resource", nil},
+		{"Other", nil},
 	}
-	sort.Strings(keys)
-
-	for _, key := range keys {
-		k := key
-		val := p.editor.character.RankAttributes[k]
-
-		entry := NewInputEntry()
-		entry.SetText(val)
-		entry.OnChanged = func(s string) {
-			p.editor.character.RankAttributes[k] = s
-			p.editor.markDirty()
+	for k := range p.editor.character.RankAttributes {
+		idx := 4 // Other
+		switch {
+		case strings.Contains(k, "Regen"):
+			idx = 2
+		case strings.HasPrefix(k, "rankAP"),
+			strings.HasPrefix(k, "rankBP"),
+			strings.HasPrefix(k, "rankCS"),
+			strings.HasPrefix(k, "rankAS"),
+			strings.HasPrefix(k, "rankSaber"):
+			idx = 1
+		case strings.HasPrefix(k, "rankForce"),
+			strings.HasPrefix(k, "rankResource"):
+			idx = 3
+		case strings.HasPrefix(k, "rankHealth"),
+			strings.HasPrefix(k, "rankArmour"),
+			strings.HasPrefix(k, "rankArmor"),
+			strings.HasPrefix(k, "rankBaseSpeed"),
+			strings.HasPrefix(k, "rankModelScale"),
+			strings.HasPrefix(k, "rankROF"),
+			strings.HasPrefix(k, "rankSTM"),
+			strings.HasPrefix(k, "rankDmg"),
+			strings.HasPrefix(k, "rankKb"),
+			strings.HasPrefix(k, "rankHack"):
+			idx = 0
 		}
+		groups[idx].keys = append(groups[idx].keys, k)
+	}
+	for i := range groups {
+		sort.Strings(groups[i].keys)
+	}
 
-		delBtn := widget.NewButtonWithIcon("", theme.DeleteIcon(), func() {
-			delete(p.editor.character.RankAttributes, k)
-			p.refreshRankAttributes()
-			p.editor.markDirty()
-		})
+	for _, g := range groups {
+		if len(g.keys) == 0 {
+			continue
+		}
+		header := widget.NewLabelWithStyle(g.name,
+			fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+		p.rankAttrContainer.Add(header)
+		for _, key := range g.keys {
+			k := key
+			val := p.editor.character.RankAttributes[k]
 
-		label := widget.NewLabel(k)
-		label.TextStyle = fyne.TextStyle{Monospace: true}
+			entry := NewInputEntry()
+			entry.SetText(val)
+			entry.OnChanged = func(s string) {
+				p.editor.character.RankAttributes[k] = s
+				p.editor.markDirty()
+			}
 
-		row := container.NewBorder(nil, nil,
-			container.NewGridWrap(fyne.NewSize(220, 28), label),
-			delBtn,
-			entry,
-		)
-		p.rankAttrContainer.Add(row)
+			delBtn := widget.NewButtonWithIcon("", theme.DeleteIcon(), func() {
+				delete(p.editor.character.RankAttributes, k)
+				p.refreshRankAttributes()
+				p.editor.markDirty()
+			})
+
+			label := widget.NewLabel(k)
+			label.TextStyle = fyne.TextStyle{Monospace: true}
+
+			row := container.NewBorder(nil, nil,
+				container.NewGridWrap(fyne.NewSize(220, 28), label),
+				delBtn,
+				entry,
+			)
+			p.rankAttrContainer.Add(row)
+		}
 	}
 	p.rankAttrContainer.Refresh()
 }
@@ -626,6 +699,9 @@ func (p *PointBuyUI) UpdateUI() {
 	p.rebuildArchetypeTabs()
 	p.refreshBudget()
 	p.refreshRankAttributes()
+	if p.simulator != nil {
+		p.simulator.Refresh()
+	}
 }
 
 // detectSlotMode returns the right UI mode for a stored slot.

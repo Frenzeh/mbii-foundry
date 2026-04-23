@@ -140,12 +140,24 @@ func (wg *WeaponGrid) createUI() {
 			// names) with the real w_icon_*.png the game ships —
 			// embedded at build time from assets/icons/weapons/. When
 			// no art is available the row renders as a plain check.
-			var row fyne.CanvasObject = check
+			var primary fyne.CanvasObject = check
 			if wg.resolveIcon != nil {
 				if res := wg.resolveIcon(weaponID); res != nil {
 					iconW := widget.NewIcon(res)
-					row = container.NewHBox(iconW, check)
+					primary = container.NewHBox(iconW, check)
 				}
+			}
+
+			// Caption under the check: the canonical MB_ATT_ that
+			// pairs with this weapon. Teaches the user which
+			// attribute controls the weapon's level/ammo without
+			// them having to know the enum. Weapons with no paired
+			// attribute (WP_MELEE, WP_SABER, etc.) get no caption.
+			var row fyne.CanvasObject = primary
+			if pair := CanonicalAttributeFor(weaponID); pair != "" {
+				caption := widget.NewLabelWithStyle("pairs: "+pair,
+					fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
+				row = container.NewVBox(primary, caption)
 			}
 
 			// Wrap in HoverContainer. Pair the enter event with a

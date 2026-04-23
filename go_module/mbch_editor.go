@@ -707,19 +707,48 @@ func (e *MBCHEditor) createUI() {
 	// editing) has fully replaced it.
 	e.sourceView = widget.NewRichTextFromMarkdown("")
 
+	// Every tab's content goes through wrapForTab — bi-directional
+	// container.NewScroll — so a tab with wide content (simulator
+	// rank-pill rows, skin-variant cards with long path fields,
+	// point-buy slot forms, etc.) can't push the whole app window
+	// past the user's screen width. Scroll caps MinSize at
+	// scrollbar metrics; wide content just scrolls internally.
+	//
+	// This is the same pattern that fixed the sidebar-rail pin on
+	// the info panel — applied here defensively across every tab
+	// because any future "add a wider widget" change would
+	// otherwise silently re-introduce the over-sized-window bug.
 	tabs := container.NewAppTabs(
-		container.NewTabItem("Profile", container.NewVScroll(profileTab)),
-		container.NewTabItem("Attributes", attrScroll),
-		container.NewTabItem("Inventory", weaponScroll),
-		container.NewTabItem("Flags", flagsTab),
-		container.NewTabItem("Skins", skinsTab),
-		container.NewTabItem("Stats & Sabers", container.NewVScroll(loadoutTab)),
-		container.NewTabItem("Weapon Mods", weaponTab),
-		container.NewTabItem("Force Mods", forceTab),
-		container.NewTabItem("Point Buy", pointBuyTab),
+		container.NewTabItem("Profile", wrapForTab(profileTab)),
+		container.NewTabItem("Attributes", wrapForTab(e.attrGrid.GetContent())),
+		container.NewTabItem("Inventory", wrapForTab(e.weaponGrid.GetContent())),
+		container.NewTabItem("Flags", wrapForTab(e.weaponFlagsUI.GetContent())),
+		container.NewTabItem("Skins", wrapForTab(e.skinVariantsUI.GetContent())),
+		container.NewTabItem("Stats & Sabers", wrapForTab(loadoutTab)),
+		container.NewTabItem("Weapon Mods", wrapForTab(weaponTab)),
+		container.NewTabItem("Force Mods", wrapForTab(forceTab)),
+		container.NewTabItem("Point Buy", wrapForTab(pointBuyTab)),
 	)
+	// wrapForTab wraps what used to be wrapped with VScroll/…Scroll
+	// variants — previously inconsistent, some tabs missed the wrap
+	// and propagated MinSize upward.
+	_ = attrScroll
+	_ = weaponScroll
+	_ = flagsTab
+	_ = skinsTab
 
 	e.container = container.NewMax(tabs)
+}
+
+// wrapForTab wraps a tab's content in a bi-directional Scroll with
+// a sensible minimum so the MBCH editor can never demand a window
+// wider/taller than the user's screen. Unlike VScroll (which
+// inherits content's MinSize.Width), container.NewScroll caps at
+// the scroll's explicit MinSize in both dimensions.
+func wrapForTab(content fyne.CanvasObject) fyne.CanvasObject {
+	s := container.NewScroll(content)
+	s.SetMinSize(fyne.NewSize(320, 280))
+	return s
 }
 
 func (e *MBCHEditor) updateSourceView() {

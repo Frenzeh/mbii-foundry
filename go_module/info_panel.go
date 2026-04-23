@@ -48,14 +48,11 @@ func (ip *InfoPanel) SetHolocronClient(client *HolocronClient) {
 
 func (ip *InfoPanel) createUI() {
 	ip.title = widget.NewLabelWithStyle("Information", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	// Truncate long hovered IDs at the container edge instead of
-	// wrapping. Wrap-word pushed the widget's MinSize to the width
-	// of the longest unbreakable token (MB_ATT_ARC_RIFLE_GRENADE-
-	// LAUNCHER ≈ 280px), which then pinned the HSplit divider's
-	// minimum position and made the rail un-draggable below that
-	// width. TextTruncate caps at the current container width and
-	// leaves MinSize at single-char width, so dragging is free.
-	ip.title.Truncation = fyne.TextTruncateEllipsis
+	// Wrap long titles to the next line so they stay readable at
+	// any sidebar width. The enclosing bi-directional Scroll below
+	// absorbs the MinSize we'd otherwise inherit from wrap-word,
+	// so the HSplit rail stays freely draggable.
+	ip.title.Wrapping = fyne.TextWrapWord
 
 	welcomeMsg := `
 ### Info Panel
@@ -67,14 +64,11 @@ This panel provides real-time documentation and context for the field you're edi
 *   **Switch** to the "Reference Library" tab to browse all available topics.
 `
 	ip.content = widget.NewRichTextFromMarkdown(welcomeMsg)
-	// Keep RichText wrapping OFF intentionally — wrap-word would
-	// otherwise bump the widget's MinSize to the width of the
-	// longest unbreakable token in the markdown (attribute IDs,
-	// URLs, code spans), pinning the sidebar's HSplit divider
-	// minimum width there. No-wrap combined with the enclosing
-	// VScroll means long lines scroll horizontally within the
-	// existing sidebar width; the rail stays draggable.
-	ip.content.Wrapping = fyne.TextWrapOff
+	// Wrap at word boundaries — content reflows to whatever width
+	// the sidebar is currently at. The bi-directional Scroll below
+	// absorbs any MinSize contribution so long tokens (MB_ATT_ARC_
+	// RIFLE_GRENADELAUNCHER, URLs) don't pin the HSplit divider.
+	ip.content.Wrapping = fyne.TextWrapWord
 
 	ip.search = NewInputEntry()
 	ip.search.SetPlaceHolder("Search help...")
@@ -102,7 +96,15 @@ This panel provides real-time documentation and context for the field you're edi
 	// thing you're hovering" — redundant when the title below already shows
 	// the item name. Dropped; the title + content speak for themselves.
 	details := container.NewVBox(ip.title, widget.NewSeparator(), ip.content)
-	detailsScroll := container.NewVScroll(details)
+	// Use bi-directional Scroll (not VScroll). Its MinSize caps at
+	// scrollbar metrics, NOT content width — so hovering an
+	// attribute with a long ID / a markdown code span won't push
+	// the HSplit divider. VScroll inherits its content's MinSize
+	// width, which is exactly what caused the "rail jumps on hover"
+	// bug. Content wraps inside the current viewport; anything that
+	// genuinely needs more width scrolls instead of resizing parents.
+	detailsScroll := container.NewScroll(details)
+	detailsScroll.SetMinSize(fyne.NewSize(120, 0))
 
 	listHeader := widget.NewLabelWithStyle("Reference Library", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	listContainer := container.NewBorder(container.NewVBox(listHeader, ip.search), nil, nil, nil, ip.list)

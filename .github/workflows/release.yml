@@ -34,6 +34,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Verify AppVersion matches tag
+        shell: bash
+        # Guard: the AppVersion constant in main.go must match the tag
+        # being released (minus the leading "v"). Without this check
+        # we've had releases go out where the in-app "FOUNDRY v0.3.0"
+        # footer and the GitHub tag said different things — which then
+        # confused the in-app update checker into either spamming
+        # "upgrade available" forever or never showing it. Fail fast
+        # and force the person tagging to bump AppVersion in the same
+        # commit.
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          APPVER=$(grep -E '^\s*AppVersion\s*=' go_module/main.go \
+            | head -1 \
+            | sed -E 's/.*"([^"]+)".*/\1/')
+          echo "Tag (without v): $TAG"
+          echo "AppVersion:      $APPVER"
+          if [ "$TAG" != "$APPVER" ]; then
+            echo "::error::Tag '$TAG' does not match AppVersion '$APPVER' in go_module/main.go."
+            echo "::error::Bump AppVersion to match the tag and re-tag, or retag to match AppVersion."
+            exit 1
+          fi
+
       - uses: actions/setup-go@v5
         with:
           go-version: '1.24'
@@ -60,12 +83,22 @@ jobs:
       - name: Package macOS .app bundle
         if: runner.os == 'macOS'
         working-directory: .
+        # data/ definitions/ schemas/ templates/ go inside
+        # Contents/Resources so the shipped .app is self-contained.
+        # resolveDataPath in data_path.go knows to look there for the
+        # bundled layout, and the Mac auto-updater's bundle-swap
+        # brings them along automatically on upgrade.
         run: |
           APP_BUNDLE="MBII Foundry.app"
           mkdir -p "$APP_BUNDLE/Contents/MacOS" "$APP_BUNDLE/Contents/Resources"
           cp go_module/mbii-foundry "$APP_BUNDLE/Contents/MacOS/"
           cp macos/Info.plist "$APP_BUNDLE/Contents/"
           cp macos/AppIcon.icns "$APP_BUNDLE/Contents/Resources/"
+          for dir in data definitions schemas templates; do
+            if [ -d "$dir" ]; then
+              cp -R "$dir" "$APP_BUNDLE/Contents/Resources/"
+            fi
+          done
           codesign -s - -f --deep "$APP_BUNDLE" || true
           zip -qr "mbii-foundry-${{ matrix.name }}.zip" "$APP_BUNDLE"
 

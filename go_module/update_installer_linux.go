@@ -74,7 +74,92 @@ func installUpdatePlatform(asset *ReleaseAsset, progress func(UpdateProgress)) e
 	if err := os.Chmod(exe, 0755); err != nil {
 		return fmt.Errorf("chmod %s: %w", exe, err)
 	}
+
+	// Sync the shipped data dirs next to the binary. The Linux tarball
+	// lays these out as sibling directories at the extract root — we
+	// mirror that by copying each one over the install dir's matching
+	// dir. Overwrite semantics: same-named files are replaced, any
+	// dirs/files not in the new release are left alone (testers
+	// side-load custom assets sometimes). If any of these don't exist
+	// in the release we silently skip — data-less releases are valid.
+	if err := syncReleaseDataDirs(extractDir, filepath.Dir(exe), progress); err != nil {
+		// Non-fatal: the binary's already swapped, so log and continue
+		// to relaunch. Worst case: the new binary reads old data until
+		// the next update. That's a degraded state, not a broken one.
+		LogError("Post-install data sync reported: %v", err)
+	}
 	return relaunchAndExit(exe)
+}
+
+// syncReleaseDataDirs walks each known shipped data dir in the
+// extracted tarball and copies it over the matching dir next to the
+// running binary. Missing sources are skipped; existing destination
+// files are overwritten but extras are left alone.
+func syncReleaseDataDirs(extractDir, installDir string, progress func(UpdateProgress)) error {
+	dirs := []string{"data", "definitions", "schemas", "templates"}
+	for _, d := range dirs {
+		src := filepath.Join(extractDir, d)
+		if info, err := os.Stat(src); err != nil || !info.IsDir() {
+			continue
+		}
+		if progress != nil {
+			progress(UpdateProgress{
+				Stage:   "installing",
+				Percent: -1,
+				Message: fmt.Sprintf("Syncing %s/…", d),
+			})
+		}
+		dst := filepath.Join(installDir, d)
+		if err := copyTreeOverwrite(src, dst); err != nil {
+			return fmt.Errorf("sync %s: %w", d, err)
+		}
+	}
+	return nil
+}
+
+// copyTreeOverwrite copies every file under src into dst, creating
+// directories as needed and overwriting existing files in place.
+// Files in dst that aren't in src are left alone (preserves user
+// side-loads). Not atomic — a crash mid-copy leaves a half-updated
+// tree, but that's survivable: the next run of the updater finishes
+// the job.
+func copyTreeOverwrite(src, dst string) error {
+	return filepath.WalkDir(src, func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		rel, err := filepath.Rel(src, path)
+		if err != nil {
+			return err
+		}
+		target := filepath.Join(dst, rel)
+		if d.IsDir() {
+			return os.MkdirAll(target, 0755)
+		}
+		if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
+			return err
+		}
+		return copyFileLinux(path, target)
+	})
+}
+
+func copyFileLinux(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+	info, err := in.Stat()
+	if err != nil {
+		return err
+	}
+	out, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, info.Mode())
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+	_, err = io.Copy(out, in)
+	return err
 }
 
 func untarGz(archivePath, destDir string) error {

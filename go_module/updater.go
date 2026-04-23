@@ -98,6 +98,17 @@ func NewUpdateChecker(configDir string) *UpdateChecker {
 // Callback fires on the calling goroutine — wrap it in fyne.Do if
 // it touches UI.
 func (uc *UpdateChecker) CheckAsync(onDone func(*UpdateInfo)) {
+	uc.checkAsync(false, onDone)
+}
+
+// ForceCheckAsync refreshes ignoring the 6h cache. Used by the
+// toolbar's "Check for updates now" action so users who don't want
+// to wait on the cache can poke the server themselves.
+func (uc *UpdateChecker) ForceCheckAsync(onDone func(*UpdateInfo)) {
+	uc.checkAsync(true, onDone)
+}
+
+func (uc *UpdateChecker) checkAsync(force bool, onDone func(*UpdateInfo)) {
 	uc.mu.Lock()
 	if uc.running {
 		uc.mu.Unlock()
@@ -113,14 +124,17 @@ func (uc *UpdateChecker) CheckAsync(onDone func(*UpdateInfo)) {
 			uc.mu.Unlock()
 		}()
 
-		// Skip the fetch if the cache is fresh. The UI still gets the
+		// Skip the fetch if the cache is fresh, unless the caller
+		// explicitly asked to bypass the cache. The UI still gets the
 		// callback so its banner can render from the cached info.
-		if cached := uc.Latest(); cached != nil &&
-			time.Since(cached.CheckedAt) < updateCacheTTL {
-			if onDone != nil {
-				onDone(cached)
+		if !force {
+			if cached := uc.Latest(); cached != nil &&
+				time.Since(cached.CheckedAt) < updateCacheTTL {
+				if onDone != nil {
+					onDone(cached)
+				}
+				return
 			}
-			return
 		}
 
 		info, err := fetchLatestRelease()

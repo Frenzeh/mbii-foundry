@@ -115,6 +115,14 @@ func NewToolbarAction(icon fyne.Resource, tooltip string, action func()) *widget
 type FoundryTheme struct{}
 
 func (h FoundryTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
+	// Force dark mode on every platform regardless of what the OS
+	// reports. macOS respects system light/dark, but on Windows and
+	// Linux the Fyne default often reports VariantLight and the app
+	// rendered as a washed-out pale UI. The whole design is dark-
+	// native; collapsing both variants to the dark path keeps the
+	// experience consistent cross-platform.
+	variant = theme.VariantDark
+
 	if name == theme.ColorNamePrimary {
 		return CurrentThemeColor
 	}
@@ -123,15 +131,11 @@ func (h FoundryTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant)
 	if name == theme.ColorNameBackground || name == theme.ColorNameInputBackground || name == theme.ColorNameOverlayBackground {
 		var base color.Color
 
-		if variant == theme.VariantLight {
-			base = theme.DefaultTheme().Color(name, variant)
+		// Dark-only base colors now (variant was pinned to dark above).
+		if name == theme.ColorNameInputBackground {
+			base = color.RGBA{R: 15, G: 15, B: 15, A: 255}
 		} else {
-			// Custom "Star Wars" Dark Mode Base
-			if name == theme.ColorNameInputBackground {
-				base = color.RGBA{R: 15, G: 15, B: 15, A: 255}
-			} else {
-				base = color.RGBA{R: 28, G: 28, B: 28, A: 255}
-			}
+			base = color.RGBA{R: 28, G: 28, B: 28, A: 255}
 		}
 
 		// Tint the background slightly with the primary accent (5%)
@@ -143,8 +147,7 @@ func (h FoundryTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant)
 	// us generic grey for buttons, hover, selections, separators —
 	// which looks out of place next to our accent-driven chrome. These
 	// overrides keep those surfaces on-brand: tinted darks for resting
-	// states, alpha-accent for interactive states. Light variant keeps
-	// Fyne defaults since it hasn't been design-audited.
+	// states, alpha-accent for interactive states.
 	if variant == theme.VariantDark {
 		switch name {
 		case theme.ColorNameButton:

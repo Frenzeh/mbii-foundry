@@ -81,6 +81,14 @@ type App struct {
 
 var CurrentThemeColor color.Color = color.RGBA{R: 0, G: 128, B: 255, A: 255} // Default Blue
 
+// CurrentColorVariant is the dark/light mode selector the custom
+// FoundryTheme respects. Historically the theme forced VariantDark to
+// dodge Fyne's cross-platform OS-reporting inconsistency; we still
+// ignore the OS signal, but we let the user pick via Preferences.
+// Updated from config at startup and whenever the user flips the
+// toggle — SetTheme() on the fyne.App refreshes render.
+var CurrentColorVariant fyne.ThemeVariant = theme.VariantDark
+
 type AppConfig struct {
 	GamedataPath    string       `json:"gamedata_path"`
 	TextAssetsPath  string       `json:"text_assets_path"`
@@ -90,7 +98,8 @@ type AppConfig struct {
 	WindowHeight    float32      `json:"window_height"`
 	RecentFiles     []RecentFile `json:"recent_files"`
 	Theme           string       `json:"theme"`
-	PrimaryColor    string       `json:"primary_color"` // New field
+	PrimaryColor    string       `json:"primary_color"`  // Accent color: blue/red/gold/green/orange/purple
+	ColorVariant    string       `json:"color_variant"`  // "dark" | "light" — foundry defaults to dark if unset
 	KnownModpacks   []*Modpack   `json:"known_modpacks"`
 	SidebarOffset   float32      `json:"sidebar_offset"`
 	SidebarVisible  bool         `json:"sidebar_visible"`
@@ -129,95 +138,161 @@ func NewToolbarAction(icon fyne.Resource, tooltip string, action func()) *widget
 type FoundryTheme struct{}
 
 func (h FoundryTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
-	// Force dark mode on every platform regardless of what the OS
-	// reports. macOS respects system light/dark, but on Windows and
-	// Linux the Fyne default often reports VariantLight and the app
-	// rendered as a washed-out pale UI. The whole design is dark-
-	// native; collapsing both variants to the dark path keeps the
-	// experience consistent cross-platform.
-	variant = theme.VariantDark
+	// Ignore whatever variant Fyne passes — on Windows/Linux the OS
+	// report often disagrees with the user's intent. We source the
+	// variant from CurrentColorVariant (set by config + Preferences
+	// toggle) so the experience is consistent cross-platform while
+	// still respecting the user's choice.
+	variant = CurrentColorVariant
 
 	if name == theme.ColorNamePrimary {
 		return CurrentThemeColor
 	}
 
-	// Surface Shifting for Backgrounds
+	// Surface Shifting for Backgrounds — base color depends on mode,
+	// then gets a subtle accent tint so switching accent colors
+	// (blue/red/gold/…) gently recolors the whole chrome.
 	if name == theme.ColorNameBackground || name == theme.ColorNameInputBackground || name == theme.ColorNameOverlayBackground {
 		var base color.Color
-
-		// Dark-only base colors now (variant was pinned to dark above).
+		if variant == theme.VariantLight {
+			// Light base: paper white for inputs, warm off-white for
+			// the main background. Matches the dark-mode approach of
+			// "a touch darker" for inputs than general background,
+			// just flipped.
+			if name == theme.ColorNameInputBackground {
+				base = color.RGBA{R: 252, G: 252, B: 252, A: 255}
+			} else {
+				base = color.RGBA{R: 240, G: 240, B: 240, A: 255}
+			}
+			// Lighter tint ratio — 4% on white quickly looks garish,
+			// 2% is just enough to carry the accent.
+			return blendColors(base, CurrentThemeColor, 0.02)
+		}
+		// Dark base.
 		if name == theme.ColorNameInputBackground {
 			base = color.RGBA{R: 15, G: 15, B: 15, A: 255}
 		} else {
 			base = color.RGBA{R: 28, G: 28, B: 28, A: 255}
 		}
-
-		// Tint the background slightly with the primary accent (5%)
-		// This creates the "Surface Shift" effect (e.g. reddish dark mode for Sith)
 		return blendColors(base, CurrentThemeColor, 0.04)
 	}
 
-	// Dark variant surface overrides. Fyne's default dark theme gives
+	// Mode-specific surface overrides. Fyne's default palette gives
 	// us generic grey for buttons, hover, selections, separators —
-	// which looks out of place next to our accent-driven chrome. These
-	// overrides keep those surfaces on-brand: tinted darks for resting
-	// states, alpha-accent for interactive states.
-	if variant == theme.VariantDark {
+	// which looks out of place next to our accent-driven chrome. The
+	// overrides keep those surfaces on-brand: tinted neutrals for
+	// resting states, alpha-accent for interactive states.
+	if variant == theme.VariantLight {
 		switch name {
 		case theme.ColorNameButton:
-			// Default button background: subtle raised surface with a
-			// whisper of accent. Used by widget.Button without LowImp.
-			return blendColors(color.RGBA{R: 40, G: 40, B: 40, A: 255}, CurrentThemeColor, 0.06)
+			// Soft card surface that reads as raised on the off-white
+			// background but doesn't compete with foreground text.
+			return blendColors(color.RGBA{R: 230, G: 230, B: 230, A: 255}, CurrentThemeColor, 0.04)
 		case theme.ColorNameDisabled:
-			return color.NRGBA{R: 120, G: 120, B: 120, A: 255}
+			return color.NRGBA{R: 150, G: 150, B: 150, A: 255}
 		case theme.ColorNameDisabledButton:
-			return color.NRGBA{R: 32, G: 32, B: 32, A: 255}
+			return color.NRGBA{R: 220, G: 220, B: 220, A: 255}
+		case theme.ColorNameForeground:
+			// Near-black for readable body text. Default dark text can
+			// be too soft against warm off-white.
+			return color.NRGBA{R: 30, G: 30, B: 30, A: 255}
+		case theme.ColorNamePlaceHolder:
+			return color.NRGBA{R: 120, G: 120, B: 120, A: 255}
 		case theme.ColorNameHover:
-			// Accent tint at low alpha — our standard interactive hint.
-			return tintWithAlpha(CurrentThemeColor, 45)
+			return tintWithAlpha(CurrentThemeColor, 40)
 		case theme.ColorNamePressed:
-			return tintWithAlpha(CurrentThemeColor, 90)
+			return tintWithAlpha(CurrentThemeColor, 80)
 		case theme.ColorNameFocus:
-			return tintWithAlpha(CurrentThemeColor, 110)
+			return tintWithAlpha(CurrentThemeColor, 100)
 		case theme.ColorNameSelection:
-			return tintWithAlpha(CurrentThemeColor, 80)
+			return tintWithAlpha(CurrentThemeColor, 70)
 		case theme.ColorNameSeparator:
-			// Thin lines between list items / form rows. Slightly
-			// warmer than pure grey so they harmonize with the
-			// accent-tinted base.
-			return color.NRGBA{R: 60, G: 60, B: 60, A: 160}
+			return color.NRGBA{R: 200, G: 200, B: 200, A: 200}
 		case theme.ColorNameInputBorder:
-			return color.NRGBA{R: 80, G: 80, B: 80, A: 200}
+			return color.NRGBA{R: 170, G: 170, B: 170, A: 220}
 		case theme.ColorNameScrollBar:
-			return tintWithAlpha(CurrentThemeColor, 80)
+			return tintWithAlpha(CurrentThemeColor, 70)
 		case theme.ColorNameShadow:
-			return color.NRGBA{R: 0, G: 0, B: 0, A: 140}
+			return color.NRGBA{R: 0, G: 0, B: 0, A: 40}
 		case theme.ColorNameMenuBackground:
-			return blendColors(color.RGBA{R: 32, G: 32, B: 32, A: 255}, CurrentThemeColor, 0.05)
+			return blendColors(color.RGBA{R: 246, G: 246, B: 246, A: 255}, CurrentThemeColor, 0.02)
 		case theme.ColorNameHeaderBackground:
-			return blendColors(color.RGBA{R: 22, G: 22, B: 22, A: 255}, CurrentThemeColor, 0.08)
+			return blendColors(color.RGBA{R: 235, G: 235, B: 235, A: 255}, CurrentThemeColor, 0.04)
 		}
-
-		// Syntax highlight palette used by the source panel's
-		// RichText view. Colors are tuned for readability against the
-		// 28/28/28 base with accent tint.
+		// Syntax palette recalibrated for readability on light
+		// backgrounds — darker saturations so tokens don't wash out.
 		switch name {
 		case ColorNameSyntaxComment:
-			return color.NRGBA{R: 110, G: 110, B: 110, A: 255} // dim grey
+			return color.NRGBA{R: 130, G: 130, B: 130, A: 255}
 		case ColorNameSyntaxString:
-			return color.NRGBA{R: 160, G: 205, B: 130, A: 255} // muted green
+			return color.NRGBA{R: 60, G: 135, B: 55, A: 255}
 		case ColorNameSyntaxNumber:
-			return color.NRGBA{R: 125, G: 175, B: 230, A: 255} // soft blue
+			return color.NRGBA{R: 40, G: 90, B: 180, A: 255}
 		case ColorNameSyntaxConst:
-			// Enum constants take the theme accent — switching
-			// theme (e.g. Sith → Jedi) repaints every MB_CLASS_*,
-			// WP_*, FP_* token to match.
 			return CurrentThemeColor
 		case ColorNameSyntaxHeader:
-			return color.NRGBA{R: 235, G: 190, B: 110, A: 255} // amber
+			return color.NRGBA{R: 160, G: 100, B: 30, A: 255}
 		case ColorNameSyntaxPunct:
-			return color.NRGBA{R: 150, G: 150, B: 150, A: 255} // dim grey
+			return color.NRGBA{R: 110, G: 110, B: 110, A: 255}
 		}
+		return theme.DefaultTheme().Color(name, variant)
+	}
+
+	// Dark variant.
+	switch name {
+	case theme.ColorNameButton:
+		// Default button background: subtle raised surface with a
+		// whisper of accent. Used by widget.Button without LowImp.
+		return blendColors(color.RGBA{R: 40, G: 40, B: 40, A: 255}, CurrentThemeColor, 0.06)
+	case theme.ColorNameDisabled:
+		return color.NRGBA{R: 120, G: 120, B: 120, A: 255}
+	case theme.ColorNameDisabledButton:
+		return color.NRGBA{R: 32, G: 32, B: 32, A: 255}
+	case theme.ColorNameHover:
+		// Accent tint at low alpha — our standard interactive hint.
+		return tintWithAlpha(CurrentThemeColor, 45)
+	case theme.ColorNamePressed:
+		return tintWithAlpha(CurrentThemeColor, 90)
+	case theme.ColorNameFocus:
+		return tintWithAlpha(CurrentThemeColor, 110)
+	case theme.ColorNameSelection:
+		return tintWithAlpha(CurrentThemeColor, 80)
+	case theme.ColorNameSeparator:
+		// Thin lines between list items / form rows. Slightly
+		// warmer than pure grey so they harmonize with the
+		// accent-tinted base.
+		return color.NRGBA{R: 60, G: 60, B: 60, A: 160}
+	case theme.ColorNameInputBorder:
+		return color.NRGBA{R: 80, G: 80, B: 80, A: 200}
+	case theme.ColorNameScrollBar:
+		return tintWithAlpha(CurrentThemeColor, 80)
+	case theme.ColorNameShadow:
+		return color.NRGBA{R: 0, G: 0, B: 0, A: 140}
+	case theme.ColorNameMenuBackground:
+		return blendColors(color.RGBA{R: 32, G: 32, B: 32, A: 255}, CurrentThemeColor, 0.05)
+	case theme.ColorNameHeaderBackground:
+		return blendColors(color.RGBA{R: 22, G: 22, B: 22, A: 255}, CurrentThemeColor, 0.08)
+	}
+
+	// Syntax highlight palette used by the source panel's RichText
+	// view. Colors are tuned for readability against the 28/28/28
+	// base with accent tint.
+	switch name {
+	case ColorNameSyntaxComment:
+		return color.NRGBA{R: 110, G: 110, B: 110, A: 255} // dim grey
+	case ColorNameSyntaxString:
+		return color.NRGBA{R: 160, G: 205, B: 130, A: 255} // muted green
+	case ColorNameSyntaxNumber:
+		return color.NRGBA{R: 125, G: 175, B: 230, A: 255} // soft blue
+	case ColorNameSyntaxConst:
+		// Enum constants take the theme accent — switching theme
+		// (e.g. Sith → Jedi) repaints every MB_CLASS_*, WP_*, FP_*
+		// token to match.
+		return CurrentThemeColor
+	case ColorNameSyntaxHeader:
+		return color.NRGBA{R: 235, G: 190, B: 110, A: 255} // amber
+	case ColorNameSyntaxPunct:
+		return color.NRGBA{R: 150, G: 150, B: 150, A: 255} // dim grey
 	}
 
 	return theme.DefaultTheme().Color(name, variant)
@@ -316,6 +391,23 @@ func (a *App) applyThemeColor(colorName string) {
 		CurrentThemeColor = color.RGBA{R: 0, G: 128, B: 255, A: 255} // Default Blue
 	}
 	a.fyneApp.Settings().SetTheme(&FoundryTheme{}) // Refresh theme
+}
+
+// applyColorVariant wires AppConfig.ColorVariant through to the
+// package-global the FoundryTheme reads. Call after loading config
+// and whenever the Preferences toggle flips. Empty or unknown values
+// default to dark — matches the historical behavior so existing
+// configs keep rendering as they always did.
+func (a *App) applyColorVariant(variant string) {
+	switch strings.ToLower(strings.TrimSpace(variant)) {
+	case "light":
+		CurrentColorVariant = theme.VariantLight
+	default:
+		CurrentColorVariant = theme.VariantDark
+	}
+	if a.fyneApp != nil {
+		a.fyneApp.Settings().SetTheme(&FoundryTheme{})
+	}
 }
 
 func main() {
@@ -1374,6 +1466,7 @@ func (a *App) loadConfig() {
 	if a.config.PrimaryColor == "" {
 		a.config.PrimaryColor = "blue"
 	}
+	a.applyColorVariant(a.config.ColorVariant) // before applyThemeColor so a single SetTheme covers both
 	a.applyThemeColor(a.config.PrimaryColor)
 }
 
@@ -1515,11 +1608,24 @@ func (a *App) showPreferences() {
 	}, "Download latest enum definitions from GitHub")
 	updateEnumBtn.Importance = widget.LowImportance
 
+	// Dark/light mode selector. We ignore the OS-reported variant (too
+	// inconsistent cross-platform) and honor whatever the user picks
+	// here. "Dark" is the historical default; "Light" flipped on adds
+	// the light-variant palette branches in FoundryTheme.Color.
+	modeSelect := widget.NewSelect([]string{"Dark", "Light"}, nil)
+	switch strings.ToLower(a.config.ColorVariant) {
+	case "light":
+		modeSelect.SetSelected("Light")
+	default:
+		modeSelect.SetSelected("Dark")
+	}
+
 	// Form rows, grouped with visible section headers instead of empty-
 	// label + separator spacer rows. The spacer rows rendered as ugly
 	// dark bands across the dialog — an accidental consequence of the
 	// dark theme + Fyne's form row padding.
 	coreForm := widget.NewForm(
+		widget.NewFormItem("Color Mode", modeSelect),
 		widget.NewFormItem("Theme Color", themeSelect),
 		widget.NewFormItem("Info Tooltips", tooltipsCheck),
 	)
@@ -1580,6 +1686,15 @@ func (a *App) showPreferences() {
 			case "Purple (Mace)":
 				a.config.PrimaryColor = "purple"
 			}
+			// Color mode — applied before applyThemeColor so the
+			// single SetTheme triggered by that call picks up both.
+			switch strings.ToLower(modeSelect.Selected) {
+			case "light":
+				a.config.ColorVariant = "light"
+			default:
+				a.config.ColorVariant = "dark"
+			}
+			a.applyColorVariant(a.config.ColorVariant)
 			a.applyThemeColor(a.config.PrimaryColor)
 
 			a.saveConfig()

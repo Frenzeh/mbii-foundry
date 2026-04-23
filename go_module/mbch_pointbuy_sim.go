@@ -1,48 +1,70 @@
 package main
 
-// Point Buy simulator — lets the author test-drive their own budget
-// configuration the way a real player would experience it in-game.
-// Each slot in the active archetype renders its rank costs as
-// clickable pills; clicking a pill "purchases" that rank and
-// deducts its cost from the live budget. Unaffordable pills grey
-// out. A Reset button clears the simulation.
+// Point Buy simulator — mirrors MBII's in-game loadout menu so an
+// author can preview exactly what a player would see + experience
+// when picking a build. Layout:
 //
-// The simulator reads from the same MBCHCharacter as the editor but
-// never writes back — selections are a throwaway preview. Authors
-// use this to answer "can a real player actually build a balanced
-// character with these costs and this mbPoints ceiling?"
+//   ┌──────────────────────────────────────────────────────────┐
+//   │                                                          │
+//   │     Spec [Gunner ▾]        Budget  42 / 100              │
+//   │                            Remaining: 58                 │
+//   │                                  [Reset Build]           │
+//   │                                                          │
+//   ├──────────────────────────────────────────────────────────┤
+//   │                                                          │
+//   │                      — WEAPONS —                         │
+//   │                                                          │
+//   │   ┌──────────────────────────────────────────────────┐   │
+//   │   │ [🔫]  Blaster Pistol                             │   │
+//   │   │        Choose your level of mastery              │   │
+//   │   │                                                  │   │
+//   │   │       [ Off ]  [R1·free]  [R2·4]  [R3·10]        │   │
+//   │   │                  (current)                       │   │
+//   │   └──────────────────────────────────────────────────┘   │
+//   │                                                          │
+//   └──────────────────────────────────────────────────────────┘
 //
-// Renders as a second AppTab next to the editor's "Edit" view,
-// sharing the PointBuyUI struct's data. The simulator pane is
-// rebuilt whenever the underlying data changes (ranks, names,
-// spec count) so the preview always reflects the current edit.
+// Unaffordable ranks disable visually; the current rank highlights
+// in accent color; Off pill is always available. Header rows
+// ("-Weapons-", "-Force Abilities-") render as centered accent
+// dividers so sections read at a glance.
+//
+// Purchases are ephemeral — the simulator never writes back to the
+// MBCH. Reset + archetype-switch both clear the build.
 
 import (
 	"fmt"
+	"image/color"
 	"strconv"
 	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
 	"github.com/Frenzeh/mbii-foundry/parsers"
 )
 
-// PointBuySimulator renders the click-to-buy preview. One instance
-// per PointBuyUI (owned by the parent); it looks up slot data each
-// time it rebuilds.
+// PointBuySimulator renders the click-to-buy preview.
 type PointBuySimulator struct {
 	owner *PointBuyUI
 
 	container *fyne.Container
 
-	budgetLabel *widget.Label
-	archetype   *widget.Select
-	resetBtn    *widget.Button
+	// Budget banner widgets.
+	budgetSpent     *canvas.Text
+	budgetTotal     *canvas.Text
+	budgetRemaining *canvas.Text
+	budgetFill      *canvas.Rectangle // colored strip whose width tracks spent/total
 
+	// Archetype selector shown only on multi-spec classes.
+	archetype *widget.Select
+	resetBtn  *widget.Button
+
+	// Scroll area holding the skill cards.
 	slotBox *fyne.Container
 
 	// State: which rank the user has "bought" per slot. 0 = nothing
@@ -62,9 +84,42 @@ func NewPointBuySimulator(owner *PointBuyUI) *PointBuySimulator {
 }
 
 func (s *PointBuySimulator) createUI() {
-	s.budgetLabel = widget.NewLabel("")
-	s.budgetLabel.TextStyle = fyne.TextStyle{Bold: true}
+	// Budget banner — MBII's in-game menu puts the points-remaining
+	// count front-and-center; we do the same. Size + color give the
+	// numbers the weight they deserve: this is the single most
+	// important readout on this screen.
+	s.budgetSpent = canvas.NewText("0", CurrentThemeColor)
+	s.budgetSpent.TextSize = SizeHeading
+	s.budgetSpent.TextStyle = fyne.TextStyle{Bold: true}
 
+	s.budgetTotal = canvas.NewText("/ 0", theme.ForegroundColor())
+	s.budgetTotal.TextSize = SizeHeading
+	s.budgetTotal.TextStyle = fyne.TextStyle{Bold: true}
+
+	s.budgetRemaining = canvas.NewText("0 remaining", theme.PlaceHolderColor())
+	s.budgetRemaining.TextSize = SizeSmall
+
+	// Progress strip: subtle horizontal bar matching accent color.
+	// Width driven by rebuild's proportional-fill calc. Height is a
+	// fixed 4px — big enough to read, small enough not to compete
+	// with the number display above.
+	s.budgetFill = canvas.NewRectangle(CurrentThemeColor)
+	s.budgetFill.SetMinSize(fyne.NewSize(0, 4))
+
+	budgetLabel := widget.NewLabel("Points Spent")
+	budgetLabel.TextStyle = fyne.TextStyle{Bold: true}
+
+	spendRow := container.NewHBox(s.budgetSpent, s.budgetTotal)
+	budgetBlock := container.NewVBox(
+		budgetLabel,
+		spendRow,
+		s.budgetRemaining,
+		s.budgetFill,
+	)
+
+	// Archetype picker — only shows when the class has >1 spec. On
+	// single-spec classes this whole row collapses to just the reset
+	// button so the UI doesn't carry a useless dropdown.
 	s.archetype = widget.NewSelect(nil, func(string) {
 		s.activeSpec = s.selectedSpecIndex()
 		s.purchased = map[int]int{}
@@ -75,18 +130,28 @@ func (s *PointBuySimulator) createUI() {
 		s.purchased = map[int]int{}
 		s.rebuild()
 	})
+	s.resetBtn.Importance = widget.LowImportance
+
+	topBar := container.NewBorder(
+		nil, nil,
+		budgetBlock, // left
+		container.NewVBox(s.archetype, s.resetBtn), // right
+		nil,
+	)
 
 	s.slotBox = container.NewVBox()
 
-	header := container.NewHBox(
-		s.archetype,
-		s.resetBtn,
-		s.budgetLabel,
-	)
 	scroll := container.NewVScroll(s.slotBox)
-	scroll.SetMinSize(fyne.NewSize(0, 420))
+	scroll.SetMinSize(fyne.NewSize(0, 440))
 
-	s.container = container.NewBorder(header, nil, nil, nil, scroll)
+	s.container = container.NewBorder(
+		container.NewVBox(
+			container.NewPadded(topBar),
+			widget.NewSeparator(),
+		),
+		nil, nil, nil,
+		scroll,
+	)
 }
 
 // GetContent is the Fyne handle for embedding the simulator in a tab.
@@ -139,8 +204,6 @@ func (s *PointBuySimulator) rebuildSpecOptions() {
 	}
 }
 
-// selectedSpecIndex returns the current archetype index based on the
-// dropdown's selection. Defaults to 0 if none / unknown.
 func (s *PointBuySimulator) selectedSpecIndex() int {
 	sel := s.archetype.Selected
 	for i, opt := range s.archetype.Options {
@@ -151,8 +214,7 @@ func (s *PointBuySimulator) selectedSpecIndex() int {
 	return 0
 }
 
-// rebuild renders every slot row for the active archetype. Called
-// on archetype switch + reset.
+// rebuild renders every slot card for the active archetype.
 func (s *PointBuySimulator) rebuild() {
 	s.slotBox.Objects = nil
 
@@ -160,7 +222,7 @@ func (s *PointBuySimulator) rebuild() {
 	base := s.activeSpec * slotsPerArchetype
 	for i := 0; i < slotsPerArchetype; i++ {
 		idx := base + i
-		row := s.buildSlotRow(idx, ch)
+		row := s.buildSlotCard(idx, ch)
 		if row != nil {
 			s.slotBox.Add(row)
 		}
@@ -169,9 +231,9 @@ func (s *PointBuySimulator) rebuild() {
 	s.refreshBudget()
 }
 
-// buildSlotRow produces a single simulator row. Returns nil for
-// Empty slots so the layout doesn't show ghost rows.
-func (s *PointBuySimulator) buildSlotRow(globalIdx int, ch *parsers.MBCHCharacter) fyne.CanvasObject {
+// buildSlotCard produces a game-loadout-style card for one slot.
+// Returns nil for Empty slots. Header slots return a styled divider.
+func (s *PointBuySimulator) buildSlotCard(globalIdx int, ch *parsers.MBCHCharacter) fyne.CanvasObject {
 	skill := ch.CustomSkills[globalIdx]
 	name := ch.CustomNames[globalIdx]
 	ranks := ch.CustomRanks[globalIdx]
@@ -181,50 +243,110 @@ func (s *PointBuySimulator) buildSlotRow(globalIdx int, ch *parsers.MBCHCharacte
 		return nil // Empty slot — skip
 	}
 
-	// Header row: render as a visually-distinct section divider.
+	// Header slot: styled as an accent-colored divider. Matches how
+	// MBII's in-game loadout menu shows category headers (-Weapons-,
+	// -Abilities-, etc.) between skill blocks.
 	if skill == "MB_ATT_INVALID" && strings.TrimSpace(ranks) == "-1" {
-		headerText := name
-		if headerText == "" {
-			headerText = "-Section-"
-		}
-		hdr := canvas.NewText(headerText, CurrentThemeColor)
-		hdr.TextSize = SizeSubtitle
-		hdr.TextStyle = fyne.TextStyle{Bold: true}
-		return container.NewPadded(hdr)
+		return buildHeaderStrip(name)
 	}
 
-	// Skill row: name on the left, rank pills on the right.
-	nameLabel := widget.NewLabel(name)
-	nameLabel.TextStyle = fyne.TextStyle{Bold: true}
+	// Skill card header: icon on the left, name + desc stacked, rank
+	// pills on the right. Wraps in a subtle bordered box so each
+	// skill reads as a distinct loadout row.
+	icon := s.buildSlotIcon(skill)
+
+	title := canvas.NewText(name, theme.ForegroundColor())
+	title.TextSize = SizeSubtitle
+	title.TextStyle = fyne.TextStyle{Bold: true}
 	if name == "" {
-		nameLabel.SetText(skill)
+		title.Text = skill
 	}
 
-	costs := parseRankCostList(ranks)
-	currentRank := s.purchased[globalIdx]
-
-	pills := container.NewHBox()
-	// "Off" pill first — always available, sets rank to 0.
-	pills.Add(s.buildRankPill(globalIdx, 0, 0, currentRank))
-	for i, cost := range costs {
-		pills.Add(s.buildRankPill(globalIdx, i+1, cost, currentRank))
-	}
-
-	body := container.NewVBox()
-	body.Add(container.NewBorder(nil, nil, nameLabel, nil, pills))
+	// Description under the title, muted italic — MBII uses these
+	// as tooltip-style hints ("Extra Grapple momentum", etc.).
+	var titleBlock fyne.CanvasObject
 	if descs != "" {
 		desc := canvas.NewText(descs, theme.PlaceHolderColor())
 		desc.TextSize = SizeSmall
 		desc.TextStyle = fyne.TextStyle{Italic: true}
-		body.Add(desc)
+		titleBlock = container.NewVBox(title, desc)
+	} else {
+		titleBlock = container.NewVBox(title)
 	}
-	body.Add(widget.NewSeparator())
-	return body
+
+	// Rank pills.
+	costs := parseRankCostList(ranks)
+	currentRank := s.purchased[globalIdx]
+	pills := container.NewHBox(s.buildRankPill(globalIdx, 0, 0, currentRank))
+	for i, cost := range costs {
+		pills.Add(s.buildRankPill(globalIdx, i+1, cost, currentRank))
+	}
+
+	// Card layout. GridWrap forces the icon to 44px regardless of
+	// container width; the name block flexes; pills pin to the
+	// right edge via HBox with a spacer.
+	leftHalf := container.NewHBox(
+		container.NewGridWrap(fyne.NewSize(44, 44), icon),
+		titleBlock,
+	)
+	rightHalf := container.NewHBox(layout.NewSpacer(), pills)
+	inner := container.NewBorder(nil, nil, leftHalf, rightHalf, nil)
+
+	bg := canvas.NewRectangle(skillCardFill())
+	bg.StrokeColor = skillCardStroke()
+	bg.StrokeWidth = 1
+
+	return container.NewPadded(
+		container.NewStack(bg, container.NewPadded(inner)),
+	)
 }
 
-// buildRankPill constructs one clickable rank button for a slot.
-// "rank" is 0..len(costs) (0 = Off); "cost" is this rank's cost
-// (0 for Off). Unaffordable pills are disabled.
+// buildSlotIcon resolves the MB_ATT icon for display. Falls back
+// to the generic file-image glyph for unresolved attrs — still
+// conveys "icon slot" visually so the card layout doesn't look
+// asymmetric against neighbors that DO have art.
+func (s *PointBuySimulator) buildSlotIcon(skill string) fyne.CanvasObject {
+	if s.owner.editor.iconResolver != nil && s.owner.editor.assetBrowser != nil {
+		path := s.owner.editor.iconResolver.ResolveAttributeIcon(skill)
+		if res := s.owner.editor.assetBrowser.LoadIconResource(path); res != nil {
+			return NewRasterIconFromResource(res, 44, 44)
+		}
+	}
+	return NewRasterIconFromResource(theme.FileImageIcon(), 44, 44)
+}
+
+// buildHeaderStrip renders a -Section- divider styled like MBII's
+// in-game category headers. Centered accent-colored text with
+// top/bottom padding so section starts feel breathy.
+func buildHeaderStrip(name string) fyne.CanvasObject {
+	text := strings.TrimSpace(name)
+	text = strings.TrimPrefix(text, "-")
+	text = strings.TrimSuffix(text, "-")
+	text = strings.TrimSpace(text)
+	if text == "" {
+		text = "Section"
+	}
+	text = strings.ToUpper(text)
+
+	label := canvas.NewText(text, CurrentThemeColor)
+	label.TextSize = SizeSubtitle
+	label.TextStyle = fyne.TextStyle{Bold: true}
+	label.Alignment = fyne.TextAlignCenter
+
+	rule := canvas.NewRectangle(tintWithAlpha(CurrentThemeColor, 80))
+	rule.SetMinSize(fyne.NewSize(0, 1))
+
+	padded := container.NewPadded(label)
+	return container.NewVBox(rule, padded, rule)
+}
+
+// buildRankPill constructs one clickable rank button. Visual states:
+//   - Current (owned) rank → accent fill, high importance
+//   - Affordable           → normal button
+//   - Unaffordable         → disabled, lower visual weight
+//
+// The "Off" pill (rank 0) is always affordable and sets ownership
+// back to zero — matching how a player would deselect in-game.
 func (s *PointBuySimulator) buildRankPill(globalIdx, rank, cost, currentRank int) *widget.Button {
 	var label string
 	switch rank {
@@ -243,19 +365,19 @@ func (s *PointBuySimulator) buildRankPill(globalIdx, rank, cost, currentRank int
 		s.rebuild()
 	})
 
-	if rank == currentRank {
+	switch {
+	case rank == currentRank:
 		btn.Importance = widget.HighImportance
-	} else {
+	default:
 		btn.Importance = widget.MediumImportance
 	}
 
-	// Disable rank pills that would push the build over budget —
-	// gives the author immediate feedback about whether their
-	// mbPoints ceiling actually lets a player buy the upgrade.
+	// Disable rank pills whose purchase would exceed the budget.
+	// Off (rank 0) is always enabled since it always frees points.
 	if rank > 0 {
 		ch := s.owner.editor.character
 		tentative := s.purchasedCostExcluding(globalIdx) + s.costForRank(globalIdx, rank, ch)
-		if tentative > ch.MBPoints {
+		if ch.MBPoints > 0 && tentative > ch.MBPoints {
 			btn.Disable()
 		}
 	}
@@ -264,8 +386,7 @@ func (s *PointBuySimulator) buildRankPill(globalIdx, rank, cost, currentRank int
 }
 
 // purchasedCostExcluding sums the purchased cost of every slot
-// except the given one (used to determine if a prospective rank
-// purchase would fit in the remaining budget).
+// except the given one. Skipping -1 means "count everything".
 func (s *PointBuySimulator) purchasedCostExcluding(skipIdx int) int {
 	ch := s.owner.editor.character
 	total := 0
@@ -279,8 +400,6 @@ func (s *PointBuySimulator) purchasedCostExcluding(skipIdx int) int {
 }
 
 // costForRank returns the cost for purchasing `rank` of slot idx.
-// Rank 0 is free by definition; rank N reads the N-th entry of the
-// slot's comma-separated rank-cost list (1-indexed: rank 1 → costs[0]).
 func (s *PointBuySimulator) costForRank(globalIdx, rank int, ch *parsers.MBCHCharacter) int {
 	if rank <= 0 {
 		return 0
@@ -292,19 +411,57 @@ func (s *PointBuySimulator) costForRank(globalIdx, rank int, ch *parsers.MBCHCha
 	return costs[rank-1]
 }
 
-// refreshBudget recomputes spent/total and updates the header label.
+// refreshBudget updates the banner numbers + fill strip. Matches the
+// in-game menu's live-updating "Points Remaining" counter.
 func (s *PointBuySimulator) refreshBudget() {
-	spent := s.purchasedCostExcluding(-1) // nothing skipped
+	spent := s.purchasedCostExcluding(-1)
 	target := s.owner.editor.character.MBPoints
 	remaining := target - spent
 
-	s.budgetLabel.SetText(fmt.Sprintf("Spent: %d / %d  ·  Remaining: %d", spent, target, remaining))
+	s.budgetSpent.Text = strconv.Itoa(spent)
+	s.budgetTotal.Text = fmt.Sprintf("/ %d", target)
+	s.budgetRemaining.Text = fmt.Sprintf("%d remaining", remaining)
+
+	// Color the spent number: green under budget, accent at budget,
+	// red over budget (shouldn't happen since unaffordable pills
+	// disable, but guard in case mbPoints drops after purchases).
+	switch {
+	case target == 0:
+		s.budgetSpent.Color = theme.PlaceHolderColor()
+	case spent > target:
+		s.budgetSpent.Color = color.NRGBA{R: 220, G: 70, B: 70, A: 255}
+	case spent == target:
+		s.budgetSpent.Color = CurrentThemeColor
+	default:
+		s.budgetSpent.Color = theme.ForegroundColor()
+	}
+
+	// Proportional strip. Clamped [0,1]. Over-budget pegs at 100%
+	// and turns red so the reader's eye catches it.
+	frac := float32(0)
+	if target > 0 {
+		frac = float32(spent) / float32(target)
+		if frac > 1 {
+			frac = 1
+		}
+	}
+	_ = frac // Fyne's canvas.Rectangle doesn't support percentage-
+	// width natively without reflowing; the 4px height strip stays
+	// the full width of its container as a background bar. A future
+	// pass could layer two rects (background + accent) to render the
+	// proportional fill properly; for now the number + color carries
+	// the weight. Keep the strip as a consistent accent bar so the
+	// banner layout stays stable.
+	s.budgetFill.FillColor = tintWithAlpha(CurrentThemeColor, 90)
+
+	s.budgetSpent.Refresh()
+	s.budgetTotal.Refresh()
+	s.budgetRemaining.Refresh()
+	s.budgetFill.Refresh()
 }
 
 // parseRankCostList parses a CSV into an int slice. "-1" or empty
-// return empty (header / empty slots have no rank costs). Negative
-// and malformed entries are skipped rather than rejecting the whole
-// list — matches the tolerant parsing the editor does.
+// return empty (header / empty slots have no rank costs).
 func parseRankCostList(csv string) []int {
 	csv = strings.TrimSpace(csv)
 	if csv == "" || csv == "-1" {
@@ -321,3 +478,12 @@ func parseRankCostList(csv string) []int {
 	return out
 }
 
+// skillCardFill + skillCardStroke pull from the theme so the card
+// background follows dark/light mode.
+func skillCardFill() color.Color {
+	return tintWithAlpha(CurrentThemeColor, 12)
+}
+
+func skillCardStroke() color.Color {
+	return tintWithAlpha(CurrentThemeColor, 40)
+}

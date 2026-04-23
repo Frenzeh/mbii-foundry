@@ -26,14 +26,14 @@ func NewWelcomeScreen(app *App) *WelcomeScreen {
 // of an otherwise empty canvas; without content underneath, the bleed
 // read as unfinished. The screen now flows:
 //
-//   MBII FOUNDRY (display)
-//   MOVIE BATTLES II CONTENT EDITOR (caption)
-//   [accent rule]
-//   CREATE column       RECENT column
-//     [tile cards]        [file buttons OR onboarding tips]
-//   [accent rule]
-//   GET STARTED strip (keyboard shortcuts + pointers)
-//   Version footer
+//	MBII FOUNDRY (display)
+//	MOVIE BATTLES II CONTENT EDITOR (caption)
+//	[accent rule]
+//	CREATE column       RECENT column
+//	  [tile cards]        [file buttons OR onboarding tips]
+//	[accent rule]
+//	GET STARTED strip (keyboard shortcuts + pointers)
+//	Version footer
 //
 // Padding is modest on all sides so the type still pushes toward the
 // edges, but every horizontal band has something to look at.
@@ -138,23 +138,14 @@ func (w *WelcomeScreen) GetContent() fyne.CanvasObject {
 	// Footer strip — always pinned to the bottom of the welcome area.
 	// Pairs with the top rule to bracket the content, and gives the
 	// bottom of the screen a visual baseline instead of trailing off
-	// into empty dark space on taller windows.
+	// into empty dark space on taller windows. The update callout
+	// (when a newer release exists) lives inside the footer's right
+	// column so it sits snug next to the version string rather than
+	// as a separate banner up top.
 	footer := w.buildFooter()
 	footerBlock := container.NewVBox(rule(), Gap(SpaceSM), footer)
 
-	// Update banner — sits above the hero. Renders an empty Spacer
-	// when no newer release is available, so it costs no vertical
-	// space in the common case. When an update IS available, the
-	// banner replaces the top strip with a visually-punchy "FOUNDRY
-	// vX.Y IS AVAILABLE" bar that the user can either act on or
-	// dismiss for the session.
-	var banner fyne.CanvasObject = layout.NewSpacer()
-	if w.app != nil && w.app.updateChecker != nil {
-		banner = NewUpdateBanner(w.app, w.app.updateChecker.Latest()).GetContent()
-	}
-
 	top := container.NewVBox(
-		banner,
 		Gap(SpaceSM),
 		heroRow,
 		Gap(SpaceMD),
@@ -234,9 +225,11 @@ func (w *WelcomeScreen) buildRecentColumn() fyne.CanvasObject {
 }
 
 // buildFooter renders the bottom strip of the welcome screen — a
-// shortcut list on the left, a version/brand footer on the right.
-// Gives the screen a clear baseline so the type hierarchy lands on
-// something instead of trailing off into empty space.
+// shortcut list on the left, a brand/version block on the right.
+// When an update is available, a compact callout slots in above the
+// version string so users see the "new version available" hint in
+// the same place they look for the current version — no separate
+// banner up top fighting the hero for attention.
 func (w *WelcomeScreen) buildFooter() fyne.CanvasObject {
 	shortcutHeader := canvas.NewText("GET STARTED", theme.PlaceHolderColor())
 	shortcutHeader.TextSize = SizeSmall
@@ -258,15 +251,45 @@ func (w *WelcomeScreen) buildFooter() fyne.CanvasObject {
 		mono("?       help / show keyboard shortcuts"),
 	)
 
-	versionTxt := canvas.NewText("FOUNDRY · ALPHA · v2.0", theme.PlaceHolderColor())
-	versionTxt.TextSize = SizeSmall
+	return container.New(layout.NewGridLayoutWithColumns(2), shortcuts, w.buildBrandColumn())
+}
+
+// buildBrandColumn renders the footer's right column: branding line,
+// version (pulled live from AppVersion so it never drifts from the
+// build), and — when applicable — the update callout. Stacked right-
+// aligned so everything flows to the edge and reads as a cohesive
+// mark.
+func (w *WelcomeScreen) buildBrandColumn() fyne.CanvasObject {
+	brandLine := canvas.NewText("MBII FOUNDRY", theme.PlaceHolderColor())
+	brandLine.TextSize = SizeSmall
+	brandLine.TextStyle = fyne.TextStyle{Bold: true}
+	brandLine.Alignment = fyne.TextAlignTrailing
+
+	versionTxt := canvas.NewText("v"+AppVersion, theme.ForegroundColor())
+	versionTxt.TextSize = SizeSubtitle
 	versionTxt.TextStyle = fyne.TextStyle{Bold: true}
 	versionTxt.Alignment = fyne.TextAlignTrailing
 
-	brand := container.NewVBox(
-		layout.NewSpacer(),
+	children := []fyne.CanvasObject{
+		layout.NewSpacer(), // push the brand block to the bottom edge
+		brandLine,
 		versionTxt,
-	)
+	}
 
-	return container.New(layout.NewGridLayoutWithColumns(2), shortcuts, brand)
+	// Compact update callout, only rendered when UpdateChecker has a
+	// newer release cached. Hidden by default so the footer stays a
+	// clean brand mark for people who are already up to date.
+	if w.app != nil && w.app.updateChecker != nil {
+		if callout := NewUpdateCallout(w.app, w.app.updateChecker.Latest()); callout != nil {
+			// Rule + spacer above the callout to separate it from the
+			// version, keeping both readable instead of blending into
+			// one amorphous bottom blob.
+			children = append(children,
+				Gap(SpaceXS),
+				callout.GetContent(),
+			)
+		}
+	}
+
+	return container.NewVBox(children...)
 }

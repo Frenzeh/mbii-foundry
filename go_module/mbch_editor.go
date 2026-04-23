@@ -354,11 +354,15 @@ func (e *MBCHEditor) createUI() {
 	e.attributesEntry.SetPlaceHolder("MB_ATT_PUSH,3|MB_ATT_PULL,3")
 	e.forcePowersEntry.SetPlaceHolder("FP_PUSH,3|FP_PULL,3")
 
-	// Initialize Attribute Grid
+	// Initialize Attribute Grid. Pair hover/unhover so attribute
+	// previews revert to the last-interacted field on mouse-out.
 	e.attrGrid = NewAttributeGrid("", func(s string) {
 		e.attributesEntry.SetText(s)
 		e.markDirty()
 	}, e.onHover, e.resolveIconResource)
+	if e.app != nil {
+		e.attrGrid.SetOnUnhover(e.app.clearHoverContext)
+	}
 
 	// Initialize Weapon Grid. onHover fires on row-enter (transient
 	// info-panel display), onUnhover on row-leave (revert to

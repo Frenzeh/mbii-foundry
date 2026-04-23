@@ -24,7 +24,13 @@ type AttributeToggleWidget struct {
 	Description string
 
 	OnChange func(int)
-	OnInfo   func(string, string) // Key, Context
+	OnInfo   func(string, string) // Key, Context — called on row hover
+	// OnInfoLeave fires when the mouse leaves the row's hoverable
+	// controls (info button, level buttons). Paired with OnInfo so
+	// the info-panel's sticky-context behavior can revert to the
+	// last-interacted entry rather than freezing on the attribute
+	// you happen to have passed over last.
+	OnInfoLeave func()
 
 	// UI Components
 	label     *widget.Label
@@ -47,6 +53,20 @@ func NewAttributeToggleWidget(attr AttributeDef, currentVal int, onChange func(i
 	w.ExtendBaseWidget(w)
 	w.createUI(onInfo, icon)
 	return w
+}
+
+// SetOnInfoLeave wires the MouseOut callback post-construction so
+// callers that didn't have the clear-hover func at build time can
+// still opt in. Keeps the widget's primary constructor small.
+func (w *AttributeToggleWidget) SetOnInfoLeave(f func()) {
+	w.OnInfoLeave = f
+	// Re-apply to already-built level buttons — refreshButtons
+	// doesn't rewire, so we patch each button's onHoverOut directly.
+	for _, btn := range w.buttons {
+		if btn != nil {
+			btn.onHoverOut = f
+		}
+	}
 }
 
 func (w *AttributeToggleWidget) createUI(onInfo func(string, string), iconRes fyne.Resource) {
@@ -134,7 +154,14 @@ func (w *AttributeToggleWidget) createLevelButton(level int, text string, onInfo
 		if w.OnChange != nil {
 			w.OnChange(level)
 		}
-	}, hover, nil)
+	}, hover, func() {
+		// MouseOut — tell the info panel to revert to sticky.
+		// Closure captures the widget; OnInfoLeave may be set later
+		// via SetOnInfoLeave so read it lazily each time.
+		if w.OnInfoLeave != nil {
+			w.OnInfoLeave()
+		}
+	})
 	return btn
 }
 

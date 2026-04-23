@@ -17,11 +17,17 @@ type AttributeGrid struct {
 	values      map[string]int
 	onChange    func(string)
 	onHover     func(string, string)
+	onUnhover   func()
 	resolveIcon func(string) fyne.Resource // New callback
 
 	filter string
 	search *widget.Entry
 }
+
+// SetOnUnhover wires a mouse-leave callback for hover-based preview
+// revert. Symmetric with WeaponGrid.SetOnUnhover — both feed the
+// info panel's sticky/hover model.
+func (ag *AttributeGrid) SetOnUnhover(f func()) { ag.onUnhover = f }
 
 func NewAttributeGrid(initialStr string, onChange func(string), onHover func(string, string), resolveIcon func(string) fyne.Resource) *AttributeGrid {
 	InitDefinitions() // Ensure docs are loaded
@@ -132,6 +138,13 @@ func (ag *AttributeGrid) createAttributeItem(attr AttributeDef) fyne.CanvasObjec
 	w := NewAttributeToggleWidget(attr, currentVal, func(newVal int) {
 		ag.updateValue(attr.ID, newVal)
 	}, ag.onHover, icon)
+
+	// Mouse-leave → revert the info panel to whatever the user last
+	// interacted with. Without this, the panel freezes on the last-
+	// hovered attribute even after the mouse moves off.
+	if ag.onUnhover != nil {
+		w.SetOnInfoLeave(ag.onUnhover)
+	}
 
 	return w
 }

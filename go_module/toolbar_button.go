@@ -31,11 +31,44 @@ type ToolbarButton struct {
 	onTap   func()
 
 	hovering bool
+	disabled bool
 	bg       *canvas.Rectangle
 	iconW    *widget.Icon
 	labelW   *canvas.Text
 	popUp    *widget.PopUp
 }
+
+// Disable turns the button into a non-interactive, visually-faded
+// state. Used by panels that need to lock the button out while a
+// background action is running (e.g. the update banner during
+// download).
+func (b *ToolbarButton) Disable() {
+	if b.disabled {
+		return
+	}
+	b.disabled = true
+	b.applyStyle()
+	if b.iconW != nil {
+		b.iconW.Refresh()
+	}
+	b.Refresh()
+}
+
+// Enable re-enables a previously disabled button.
+func (b *ToolbarButton) Enable() {
+	if !b.disabled {
+		return
+	}
+	b.disabled = false
+	b.applyStyle()
+	if b.iconW != nil {
+		b.iconW.Refresh()
+	}
+	b.Refresh()
+}
+
+// Disabled reports the current state.
+func (b *ToolbarButton) Disabled() bool { return b.disabled }
 
 func NewToolbarButton(label string, icon fyne.Resource, onTap func(), tooltip string) *ToolbarButton {
 	b := &ToolbarButton{label: label, icon: icon, onTap: onTap, tooltip: tooltip}
@@ -79,12 +112,18 @@ func (b *ToolbarButton) MinSize() fyne.Size {
 }
 
 func (b *ToolbarButton) Tapped(*fyne.PointEvent) {
+	if b.disabled {
+		return
+	}
 	if b.onTap != nil {
 		b.onTap()
 	}
 }
 
 func (b *ToolbarButton) MouseIn(*desktop.MouseEvent) {
+	if b.disabled {
+		return
+	}
 	b.hovering = true
 	b.applyStyle()
 	if b.tooltip == "" {
@@ -118,7 +157,12 @@ func (b *ToolbarButton) MouseOut() {
 
 func (b *ToolbarButton) MouseMoved(*desktop.MouseEvent) {}
 
-func (b *ToolbarButton) Cursor() desktop.Cursor { return desktop.PointerCursor }
+func (b *ToolbarButton) Cursor() desktop.Cursor {
+	if b.disabled {
+		return desktop.DefaultCursor
+	}
+	return desktop.PointerCursor
+}
 
 func (b *ToolbarButton) applyStyle() {
 	if b.bg == nil {

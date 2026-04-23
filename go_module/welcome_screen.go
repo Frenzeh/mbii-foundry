@@ -142,7 +142,19 @@ func (w *WelcomeScreen) GetContent() fyne.CanvasObject {
 	footer := w.buildFooter()
 	footerBlock := container.NewVBox(rule(), Gap(SpaceSM), footer)
 
+	// Update banner — sits above the hero. Renders an empty Spacer
+	// when no newer release is available, so it costs no vertical
+	// space in the common case. When an update IS available, the
+	// banner replaces the top strip with a visually-punchy "FOUNDRY
+	// vX.Y IS AVAILABLE" bar that the user can either act on or
+	// dismiss for the session.
+	var banner fyne.CanvasObject = layout.NewSpacer()
+	if w.app != nil && w.app.updateChecker != nil {
+		banner = NewUpdateBanner(w.app, w.app.updateChecker.Latest()).GetContent()
+	}
+
 	top := container.NewVBox(
+		banner,
 		Gap(SpaceSM),
 		heroRow,
 		Gap(SpaceMD),

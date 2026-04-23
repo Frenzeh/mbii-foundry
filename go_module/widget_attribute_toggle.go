@@ -80,14 +80,14 @@ func (w *AttributeToggleWidget) createUI(onInfo func(string, string), iconRes fy
 	})
 	w.infoBtn.Importance = widget.LowImportance // Less intrusive
 
-	// Icon
+	// Icon — canvas.Image (via NewRasterIconFromResource) renders the
+	// full extracted PNG at 24×24. widget.Icon would downscale to the
+	// theme icon size (~20px) and leave the resource mostly unseen,
+	// which is what made attribute icons look "missing" earlier.
 	var iconObj fyne.CanvasObject
 	if iconRes != nil {
-		img := widget.NewIcon(iconRes)
-		// img.SetMinSize(fyne.NewSize(32, 32)) // Optional sizing
-		iconObj = img
+		iconObj = NewRasterIconFromResource(iconRes, 24, 24)
 	} else {
-		// Placeholder spacer
 		iconObj = layout.NewSpacer()
 	}
 

@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
@@ -72,7 +73,7 @@ type MBCHEditor struct {
 	skinEntry        *ValidatedEntry
 	uiShaderEntry    *ValidatedEntry
 	soundsetEntry    *ValidatedEntry
-	iconPreview      *widget.Icon // Portrait of the current model+skin (or explicit UI shader)
+	iconPreview      *canvas.Image // Portrait of the current model+skin (or explicit UI shader); raster-friendly, fills its container
 	portraitSource   *widget.Label // Shows whether the portrait is "auto" or an "override" so authors can tell quickly
 	weaponsEntry     *widget.Entry
 	attributesEntry  *widget.Entry
@@ -337,7 +338,16 @@ func (e *MBCHEditor) createUI() {
 	// glance whether the rendered portrait is from their override or
 	// the convention — useful when the icon "looks wrong" and you
 	// need to know where to intervene.
-	e.iconPreview = widget.NewIcon(theme.FileImageIcon())
+	//
+	// iconPreview stays a widget.Icon for SetResource compatibility,
+	// but the layout that embeds it wraps it in the same canvas.Image
+	// pipeline the other icon slots use — see the Portrait form row
+	// below where updateIconPreview hands off to a refreshable
+	// canvas.Image.
+	e.iconPreview = canvas.NewImageFromResource(theme.FileImageIcon())
+	e.iconPreview.FillMode = canvas.ImageFillContain
+	e.iconPreview.ScaleMode = canvas.ImageScaleSmooth
+	e.iconPreview.SetMinSize(fyne.NewSize(64, 64))
 	e.portraitSource = widget.NewLabel("")
 	e.portraitSource.TextStyle = fyne.TextStyle{Italic: true}
 
@@ -1041,14 +1051,16 @@ func (e *MBCHEditor) updateIconPreview() {
 	path := e.iconResolver.ResolveClassIcon(model, skin, uishader)
 	if path != "" {
 		if res := e.assetBrowser.LoadIconResource(path); res != nil {
-			e.iconPreview.SetResource(res)
+			e.iconPreview.Resource = res
+			e.iconPreview.Refresh()
 			return
 		}
 	}
 	// Nothing resolved — fall back to a generic placeholder so the
 	// 64px slot still reads as "this is the portrait area" instead
 	// of going blank.
-	e.iconPreview.SetResource(theme.FileImageIcon())
+	e.iconPreview.Resource = theme.FileImageIcon()
+	e.iconPreview.Refresh()
 }
 
 func (e *MBCHEditor) resolveIconResource(id string) fyne.Resource {

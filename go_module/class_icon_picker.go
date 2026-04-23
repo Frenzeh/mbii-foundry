@@ -27,6 +27,7 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
@@ -146,7 +147,7 @@ type classCard struct {
 
 	bg      *canvas.Rectangle
 	border  *canvas.Rectangle
-	iconW   *widget.Icon
+	iconObj fyne.CanvasObject // raster-friendly wrapper (see NewRasterIconFromResource)
 	caption *canvas.Text
 }
 
@@ -164,16 +165,27 @@ func (c *classCard) CreateRenderer() fyne.WidgetRenderer {
 
 	// Class icon — loaded from embedded assets via LoadGameIcon.
 	// Uses the alias table to turn MB_CLASS_* → filename basename;
-	// LoadGameIcon then looks up the PNG in embedIcons. Falls back
-	// to a person-shaped theme icon when no art exists.
+	// LoadGameIcon then looks up the PNG in embedIcons. Renders via
+	// canvas.Image inside a GridWrap — widget.Icon tries to respect
+	// theme icon size (~20px) for SVG tinting and leaves raster PNGs
+	// looking like a tiny dot in the middle of a 44×44 cell. Using
+	// canvas.Image with ImageFillContain fills the whole box.
 	alias := classIconAliases[c.def.ID]
-	var iconRes fyne.Resource = theme.AccountIcon()
 	if alias != "" {
 		if img, ok := LoadGameIcon(nil, "classes/"+alias); ok {
-			iconRes = staticPNGResource(alias+".png", img)
+			ci := canvas.NewImageFromImage(img)
+			ci.FillMode = canvas.ImageFillContain
+			ci.ScaleMode = canvas.ImageScaleSmooth
+			ci.SetMinSize(fyne.NewSize(44, 44))
+			c.iconObj = container.New(layout.NewGridWrapLayout(fyne.NewSize(44, 44)), ci)
 		}
 	}
-	c.iconW = widget.NewIcon(iconRes)
+	if c.iconObj == nil {
+		// Fallback — theme person icon, which is actually an SVG so
+		// widget.Icon renders it fine at theme size inside the grid.
+		fb := widget.NewIcon(theme.AccountIcon())
+		c.iconObj = container.New(layout.NewGridWrapLayout(fyne.NewSize(44, 44)), fb)
+	}
 
 	c.caption = canvas.NewText(prettyClassName(c.def), theme.ForegroundColor())
 	c.caption.TextSize = SizeSmall
@@ -185,7 +197,7 @@ func (c *classCard) CreateRenderer() fyne.WidgetRenderer {
 	// container means the 44x44 icon and the caption text both
 	// track the card's horizontal midline regardless of how wide
 	// the card ends up (GridWithColumns flexes the card width).
-	iconHost := container.NewCenter(container.NewGridWrap(fyne.NewSize(44, 44), c.iconW))
+	iconHost := container.NewCenter(c.iconObj)
 	captionHost := container.NewCenter(c.caption)
 	body := container.NewVBox(iconHost, captionHost)
 	inner := container.NewPadded(body)

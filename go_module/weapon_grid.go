@@ -138,13 +138,18 @@ func (wg *WeaponGrid) createUI() {
 			// In-game icon sits immediately to the left of the check.
 			// Replaces the old emoji prefix (💣, 🔫 etc. on weapon
 			// names) with the real w_icon_*.png the game ships —
-			// embedded at build time from assets/icons/weapons/. When
-			// no art is available the row renders as a plain check.
+			// embedded at build time from assets/icons/weapons/.
+			// Uses canvas.Image (via NewRasterIconFromResource) at a
+			// 28px cell — widget.Icon would render raster art at the
+			// theme icon size (~20px) and leave empty border, making
+			// the icon appear missing.
 			var primary fyne.CanvasObject = check
 			if wg.resolveIcon != nil {
 				if res := wg.resolveIcon(weaponID); res != nil {
-					iconW := widget.NewIcon(res)
-					primary = container.NewHBox(iconW, check)
+					primary = container.NewHBox(
+						NewRasterIconFromResource(res, 28, 28),
+						check,
+					)
 				}
 			}
 

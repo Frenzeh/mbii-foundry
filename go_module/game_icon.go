@@ -180,6 +180,26 @@ func NewGameIconCanvas(vfs *VirtualFileSystem, basePath string, width, height fl
 	return container.New(layout.NewGridWrapLayout(fyne.NewSize(width, height)), fb)
 }
 
+// NewRasterIconFromResource takes a PNG/JPEG fyne.Resource and returns
+// a sized CanvasObject that actually RENDERS it at the requested
+// size. Needed because widget.NewIcon was designed for monochrome
+// SVG theme icons — it respects the theme's icon size (~20px) so
+// a raster PNG placed in a larger container shows as a tiny dot.
+// canvas.Image with ImageFillContain fills the whole box, preserving
+// aspect ratio. Returns a placeholder file-image when resource is
+// nil so callers don't have to nil-check.
+func NewRasterIconFromResource(res fyne.Resource, width, height float32) fyne.CanvasObject {
+	if res == nil {
+		fb := widget.NewIcon(theme.FileImageIcon())
+		return container.New(layout.NewGridWrapLayout(fyne.NewSize(width, height)), fb)
+	}
+	ci := canvas.NewImageFromResource(res)
+	ci.FillMode = canvas.ImageFillContain
+	ci.ScaleMode = canvas.ImageScaleSmooth
+	ci.SetMinSize(fyne.NewSize(width, height))
+	return container.New(layout.NewGridWrapLayout(fyne.NewSize(width, height)), ci)
+}
+
 // stripLeadingNonWord strips any leading runes that aren't letters
 // or digits, plus the whitespace immediately following them. Used to
 // clean "💣 Pulse Grenade" → "Pulse Grenade" at load time so the

@@ -88,7 +88,7 @@ type PointBuyUI struct {
 	slotRows    []*fyne.Container
 	slotModes   []*widget.Select
 	slotSkills  []*widget.Select
-	slotIcons   []*widget.Icon
+	slotIcons   []*canvas.Image // raster-friendly; widget.Icon renders at theme-icon size and loses raster detail
 	slotNames   []*widget.Entry
 	slotRanks   []*widget.Entry
 	slotDescs   []*widget.Entry
@@ -171,7 +171,7 @@ func (p *PointBuyUI) createUI() {
 	p.slotRows = make([]*fyne.Container, maxTotalSlots)
 	p.slotModes = make([]*widget.Select, maxTotalSlots)
 	p.slotSkills = make([]*widget.Select, maxTotalSlots)
-	p.slotIcons = make([]*widget.Icon, maxTotalSlots)
+	p.slotIcons = make([]*canvas.Image, maxTotalSlots)
 	p.slotNames = make([]*widget.Entry, maxTotalSlots)
 	p.slotRanks = make([]*widget.Entry, maxTotalSlots)
 	p.slotDescs = make([]*widget.Entry, maxTotalSlots)
@@ -245,7 +245,10 @@ func (p *PointBuyUI) buildSlotRow(globalIdx int, attrOptions []string) *fyne.Con
 	skillSel.PlaceHolder = "MB_ATT_..."
 	p.slotSkills[globalIdx] = skillSel
 
-	iconW := widget.NewIcon(theme.FileImageIcon())
+	iconW := canvas.NewImageFromResource(theme.FileImageIcon())
+	iconW.FillMode = canvas.ImageFillContain
+	iconW.ScaleMode = canvas.ImageScaleSmooth
+	iconW.SetMinSize(fyne.NewSize(24, 24))
 	p.slotIcons[globalIdx] = iconW
 
 	nameEntry := NewInputEntry()
@@ -453,21 +456,25 @@ func (p *PointBuyUI) refreshSlotLayout(i int) {
 }
 
 func (p *PointBuyUI) refreshSlotIcon(i int) {
+	setRes := func(res fyne.Resource) {
+		p.slotIcons[i].Resource = res
+		p.slotIcons[i].Refresh()
+	}
 	skill := p.editor.character.CustomSkills[i]
 	if skill == "" || skill == "MB_ATT_INVALID" {
-		p.slotIcons[i].SetResource(theme.FileImageIcon())
+		setRes(theme.FileImageIcon())
 		return
 	}
 	if p.editor.iconResolver == nil || p.editor.assetBrowser == nil {
-		p.slotIcons[i].SetResource(theme.FileImageIcon())
+		setRes(theme.FileImageIcon())
 		return
 	}
 	path := p.editor.iconResolver.ResolveAttributeIcon(skill)
 	if res := p.editor.assetBrowser.LoadIconResource(path); res != nil {
-		p.slotIcons[i].SetResource(res)
+		setRes(res)
 		return
 	}
-	p.slotIcons[i].SetResource(theme.FileImageIcon())
+	setRes(theme.FileImageIcon())
 }
 
 func (p *PointBuyUI) refreshSlotMaxCost(i int) {

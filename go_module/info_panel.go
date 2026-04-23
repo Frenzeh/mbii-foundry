@@ -85,8 +85,11 @@ This panel provides real-time documentation and context for the field you're edi
 		},
 	)
 	ip.list.OnSelected = func(id widget.ListItemID) {
-		ip.ShowInfo(ip.keys[id], "")
-		// Auto-switch to Context tab to show result
+		// Library click is a deliberate "show me this" — here we
+		// DO want the tab auto-switch. ShowInfo itself no longer
+		// switches because that jittered the sidebar on every
+		// hover; click-to-jump is the right exception.
+		ip.ShowSticky(ip.keys[id], "")
 		ip.tabs.SelectIndex(0)
 	}
 
@@ -220,8 +223,14 @@ func (ip *InfoPanel) ClearHover() {
 func (ip *InfoPanel) ShowInfo(key, context string) {
 	LogInfo("InfoPanel: ShowInfo called for key='%s'", key)
 
-	// Auto-switch to Context tab so user sees the info
-	ip.tabs.SelectIndex(0)
+	// Tab auto-switch was here and caused layout jitter on every
+	// hover: switching the active tab recalcs AppTabs layout, which
+	// cascaded into HSplit min-size updates and made the sidebar
+	// rail visibly shift whenever the user moused over a new field.
+	// Left behind for the Library list's OnSelected to invoke
+	// explicitly — that's the only flow that NEEDS a tab switch
+	// (user clicked a key in the Library and expects to see its
+	// content). Hovers just mutate text.
 
 	var def string
 	var found bool

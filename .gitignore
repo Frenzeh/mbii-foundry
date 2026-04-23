@@ -44,3 +44,6 @@ mbii-foundry.log
 fa_creator.log
 mbii-foundry_config.json
 fa_creator_config.json
+
+# extract-icons built binary (run `go build ./tools/extract-icons` to regenerate)
+tools/extract-icons/extract-icons

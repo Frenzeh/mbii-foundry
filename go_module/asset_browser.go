@@ -928,6 +928,21 @@ func (ab *AssetBrowser) ensureCacheDir() string {
 }
 
 func (ab *AssetBrowser) LoadIconResource(path string) fyne.Resource {
+	// Callers sometimes hand us a base path without extension (e.g.
+	// IconResolver.ResolveAttributeIcon returns "gfx/hud/chk_stealth"
+	// and expects us to figure out the ext). When we get one, search
+	// the VFS index for the first matching extension so the real
+	// game asset renders instead of silently falling through.
+	if filepath.Ext(path) == "" && ab.vfs != nil {
+		for _, ext := range []string{".tga", ".png", ".jpg", ".jpeg"} {
+			candidate := strings.ToLower(path + ext)
+			if _, ok := ab.vfs.Index[candidate]; ok {
+				path = path + ext
+				break
+			}
+		}
+	}
+
 	// 1. Check Cache
 	hash := md5.Sum([]byte(path))
 	hashStr := hex.EncodeToString(hash[:])
@@ -937,7 +952,9 @@ func (ab *AssetBrowser) LoadIconResource(path string) fyne.Resource {
 		return fyne.NewStaticResource(filepath.Base(path), data)
 	}
 
-	if ab.vfs == nil {
+	if ab.vfs == nil || filepath.Ext(path) == "" {
+		// No extension resolved — no asset exists. Return nil so
+		// callers can fall back to a theme icon.
 		return nil
 	}
 

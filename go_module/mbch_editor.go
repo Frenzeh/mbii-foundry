@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"image"
+	"image/png"
 	"io"
 	"os"
 	"os/exec"
@@ -328,7 +331,7 @@ func (e *MBCHEditor) createUI() {
 	e.weaponGrid = NewWeaponGrid("", func(s string) {
 		e.weaponsEntry.SetText(s)
 		e.markDirty()
-	}, e.onHover)
+	}, e.onHover, e.resolveWeaponIconResource)
 
 	// Text -> Grid binding
 	e.attributesEntry.OnChanged = func(s string) {
@@ -988,4 +991,42 @@ func (e *MBCHEditor) resolveIconResource(id string) fyne.Resource {
 		return nil
 	}
 	return e.assetBrowser.LoadIconResource(path)
+}
+
+// resolveWeaponIconResource mirrors resolveIconResource but uses the
+// weapon-specific path pattern (gfx/hud/w_icon_*). Embedded PNGs in
+// assets/icons/weapons/ take priority over VFS — see game_icon.go's
+// LoadGameIcon for the lookup order. The wrapper first tries the
+// embedded set directly so the grid keeps rendering even when the
+// user hasn't loaded any PK3s (IconResolver requires a populated
+// VFS index for the check-exists path). VFS is the fallback for any
+// weapon we haven't extracted yet.
+func (e *MBCHEditor) resolveWeaponIconResource(id string) fyne.Resource {
+	base := "gfx/hud/w_icon_" + strings.ToLower(strings.TrimPrefix(id, "WP_"))
+	if img, ok := LoadGameIcon(nil, base); ok {
+		// Re-encode to PNG bytes so Fyne accepts it as a resource. The
+		// LoadGameIcon cache means this decode+encode round-trip happens
+		// at most once per weapon per session.
+		return staticPNGResource(filepath.Base(base)+".png", img)
+	}
+	if e.iconResolver == nil || e.assetBrowser == nil {
+		return nil
+	}
+	path := e.iconResolver.ResolveWeaponIcon(id)
+	if path == "" {
+		return nil
+	}
+	return e.assetBrowser.LoadIconResource(path)
+}
+
+// staticPNGResource encodes an image.Image to PNG bytes and wraps it
+// in a fyne.StaticResource. Small helper because we need this twice —
+// the weapon and future class icon paths — and the ceremony around
+// encoding-to-bytes-for-Fyne is enough to factor out.
+func staticPNGResource(name string, img image.Image) fyne.Resource {
+	var buf bytes.Buffer
+	if err := png.Encode(&buf, img); err != nil {
+		return nil
+	}
+	return fyne.NewStaticResource(name, buf.Bytes())
 }

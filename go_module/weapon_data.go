@@ -11,6 +11,15 @@ type WeaponDef struct {
 	Tips     []string          `json:"tips,omitempty"`
 	Tags     []string          `json:"tags,omitempty"`
 	Stats    map[string]string `json:"stats,omitempty"` // New field for numerical stats
+
+	// Hidden marks a weapon that's defined in the enum but not live
+	// in the current build (behind an #ifdef in bg_weapons.h, or a
+	// commented-out line). Hidden entries are filtered from
+	// GetWeapons but remain visible via GetAllWeapons so loaded
+	// files referencing custom/experimental weapons still display
+	// something instead of silently dropping the line. Populated
+	// from hiddenWeaponIDs in data_loader.go at load time.
+	Hidden bool `json:"-"`
 }
 
 var MBIIWeapons = []WeaponDef{

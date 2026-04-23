@@ -258,31 +258,78 @@ func LoadExternalData(dataPath string) error {
 		}
 	}
 
+	// Flip the Hidden flag on IDs from hidden_content.go's curated
+	// sets (#ifdef-guarded or commented-out in the game headers). The
+	// JSON files are flat lists that don't know about live-vs-hidden
+	// status — that's a property of the build, not the content — so
+	// we apply it here after all loading is done.
+	markHiddenClasses(LoadedClasses)
+	markHiddenWeapons(LoadedWeapons)
+	markHiddenAttributes(LoadedAttributes)
+
+	// Strip decorative emoji prefixes from weapon/attribute names.
+	// Historically the JSON hand-crafted names like "💣 Pulse Grenade"
+	// as a cheap stand-in for real icons. Now that Foundry embeds the
+	// actual game HUD icons and renders them alongside the label,
+	// those emojis are visual noise fighting the real art. The strip
+	// is conservative — only removes leading non-word runes (emojis,
+	// combining marks, surrounding whitespace) up to the first real
+	// letter/digit, so names like "E-11 Blaster" or "(Old) Bryar"
+	// keep their natural opening punctuation.
+	for i := range LoadedWeapons {
+		LoadedWeapons[i].Name = stripLeadingNonWord(LoadedWeapons[i].Name)
+	}
+	for i := range LoadedAttributes {
+		LoadedAttributes[i].Name = stripLeadingNonWord(LoadedAttributes[i].Name)
+	}
+
 	return nil
 }
 
-// GetAttributes returns the loaded attributes, falling back to hardcoded defaults if empty.
+// GetAttributes returns loaded attributes with non-live entries
+// filtered out. See hidden_content.go for what counts as hidden and
+// why — short version: #ifdef-guarded or commented-out entries from
+// the game's bg_public.h / bg_weapons.h that shouldn't appear in
+// editor pickers. Use GetAllAttributes if you need the full set
+// (e.g. rendering a loaded file that references a custom attribute).
 func GetAttributes() []AttributeDef {
+	return filterVisibleAttributes(GetAllAttributes())
+}
+
+// GetAllAttributes returns every loaded attribute, including ones
+// marked Hidden. Falls back to the hardcoded defaults if external
+// data hasn't loaded.
+func GetAllAttributes() []AttributeDef {
 	DataLock.RLock()
 	defer DataLock.RUnlock()
 	if len(LoadedAttributes) > 0 {
 		return LoadedAttributes
 	}
-	return MBIIAttributes // Fallback to hardcoded
+	return MBIIAttributes
 }
 
-// GetWeapons returns the loaded weapons, falling back to hardcoded defaults if empty.
+// GetWeapons returns loaded weapons with non-live entries filtered out.
 func GetWeapons() []WeaponDef {
+	return filterVisibleWeapons(GetAllWeapons())
+}
+
+// GetAllWeapons returns every loaded weapon, including Hidden ones.
+func GetAllWeapons() []WeaponDef {
 	DataLock.RLock()
 	defer DataLock.RUnlock()
 	if len(LoadedWeapons) > 0 {
 		return LoadedWeapons
 	}
-	return MBIIWeapons // Fallback to hardcoded
+	return MBIIWeapons
 }
 
-// GetClasses returns the loaded classes, falling back to hardcoded defaults if empty.
+// GetClasses returns loaded classes with non-live entries filtered out.
 func GetClasses() []ClassDef {
+	return filterVisibleClasses(GetAllClasses())
+}
+
+// GetAllClasses returns every loaded class, including Hidden ones.
+func GetAllClasses() []ClassDef {
 	DataLock.RLock()
 	defer DataLock.RUnlock()
 	if len(LoadedClasses) > 0 {

@@ -11,20 +11,28 @@ import (
 )
 
 type WeaponGrid struct {
-	container *fyne.Container
-	selected  map[string]bool
-	onChange  func(string)
-	onHover   func(string, string)
+	container   *fyne.Container
+	selected    map[string]bool
+	onChange    func(string)
+	onHover     func(string, string)
+	resolveIcon func(string) fyne.Resource
 
 	filter string
 	search *widget.Entry
 }
 
-func NewWeaponGrid(initialStr string, onChange func(string), onHover func(string, string)) *WeaponGrid {
+// NewWeaponGrid creates a weapon picker. resolveIcon is optional —
+// when provided, it's called per-weapon with the WP_ ID and should
+// return a fyne.Resource rendering the in-game icon (typically
+// gfx/hud/w_icon_*.tga decoded + PNG-cached via AssetBrowser's
+// LoadIconResource). Passing nil falls back to a plain checkbox
+// with no leading image, matching the previous behavior.
+func NewWeaponGrid(initialStr string, onChange func(string), onHover func(string, string), resolveIcon func(string) fyne.Resource) *WeaponGrid {
 	wg := &WeaponGrid{
-		selected: make(map[string]bool),
-		onChange: onChange,
-		onHover:  onHover,
+		selected:    make(map[string]bool),
+		onChange:    onChange,
+		onHover:     onHover,
+		resolveIcon: resolveIcon,
 	}
 	wg.parseString(initialStr)
 	wg.createUI()
@@ -118,8 +126,21 @@ func (wg *WeaponGrid) createUI() {
 			})
 			check.Checked = wg.selected[weaponID]
 
+			// In-game icon sits immediately to the left of the check.
+			// Replaces the old emoji prefix (💣, 🔫 etc. on weapon
+			// names) with the real w_icon_*.png the game ships —
+			// embedded at build time from assets/icons/weapons/. When
+			// no art is available the row renders as a plain check.
+			var row fyne.CanvasObject = check
+			if wg.resolveIcon != nil {
+				if res := wg.resolveIcon(weaponID); res != nil {
+					iconW := widget.NewIcon(res)
+					row = container.NewHBox(iconW, check)
+				}
+			}
+
 			// Wrap in HoverContainer
-			hoverContainer := NewHoverContainer(check, func() {
+			hoverContainer := NewHoverContainer(row, func() {
 				if wg.onHover != nil {
 					wg.onHover(weaponID, w.Description)
 				}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"
 	_ "embed"
 )
 
@@ -48,3 +49,16 @@ var embedPanelExpandRight []byte
 //
 //go:embed assets/logo-mbii.png
 var embedLogoMBII []byte
+
+// In-game HUD icons — weapon w_icon_* pngs, attribute chk_/i_icon_
+// pngs, force-power icons. Extracted once from MBII PK3s by
+// tools/extract-icons and committed as PNGs so the binary renders the
+// real game icons without needing the user to have PK3s installed.
+//
+// embed.FS gives us a filesystem-flavored view so the runtime lookup
+// in game_icon.go can resolve by logical filename (e.g.
+// "weapons/w_icon_a280.png") without having to enumerate each file
+// as its own variable.
+//
+//go:embed assets/icons
+var embedIcons embed.FS

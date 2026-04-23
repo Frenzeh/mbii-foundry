@@ -21,12 +21,25 @@ type AttributeDef struct {
 	Levels   map[string]LevelDoc `json:"levels,omitempty"` // map[string] because JSON keys are strings
 	Tips     []string            `json:"tips,omitempty"`
 	Tags     []string            `json:"tags,omitempty"`
+
+	// Hidden marks an attribute that's defined in the enum but not
+	// live in the current build (behind an #ifdef in bg_public.h /
+	// bg_weapons.h). Hidden entries are filtered from GetAttributes
+	// but remain accessible via GetAllAttributes so loaded files that
+	// happen to reference them still display meaningfully. Populated
+	// from hiddenAttributeIDs at load time, not from JSON — the JSON
+	// stays a flat list since hidden status is a property of the
+	// build, not the content.
+	Hidden bool `json:"-"`
 }
 
 type ClassDef struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
+
+	// See AttributeDef.Hidden for semantics.
+	Hidden bool `json:"-"`
 }
 
 type ClassFlagDef struct {

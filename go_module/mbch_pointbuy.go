@@ -78,21 +78,26 @@ type PointBuyUI struct {
 	budgetLabel      *widget.Label
 
 	// Archetype strip — count picker + spec-tab container. Re-rendered
-	// when the count changes so tab count matches HasCustomSpec.
-	archetypeCountSelect *widget.Select
-	specTabs             *container.AppTabs
-	archetypeHost        *fyne.Container // holds specTabs + the count picker row
+	// when the count changes so tab count matches HasCustomSpec. The
+	// count picker is a button row (1 / 2 / 3) so flipping between
+	// single- and multi-spec feels tactile like the in-game class-
+	// variant picker rather than a generic dropdown.
+	archetypeCountBtns []*widget.Button
+	specTabs           *container.AppTabs
+	archetypeHost      *fyne.Container // holds specTabs + the count picker row
 
 	// Per-slot widgets, indexed globally (0..maxTotalSlots-1). Each
 	// archetype's tab owns slots [i*15, (i+1)*15).
-	slotRows    []*fyne.Container
-	slotModes   []*widget.Select
-	slotSkills  []*widget.Select
-	slotIcons   []*canvas.Image // raster-friendly; widget.Icon renders at theme-icon size and loses raster detail
-	slotNames   []*widget.Entry
-	slotRanks   []*widget.Entry
-	slotDescs   []*widget.Entry
-	slotMaxCost []*widget.Label
+	slotRows      []*fyne.Container
+	slotModes     []*widget.Select
+	slotSkills    []*widget.Select
+	slotIcons     []*canvas.Image // raster-friendly; widget.Icon renders at theme-icon size and loses raster detail
+	slotNames     []*widget.Entry
+	slotRanks     []*widget.Entry
+	slotDescs     []*widget.Entry
+	slotMaxCost   []*widget.Label
+	slotForms     []*widget.Form        // one form per slot — rebuilt items drive mode-based visibility
+	slotFormItems [][]*widget.FormItem  // [slot][0..3] = Skill / Name / Costs / Description items
 
 	// Per-archetype spec header (name + icon) widgets.
 	specNameEntries [maxArchetypes]*widget.Entry
@@ -138,30 +143,30 @@ func (p *PointBuyUI) createUI() {
 
 	p.budgetLabel = widget.NewLabel("max spend: 0 / 0")
 
-	p.archetypeCountSelect = widget.NewSelect([]string{"1", "2", "3"}, nil)
-	p.archetypeCountSelect.OnChanged = func(s string) {
-		n, _ := strconv.Atoi(s)
-		if n < 1 {
-			n = 1
-		}
-		// HasCustomSpec > 1 means multi-archetype; single archetype
-		// leaves it at 0 or 1 (both generate identically).
-		if n > 1 {
-			p.editor.character.HasCustomSpec = n
-		} else {
-			p.editor.character.HasCustomSpec = 0
-		}
-		p.editor.markDirty()
-		p.rebuildArchetypeTabs()
-		p.refreshBudget()
+	// Archetype count buttons. GridWrap forces all three to the same
+	// width so "1 / 2 / 3" reads as a coherent toggle group, not three
+	// differently-sized buttons.
+	p.archetypeCountBtns = make([]*widget.Button, maxArchetypes)
+	archetypeBtnRow := container.NewHBox()
+	for i := 0; i < maxArchetypes; i++ {
+		n := i + 1
+		btn := widget.NewButton(strconv.Itoa(n), func() {
+			p.selectArchetypeCount(n, true)
+		})
+		p.archetypeCountBtns[i] = btn
+		archetypeBtnRow.Add(container.New(layout.NewGridWrapLayout(fyne.NewSize(44, 34)), btn))
 	}
 
 	headerForm := widget.NewForm(
 		widget.NewFormItem("Custom Build", p.customBuildCheck),
 		widget.NewFormItem("mbPoints", p.mbPointsEntry),
-		widget.NewFormItem("Archetypes", p.archetypeCountSelect),
+		widget.NewFormItem("Archetypes", archetypeBtnRow),
 		widget.NewFormItem("Budget check", p.budgetLabel),
 	)
+	headerForm.Items[0].HintText = "If off, the class uses the classic fixed loadout instead of point-buy"
+	headerForm.Items[1].HintText = "Total points the player spends across the active archetype (e.g. 100)"
+	headerForm.Items[2].HintText = "How many specs the player picks from — single, dual, or three archetypes"
+	headerForm.Items[3].HintText = "Live check of the priciest spec's max spend vs the mbPoints ceiling"
 
 	// --- Build all 45 slot widgets up front. Tabs only show the
 	// slice relevant to each archetype; slots outside the active
@@ -176,6 +181,8 @@ func (p *PointBuyUI) createUI() {
 	p.slotRanks = make([]*widget.Entry, maxTotalSlots)
 	p.slotDescs = make([]*widget.Entry, maxTotalSlots)
 	p.slotMaxCost = make([]*widget.Label, maxTotalSlots)
+	p.slotForms = make([]*widget.Form, maxTotalSlots)
+	p.slotFormItems = make([][]*widget.FormItem, maxTotalSlots)
 	for i := 0; i < maxTotalSlots; i++ {
 		p.slotRows[i] = p.buildSlotRow(i, attrOptions)
 	}
@@ -323,16 +330,33 @@ func (p *PointBuyUI) buildSlotRow(globalIdx int, attrOptions []string) *fyne.Con
 		p.editor.markDirty()
 	}
 
-	controls := container.NewVBox(
-		container.NewBorder(nil, nil,
-			container.NewGridWrap(fyne.NewSize(28, 28), iconW),
-			maxCost,
-			skillSel,
-		),
-		nameEntry,
-		rankEntry,
-		descEntry,
+	// Skill row packs the attribute dropdown between the resolved icon
+	// (for visual recall) and the max-cost label (live sum readout).
+	skillRow := container.NewBorder(nil, nil,
+		container.NewGridWrap(fyne.NewSize(28, 28), iconW),
+		maxCost,
+		skillSel,
 	)
+
+	// Form carries the per-field label + HintText so authors can see
+	// what each input does even after they've typed into it (unlike
+	// placeholders, which vanish the moment the field has content).
+	// Items stay stashed on the slot so refreshSlotLayout can rebuild
+	// form.Items based on mode (Empty → nothing, Header → just Name,
+	// Skill → all four) — hiding the widget inside a form item leaves
+	// the label + hint visible, so rebuilding is the right fix.
+	skillItem := widget.NewFormItem("Skill", skillRow)
+	skillItem.HintText = "MB_ATT_* attribute ID — what this row grants (weapon, ability, perk)"
+	nameItem := widget.NewFormItem("Name", nameEntry)
+	nameItem.HintText = "Display label shown in the in-game loadout menu (e.g. \"A280 Blaster Rifle:\")"
+	costsItem := widget.NewFormItem("Costs", rankEntry)
+	costsItem.HintText = "Per-rank point cost, comma-separated. \"0,4,10\" → rank 1 free, rank 2 costs 4, rank 3 costs 10"
+	descItem := widget.NewFormItem("Description", descEntry)
+	descItem.HintText = "Optional tooltip shown under the rank in-game (e.g. \"Adds secondary fire\")"
+
+	form := widget.NewForm(skillItem, nameItem, costsItem, descItem)
+	p.slotForms[globalIdx] = form
+	p.slotFormItems[globalIdx] = []*widget.FormItem{skillItem, nameItem, costsItem, descItem}
 
 	left := container.NewHBox(
 		container.NewGridWrap(fyne.NewSize(24, 24), container.NewCenter(slotLabel)),
@@ -340,8 +364,49 @@ func (p *PointBuyUI) buildSlotRow(globalIdx int, attrOptions []string) *fyne.Con
 	)
 
 	row := container.NewBorder(nil, widget.NewSeparator(),
-		left, nil, controls)
+		left, nil, form)
 	return row
+}
+
+// selectArchetypeCount applies the N-archetype choice: updates the
+// stored HasCustomSpec (only on user-initiated clicks, not when
+// UpdateUI is syncing load), restyles the button row so the active
+// count renders as HighImportance, and rebuilds the tab strip. The
+// fromUser flag prevents load-time sync from dirtying the file.
+func (p *PointBuyUI) selectArchetypeCount(n int, fromUser bool) {
+	if n < 1 {
+		n = 1
+	}
+	if n > maxArchetypes {
+		n = maxArchetypes
+	}
+	for i, btn := range p.archetypeCountBtns {
+		if i+1 == n {
+			btn.Importance = widget.HighImportance
+		} else {
+			btn.Importance = widget.MediumImportance
+		}
+		btn.Refresh()
+	}
+	if !fromUser {
+		// UpdateUI path — caller already rebuilds tabs + refreshes
+		// budget/simulator after populating slot data. Avoid double
+		// work and don't mark the file dirty on load.
+		return
+	}
+	// HasCustomSpec > 1 means multi-archetype; single archetype
+	// leaves it at 0 or 1 (both generate identically).
+	if n > 1 {
+		p.editor.character.HasCustomSpec = n
+	} else {
+		p.editor.character.HasCustomSpec = 0
+	}
+	p.editor.markDirty()
+	p.rebuildArchetypeTabs()
+	p.refreshBudget()
+	if p.simulator != nil {
+		p.simulator.Refresh()
+	}
 }
 
 // rebuildArchetypeTabs re-renders the tab strip so it has exactly
@@ -426,32 +491,30 @@ func (p *PointBuyUI) buildSpecPane(spec, totalSpecs int) fyne.CanvasObject {
 	return content
 }
 
-// refreshSlotLayout hides/shows controls based on slot mode.
+// refreshSlotLayout rebuilds the slot's form.Items so only the fields
+// relevant to the current mode render. Unlike Hide() on a FormItem's
+// content widget, rebuilding the slice actually removes the label +
+// hint rows that would otherwise leave empty blocks behind.
+//   Empty  → no fields at all
+//   Header → just the Name entry (the section label text)
+//   Skill  → all four: Skill, Name, Costs, Description
 func (p *PointBuyUI) refreshSlotLayout(i int) {
+	form := p.slotForms[i]
+	items := p.slotFormItems[i]
+	if form == nil || items == nil {
+		return
+	}
 	mode := p.slotModes[i].Selected
 	switch mode {
 	case "Empty":
-		p.slotSkills[i].Hide()
-		p.slotIcons[i].Hide()
-		p.slotNames[i].Hide()
-		p.slotRanks[i].Hide()
-		p.slotDescs[i].Hide()
-		p.slotMaxCost[i].Hide()
+		form.Items = nil
 	case "Header":
-		p.slotSkills[i].Hide()
-		p.slotIcons[i].Hide()
-		p.slotNames[i].Show()
-		p.slotRanks[i].Hide()
-		p.slotDescs[i].Hide()
-		p.slotMaxCost[i].Hide()
+		// Items index 1 = Name.
+		form.Items = []*widget.FormItem{items[1]}
 	case "Skill":
-		p.slotSkills[i].Show()
-		p.slotIcons[i].Show()
-		p.slotNames[i].Show()
-		p.slotRanks[i].Show()
-		p.slotDescs[i].Show()
-		p.slotMaxCost[i].Show()
+		form.Items = items
 	}
+	form.Refresh()
 	p.slotRows[i].Refresh()
 }
 
@@ -683,7 +746,8 @@ func (p *PointBuyUI) UpdateUI() {
 	if archetypeCount > maxArchetypes {
 		archetypeCount = maxArchetypes
 	}
-	p.archetypeCountSelect.SetSelected(strconv.Itoa(archetypeCount))
+	// fromUser=false so loading a file doesn't mark it dirty.
+	p.selectArchetypeCount(archetypeCount, false)
 
 	for i := 0; i < maxTotalSlots; i++ {
 		skill := p.editor.character.CustomSkills[i]

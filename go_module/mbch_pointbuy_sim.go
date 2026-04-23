@@ -18,8 +18,8 @@ package main
 //   │   │ [🔫]  Blaster Pistol                             │   │
 //   │   │        Choose your level of mastery              │   │
 //   │   │                                                  │   │
-//   │   │       [ Off ]  [R1·free]  [R2·4]  [R3·10]        │   │
-//   │   │                  (current)                       │   │
+//   │   │              ● ● ○ ○   (r1, r2 owned)            │   │
+//   │   │             free 4 10                            │   │
 //   │   └──────────────────────────────────────────────────┘   │
 //   │                                                          │
 //   └──────────────────────────────────────────────────────────┘
@@ -60,9 +60,14 @@ type PointBuySimulator struct {
 	budgetRemaining *canvas.Text
 	budgetFill      *canvas.Rectangle // colored strip whose width tracks spent/total
 
-	// Archetype selector shown only on multi-spec classes.
-	archetype *widget.Select
-	resetBtn  *widget.Button
+	// Archetype selector shown only on multi-spec classes. A horizontal
+	// button row — one button per spec — so picking "Gunner / Scout /
+	// Vanguard" feels like in-game class-variant picking rather than a
+	// flat dropdown. Active spec renders HighImportance (accent fill).
+	archetypeBar   *fyne.Container
+	specNames      []string
+	archetypeLabel *canvas.Text
+	resetBtn       *widget.Button
 
 	// Scroll area holding the skill cards.
 	slotBox *fyne.Container
@@ -119,12 +124,11 @@ func (s *PointBuySimulator) createUI() {
 
 	// Archetype picker — only shows when the class has >1 spec. On
 	// single-spec classes this whole row collapses to just the reset
-	// button so the UI doesn't carry a useless dropdown.
-	s.archetype = widget.NewSelect(nil, func(string) {
-		s.activeSpec = s.selectedSpecIndex()
-		s.purchased = map[int]int{}
-		s.rebuild()
-	})
+	// button so the UI doesn't carry a useless bar.
+	s.archetypeLabel = canvas.NewText("Archetype", theme.PlaceHolderColor())
+	s.archetypeLabel.TextSize = SizeSmall
+	s.archetypeLabel.TextStyle = fyne.TextStyle{Bold: true}
+	s.archetypeBar = container.NewHBox()
 
 	s.resetBtn = widget.NewButtonWithIcon("Reset build", theme.ViewRefreshIcon(), func() {
 		s.purchased = map[int]int{}
@@ -132,10 +136,12 @@ func (s *PointBuySimulator) createUI() {
 	})
 	s.resetBtn.Importance = widget.LowImportance
 
+	archetypeBlock := container.NewVBox(s.archetypeLabel, s.archetypeBar)
+
 	topBar := container.NewBorder(
 		nil, nil,
 		budgetBlock, // left
-		container.NewVBox(s.archetype, s.resetBtn), // right
+		container.NewVBox(archetypeBlock, s.resetBtn), // right
 		nil,
 	)
 
@@ -167,9 +173,10 @@ func (s *PointBuySimulator) Refresh() {
 	s.rebuild()
 }
 
-// rebuildSpecOptions repopulates the archetype dropdown so it matches
-// the current HasCustomSpec. Kept separate from rebuild() because the
-// options only change when the user flips the archetype count.
+// rebuildSpecOptions repopulates the archetype button row so it
+// matches the current HasCustomSpec. Kept separate from rebuild()
+// because the options only change when the user flips the archetype
+// count or renames a spec. On single-spec classes the row hides.
 func (s *PointBuySimulator) rebuildSpecOptions() {
 	ch := s.owner.editor.character
 	count := ch.HasCustomSpec
@@ -180,38 +187,47 @@ func (s *PointBuySimulator) rebuildSpecOptions() {
 		count = maxArchetypes
 	}
 
-	opts := make([]string, 0, count)
+	s.specNames = make([]string, count)
 	for i := 0; i < count; i++ {
 		name := ch.CustomSpecNames[i]
 		if name == "" {
 			name = fmt.Sprintf("Spec %d", i+1)
 		}
-		opts = append(opts, name)
-	}
-	s.archetype.Options = opts
-
-	if count == 1 {
-		s.archetype.Hide()
-	} else {
-		s.archetype.Show()
+		s.specNames[i] = name
 	}
 
 	if s.activeSpec >= count {
 		s.activeSpec = 0
 	}
-	if len(opts) > 0 {
-		s.archetype.SetSelected(opts[s.activeSpec])
-	}
-}
 
-func (s *PointBuySimulator) selectedSpecIndex() int {
-	sel := s.archetype.Selected
-	for i, opt := range s.archetype.Options {
-		if opt == sel {
-			return i
+	s.archetypeBar.Objects = nil
+	for i, name := range s.specNames {
+		idx := i // capture
+		btn := widget.NewButton(name, func() {
+			if s.activeSpec == idx {
+				return
+			}
+			s.activeSpec = idx
+			s.purchased = map[int]int{}
+			s.rebuildSpecOptions()
+			s.rebuild()
+		})
+		if i == s.activeSpec {
+			btn.Importance = widget.HighImportance
+		} else {
+			btn.Importance = widget.MediumImportance
 		}
+		s.archetypeBar.Add(btn)
 	}
-	return 0
+	s.archetypeBar.Refresh()
+
+	if count == 1 {
+		s.archetypeLabel.Hide()
+		s.archetypeBar.Hide()
+	} else {
+		s.archetypeLabel.Show()
+		s.archetypeBar.Show()
+	}
 }
 
 // rebuild renders every slot card for the active archetype.
@@ -274,13 +290,31 @@ func (s *PointBuySimulator) buildSlotCard(globalIdx int, ch *parsers.MBCHCharact
 		titleBlock = container.NewVBox(title)
 	}
 
-	// Rank pills.
+	// Rank dots — in-game loadout metaphor. Left-click a dot to fill
+	// ranks 1..N; right-click to step back one rank. Affordable dots
+	// glow accent-color; unaffordable ones dim. No "Off" pill — right-
+	// click on the rank-1 dot drops to unowned, matching MBII's menu.
 	costs := parseRankCostList(ranks)
 	currentRank := s.purchased[globalIdx]
-	pills := container.NewHBox(s.buildRankPill(globalIdx, 0, 0, currentRank))
-	for i, cost := range costs {
-		pills.Add(s.buildRankPill(globalIdx, i+1, cost, currentRank))
-	}
+	dots := NewRankDots(costs, currentRank,
+		func(rank int) bool {
+			if ch.MBPoints == 0 {
+				return true
+			}
+			tentative := s.purchasedCostExcluding(globalIdx) + s.costForRank(globalIdx, rank, ch)
+			return tentative <= ch.MBPoints
+		},
+		func(newRank int) {
+			if newRank < 0 {
+				newRank = 0
+			}
+			if newRank > len(costs) {
+				newRank = len(costs)
+			}
+			s.purchased[globalIdx] = newRank
+			s.rebuild()
+		},
+	)
 
 	// Card layout. GridWrap forces the icon to 44px regardless of
 	// container width; the name block flexes; pills pin to the
@@ -289,7 +323,7 @@ func (s *PointBuySimulator) buildSlotCard(globalIdx int, ch *parsers.MBCHCharact
 		container.NewGridWrap(fyne.NewSize(44, 44), icon),
 		titleBlock,
 	)
-	rightHalf := container.NewHBox(layout.NewSpacer(), pills)
+	rightHalf := container.NewHBox(layout.NewSpacer(), dots)
 	inner := container.NewBorder(nil, nil, leftHalf, rightHalf, nil)
 
 	bg := canvas.NewRectangle(skillCardFill())
@@ -338,51 +372,6 @@ func buildHeaderStrip(name string) fyne.CanvasObject {
 
 	padded := container.NewPadded(label)
 	return container.NewVBox(rule, padded, rule)
-}
-
-// buildRankPill constructs one clickable rank button. Visual states:
-//   - Current (owned) rank → accent fill, high importance
-//   - Affordable           → normal button
-//   - Unaffordable         → disabled, lower visual weight
-//
-// The "Off" pill (rank 0) is always affordable and sets ownership
-// back to zero — matching how a player would deselect in-game.
-func (s *PointBuySimulator) buildRankPill(globalIdx, rank, cost, currentRank int) *widget.Button {
-	var label string
-	switch rank {
-	case 0:
-		label = "Off"
-	default:
-		if cost == 0 {
-			label = fmt.Sprintf("R%d · free", rank)
-		} else {
-			label = fmt.Sprintf("R%d · %d", rank, cost)
-		}
-	}
-
-	btn := widget.NewButton(label, func() {
-		s.purchased[globalIdx] = rank
-		s.rebuild()
-	})
-
-	switch {
-	case rank == currentRank:
-		btn.Importance = widget.HighImportance
-	default:
-		btn.Importance = widget.MediumImportance
-	}
-
-	// Disable rank pills whose purchase would exceed the budget.
-	// Off (rank 0) is always enabled since it always frees points.
-	if rank > 0 {
-		ch := s.owner.editor.character
-		tentative := s.purchasedCostExcluding(globalIdx) + s.costForRank(globalIdx, rank, ch)
-		if ch.MBPoints > 0 && tentative > ch.MBPoints {
-			btn.Disable()
-		}
-	}
-
-	return btn
 }
 
 // purchasedCostExcluding sums the purchased cost of every slot

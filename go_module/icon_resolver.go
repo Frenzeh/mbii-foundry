@@ -94,23 +94,104 @@ func (ir *IconResolver) ResolveWeaponIcon(wpID string) string {
 	return fmt.Sprintf("gfx/hud/w_icon_%s", suffix)
 }
 
-// ResolveAttributeIcon finds the icon for an MB_ATT_ ID
-func (ir *IconResolver) ResolveAttributeIcon(attID string) string {
-	// Patterns vary widely.
-	// Force powers: gfx/forcepowers/{name} usually? Or gfx/hud/force_{name}?
-	// Actually most attributes don't have HUD icons unless they are abilities.
+// attributeIconAliases maps MB_ATT_* enum values to icon basenames.
+// Unlike weapons, MBII doesn't ship a canonical 1:1 attribute→icon
+// table — content authors pick from the icon_stats_* set ad-hoc in
+// their .mbch customSpecIcon fields. This table is a best-effort
+// mapping curated from the icon_stats_* pool in MBAssets2.pk3 so
+// the attribute grid renders meaningful art instead of blank rows.
+// Multiple attributes deliberately reuse the same icon (e.g. all
+// armor-style attributes → icon_stats_armor) — there's no harm,
+// and having a thematically-appropriate icon beats none.
+var attributeIconAliases = map[string]string{
+	// Direct weapon counterparts.
+	"MB_ATT_A280":             "icon_stats_a280",
+	"MB_ATT_BLASTER":          "icon_stats_e11",
+	"MB_ATT_BOWCASTER":        "icon_stats_bowcaster",
+	"MB_ATT_CLONERIFLE":       "icon_stats_clonerifle",
+	"MB_ATT_CLONE_PISTOL":     "icon_stats_clonepistol",
+	"MB_ATT_CONCUSSION":       "icon_stats_conc",
+	"MB_ATT_DEMP2":            "icon_stats_emp",
+	"MB_ATT_DISRUPTOR":        "icon_stats_disruptor",
+	"MB_ATT_DLT20A":           "icon_stats_dlt20a",
+	"MB_ATT_EE3":              "icon_stats_ee3",
+	"MB_ATT_EE4":              "icon_stats_ee3", // no dedicated EE4 icon; EE3 is closest
+	"MB_ATT_PISTOL":           "icon_stats_pistol",
+	"MB_ATT_HEAVY_PISTOL":     "icon_stats_pistol",
+	"MB_ATT_MANDO_PISTOL":     "icon_stats_pistol",
+	"MB_ATT_REDACTED_24":       "icon_stats_pistol",
+	"MB_ATT_IMP_PISTOL":       "icon_stats_pistol",
+	"MB_ATT_PLX1":             "icon_stats_plx",
+	"MB_ATT_PROJECTILE_RIFLE": "icon_stats_proj",
+	"MB_ATT_ROCKET":           "icon_stats_rocket",
+	"MB_ATT_ROCKET_LAUNCHER":  "icon_stats_rocket",
+	"MB_ATT_T21":              "icon_stats_t21",
+	"MB_ATT_WESTARM5":         "icon_stats_westarm5",
 
-	// Common mapping based on observation
+	// Grenades / explosives.
+	"MB_ATT_FIRE_GRENADES":   "icon_stats_fire",
+	"MB_ATT_FRAGS":           "icon_stats_frag",
+	"MB_ATT_CRYOBAN_GRENADES": "icon_stats_sonic", // no cryo icon; sonic is a close thematic match
+	"MB_ATT_SONIC_DETONATOR": "icon_stats_sonic",
+	"MB_ATT_THERMALS":        "icon_stats_thermal",
+	"MB_ATT_PULSE_GRENADES":  "icon_stats_concblob",
+	"MB_ATT_BASE_TD":         "icon_stats_thermal",
+
+	// Darts.
+	"MB_ATT_POISON_DART":   "icon_stats_pdart",
+	"MB_ATT_TRACKING_DART": "icon_stats_tdart",
+
+	// Armor / durability — all share the armor icon since MBII doesn't
+	// ship dedicated variants.
+	"MB_ATT_ARMOUR":          "icon_stats_armor",
+	"MB_ATT_BLAST_ARMOUR":    "icon_stats_armor",
+	"MB_ATT_MAGNETIC_PLATING": "icon_stats_armor",
+	"MB_ATT_CORTOSIS":        "icon_stats_armor",
+	"MB_ATT_DURABILITY":      "icon_stats_armor",
+	"MB_ATT_HULL_STRENGTH":   "icon_stats_armor",
+	"MB_ATT_DEKA_SHIELD":     "icon_stats_armor",
+	"MB_ATT_DEKA_HULL":       "icon_stats_armor",
+	"MB_ATT_SHIELD_PROJ":     "icon_stats_armor",
+	"MB_ATT_WOOKIE_HEALTH":   "icon_stats_health",
+
+	// Health / bacta / healing.
+	"MB_ATT_HEALTH":     "icon_stats_health",
+	"MB_ATT_HEALING":    "i_icon_bacta",
+	"MB_ATT_MEDI_PACK":  "i_icon_medkit",
+	"MB_ATT_STIMPACK":   "i_icon_medkit",
+	"MB_ATT_AMMO_PACK":  "i_icon_medkit",
+
+	// Speed / movement.
+	"MB_ATT_BASESPEED": "icon_stats_movespeed",
+	"MB_ATT_ACROBACY":  "icon_stats_movespeed",
+	"MB_ATT_DEXTERITY": "icon_stats_movespeed",
+
+	// Jetpack / fuel.
+	"MB_ATT_FUEL":      "icon_stats_fuel",
+	"MB_ATT_FUELREGEN": "icon_stats_fuel",
+	"MB_ATT_JETPACK":   "icon_stats_fuel",
+}
+
+// ResolveAttributeIcon returns the gfx path for an MB_ATT_* ID.
+// Prefers the curated alias table (backed by extracted icon_stats_*
+// and i_icon_* PNGs embedded in the binary); falls back to the
+// legacy chk_/i_icon_/forcepowers pattern for IDs not in the table,
+// letting the VFS path still find something when the user has PK3s
+// indexed that Foundry hasn't explicitly mapped.
+func (ir *IconResolver) ResolveAttributeIcon(attID string) string {
+	if alias, ok := attributeIconAliases[attID]; ok {
+		return "gfx/menus/alpha/" + alias
+	}
+
 	suffix := strings.ToLower(strings.TrimPrefix(attID, "MB_ATT_"))
 
-	// Try ability icon pattern
 	candidates := []string{
 		fmt.Sprintf("gfx/hud/chk_%s", suffix),
 		fmt.Sprintf("gfx/hud/i_icon_%s", suffix),
 		fmt.Sprintf("gfx/2d/forcepowers/%s", suffix),
 	}
 
-	// Handle FP_ prefix (e.g. MB_ATT_FP_PUSH -> fp_push -> push)
+	// Handle FP_ prefix (e.g. MB_ATT_FP_PUSH -> push in forcepowers dir)
 	if strings.HasPrefix(suffix, "fp_") {
 		short := strings.TrimPrefix(suffix, "fp_")
 		candidates = append(candidates, fmt.Sprintf("gfx/2d/forcepowers/%s", short))
@@ -120,14 +201,12 @@ func (ir *IconResolver) ResolveAttributeIcon(attID string) string {
 
 	if ir.vfs != nil {
 		for _, c := range candidates {
-			// Check if exists (with extensions)
 			if ir.checkExists(c) {
 				return c
 			}
 		}
 	}
-
-	return candidates[0] // Return best guess
+	return candidates[0]
 }
 
 // ResolveClassIcon finds the icon for a Character definition

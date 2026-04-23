@@ -186,9 +186,9 @@ func (e *SABEditor) browseAsset(entry *widget.Entry, assetType AssetType) {
 	// Use shared browser logic?
 	// Ideally re-use the CustomFilePicker logic
 	cfp := NewCustomFilePicker(filePickerWindow, e.assetBrowser)
-	cfp.Show(func(path string) {
-		if path != "" {
-			entry.SetText(path)
+	cfp.Show(func(asset *AssetEntry) {
+		if asset != nil && asset.Path != "" {
+			entry.SetText(asset.Path)
 		}
 	})
 }

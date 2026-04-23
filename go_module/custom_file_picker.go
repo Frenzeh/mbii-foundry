@@ -14,7 +14,7 @@ import (
 type CustomFilePicker struct {
 	window       fyne.Window
 	browser      *AssetBrowser
-	onSelected   func(string)
+	onSelected   func(*AssetEntry)
 	currentPath  string
 	selectedFile *AssetEntry
 
@@ -64,9 +64,13 @@ func (cfp *CustomFilePicker) createUI() {
 				cfp.selectButton.Disable()
 			} else {
 				LogInfo("Returning file...")
-				// Open file
+				// Open file — pass the whole AssetEntry so the caller
+				// can tell a filesystem file apart from a PK3-embedded
+				// one (different read strategies). Passing just Path
+				// lost the PK3Source and caused "file does not exist"
+				// when the picker was sitting inside a .pk3.
 				if cfp.onSelected != nil {
-					cfp.onSelected(cfp.selectedFile.Path)
+					cfp.onSelected(cfp.selectedFile)
 					cfp.window.Close()
 				}
 			}
@@ -203,8 +207,11 @@ func (cfp *CustomFilePicker) createUI() {
 	})
 
 	cfp.browser.SetOnAssetDouble(func(asset *AssetEntry) {
+		if asset == nil || asset.IsDir {
+			return
+		}
 		if cfp.onSelected != nil {
-			cfp.onSelected(asset.Path)
+			cfp.onSelected(asset)
 			cfp.window.Close()
 		}
 	})
@@ -324,7 +331,7 @@ func (cfp *CustomFilePicker) goUp() {
 	cfp.refreshPathBar()
 }
 
-func (cfp *CustomFilePicker) Show(onSelected func(string)) {
+func (cfp *CustomFilePicker) Show(onSelected func(*AssetEntry)) {
 	cfp.onSelected = onSelected
 	cfp.selectedFile = nil
 	cfp.selectButton.Disable()

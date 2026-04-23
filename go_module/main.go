@@ -1278,7 +1278,7 @@ func (a *App) shareFile() {
 
 func (a *App) openFile() {
 	filePickerWindow := a.fyneApp.NewWindow("Open File")
-	filePickerWindow.Resize(fyne.NewSize(900, 600))
+	filePickerWindow.Resize(fyne.NewSize(1200, 780))
 
 	pickerBrowser := NewAssetBrowser(a.config.GamedataPath, a.config.TextAssetsPath)
 	cfp := NewCustomFilePicker(filePickerWindow, pickerBrowser)
@@ -1611,7 +1611,7 @@ func (a *App) showPreferences() {
 		container.NewPadded(container.NewVBox(updateEnumBtn, updateStatusLabel)),
 	)
 
-	dialog.ShowCustomConfirm("Preferences", "Save", "Cancel", form, func(b bool) {
+	prefsDlg := dialog.NewCustomConfirm("Preferences", "Save", "Cancel", form, func(b bool) {
 		if b {
 			a.config.GamedataPath = gamedataEntry.Text
 			a.config.TextAssetsPath = textAssetsEntry.Text
@@ -1642,6 +1642,12 @@ func (a *App) showPreferences() {
 			}
 		}
 	}, a.mainWindow)
+	// Resize before showing — default width crams long path fields
+	// into a sliver you can't read. 720x560 gives every form row a
+	// comfortable full-width input and leaves headroom for the theme
+	// picker + data-update sub-forms to breathe.
+	prefsDlg.Resize(fyne.NewSize(720, 560))
+	prefsDlg.Show()
 }
 
 func (a *App) saveConfig() {
@@ -1922,7 +1928,7 @@ To enable the **Asset Browser**, **Visual Editor**, and **Model Previews**, we n
 // showFilePickerForEntry opens a file picker for an Entry widget.
 func (a *App) showFilePickerForEntry(entry *widget.Entry, title string, filter AssetType) {
 	filePickerWindow := a.fyneApp.NewWindow(title)
-	filePickerWindow.Resize(fyne.NewSize(900, 600))
+	filePickerWindow.Resize(fyne.NewSize(1200, 780))
 
 	pickerBrowser := NewAssetBrowser(a.config.GamedataPath, a.config.TextAssetsPath)
 

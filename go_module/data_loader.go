@@ -267,6 +267,14 @@ func LoadExternalData(dataPath string) error {
 	markHiddenWeapons(LoadedWeapons)
 	markHiddenAttributes(LoadedAttributes)
 
+	// Reshuffle attributes into clearer buckets so the editor's
+	// category-grouped grid actually splits meaningfully. The legacy
+	// JSON file dumps most attributes into "General"; the
+	// recategorize pass uses ID-prefix rules (see
+	// hidden_content.go) to move them into Force/Saber/Regen/
+	// Multipliers/Supply/Class-Specific/Weapons as appropriate.
+	recategorizeAttributes(LoadedAttributes)
+
 	// Strip decorative emoji prefixes from weapon/attribute names.
 	// Historically the JSON hand-crafted names like "💣 Pulse Grenade"
 	// as a cheap stand-in for real icons. Now that Foundry embeds the

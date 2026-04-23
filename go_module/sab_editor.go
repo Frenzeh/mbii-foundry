@@ -181,7 +181,7 @@ func (e *SABEditor) browseAsset(entry *widget.Entry, assetType AssetType) {
 	// win := fyne.CurrentApp().Driver().AllWindows()[0] // Not needed
 
 	filePickerWindow := fyne.CurrentApp().NewWindow("Select Asset")
-	filePickerWindow.Resize(fyne.NewSize(900, 600))
+	filePickerWindow.Resize(fyne.NewSize(1200, 780))
 
 	// Use shared browser logic?
 	// Ideally re-use the CustomFilePicker logic

@@ -73,19 +73,18 @@ func NewClassIconPicker(onChange func(string)) *ClassIconPicker {
 }
 
 func (p *ClassIconPicker) buildCards() {
-	row := container.NewHBox()
+	// 14 live classes laid out 5-per-row → 3 rows (5+5+4). Better
+	// use of vertical space in the Profile tab than a single long
+	// strip, and keeps each card larger/readable without shrinking
+	// the icons. GridWithColumns distributes width evenly, so the
+	// row width flexes with the form pane.
+	grid := container.NewGridWithColumns(5)
 	for _, c := range GetClasses() {
 		card := newClassCard(c, p)
 		p.cards = append(p.cards, card)
-		row.Add(card)
+		grid.Add(card)
 	}
-	// Wrap in a HScroll so on narrow windows the row is scrollable
-	// instead of clipping. Fixed vertical height keeps the scrollbar
-	// thin. ~70px accommodates icon + caption + a touch of breathing
-	// room, matching tile_card's visual weight elsewhere.
-	scroll := container.NewHScroll(row)
-	scroll.SetMinSize(fyne.NewSize(0, 72))
-	p.container = container.NewStack(scroll)
+	p.container = container.NewStack(grid)
 }
 
 // CreateRenderer wires the composite widget into Fyne's render tree.
@@ -168,12 +167,16 @@ func (c *classCard) CreateRenderer() fyne.WidgetRenderer {
 	c.caption.TextStyle = fyne.TextStyle{Bold: true}
 	c.caption.Alignment = fyne.TextAlignCenter
 
-	// Fixed cell size so the HBox lays cards uniformly.
-	iconHost := container.NewGridWrap(fyne.NewSize(44, 44), c.iconW)
-	body := container.NewVBox(iconHost, c.caption)
+	// Center both icon + caption horizontally inside the card. VBox
+	// alone left-aligns its children; wrapping each row in a Center
+	// container means the 44x44 icon and the caption text both
+	// track the card's horizontal midline regardless of how wide
+	// the card ends up (GridWithColumns flexes the card width).
+	iconHost := container.NewCenter(container.NewGridWrap(fyne.NewSize(44, 44), c.iconW))
+	captionHost := container.NewCenter(c.caption)
+	body := container.NewVBox(iconHost, captionHost)
 	inner := container.NewPadded(body)
-	stack := container.NewStack(c.bg, c.border, inner)
-	cell := container.NewGridWrap(fyne.NewSize(80, 72), stack)
+	cell := container.NewStack(c.bg, c.border, inner)
 
 	c.applyStyle()
 	return widget.NewSimpleRenderer(cell)

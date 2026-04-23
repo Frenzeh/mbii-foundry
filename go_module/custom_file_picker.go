@@ -337,7 +337,7 @@ func (cfp *CustomFilePicker) Show(onSelected func(*AssetEntry)) {
 	cfp.selectButton.Disable()
 
 	// Ensure decent initial size
-	cfp.window.Resize(fyne.NewSize(900, 600))
+	cfp.window.Resize(fyne.NewSize(1200, 780))
 	cfp.window.Show()
 
 	// Default to Home or Computer if nothing loaded

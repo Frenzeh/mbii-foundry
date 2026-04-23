@@ -90,14 +90,16 @@ func LoadGameIcon(vfs *VirtualFileSystem, basePath string) (image.Image, bool) {
 // filename (stripped of ext) matches basePath's basename. The
 // embedded tree is flat per-category, so we walk all category
 // subdirectories. embed.FS lookups are cheap (in-memory).
+//
+// Keep the dir list in sync with tools/extract-icons' prefixRules
+// AND with the actual subdirs created under assets/icons/. Missing
+// one here means icons silently fail to resolve even though the
+// PNG is baked into the binary.
 func loadEmbeddedIcon(basePath string) image.Image {
 	wanted := filepath.Base(basePath) + ".png"
 	wanted = strings.ToLower(wanted)
 
-	// Known subdirs — kept in sync with tools/extract-icons'
-	// prefixRules so the runtime lookup matches what the extractor
-	// writes. Order is irrelevant since basenames are unique.
-	for _, dir := range []string{"weapons", "attributes", "force"} {
+	for _, dir := range []string{"weapons", "attributes", "classes", "force"} {
 		path := "assets/icons/" + dir + "/" + wanted
 		data, err := embedIcons.ReadFile(path)
 		if err != nil {

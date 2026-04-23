@@ -43,8 +43,21 @@ func (ag *AttributeGrid) createUI() {
 		categories[attr.Category] = append(categories[attr.Category], attr)
 	}
 
-	// Order of categories
-	catOrder := []string{"General", "Weapons", "Class Specific", "Force", "Saber"}
+	// Category display order — informs both the section headers and
+	// the top-to-bottom reading flow in the grid. Mirrors the buckets
+	// that hidden_content.go's categorizeAttribute assigns. General
+	// goes last so the more-opinionated buckets (Weapons, Force, etc.)
+	// land near the top of the scroll — most edits touch them first.
+	catOrder := []string{
+		"Weapons",
+		"Force",
+		"Saber",
+		"Class Specific",
+		"Supply",
+		"Regen",
+		"Multipliers",
+		"General",
+	}
 
 	// Re-use existing container if possible, or create new
 	var content *fyne.Container

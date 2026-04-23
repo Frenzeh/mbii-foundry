@@ -928,6 +928,19 @@ func (ab *AssetBrowser) ensureCacheDir() string {
 }
 
 func (ab *AssetBrowser) LoadIconResource(path string) fyne.Resource {
+	// Priority: embedded > on-disk PNG cache > VFS decode + cache.
+	//
+	// The embedded check comes first so a fresh Foundry install —
+	// where the user hasn't pointed gamedata at any PK3s yet —
+	// still renders class/weapon/attribute icons out of the box.
+	// LoadGameIcon keys on the basename, so paths like
+	// "gfx/hud/w_icon_a280" or "gfx/menus/alpha/icon_stats_a280"
+	// both resolve by picking up a280.png (weapons/ or attributes/
+	// subdir) from the embedded FS.
+	if img, ok := LoadGameIcon(nil, path); ok {
+		return staticPNGResource(filepath.Base(path)+".png", img)
+	}
+
 	// Callers sometimes hand us a base path without extension (e.g.
 	// IconResolver.ResolveAttributeIcon returns "gfx/hud/chk_stealth"
 	// and expects us to figure out the ext). When we get one, search
@@ -943,7 +956,7 @@ func (ab *AssetBrowser) LoadIconResource(path string) fyne.Resource {
 		}
 	}
 
-	// 1. Check Cache
+	// 2. On-disk PNG cache (from a previous VFS decode).
 	hash := md5.Sum([]byte(path))
 	hashStr := hex.EncodeToString(hash[:])
 	cachePath := filepath.Join(ab.ensureCacheDir(), hashStr+".png")
@@ -953,8 +966,8 @@ func (ab *AssetBrowser) LoadIconResource(path string) fyne.Resource {
 	}
 
 	if ab.vfs == nil || filepath.Ext(path) == "" {
-		// No extension resolved — no asset exists. Return nil so
-		// callers can fall back to a theme icon.
+		// No VFS and nothing embedded — no asset exists. Return nil
+		// so callers can fall back to a theme icon.
 		return nil
 	}
 

@@ -105,10 +105,29 @@ type MBCHCharacter struct {
 	Description       string
 	ExtraFields       map[string]string
 
-	CustomSkills    [15]string
-	CustomNames     [15]string
-	CustomRanks     [15]string
-	RankAttributes  map[string]string
+	// Point-buy slots. Fixed capacity of 45 accommodates the
+	// Legends 2.0 archetype system: up to 3 archetypes × 15 slots
+	// each (spec1 uses 0-14, spec2 uses 15-29, spec3 uses 30-44).
+	// Slots beyond `15 * HasCustomSpec` are ignored at serialize
+	// time. Zero-valued entries don't emit. Descs added per the
+	// monkey-lizard pattern (c_att_descs_N optional description
+	// strings that render in the in-game loadout menu).
+	CustomSkills   [45]string
+	CustomNames    [45]string
+	CustomRanks    [45]string
+	CustomDescs    [45]string
+	RankAttributes map[string]string
+
+	// Archetype ("customSpec") system. hasCustomSpec declares how
+	// many archetypes the character offers (1-3); per-archetype
+	// name + icon describe the in-game tab. When HasCustomSpec > 1
+	// each archetype gets its own 15-slot window in CustomSkills.
+	// HasCustomSpec == 0 or 1 means "single spec" — treat CustomSkills
+	// as one 15-slot build.
+	HasCustomSpec   int
+	CustomSpecNames [3]string
+	CustomSpecIcons [3]string
+
 	WeaponOverrides []WeaponInfo
 	ForceOverrides  []ForceInfo
 }
@@ -330,22 +349,62 @@ func parseForceInfo(block string, char *MBCHCharacter) {
 }
 
 func setField(char *MBCHCharacter, key, value string) {
-	// Handle Custom Point Buy Fields
+	// Point-buy slots — up to 45 (3 archetypes × 15). Legends FAs
+	// like h3_CloneCom already emit c_att_skill_30+; legacy single-
+	// archetype files stay inside 0-14.
 	if strings.HasPrefix(key, "c_att_skill_") {
-		if idx, err := strconv.Atoi(strings.TrimPrefix(key, "c_att_skill_")); err == nil && idx >= 0 && idx < 15 {
+		if idx, err := strconv.Atoi(strings.TrimPrefix(key, "c_att_skill_")); err == nil && idx >= 0 && idx < 45 {
 			char.CustomSkills[idx] = value
 			return
 		}
 	}
 	if strings.HasPrefix(key, "c_att_names_") {
-		if idx, err := strconv.Atoi(strings.TrimPrefix(key, "c_att_names_")); err == nil && idx >= 0 && idx < 15 {
+		if idx, err := strconv.Atoi(strings.TrimPrefix(key, "c_att_names_")); err == nil && idx >= 0 && idx < 45 {
 			char.CustomNames[idx] = value
 			return
 		}
 	}
 	if strings.HasPrefix(key, "c_att_ranks_") {
-		if idx, err := strconv.Atoi(strings.TrimPrefix(key, "c_att_ranks_")); err == nil && idx >= 0 && idx < 15 {
+		if idx, err := strconv.Atoi(strings.TrimPrefix(key, "c_att_ranks_")); err == nil && idx >= 0 && idx < 45 {
 			char.CustomRanks[idx] = value
+			return
+		}
+	}
+	// c_att_descs_N — per-slot description string seen in legends
+	// (monkey-lizard uses it for "Retain momentum from first
+	// Grapple" style hints that render under the purchase button).
+	if strings.HasPrefix(key, "c_att_descs_") {
+		if idx, err := strconv.Atoi(strings.TrimPrefix(key, "c_att_descs_")); err == nil && idx >= 0 && idx < 45 {
+			char.CustomDescs[idx] = value
+			return
+		}
+	}
+
+	// Archetype system (customSpec).
+	if strings.EqualFold(key, "hasCustomSpec") {
+		if n, err := strconv.Atoi(value); err == nil {
+			char.HasCustomSpec = n
+		}
+		return
+	}
+	if strings.HasPrefix(key, "customSpecName_") {
+		if idx, err := strconv.Atoi(strings.TrimPrefix(key, "customSpecName_")); err == nil && idx >= 0 && idx < 3 {
+			// Wiki uses 1-based indexing (customSpecName_1 is spec 1).
+			// Normalize to 0-based internally by decrementing, but
+			// guard against customSpecName_0 in case any file uses 0.
+			if idx > 0 {
+				idx--
+			}
+			char.CustomSpecNames[idx] = value
+			return
+		}
+	}
+	if strings.HasPrefix(key, "customSpecIcon_") {
+		if idx, err := strconv.Atoi(strings.TrimPrefix(key, "customSpecIcon_")); err == nil && idx >= 0 && idx < 3 {
+			if idx > 0 {
+				idx--
+			}
+			char.CustomSpecIcons[idx] = value
 			return
 		}
 	}
@@ -509,7 +568,36 @@ func GenerateMBCH(char *MBCHCharacter) (string, error) {
 	if char.IsCustomBuild == 1 {
 		fmt.Fprintf(&sb, "\tisCustomBuild\t\t1\n")
 		fmt.Fprintf(&sb, "\tmbPoints\t\t%d\n", char.MBPoints)
-		for i := 0; i < 15; i++ {
+
+		// Archetype ("customSpec") header. hasCustomSpec = number of
+		// archetypes (1-3). When > 1, customSpecName_N/customSpecIcon_N
+		// define each archetype's in-menu tab. Wiki uses 1-based
+		// indexing (customSpecName_1 is the first spec) so we emit
+		// with +1 offset and skip empty slots.
+		if char.HasCustomSpec > 1 {
+			fmt.Fprintf(&sb, "\thasCustomSpec\t\t%d\n", char.HasCustomSpec)
+			for i := 0; i < char.HasCustomSpec && i < 3; i++ {
+				if name := char.CustomSpecNames[i]; name != "" {
+					fmt.Fprintf(&sb, "\tcustomSpecName_%d\t\"%s\"\n", i+1, name)
+				}
+				if icon := char.CustomSpecIcons[i]; icon != "" {
+					fmt.Fprintf(&sb, "\tcustomSpecIcon_%d\t\"%s\"\n", i+1, icon)
+				}
+			}
+		}
+
+		// Point-buy slot emission. 15 slots for single-spec classes,
+		// 15 × HasCustomSpec for multi-archetype ones. Slot index is
+		// the canonical identifier in-game; we preserve it exactly so
+		// round-trip edits don't scramble archetypes.
+		slotCount := 15
+		if char.HasCustomSpec > 1 {
+			slotCount = 15 * char.HasCustomSpec
+			if slotCount > 45 {
+				slotCount = 45
+			}
+		}
+		for i := 0; i < slotCount; i++ {
 			if char.CustomSkills[i] != "" {
 				fmt.Fprintf(&sb, "\tc_att_skill_%d\t%s\n", i, char.CustomSkills[i])
 				if char.CustomNames[i] != "" {
@@ -517,6 +605,9 @@ func GenerateMBCH(char *MBCHCharacter) (string, error) {
 				}
 				if char.CustomRanks[i] != "" {
 					fmt.Fprintf(&sb, "\tc_att_ranks_%d\t%s\n", i, char.CustomRanks[i])
+				}
+				if char.CustomDescs[i] != "" {
+					fmt.Fprintf(&sb, "\tc_att_descs_%d\t\"%s\"\n", i, char.CustomDescs[i])
 				}
 			}
 		}

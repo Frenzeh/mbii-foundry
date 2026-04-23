@@ -1,41 +1,31 @@
 package main
 
-// Point Buy editor — models the MBII Legends 2.0 c_att_skill_N /
-// c_att_names_N / c_att_ranks_N slot layout the way players see it
-// in the loadout menu:
+// Point Buy editor — models the MBII Legends 2.0 loadout system:
 //
-//   ┌──── Budget ──────────────────────────────────────────────┐
-//   │ [x] Custom Build   mbPoints [100]   max-spend: 82 / 100  │
-//   ├──────────────────────────────────────────────────────────┤
-//   │ 0  [Header]   -Weapons-                                  │
-//   │ 1  [Skill]    [🔫] MB_ATT_PISTOL    "Blaster Pistol:"    │
-//   │                                     costs: 0, 4, 10      │
-//   │ 2  [Skill]    [🔫] MB_ATT_BLASTER   "E-11 Blaster:"      │
-//   │                                     costs: 5, 7, 9       │
-//   │ 3  [Header]   -Abilities-                                │
-//   │ 4  [Skill]    [🛡] MB_ATT_CCTRAINING "Close Combat:"     │
-//   │                                     costs: 4, 2          │
-//   │ ...                                                       │
-//   │ 14 [Empty]                                                │
-//   └──────────────────────────────────────────────────────────┘
+//   * Single archetype (hasCustomSpec <= 1): 15 skill slots
+//   * Multi archetype (hasCustomSpec 2–3): 15 slots per archetype,
+//     stored contiguously in CustomSkills[] — spec 1 uses 0-14,
+//     spec 2 uses 15-29, spec 3 uses 30-44.
 //
-// Each slot is one of three modes:
-//   - Empty  : no skill, no name, no ranks — collapsed row
-//   - Header : MB_ATT_INVALID + ranks "-1" — styled as section divider
-//   - Skill  : real MB_ATT_ + name + rank costs array
+// Each slot is one of three modes: Empty, Header (section divider),
+// Skill (real MB_ATT_ pick with costs). Slot view:
 //
-// Header vs Skill is derived from the stored data (not a separate
-// field), which matches the game's parsing and keeps the save format
-// untouched. Authors can flip modes by editing the dropdown / rank
-// value — the UI updates the visual layout accordingly.
+//   ┌─── Archetype: "Gunner"  icon [📎]  [rename] ───┐
+//   │ 0  [Header]  -Weapons-                         │
+//   │ 1  [Skill ]  [🔫] MB_ATT_PISTOL  "Pistol:"    │
+//   │                    0,4,10   max 14             │
+//   │                    desc: "Extra shots unlock"  │
+//   │ 2  [Skill ]  ...                               │
+//   │ ... 15 rows per archetype ...                  │
+//   └────────────────────────────────────────────────┘
 //
-// Budget tracker shows max-spend (sum of all rank costs across all
-// slots) vs mbPoints. This is a *max* not an active count, since the
-// in-game cost is what a player picks at runtime — but showing the
-// ceiling gives authors an immediate check: if max-spend > mbPoints,
-// the class is under-constrained (a player can't actually buy every
-// upgrade); if max-spend < mbPoints × 0.5, it's over-budgeted (too
-// many points for too few upgrades).
+// Archetype tabs sit at the top; count picker adds/removes
+// archetypes by toggling HasCustomSpec. Budget tracker sums
+// max-spend across the currently-visible archetype vs mbPoints.
+//
+// Rank modifiers (rank*) live in their own collapsible section
+// below — they apply across all archetypes since MBII doesn't
+// namespace them per spec.
 
 import (
 	"fmt"
@@ -52,11 +42,14 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-const pointBuySlots = 15 // c_att_skill_0 through c_att_skill_14
+const (
+	slotsPerArchetype = 15 // c_att_skill_0..14 per spec
+	maxArchetypes     = 3
+	maxTotalSlots     = slotsPerArchetype * maxArchetypes // 45
+)
 
 // KnownRankAttributes lists the `rank*` field names from Legends 2.0's
-// expanded system — used by the "Add Rank Attribute" picker below.
-// Sourced from the wiki's Legends 2.0 point-buy guide.
+// expanded system — used by the "Add Rank Modifier" picker.
 var KnownRankAttributes = []string{
 	"rankHealth", "rankArmor",
 	"rankAP", "rankBP", "rankCS", "rankAS",
@@ -79,23 +72,33 @@ type PointBuyUI struct {
 
 	container *fyne.Container
 
-	// Header controls.
+	// Header controls (apply to all archetypes).
 	customBuildCheck *widget.Check
 	mbPointsEntry    *widget.Entry
 	budgetLabel      *widget.Label
 
-	// Per-slot state. slotMode tracks which of the three visual
-	// modes is showing (empty/header/skill) so the row repaints
-	// without losing user state when the data-driven mode flips.
-	slotRows     []*fyne.Container
-	slotModes    []*widget.Select
-	slotSkills   []*widget.Select // MB_ATT_* picker (skill mode)
-	slotIcons    []*widget.Icon   // icon beside the skill select
-	slotNames    []*widget.Entry  // display name (both header + skill)
-	slotRanks    []*widget.Entry  // rank cost CSV (skill mode)
-	slotMaxCost  []*widget.Label  // derived max-cost per slot
+	// Archetype strip — count picker + spec-tab container. Re-rendered
+	// when the count changes so tab count matches HasCustomSpec.
+	archetypeCountSelect *widget.Select
+	specTabs             *container.AppTabs
+	archetypeHost        *fyne.Container // holds specTabs + the count picker row
 
-	// Extra rank* attributes (Legends 2.0 stat modifiers).
+	// Per-slot widgets, indexed globally (0..maxTotalSlots-1). Each
+	// archetype's tab owns slots [i*15, (i+1)*15).
+	slotRows    []*fyne.Container
+	slotModes   []*widget.Select
+	slotSkills  []*widget.Select
+	slotIcons   []*widget.Icon
+	slotNames   []*widget.Entry
+	slotRanks   []*widget.Entry
+	slotDescs   []*widget.Entry
+	slotMaxCost []*widget.Label
+
+	// Per-archetype spec header (name + icon) widgets.
+	specNameEntries [maxArchetypes]*widget.Entry
+	specIconEntries [maxArchetypes]*widget.Entry
+
+	// Rank modifiers (applies across archetypes).
 	rankAttrContainer *fyne.Container
 }
 
@@ -106,7 +109,7 @@ func NewPointBuyUI(editor *MBCHEditor) *PointBuyUI {
 }
 
 func (p *PointBuyUI) createUI() {
-	// --- Header: custom-build toggle + budget + live max-spend ---
+	// --- Header: custom-build toggle + budget ---
 	p.customBuildCheck = widget.NewCheck("Custom Build enabled", func(on bool) {
 		if on {
 			p.editor.character.IsCustomBuild = 1
@@ -130,32 +133,54 @@ func (p *PointBuyUI) createUI() {
 
 	p.budgetLabel = widget.NewLabel("max spend: 0 / 0")
 
+	p.archetypeCountSelect = widget.NewSelect([]string{"1", "2", "3"}, nil)
+	p.archetypeCountSelect.OnChanged = func(s string) {
+		n, _ := strconv.Atoi(s)
+		if n < 1 {
+			n = 1
+		}
+		// HasCustomSpec > 1 means multi-archetype; single archetype
+		// leaves it at 0 or 1 (both generate identically).
+		if n > 1 {
+			p.editor.character.HasCustomSpec = n
+		} else {
+			p.editor.character.HasCustomSpec = 0
+		}
+		p.editor.markDirty()
+		p.rebuildArchetypeTabs()
+		p.refreshBudget()
+	}
+
 	headerForm := widget.NewForm(
 		widget.NewFormItem("Custom Build", p.customBuildCheck),
 		widget.NewFormItem("mbPoints", p.mbPointsEntry),
+		widget.NewFormItem("Archetypes", p.archetypeCountSelect),
 		widget.NewFormItem("Budget check", p.budgetLabel),
 	)
 
-	// --- Slot list: one row per c_att_skill_N, 15 total ---
-	slotBox := container.NewVBox()
-	p.slotRows = make([]*fyne.Container, pointBuySlots)
-	p.slotModes = make([]*widget.Select, pointBuySlots)
-	p.slotSkills = make([]*widget.Select, pointBuySlots)
-	p.slotIcons = make([]*widget.Icon, pointBuySlots)
-	p.slotNames = make([]*widget.Entry, pointBuySlots)
-	p.slotRanks = make([]*widget.Entry, pointBuySlots)
-	p.slotMaxCost = make([]*widget.Label, pointBuySlots)
-
+	// --- Build all 45 slot widgets up front. Tabs only show the
+	// slice relevant to each archetype; slots outside the active
+	// archetype range stay unreferenced (but kept in memory so
+	// toggling HasCustomSpec doesn't lose edits).
 	attrOptions := pointBuyAttrOptions()
-	for i := 0; i < pointBuySlots; i++ {
+	p.slotRows = make([]*fyne.Container, maxTotalSlots)
+	p.slotModes = make([]*widget.Select, maxTotalSlots)
+	p.slotSkills = make([]*widget.Select, maxTotalSlots)
+	p.slotIcons = make([]*widget.Icon, maxTotalSlots)
+	p.slotNames = make([]*widget.Entry, maxTotalSlots)
+	p.slotRanks = make([]*widget.Entry, maxTotalSlots)
+	p.slotDescs = make([]*widget.Entry, maxTotalSlots)
+	p.slotMaxCost = make([]*widget.Label, maxTotalSlots)
+	for i := 0; i < maxTotalSlots; i++ {
 		p.slotRows[i] = p.buildSlotRow(i, attrOptions)
-		slotBox.Add(p.slotRows[i])
 	}
 
-	slotScroll := container.NewVScroll(slotBox)
-	slotScroll.SetMinSize(fyne.NewSize(0, 400))
+	// --- Archetype tabs. Rebuilt by rebuildArchetypeTabs so the
+	// number of tabs tracks HasCustomSpec.
+	p.specTabs = container.NewAppTabs()
+	p.archetypeHost = container.NewStack(p.specTabs)
 
-	// --- Rank attributes (Legends 2.0 stat modifiers) ---
+	// --- Rank modifiers.
 	p.rankAttrContainer = container.NewVBox()
 
 	addRankAttrBtn := widget.NewButtonWithIcon("Add Rank Modifier", theme.ContentAddIcon(), func() {
@@ -164,122 +189,126 @@ func (p *PointBuyUI) createUI() {
 
 	p.container = container.NewVBox(
 		widget.NewCard("Point Buy Budget",
-			"Toggle Custom Build, set total mbPoints, and watch the max-spend ceiling.",
+			"Toggle Custom Build, set total mbPoints, and pick how many archetypes the class offers (1–3).",
 			container.NewPadded(headerForm),
 		),
-		widget.NewCard("Skill Slots",
-			"15 slots mirror the in-game loadout menu. Pick an MB_ATT, name it, and list comma-separated per-rank costs. Use \"Header\" mode for section dividers.",
-			slotScroll,
+		widget.NewCard("Archetypes & Skill Slots",
+			"Each archetype has 15 slots mirroring the in-game loadout menu. Pick an MB_ATT, name it, list comma-separated per-rank costs, and optionally add a description for the tooltip.",
+			p.archetypeHost,
 		),
 		widget.NewCard("Rank Modifiers",
-			"Per-rank stat overrides from Legends 2.0 (rankHealth, rankAP, rankROF, …). Values are comma-separated per rank.",
+			"Per-rank stat overrides (rankHealth, rankAP, rankROF, …). Values are comma-separated per rank. Shared across all archetypes.",
 			container.NewVBox(addRankAttrBtn, p.rankAttrContainer),
 		),
 	)
 }
 
-// buildSlotRow renders one c_att_skill_N slot. Mode selector at the
-// left flips between Empty / Header / Skill layouts; the right side
-// swaps controls accordingly.
-func (p *PointBuyUI) buildSlotRow(i int, attrOptions []string) *fyne.Container {
-	slotLabel := canvas.NewText(fmt.Sprintf("%d", i), theme.PlaceHolderColor())
+// buildSlotRow renders one c_att_skill_N slot (global index 0..44).
+// The slot number shown in the UI is relative to the archetype
+// (so archetype 2 slot 0 displays "0" even though its stored index
+// is 15).
+func (p *PointBuyUI) buildSlotRow(globalIdx int, attrOptions []string) *fyne.Container {
+	displayIdx := globalIdx % slotsPerArchetype
+	slotLabel := canvas.NewText(fmt.Sprintf("%d", displayIdx), theme.PlaceHolderColor())
 	slotLabel.TextSize = SizeSmall
 	slotLabel.TextStyle = fyne.TextStyle{Bold: true, Monospace: true}
 
 	mode := widget.NewSelect([]string{"Empty", "Header", "Skill"}, nil)
 	mode.PlaceHolder = "Empty"
-	p.slotModes[i] = mode
+	p.slotModes[globalIdx] = mode
 
 	skillSel := widget.NewSelect(attrOptions, nil)
 	skillSel.PlaceHolder = "MB_ATT_..."
-	p.slotSkills[i] = skillSel
+	p.slotSkills[globalIdx] = skillSel
 
 	iconW := widget.NewIcon(theme.FileImageIcon())
-	p.slotIcons[i] = iconW
+	p.slotIcons[globalIdx] = iconW
 
 	nameEntry := NewInputEntry()
 	nameEntry.SetPlaceHolder("Display name (e.g. \"Blaster Pistol:\")")
-	p.slotNames[i] = nameEntry
+	p.slotNames[globalIdx] = nameEntry
 
 	rankEntry := NewInputEntry()
 	rankEntry.SetPlaceHolder("0,4,10")
-	p.slotRanks[i] = rankEntry
+	p.slotRanks[globalIdx] = rankEntry
+
+	descEntry := NewInputEntry()
+	descEntry.SetPlaceHolder("Optional description (c_att_descs)")
+	p.slotDescs[globalIdx] = descEntry
 
 	maxCost := widget.NewLabel("")
 	maxCost.TextStyle = fyne.TextStyle{Italic: true}
-	p.slotMaxCost[i] = maxCost
+	p.slotMaxCost[globalIdx] = maxCost
 
-	// --- Wire callbacks. All changes flow into the backing character
-	// struct + mark dirty + recalc budget. Mode changes also rewrite
-	// the underlying strings so the save format stays consistent
-	// (e.g. switching to Header sets skill=MB_ATT_INVALID, ranks="-1").
 	mode.OnChanged = func(s string) {
 		switch s {
 		case "Empty":
-			p.editor.character.CustomSkills[i] = ""
-			p.editor.character.CustomNames[i] = ""
-			p.editor.character.CustomRanks[i] = ""
+			p.editor.character.CustomSkills[globalIdx] = ""
+			p.editor.character.CustomNames[globalIdx] = ""
+			p.editor.character.CustomRanks[globalIdx] = ""
+			p.editor.character.CustomDescs[globalIdx] = ""
 			skillSel.SetSelected("")
 			nameEntry.SetText("")
 			rankEntry.SetText("")
+			descEntry.SetText("")
 		case "Header":
-			p.editor.character.CustomSkills[i] = "MB_ATT_INVALID"
-			if p.editor.character.CustomNames[i] == "" {
-				p.editor.character.CustomNames[i] = "-Section-"
+			p.editor.character.CustomSkills[globalIdx] = "MB_ATT_INVALID"
+			if p.editor.character.CustomNames[globalIdx] == "" {
+				p.editor.character.CustomNames[globalIdx] = "-Section-"
 				nameEntry.SetText("-Section-")
 			}
-			p.editor.character.CustomRanks[i] = "-1"
+			p.editor.character.CustomRanks[globalIdx] = "-1"
 			skillSel.SetSelected("MB_ATT_INVALID")
 			rankEntry.SetText("-1")
 		case "Skill":
-			if p.editor.character.CustomSkills[i] == "MB_ATT_INVALID" ||
-				p.editor.character.CustomSkills[i] == "" {
-				p.editor.character.CustomSkills[i] = ""
+			if p.editor.character.CustomSkills[globalIdx] == "MB_ATT_INVALID" ||
+				p.editor.character.CustomSkills[globalIdx] == "" {
+				p.editor.character.CustomSkills[globalIdx] = ""
 				skillSel.SetSelected("")
 			}
-			if p.editor.character.CustomRanks[i] == "-1" {
-				p.editor.character.CustomRanks[i] = ""
+			if p.editor.character.CustomRanks[globalIdx] == "-1" {
+				p.editor.character.CustomRanks[globalIdx] = ""
 				rankEntry.SetText("")
 			}
 		}
-		p.refreshSlotLayout(i)
+		p.refreshSlotLayout(globalIdx)
 		p.editor.markDirty()
 		p.refreshBudget()
 	}
 
 	skillSel.OnChanged = func(s string) {
-		p.editor.character.CustomSkills[i] = s
-		p.refreshSlotIcon(i)
+		p.editor.character.CustomSkills[globalIdx] = s
+		p.refreshSlotIcon(globalIdx)
 		p.editor.markDirty()
 	}
-
 	nameEntry.OnChanged = func(s string) {
-		p.editor.character.CustomNames[i] = s
+		p.editor.character.CustomNames[globalIdx] = s
 		p.editor.markDirty()
 	}
-
 	rankEntry.OnChanged = func(s string) {
-		p.editor.character.CustomRanks[i] = s
-		p.refreshSlotMaxCost(i)
+		p.editor.character.CustomRanks[globalIdx] = s
+		p.refreshSlotMaxCost(globalIdx)
 		p.refreshBudget()
 		p.editor.markDirty()
 	}
+	descEntry.OnChanged = func(s string) {
+		p.editor.character.CustomDescs[globalIdx] = s
+		p.editor.markDirty()
+	}
 
-	// Layout — slot number and mode selector fixed-width on the left,
-	// the editable controls fill the rest of the row. Stack in a
-	// Border with a subtle bottom separator so rows read as distinct.
-	controls := container.NewVBox()
-	controls.Add(container.NewBorder(nil, nil,
-		container.NewGridWrap(fyne.NewSize(28, 28), iconW),
-		maxCost,
-		skillSel,
-	))
-	controls.Add(nameEntry)
-	controls.Add(rankEntry)
+	controls := container.NewVBox(
+		container.NewBorder(nil, nil,
+			container.NewGridWrap(fyne.NewSize(28, 28), iconW),
+			maxCost,
+			skillSel,
+		),
+		nameEntry,
+		rankEntry,
+		descEntry,
+	)
 
 	left := container.NewHBox(
-		container.NewGridWrap(fyne.NewSize(24, 24),
-			container.NewCenter(slotLabel)),
+		container.NewGridWrap(fyne.NewSize(24, 24), container.NewCenter(slotLabel)),
 		container.NewGridWrap(fyne.NewSize(90, 36), mode),
 	)
 
@@ -288,8 +317,89 @@ func (p *PointBuyUI) buildSlotRow(i int, attrOptions []string) *fyne.Container {
 	return row
 }
 
-// refreshSlotLayout hides/shows controls in a row based on its mode.
-// Called after mode changes or during UpdateUI.
+// rebuildArchetypeTabs re-renders the tab strip so it has exactly
+// HasCustomSpec tabs (min 1). Each tab holds a VBox of 15 slot rows
+// from the appropriate window into the global slot arrays. A spec-
+// header row (name + icon) sits above each tab's slots when there's
+// more than one archetype — otherwise the header's pointless clutter.
+func (p *PointBuyUI) rebuildArchetypeTabs() {
+	count := p.editor.character.HasCustomSpec
+	if count < 2 {
+		count = 1
+	}
+	if count > maxArchetypes {
+		count = maxArchetypes
+	}
+
+	p.specTabs.Items = nil
+	for spec := 0; spec < count; spec++ {
+		p.specTabs.Append(container.NewTabItem(p.specTabTitle(spec, count), p.buildSpecPane(spec, count)))
+	}
+	p.specTabs.Refresh()
+}
+
+func (p *PointBuyUI) specTabTitle(spec, count int) string {
+	if count == 1 {
+		return "Skills"
+	}
+	name := p.editor.character.CustomSpecNames[spec]
+	if name == "" {
+		return fmt.Sprintf("Spec %d", spec+1)
+	}
+	return name
+}
+
+// buildSpecPane builds the contents of one archetype tab: the optional
+// spec-header row (name + icon) + the 15 slot rows.
+func (p *PointBuyUI) buildSpecPane(spec, totalSpecs int) fyne.CanvasObject {
+	content := container.NewVBox()
+
+	if totalSpecs > 1 {
+		nameEntry := NewInputEntry()
+		nameEntry.SetPlaceHolder(fmt.Sprintf("Spec %d name (shown as tab title)", spec+1))
+		nameEntry.SetText(p.editor.character.CustomSpecNames[spec])
+		nameEntry.OnChanged = func(s string) {
+			p.editor.character.CustomSpecNames[spec] = s
+			// Update tab title live so the UI matches.
+			if spec < len(p.specTabs.Items) {
+				p.specTabs.Items[spec].Text = p.specTabTitle(spec, totalSpecs)
+				p.specTabs.Refresh()
+			}
+			p.editor.markDirty()
+		}
+		p.specNameEntries[spec] = nameEntry
+
+		iconEntry := NewInputEntry()
+		iconEntry.SetPlaceHolder("Icon path (e.g. gfx/menus/alpha/icon_weap_accuracy)")
+		iconEntry.SetText(p.editor.character.CustomSpecIcons[spec])
+		iconEntry.OnChanged = func(s string) {
+			p.editor.character.CustomSpecIcons[spec] = s
+			p.editor.markDirty()
+		}
+		p.specIconEntries[spec] = iconEntry
+
+		header := widget.NewForm(
+			widget.NewFormItem("Spec Name", nameEntry),
+			widget.NewFormItem("Spec Icon", iconEntry),
+		)
+		content.Add(header)
+		content.Add(widget.NewSeparator())
+	}
+
+	// Slot rows — 15 from the right window.
+	base := spec * slotsPerArchetype
+	slotBox := container.NewVBox()
+	for i := 0; i < slotsPerArchetype; i++ {
+		slotBox.Add(p.slotRows[base+i])
+	}
+	scroll := container.NewVScroll(slotBox)
+	scroll.SetMinSize(fyne.NewSize(0, 420))
+	content.Add(scroll)
+
+	return content
+}
+
+// refreshSlotLayout hides/shows controls based on slot mode.
 func (p *PointBuyUI) refreshSlotLayout(i int) {
 	mode := p.slotModes[i].Selected
 	switch mode {
@@ -298,26 +408,26 @@ func (p *PointBuyUI) refreshSlotLayout(i int) {
 		p.slotIcons[i].Hide()
 		p.slotNames[i].Hide()
 		p.slotRanks[i].Hide()
+		p.slotDescs[i].Hide()
 		p.slotMaxCost[i].Hide()
 	case "Header":
 		p.slotSkills[i].Hide()
 		p.slotIcons[i].Hide()
 		p.slotNames[i].Show()
 		p.slotRanks[i].Hide()
+		p.slotDescs[i].Hide()
 		p.slotMaxCost[i].Hide()
 	case "Skill":
 		p.slotSkills[i].Show()
 		p.slotIcons[i].Show()
 		p.slotNames[i].Show()
 		p.slotRanks[i].Show()
+		p.slotDescs[i].Show()
 		p.slotMaxCost[i].Show()
 	}
 	p.slotRows[i].Refresh()
 }
 
-// refreshSlotIcon pulls the embedded game icon for the current MB_ATT
-// and paints it next to the skill picker. Falls back to a theme icon
-// when the attribute has no art (most do via our alias table).
 func (p *PointBuyUI) refreshSlotIcon(i int) {
 	skill := p.editor.character.CustomSkills[i]
 	if skill == "" || skill == "MB_ATT_INVALID" {
@@ -336,8 +446,6 @@ func (p *PointBuyUI) refreshSlotIcon(i int) {
 	p.slotIcons[i].SetResource(theme.FileImageIcon())
 }
 
-// refreshSlotMaxCost computes sum(rank_costs) and shows it next to
-// the slot. Gives the author a ceiling at a glance.
 func (p *PointBuyUI) refreshSlotMaxCost(i int) {
 	total := parseRankCostSum(p.editor.character.CustomRanks[i])
 	if total <= 0 {
@@ -347,29 +455,41 @@ func (p *PointBuyUI) refreshSlotMaxCost(i int) {
 	}
 }
 
-// refreshBudget re-sums every slot's rank costs and writes the total
-// next to mbPoints. Over-budget (max > mbPoints) is normal; the
-// number just tells the author whether the class is *spendable* at
-// all. Highlighted in accent color when the ceiling is below mbPoints
-// (probably under-budgeted).
+// refreshBudget recomputes the max-spend ceiling across ALL
+// archetypes combined. Per-archetype budget isn't how MBII's runtime
+// works — a player only buys within one archetype at a time, so the
+// real budget comparison is mbPoints vs max-of-any-spec. Show the
+// max-of-any instead of a sum for that reason.
 func (p *PointBuyUI) refreshBudget() {
-	total := 0
-	for i := 0; i < pointBuySlots; i++ {
-		total += parseRankCostSum(p.editor.character.CustomRanks[i])
+	specs := p.editor.character.HasCustomSpec
+	if specs < 2 {
+		specs = 1
+	}
+	if specs > maxArchetypes {
+		specs = maxArchetypes
+	}
+	worst := 0
+	for s := 0; s < specs; s++ {
+		total := 0
+		for i := 0; i < slotsPerArchetype; i++ {
+			total += parseRankCostSum(p.editor.character.CustomRanks[s*slotsPerArchetype+i])
+		}
+		if total > worst {
+			worst = total
+		}
 	}
 	target := p.editor.character.MBPoints
-	msg := fmt.Sprintf("max spend: %d / %d", total, target)
-	if target > 0 && total < target/2 {
+	msg := fmt.Sprintf("max spend per spec: %d / %d", worst, target)
+	if target > 0 && worst < target/2 {
 		msg += " · consider adding more purchasable skills"
-	} else if target > 0 && total > target*3 {
-		msg += " · costs far exceed budget — consider lowering"
+	} else if target > 0 && worst > target*3 {
+		msg += " · costs far exceed budget"
 	}
 	p.budgetLabel.SetText(msg)
 }
 
 // parseRankCostSum parses a CSV of rank costs and returns the sum.
-// Header rows ("-1") return 0. Malformed entries skip silently so
-// the budget label stays useful during active typing.
+// Header rows ("-1") return 0.
 func parseRankCostSum(csv string) int {
 	csv = strings.TrimSpace(csv)
 	if csv == "" || csv == "-1" {
@@ -386,13 +506,11 @@ func parseRankCostSum(csv string) int {
 	return total
 }
 
-// pointBuyAttrOptions returns the list of MB_ATT_* IDs available for
-// the skill dropdown. Includes MB_ATT_INVALID (for Header rows that
-// an author toggles via the mode picker). Filtered hidden list so
-// non-live content doesn't leak into new point-buy builds.
+// pointBuyAttrOptions returns the list of MB_ATT_* IDs available.
+// Includes MB_ATT_INVALID for Header rows.
 func pointBuyAttrOptions() []string {
 	opts := []string{"MB_ATT_INVALID"}
-	attrs := GetAttributes() // already filters Hidden==true
+	attrs := GetAttributes()
 	ids := make([]string, 0, len(attrs))
 	for _, a := range attrs {
 		ids = append(ids, a.ID)
@@ -430,8 +548,6 @@ func (p *PointBuyUI) refreshRankAttributes() {
 	if p.editor.character.RankAttributes == nil {
 		return
 	}
-	// Sort keys for a stable display order — Go map iteration is
-	// random, which otherwise made the list bounce on every refresh.
 	keys := make([]string, 0, len(p.editor.character.RankAttributes))
 	for k := range p.editor.character.RankAttributes {
 		keys = append(keys, k)
@@ -470,8 +586,8 @@ func (p *PointBuyUI) refreshRankAttributes() {
 
 func (p *PointBuyUI) GetContent() fyne.CanvasObject { return p.container }
 
-// UpdateUI is called after a file loads (updateUI in mbch_editor).
-// Repopulates every slot, detecting its mode from the stored values.
+// UpdateUI is called after a file loads. Repopulates every slot +
+// archetype header and redraws the tab strip to match HasCustomSpec.
 func (p *PointBuyUI) UpdateUI() {
 	p.customBuildCheck.SetChecked(p.editor.character.IsCustomBuild == 1)
 	if p.editor.character.MBPoints > 0 {
@@ -480,30 +596,39 @@ func (p *PointBuyUI) UpdateUI() {
 		p.mbPointsEntry.SetText("")
 	}
 
-	for i := 0; i < pointBuySlots; i++ {
+	archetypeCount := p.editor.character.HasCustomSpec
+	if archetypeCount < 1 {
+		archetypeCount = 1
+	}
+	if archetypeCount > maxArchetypes {
+		archetypeCount = maxArchetypes
+	}
+	p.archetypeCountSelect.SetSelected(strconv.Itoa(archetypeCount))
+
+	for i := 0; i < maxTotalSlots; i++ {
 		skill := p.editor.character.CustomSkills[i]
 		name := p.editor.character.CustomNames[i]
 		ranks := p.editor.character.CustomRanks[i]
+		descs := p.editor.character.CustomDescs[i]
 
 		mode := detectSlotMode(skill, ranks)
 		p.slotModes[i].SetSelected(mode)
-
 		p.slotSkills[i].SetSelected(skill)
 		p.slotNames[i].SetText(name)
 		p.slotRanks[i].SetText(ranks)
+		p.slotDescs[i].SetText(descs)
 
 		p.refreshSlotLayout(i)
 		p.refreshSlotIcon(i)
 		p.refreshSlotMaxCost(i)
 	}
+
+	p.rebuildArchetypeTabs()
 	p.refreshBudget()
 	p.refreshRankAttributes()
 }
 
-// detectSlotMode returns the right UI mode for a stored slot. Empty
-// rows have no skill set; Header rows carry MB_ATT_INVALID + "-1"
-// ranks (matching how the game recognizes section dividers);
-// anything else is a normal Skill row.
+// detectSlotMode returns the right UI mode for a stored slot.
 func detectSlotMode(skill, ranks string) string {
 	if skill == "" {
 		return "Empty"
@@ -514,6 +639,4 @@ func detectSlotMode(skill, ranks string) string {
 	return "Skill"
 }
 
-// _ keeps the layout import alive if we later re-add center-wrapped
-// content; current usage is routed via container.NewCenter.
 var _ = layout.NewSpacer

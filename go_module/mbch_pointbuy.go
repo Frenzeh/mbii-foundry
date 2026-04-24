@@ -224,7 +224,7 @@ func (p *PointBuyUI) createUI() {
 			container.NewPadded(headerForm),
 		),
 		widget.NewCard("Build & Simulator",
-			"Edit the archetype / slot layout, then flip to Simulate to play the build like an in-game player would (click a rank pill to \"buy\" it; over-budget pills disable).",
+			"Edit skills here, then flip to Simulate to try the build.",
 			p.modeTabs,
 		),
 		widget.NewCard("Rank Modifiers",

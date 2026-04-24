@@ -161,9 +161,6 @@ func (d *rankDot) applyStyle() {
 }
 
 func (d *rankDot) costLabel() string {
-	if d.cost <= 0 {
-		return "free"
-	}
 	return strconv.Itoa(d.cost)
 }
 

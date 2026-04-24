@@ -6,7 +6,7 @@
 ██║ ╚═╝ ██║██████╔╝██║██║    ██║     ╚██████╔╝╚██████╔╝██║ ╚████║██████╔╝██║  ██║   ██║
 ╚═╝     ╚═╝╚═════╝ ╚═╝╚═╝    ╚═╝      ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝ ╚═╝  ╚═╝   ╚═╝
 
-                    W H E R E   M O V I E   B A T T L E S   I I   I S   F O R G E D
+                    W H E R E   T E X T    I S   F O R G E D
 ```
 
 [![CI](https://github.com/Frenzeh/mbii-foundry/actions/workflows/ci.yml/badge.svg)](https://github.com/Frenzeh/mbii-foundry/actions/workflows/ci.yml)
@@ -16,7 +16,7 @@
 
 > A visual content editor for **Movie Battles II**. Shape classes, sabers, and vehicles without wrestling raw config syntax.
 
-**Status:** Very aalpha — works end-to-end for `.mbch` editing, other formats rolling in. Rough edges expected; feedback welcome.
+**Status:** Veeery alpha — works end-to-end for `.mbch` editing, other formats rolling in. Rough edges expected; feedback needed.
 
 ---
 
@@ -33,8 +33,8 @@ MBII Foundry is a standalone desktop app that replaces hand-editing MBII's text-
 
 Plus:
 
-- **Asset browser** — peek at models/textures/sounds directly from PK3s.
-- **Modpack packager** — bundle your edits into a loadable pk3.
+- **Asset browser** — peek at models/textures/sounds directly from PK3s. (wip)
+- **Modpack packager** — bundle your edits into a loadable pk3. (wip)
 - **Validation** — prevents the common "typo in enum → crash on map load" class of bug.
 
 ## Who it's for

@@ -384,6 +384,9 @@ var MBIIAttributes = []AttributeDef{
 	{ID: "MB_ATT_THROWER_FLAME", Name: "Thrower Flame", MaxLevel: 3, Category: "General", Description: ""},
 	{ID: "MB_ATT_REMOTE_DETONATE", Name: "Remote Detonate", MaxLevel: 3, Category: "General", Description: ""},
 	{ID: "MB_ATT_GETUPS", Name: "Getups", MaxLevel: 3, Category: "General", Description: ""},
-	{ID: "MB_ATT_FP_FINAL", Name: "Force Final", MaxLevel: 3, Category: "Force", Description: ""},
-	{ID: "MB_ATT_PISTOL", Name: "Pistol", MaxLevel: 3, Category: "Weapons", Description: ""},
+	// MB_ATT_FP_FINAL was here — it's a #define alias for (MB_ATT_PISTOL-1),
+	// not a real enum member, so it has no business in the picker.
+	// Duplicate MB_ATT_PISTOL entry was here too — already defined above
+	// in the Weapons section. Both removed so the grid stops showing a
+	// phantom "Force Final" row and double pistols.
 }

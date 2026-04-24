@@ -16,10 +16,15 @@ type InfoPanel struct {
 	title     *widget.Label
 	content   *widget.RichText // Changed to RichText for formatting
 	search    *widget.Entry
-	list      *widget.List
 	tabs      *container.AppTabs
 
-	keys []string
+	// Library is a per-type Accordion — Attributes / Weapons / Classes
+	// / Class Flags / Saber Styles / Glossary. Splitting by type cleans
+	// up the old mega-list that jumbled everything into one 500-row
+	// scroll where "Pistol" the weapon and "Pistol" the attribute sat
+	// right next to each other with no indication of which was which.
+	library       *widget.Accordion
+	libraryGroups []*libraryGroup
 
 	holocronClient *HolocronClient
 
@@ -34,6 +39,19 @@ type InfoPanel struct {
 	// from — lets us avoid re-rendering sticky when the panel is
 	// already showing sticky.
 	showingHover bool
+}
+
+// libraryGroup bundles the per-type state for a single Library
+// accordion section — its slice of keys, the List widget that renders
+// them, and the AccordionItem that wraps the list. Refresh rebuilds
+// the slice in place and refreshes both the list and the parent item
+// title (so counts stay in sync with the filter).
+type libraryGroup struct {
+	title  string
+	keys   []string
+	source func(filter string) []string
+	list   *widget.List
+	item   *widget.AccordionItem
 }
 
 func NewInfoPanel() *InfoPanel {
@@ -74,22 +92,9 @@ This panel provides real-time documentation and context for the field you're edi
 	ip.search.SetPlaceHolder("Search help...")
 	ip.search.OnChanged = ip.filterList
 
-	ip.list = widget.NewList(
-		func() int { return len(ip.keys) },
-		func() fyne.CanvasObject { return widget.NewLabel("Topic") },
-		func(id widget.ListItemID, obj fyne.CanvasObject) {
-			obj.(*widget.Label).SetText(ip.keys[id])
-		},
-	)
-	ip.list.OnSelected = func(id widget.ListItemID) {
-		// Library click is a deliberate "show me this" — here we
-		// DO want the tab auto-switch. ShowInfo itself no longer
-		// switches because that jittered the sidebar on every
-		// hover; click-to-jump is the right exception.
-		ip.ShowSticky(ip.keys[id], "")
-		ip.tabs.SelectIndex(0)
-	}
-
+	ip.library = widget.NewAccordion()
+	ip.library.MultiOpen = true
+	ip.buildLibraryGroups()
 	ip.refreshKeys("")
 
 	// "Active Context" was an unhelpful header that just said "here's the
@@ -107,7 +112,8 @@ This panel provides real-time documentation and context for the field you're edi
 	detailsScroll.SetMinSize(fyne.NewSize(120, 0))
 
 	listHeader := widget.NewLabelWithStyle("Reference Library", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	listContainer := container.NewBorder(container.NewVBox(listHeader, ip.search), nil, nil, nil, ip.list)
+	libraryScroll := container.NewVScroll(ip.library)
+	listContainer := container.NewBorder(container.NewVBox(listHeader, ip.search), nil, nil, nil, libraryScroll)
 
 	ip.tabs = container.NewAppTabs(
 		container.NewTabItem("Context", detailsScroll),
@@ -117,58 +123,152 @@ This panel provides real-time documentation and context for the field you're edi
 	ip.container = container.NewMax(ip.tabs)
 }
 
+// buildLibraryGroups wires up the per-type accordion sections once.
+// Called from createUI; subsequent updates just refresh each group's
+// key slice + list. Each group's source closure owns its own data
+// lookup — keeps the filter logic declarative per section instead of
+// stuffing 6 types of enumeration into one method.
+func (ip *InfoPanel) buildLibraryGroups() {
+	match := func(s, filter string) bool {
+		return filter == "" || strings.Contains(strings.ToLower(s), filter)
+	}
+
+	ip.libraryGroups = []*libraryGroup{
+		{
+			title: "Attributes",
+			source: func(filter string) []string {
+				var out []string
+				for _, a := range GetAttributes() {
+					if match(a.Name, filter) || match(a.ID, filter) {
+						out = append(out, a.Name)
+					}
+				}
+				sort.Strings(out)
+				return out
+			},
+		},
+		{
+			title: "Weapons",
+			source: func(filter string) []string {
+				var out []string
+				for _, w := range GetWeapons() {
+					if match(w.Name, filter) || match(w.ID, filter) {
+						out = append(out, w.Name)
+					}
+				}
+				sort.Strings(out)
+				return out
+			},
+		},
+		{
+			title: "Classes",
+			source: func(filter string) []string {
+				var out []string
+				for _, c := range GetClasses() {
+					if match(c.Name, filter) || match(c.ID, filter) {
+						out = append(out, c.Name)
+					}
+				}
+				sort.Strings(out)
+				return out
+			},
+		},
+		{
+			title: "Class Flags",
+			source: func(filter string) []string {
+				var out []string
+				for _, f := range GetClassFlags() {
+					if match(f.Name, filter) || match(f.ID, filter) {
+						out = append(out, f.Name)
+					}
+				}
+				sort.Strings(out)
+				return out
+			},
+		},
+		{
+			title: "Saber Styles",
+			source: func(filter string) []string {
+				var out []string
+				for _, s := range GetSaberStyles() {
+					if match(s.Name, filter) || match(s.ID, filter) {
+						out = append(out, s.Name)
+					}
+				}
+				sort.Strings(out)
+				return out
+			},
+		},
+		{
+			title: "Glossary",
+			source: func(filter string) []string {
+				var out []string
+				for _, g := range GetGlossary() {
+					if match(g.Name, filter) || match(g.ID, filter) {
+						out = append(out, g.Name)
+					}
+				}
+				// Legacy Definitions map — raw .md filenames that don't
+				// belong to the typed getters. Dumped into Glossary as a
+				// catch-all so they stay reachable without crowding the
+				// top-level sections.
+				DefinitionsLock.RLock()
+				for k := range Definitions {
+					if match(k, filter) {
+						out = append(out, k)
+					}
+				}
+				DefinitionsLock.RUnlock()
+				sort.Strings(out)
+				return out
+			},
+		},
+	}
+
+	for _, g := range ip.libraryGroups {
+		group := g // closure capture
+		group.list = widget.NewList(
+			func() int { return len(group.keys) },
+			func() fyne.CanvasObject { return widget.NewLabel("Topic") },
+			func(id widget.ListItemID, obj fyne.CanvasObject) {
+				if id < len(group.keys) {
+					obj.(*widget.Label).SetText(group.keys[id])
+				}
+			},
+		)
+		group.list.OnSelected = func(id widget.ListItemID) {
+			if id < len(group.keys) {
+				ip.ShowSticky(group.keys[id], "")
+				ip.tabs.SelectIndex(0)
+			}
+			group.list.UnselectAll()
+		}
+		// Each list needs a concrete height so it renders inside the
+		// accordion; List with no MinSize collapses to 0px. 240 fits
+		// ~10 rows — enough to scan without dominating the sidebar.
+		scroll := container.NewVScroll(group.list)
+		scroll.SetMinSize(fyne.NewSize(0, 240))
+		group.item = widget.NewAccordionItem(group.title, scroll)
+		ip.library.Append(group.item)
+	}
+}
+
 func (ip *InfoPanel) refreshKeys(filter string) {
-	DefinitionsLock.RLock()
-	defer DefinitionsLock.RUnlock()
-
-	ip.keys = []string{}
 	filter = strings.ToLower(filter)
-
-	for k := range Definitions {
-		if filter == "" || strings.Contains(strings.ToLower(k), filter) {
-			ip.keys = append(ip.keys, k)
+	filtering := filter != ""
+	for _, g := range ip.libraryGroups {
+		g.keys = g.source(filter)
+		g.item.Title = fmt.Sprintf("%s (%d)", g.title, len(g.keys))
+		// Auto-expand any section that has matches under an active
+		// filter — surfaces results without forcing a click. When the
+		// filter clears, leave collapse state alone (don't re-close
+		// sections the user opened manually).
+		if filtering && len(g.keys) > 0 {
+			g.item.Open = true
 		}
+		g.list.Refresh()
 	}
-
-	// Add JSON keys too if searchable
-	for _, a := range GetAttributes() {
-		k := a.Name
-		if filter == "" || strings.Contains(strings.ToLower(k), filter) {
-			ip.keys = append(ip.keys, k)
-		}
-	}
-	for _, w := range GetWeapons() {
-		k := w.Name
-		if filter == "" || strings.Contains(strings.ToLower(k), filter) {
-			ip.keys = append(ip.keys, k)
-		}
-	}
-
-	// Add other definitions
-	for _, c := range GetClasses() {
-		if filter == "" || strings.Contains(strings.ToLower(c.Name), filter) {
-			ip.keys = append(ip.keys, c.Name)
-		}
-	}
-	for _, f := range GetClassFlags() {
-		if filter == "" || strings.Contains(strings.ToLower(f.Name), filter) {
-			ip.keys = append(ip.keys, f.Name)
-		}
-	}
-	for _, s := range GetSaberStyles() {
-		if filter == "" || strings.Contains(strings.ToLower(s.Name), filter) {
-			ip.keys = append(ip.keys, s.Name)
-		}
-	}
-	for _, g := range GetGlossary() {
-		if filter == "" || strings.Contains(strings.ToLower(g.Name), filter) {
-			ip.keys = append(ip.keys, g.Name)
-		}
-	}
-
-	// Deduplicate and sort
-	sort.Strings(ip.keys)
-	ip.list.Refresh()
+	ip.library.Refresh()
 }
 
 func (ip *InfoPanel) filterList(text string) {

@@ -142,6 +142,21 @@ var hiddenAttributeIDs = map[string]bool{
 	// which it isn't (behind REDACTED_FLAG_04).
 	"MB_ATT_REDACTED_23": true,
 	"MB_ATT_REDACTED_24":   true,
+
+	// Attributes tied to hidden weapons — if the weapon isn't live, the
+	// attribute that maps to it can't be usefully purchased either.
+	"MB_ATT_GRAPPLE_HOOK":   true, // WP_GRAPPLE_HOOK is hidden
+	"MB_ATT_REDACTED_25": true, // WP_REDACTED_10 is hidden
+
+	// MB_ATT_FP_FINAL isn't a real enum member — it's a #define alias
+	// for (MB_ATT_PISTOL-1) that marks the end of the force-power run.
+	// Keep it in the hidden map as a defensive stop against any stale
+	// data that happened to carry it forward.
+	"MB_ATT_FP_FINAL": true,
+
+	// MB_ATT_REDACTED_04 is live in the enum but per the header
+	// comment only targets NPCs — not a user-facing loadout pick.
+	"MB_ATT_REDACTED_04": true,
 }
 
 // markHiddenClasses flips the Hidden flag on classes whose IDs appear
@@ -186,6 +201,11 @@ func markHiddenAttributes(attrs []AttributeDef) {
 //   - Class Specific: WOOKIE*, DEKA*, SBD*, CLONE*, CCTRAINING*, ET_*, MD_*, ASTRO_*, SPY_*, ARC_RIFLE_*
 //   - Weapons:        everything in the weapon-attribute allow-set
 //                     (mirrors the WP_* ↔ MB_ATT_* relationships)
+//   - Advanced:       engine-tuning / movement-tech attributes that
+//                     are rarely bought directly — jetpack fuel, turn
+//                     rate, hop mechanics, getup anim, etc. Collapsed
+//                     by default in the grid so they don't drown out
+//                     the bread-and-butter attribute buckets above.
 //   - General:        fallback for anything unmatched
 //
 // Not exhaustive — a handful of utility attributes (STEALTH, DASH,
@@ -266,7 +286,44 @@ func categorizeAttribute(id string) string {
 		return "Weapons"
 	}
 
+	// Advanced — engine tuning knobs, movement-tech flags, and internal
+	// mechanics that rarely belong in a player-facing loadout. Still
+	// editable (FA authors sometimes touch them), just tucked into a
+	// collapsed accordion section so they don't crowd the main grid.
+	if advancedAttributeIDs[id] {
+		return "Advanced"
+	}
+
 	return "General"
+}
+
+// advancedAttributeIDs — attributes that are live in the enum but
+// represent engine-level tuning rather than loadout picks. Kept as
+// its own map so the grid can render them in a collapsed "Advanced"
+// section the author opens only when they need to touch one.
+var advancedAttributeIDs = map[string]bool{
+	"MB_ATT_TURN_RATE":         true,
+	"MB_ATT_USE_DISTANCE":      true,
+	"MB_ATT_VIEWBASEDDRAIN":    true,
+	"MB_ATT_INAIR_FORCE_REGEN": true,
+	"MB_ATT_BUNNY_HOP":         true,
+	"MB_ATT_FLOAT_HOP":         true,
+	"MB_ATT_GRAPPLE_HOP":       true,
+	"MB_ATT_GETUPS":            true,
+	"MB_ATT_FUEL":              true,
+	"MB_ATT_FUELREGEN":         true,
+	"MB_ATT_WRIST_AMMO":        true,
+	"MB_ATT_KNOCKDOWN_ROLL":    true,
+	"MB_ATT_TRACKING_BEACON":   true,
+	"MB_ATT_SHIELD_RECHARGE2":  true, // duplicate-of-SHIELD_RECHARGE dev helper
+	"MB_ATT_SHIELD_PROJ":       true,
+	"MB_ATT_FP_MIRALUKA":       true, // niche force (MIRALUKA_MBATT)
+	"MB_ATT_FP_REPULSE":        true, // niche force (NEW360PUSH)
+	"MB_ATT_GUNBASH":           true, // melee mechanic, not loadout
+	"MB_ATT_FLIPKICK":          true, // movement mechanic
+	"MB_ATT_ROSHTAUNT":         true, // dev/test taunt binding
+	"MB_ATT_LIGHTS_BEACON":     true,
+	"MB_ATT_ANTI_MT":           true,
 }
 
 // weaponAttributeIDs is the allow-set for the "Weapons" bucket in

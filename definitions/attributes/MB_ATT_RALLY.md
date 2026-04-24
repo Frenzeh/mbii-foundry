@@ -2,16 +2,14 @@
 
 `MB_ATT_RALLY`
 
-Passive aura that buffs nearby allies.
+> Passive aura that buffs nearby allies.
 
-**Class Specific:** Commander, ARC Trooper.
+## Per level
 
-### Levels
+- **Level 1** — Nearby allies gain faster health/armor regeneration.
+Nearby allies gain improved suppression resistance.
+Required for `MB_ATT_ASSEMBLE` to work for teammates.
 
-*   **Level 1**:
-    *   Nearby allies gain faster health/armor regeneration.
-    *   Nearby allies gain improved suppression resistance.
-    *   Required for `MB_ATT_ASSEMBLE` to work for teammates.
+## Tips
 
-### Notes
-*   The Commander must be alive for the Rally effect to persist.
+- The Commander must be alive for the Rally effect to persist.

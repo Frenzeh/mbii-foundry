@@ -1,8 +1,9 @@
-# 💥 Frag Grenade
+# Frag Grenade
 
 `WP_FRAG_NADE`
 
-Fragmentation Grenade.
+> Fragmentation Grenade.
 
-### 💡 Tips
-*   Paired with `MB_ATT_FRAGS`.
+## Tips
+
+- Paired with `MB_ATT_FRAGS`.

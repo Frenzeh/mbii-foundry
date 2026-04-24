@@ -2,21 +2,40 @@ package main
 
 import (
 	"fmt"
+	"image/color"
 	"sort"
 	"strconv"
 	"strings"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
 type InfoPanel struct {
 	container *fyne.Container
-	title     *widget.Label
-	content   *widget.RichText // Changed to RichText for formatting
-	search    *widget.Entry
-	tabs      *container.AppTabs
+
+	// --- Header zone --------------------------------------------------
+	// "Hero" strip at top of the Context tab. Loose Swiss-ish grid:
+	// category chip pinned left, monospace ID pinned right, bold title
+	// below; tinted rectangle behind the whole block so it reads as a
+	// distinct identity band regardless of scroll position.
+	headerBG        *canvas.Rectangle // faint accent-tinted fill
+	headerFrame     *canvas.Rectangle // 1px accent border for a solid brutalist edge
+	categoryChip    *canvas.Text      // small caps, tinted
+	idChip          *canvas.Text      // monospace, muted
+	title           *widget.Label     // large, bold
+	// Accent marker + rule below the header — the small square + thin
+	// line is the sci-fi note. Both use accent color.
+	headerMarker *canvas.Rectangle
+	headerRule   *canvas.Rectangle
+
+	content *widget.RichText // markdown body
+	search  *widget.Entry
+	tabs    *container.AppTabs
 
 	// Library is a per-type Accordion — Attributes / Weapons / Classes
 	// / Class Flags / Saber Styles / Glossary. Splitting by type cleans
@@ -69,6 +88,37 @@ type librarySubGroup struct {
 	item   *widget.AccordionItem
 }
 
+// categoryTagFor builds the small-caps chip text for the info panel
+// header. Attributes get a "ATTRIBUTE · FORCE" style subtag so the
+// reader sees both the enum kind and its bucket (Force / Weapons /
+// Saber / Advanced / etc.) without having to infer from the ID.
+func categoryTagFor(kind, bucket string) string {
+	kind = strings.ToUpper(strings.TrimSpace(kind))
+	bucket = strings.ToUpper(strings.TrimSpace(bucket))
+	if bucket == "" || bucket == "GENERAL" {
+		return kind
+	}
+	return kind + " · " + bucket
+}
+
+// updateHeaderChips sets the hero band's ID chip + category chip.
+// Called from ShowInfo after the def is resolved; also used by the
+// welcome / not-found paths to keep the UI consistent.
+func (ip *InfoPanel) updateHeaderChips(id, category string) {
+	if ip.idChip != nil {
+		if id != "" {
+			ip.idChip.Text = id
+		} else {
+			ip.idChip.Text = ""
+		}
+		ip.idChip.Refresh()
+	}
+	if ip.categoryChip != nil {
+		ip.categoryChip.Text = strings.ToUpper(category)
+		ip.categoryChip.Refresh()
+	}
+}
+
 // isHiddenLibraryKey reports whether a Definitions-map key names an
 // ID that is in the hidden set. Used to filter the Library's legacy
 // catch-all so private-overlay markdown doesn't leak into the glossary
@@ -111,12 +161,37 @@ func (ip *InfoPanel) SetHolocronClient(client *HolocronClient) {
 }
 
 func (ip *InfoPanel) createUI() {
+	// Title — large, bold, wrapping. Sits inside the header hero below.
 	ip.title = widget.NewLabelWithStyle("Information", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	// Wrap long titles to the next line so they stay readable at
-	// any sidebar width. The enclosing bi-directional Scroll below
-	// absorbs the MinSize we'd otherwise inherit from wrap-word,
-	// so the HSplit rail stays freely draggable.
 	ip.title.Wrapping = fyne.TextWrapWord
+
+	// Category chip — small-caps accent-colored label above the title.
+	// Tells the reader what KIND of thing they're looking at (attribute,
+	// weapon, force power, class, etc.) without needing the body to say so.
+	ip.categoryChip = canvas.NewText("", CurrentThemeColor)
+	ip.categoryChip.TextSize = SizeSmall
+	ip.categoryChip.TextStyle = fyne.TextStyle{Bold: true, Monospace: true}
+
+	// ID chip — monospace enum id pinned right. Cues the reader into the
+	// machine-facing name so they know what to type in source.
+	ip.idChip = canvas.NewText("", theme.PlaceHolderColor())
+	ip.idChip.TextSize = SizeSmall
+	ip.idChip.TextStyle = fyne.TextStyle{Monospace: true}
+	ip.idChip.Alignment = fyne.TextAlignTrailing
+
+	// Hero background — faint accent tint, solid color for a brutalist
+	// panel feel. Paired with a 1px accent border to anchor the block.
+	ip.headerBG = canvas.NewRectangle(tintWithAlpha(CurrentThemeColor, 22))
+	ip.headerFrame = canvas.NewRectangle(color.Transparent)
+	ip.headerFrame.StrokeColor = tintWithAlpha(CurrentThemeColor, 90)
+	ip.headerFrame.StrokeWidth = 1
+
+	// Accent marker + rule — small filled square left, thin rule right.
+	// The square is the sci-fi note the Swiss grid lets us get away with.
+	ip.headerMarker = canvas.NewRectangle(CurrentThemeColor)
+	ip.headerMarker.SetMinSize(fyne.NewSize(8, 8))
+	ip.headerRule = canvas.NewRectangle(tintWithAlpha(CurrentThemeColor, 120))
+	ip.headerRule.SetMinSize(fyne.NewSize(0, 1))
 
 	welcomeMsg := `
 ### Info Panel
@@ -124,8 +199,9 @@ func (ip *InfoPanel) createUI() {
 This panel provides real-time documentation and context for the field you're editing.
 
 **How to use:**
+
 *   **Hover** over any attribute or weapon in the editor to see its description here.
-*   **Switch** to the "Reference Library" tab to browse all available topics.
+*   **Switch** to the "Library" tab above to browse all available topics.
 `
 	ip.content = widget.NewRichTextFromMarkdown(welcomeMsg)
 	// Wrap at word boundaries — content reflows to whatever width
@@ -143,17 +219,40 @@ This panel provides real-time documentation and context for the field you're edi
 	ip.buildLibraryGroups()
 	ip.refreshKeys("")
 
-	// "Active Context" was an unhelpful header that just said "here's the
-	// thing you're hovering" — redundant when the title below already shows
-	// the item name. Dropped; the title + content speak for themselves.
-	details := container.NewVBox(ip.title, widget.NewSeparator(), ip.content)
-	// Use bi-directional Scroll (not VScroll). Its MinSize caps at
-	// scrollbar metrics, NOT content width — so hovering an
-	// attribute with a long ID / a markdown code span won't push
-	// the HSplit divider. VScroll inherits its content's MinSize
-	// width, which is exactly what caused the "rail jumps on hover"
-	// bug. Content wraps inside the current viewport; anything that
-	// genuinely needs more width scrolls instead of resizing parents.
+	// ── Hero band ─────────────────────────────────────────────────
+	// Layered composition: tinted background rectangle, 1px accent
+	// border on top, and the padded content (category/ID row, title)
+	// layered above both. Generous 16px padding so the block reads
+	// more like a poster header than a form label.
+	heroRow := container.NewBorder(nil, nil,
+		ip.categoryChip, // left
+		ip.idChip,       // right
+		nil,             // no flex center — the chips hug their edges
+	)
+	heroInner := container.NewPadded(container.NewVBox(
+		heroRow,
+		ip.title,
+	))
+	hero := container.NewStack(ip.headerBG, ip.headerFrame, heroInner)
+
+	// Square accent + thin rule. The square is left-aligned, flex-size
+	// horizontal rule takes the rest of the width.
+	markerBox := container.New(layout.NewGridWrapLayout(fyne.NewSize(8, 8)), ip.headerMarker)
+	rule := container.NewBorder(nil, nil, markerBox, nil, ip.headerRule)
+	// Spacer rows give the body real breathing room — MBCH docs can
+	// be dense so a tight-packed info panel feels cramped.
+	spacerTop := canvas.NewRectangle(color.Transparent)
+	spacerTop.SetMinSize(fyne.NewSize(0, 8))
+	spacerBottom := canvas.NewRectangle(color.Transparent)
+	spacerBottom.SetMinSize(fyne.NewSize(0, 12))
+
+	details := container.NewVBox(
+		hero,
+		spacerTop,
+		rule,
+		spacerBottom,
+		container.NewPadded(ip.content),
+	)
 	detailsScroll := container.NewScroll(details)
 	detailsScroll.SetMinSize(fyne.NewSize(120, 0))
 
@@ -565,10 +664,11 @@ func (ip *InfoPanel) ShowInfo(key, context string) {
 	}
 
 	// 1. JSON Data Lookup (Priority) — but markdown wins when richer.
-	var resolvedID string
+	var resolvedID, resolvedCategory string
 	for _, attr := range GetAttributes() {
 		if attr.ID == key || attr.Name == key {
 			resolvedID = attr.ID
+			resolvedCategory = categoryTagFor("ATTRIBUTE", attr.Category)
 			if md, ok := preferMarkdown(attr.ID); ok {
 				def = md
 				key = attr.Name
@@ -585,6 +685,7 @@ func (ip *InfoPanel) ShowInfo(key, context string) {
 		for _, w := range GetWeapons() {
 			if w.ID == key || w.Name == key {
 				resolvedID = w.ID
+				resolvedCategory = "WEAPON"
 				if md, ok := preferMarkdown(w.ID); ok {
 					def = md
 					key = w.Name
@@ -602,6 +703,7 @@ func (ip *InfoPanel) ShowInfo(key, context string) {
 		for _, c := range GetClasses() {
 			if c.ID == key || c.Name == key {
 				resolvedID = c.ID
+				resolvedCategory = "CLASS"
 				if md, ok := preferMarkdown(c.ID); ok {
 					def = md
 					key = c.Name
@@ -619,6 +721,7 @@ func (ip *InfoPanel) ShowInfo(key, context string) {
 		for _, f := range GetClassFlags() {
 			if f.ID == key || f.Name == key {
 				resolvedID = f.ID
+				resolvedCategory = "CLASS FLAG"
 				if md, ok := preferMarkdown(f.ID); ok {
 					def = md
 					key = f.Name
@@ -636,6 +739,7 @@ func (ip *InfoPanel) ShowInfo(key, context string) {
 		for _, s := range GetSaberStyles() {
 			if s.ID == key || s.Name == key {
 				resolvedID = s.ID
+				resolvedCategory = "SABER STYLE"
 				if md, ok := preferMarkdown(s.ID); ok {
 					def = md
 					key = s.Name
@@ -653,6 +757,7 @@ func (ip *InfoPanel) ShowInfo(key, context string) {
 		for _, g := range GetGlossary() {
 			if g.ID == key || g.Name == key {
 				resolvedID = g.ID
+				resolvedCategory = "GLOSSARY"
 				if md, ok := preferMarkdown(g.ID); ok {
 					def = md
 					key = g.Name
@@ -718,6 +823,7 @@ func (ip *InfoPanel) ShowInfo(key, context string) {
 	if !found {
 		ip.title.SetText(key)
 		md = "_No local documentation available._"
+		resolvedCategory = "REFERENCE"
 	} else {
 		ip.title.SetText(key)
 		if context != "" {
@@ -726,6 +832,7 @@ func (ip *InfoPanel) ShowInfo(key, context string) {
 			md = def
 		}
 	}
+	ip.updateHeaderChips(resolvedID, resolvedCategory)
 
 	ip.content.ParseMarkdown(md)
 

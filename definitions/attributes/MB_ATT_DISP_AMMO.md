@@ -1,15 +1,11 @@
-# MB_ATT_DISP_AMMO
+# Disp Ammo
 
 `MB_ATT_DISP_AMMO`
 
-Ammo Dispenser
-
+> Ammo Dispenser
 1-3
-
 Hold 'Use' key on allies to restore their Ammo at a set amount every 250ms.
 
-* Level 1: 2
+## Overview
 
-* Level 2: 4
-
-* Level 3: 6
+Ammo Dispenser

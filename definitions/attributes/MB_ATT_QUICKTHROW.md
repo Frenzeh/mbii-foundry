@@ -1,16 +1,15 @@
-# 💣 Quick Throw
+# Quick Throw
 
 `MB_ATT_QUICKTHROW`
 
-Ability to throw grenades instantly without switching weapons.
+> Ability to throw grenades instantly without switching weapons.
 
-> **Default:** Disabled.
+## Per level
 
-### 📊 Levels
+- **Level 1** — **Enabled**. Press "Special Class Ability 1" to throw currently selected grenade.
+- **Level 2** — **Enhanced**. Increases throw velocity and range. Shorter animation time.
 
-*   **Level 1**: **Enabled**. Press "Special Class Ability 1" to throw currently selected grenade.
-*   **Level 2**: **Enhanced**. Increases throw velocity and range. Shorter animation time.
+## Tips
 
-### 💡 Tips
-*   Crucial for comboing gunfire with explosives. Shoot -> Throw -> Shoot.
-*   Requires grenades in inventory to work.
+- Crucial for comboing gunfire with explosives. Shoot -> Throw -> Shoot.
+- Requires grenades in inventory to work.

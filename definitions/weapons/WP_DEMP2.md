@@ -1,13 +1,15 @@
-# ⚡ DEMP 2
+# DEMP 2
 
 `WP_DEMP2`
 
-Pulse rifle specialized against droids.
+> Pulse rifle specialized against droids.
 
-### 📊 Stats
-*   **Effect:** Ion damage.
-*   **Alt-Fire:** Chargeable blast.
+## Stats
 
-### 💡 Tips
-*   Paired with `MB_ATT_DEMP2`.
-*   Devastating against SBDs and Droidekas.
+- **Effect** — Ion damage.
+- **Alt-Fire** — Chargeable blast.
+
+## Tips
+
+- Paired with `MB_ATT_DEMP2`.
+- Devastating against SBDs and Droidekas.

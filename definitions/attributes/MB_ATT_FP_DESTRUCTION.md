@@ -8,16 +8,16 @@ Concentrates Force energy into a devastating explosive ball.
 
 ### Levels
 
-*   **Level 1**:
-    *   Small blast radius.
-    *   High damage.
-    *   Long charge time.
+* **Level 1**:
+ * Small blast radius.
+ * High damage.
+ * Long charge time.
 
-*   **Level 2**:
-    *   Large blast radius (Nuclear).
-    *   Instakills almost anything in center.
-    *   User is vulnerable while charging.
+* **Level 2**:
+ * Large blast radius (Nuclear).
+ * Instakills almost anything in center.
+ * User is vulnerable while charging.
 
 ### Notes
-*   Requires both hands (cannot use saber).
-*   Takes seconds to cast, leaving you open to snipers.
+* Requires both hands (cannot use saber).
+* Takes seconds to cast, leaving you open to snipers.

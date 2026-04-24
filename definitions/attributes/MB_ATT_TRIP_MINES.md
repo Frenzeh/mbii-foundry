@@ -1,23 +1,21 @@
-# 🪚 Trip Mine
+# Trip Mine
 
 `MB_ATT_TRIP_MINES`
 
-Deployable laser trip mines.
+> Deployable laser trip mines.
 
-> **Default:** None.
+## Per level
 
-### 📊 Stats
-*   **Damage:** 100+ (Lethal)
-*   **Trigger Radius:** Small.
-*   **Deployment:** Sticks to surfaces.
+- **Level 1** — **Single Mine**.
+- **Level 2** — **Two Mines**.
 
-### 📊 Levels
+## Stats
 
-*   **Level 1**:
-    *   **Single Mine**.
-*   **Level 2**:
-    *   **Two Mines**.
+- **Damage** — 100+ (Lethal)
+- **Trigger Radius** — Small.
+- **Deployment** — Sticks to surfaces.
 
-### 💡 Tips
-*   Excellent for securing flanks or objective points.
-*   Can be shot by enemies to clear them safely.
+## Tips
+
+- Excellent for securing flanks or objective points.
+- Can be shot by enemies to clear them safely.

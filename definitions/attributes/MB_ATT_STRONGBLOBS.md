@@ -8,17 +8,17 @@ High-impact concussion rounds for the DC-15A Clone Rifle.
 
 ### Levels
 
-*   **Level 1**:
-    *   3 Concussion rounds.
-    *   Large explosion radius.
-    *   Knocks down enemies in a wide area.
+* **Level 1**:
+ * 3 Concussion rounds.
+ * Large explosion radius.
+ * Knocks down enemies in a wide area.
 
-*   **Level 2**:
-    *   6 Concussion rounds.
+* **Level 2**:
+ * 6 Concussion rounds.
 
-*   **Level 3**:
-    *   9 Concussion rounds.
+* **Level 3**:
+ * 9 Concussion rounds.
 
 ### Notes
-*   Requires `MB_ATT_CLONERIFLE`.
-*   Cannot be equipped simultaneously with Clone Blobs (Ion) on some server configs, but FA allows overrides.
+* Requires `MB_ATT_CLONERIFLE`.
+* Cannot be equipped simultaneously with Clone Blobs (Ion) on some server configs, but FA allows overrides.

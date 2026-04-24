@@ -1,13 +1,14 @@
-# 👻 Anti-Mind Trick
+# Anti-Mind Trick
 
 `MB_ATT_ANTI_MT`
 
-Resistance to Force Mind Trick (Invisibility).
+> Resistance to Force Mind Trick (Invisibility).
 
-### 📊 Levels
+## Per level
 
-*   **Rank 1:** Mind Tricked enemies appear as **Shimmering Ghosts** (partially visible).
-*   **Rank 2:** Mind Tricked enemies are **Fully Visible** (immune to the effect).
+- **Level 1** — ** Mind Tricked enemies appear as **Shimmering Ghosts** (partially visible).
+- **Level 2** — ** Mind Tricked enemies are **Fully Visible** (immune to the effect).
 
-### 💡 Tips
-*   Critical for sentry classes (SBD, Droideka) to prevent sneak attacks.
+## Tips
+
+- Critical for sentry classes (SBD, Droideka) to prevent sneak attacks.

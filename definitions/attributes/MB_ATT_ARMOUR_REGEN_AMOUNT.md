@@ -1,7 +1,10 @@
-# MB_ATT_ARMOUR_REGEN_AMOUNT
+# Armour Regen Amount
 
 `MB_ATT_ARMOUR_REGEN_AMOUNT`
 
-Armor Regen
+> Armor Regen
+Armor Regeneration.
 
-Armor Regeneration. Requires ArmourRegenRate and rankArmourRegenAmount (Needs verification)
+## Overview
+
+Armor Regen

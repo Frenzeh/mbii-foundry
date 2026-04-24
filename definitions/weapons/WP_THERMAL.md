@@ -1,12 +1,14 @@
-# 💣 Thermal Detonator
+# Thermal Detonator
 
 `WP_THERMAL`
 
-Standard Thermal Detonator grenade.
+> Standard Thermal Detonator grenade.
 
-### 📊 Stats
-*   **Damage:** High explosive.
-*   **Timer:** 3 seconds.
+## Stats
 
-### 💡 Tips
-*   Paired with `MB_ATT_THERMALS`.
+- **Damage** — High explosive.
+- **Timer** — 3 seconds.
+
+## Tips
+
+- Paired with `MB_ATT_THERMALS`.

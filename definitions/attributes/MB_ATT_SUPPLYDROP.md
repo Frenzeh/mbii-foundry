@@ -1,9 +1,11 @@
-# MB_ATT_SUPPLYDROP
+# Supplydrop
 
 `MB_ATT_SUPPLYDROP`
 
-Ammo Drop
-
+> Ammo Drop
 EAS_HI_SUPPLYDROP
+'Use' key old ammo drop.
 
-'Use' key old ammo drop
+## Overview
+
+Ammo Drop

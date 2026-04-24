@@ -1,8 +1,9 @@
-# 💫 Sonic Grenade
+# Sonic Grenade
 
 `WP_SONIC_NADE`
 
-Stun Grenade.
+> Stun Grenade.
 
-### 💡 Tips
-*   Paired with `MB_ATT_SONIC_DETONATOR`.
+## Tips
+
+- Paired with `MB_ATT_SONIC_DETONATOR`.

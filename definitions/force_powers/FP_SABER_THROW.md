@@ -1,19 +1,11 @@
-# FP_SABER_THROW
+# Saber Throw
 
-Description needed.
+`FP_SABER_THROW`
 
-## Level 1
-**Cost:** 20
+> Description needed.
 
-Cost: 20
+## Per level
 
-## Level 2
-**Cost:** 20
-
-Cost: 20
-
-## Level 3
-**Cost:** 20
-
-Cost: 20
-
+- **Level 1** — Cost: 20 · *cost 20*
+- **Level 2** — Cost: 20 · *cost 20*
+- **Level 3** — Cost: 20 · *cost 20*

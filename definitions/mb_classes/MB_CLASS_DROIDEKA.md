@@ -1,5 +1,9 @@
-# MB_CLASS_DROIDEKA
+# Droideka
 
 `MB_CLASS_DROIDEKA`
+
+> Destroyer Droid.
+
+## Overview
 
 Destroyer Droid

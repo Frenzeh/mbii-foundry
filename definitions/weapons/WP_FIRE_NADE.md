@@ -1,8 +1,9 @@
-# 🔥 Fire Grenade
+# Fire Grenade
 
 `WP_FIRE_NADE`
 
-Incendiary Grenade.
+> Incendiary Grenade.
 
-### 💡 Tips
-*   Paired with `MB_ATT_FIRE_GRENADES`.
+## Tips
+
+- Paired with `MB_ATT_FIRE_GRENADES`.

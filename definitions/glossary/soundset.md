@@ -6,9 +6,9 @@ The voice lines and sounds the character makes.
 `sound_folder`
 
 ### Examples
-*   `jedi1`
-*   `clonetrooper`
-*   `kyle`
+* `jedi1`
+* `clonetrooper`
+* `kyle`
 
 ### Notes
-*   Must correspond to a folder in `sound/chars/`.
+* Must correspond to a folder in `sound/chars/`.

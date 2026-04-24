@@ -1,19 +1,11 @@
-# FP_MINDTRICK
+# Mindtrick
 
-Description needed.
+`FP_MINDTRICK`
 
-## Level 1
-**Cost:** 50
+> Description needed.
 
-Cost: 50
+## Per level
 
-## Level 2
-**Cost:** 30
-
-Cost: 30
-
-## Level 3
-**Cost:** 30
-
-Cost: 30
-
+- **Level 1** — Cost: 50 · *cost 50*
+- **Level 2** — Cost: 30 · *cost 30*
+- **Level 3** — Cost: 30 · *cost 30*

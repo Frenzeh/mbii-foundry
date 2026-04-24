@@ -1,15 +1,11 @@
-# MB_ATT_DISP_HEALTH
+# Disp Health
 
 `MB_ATT_DISP_HEALTH`
 
-Health Dispenser
-
+> Health Dispenser
 1-3
-
 Hold 'Use' key on allies to restore their Health at a set amount every 250ms.
 
-* Level 1: 2
+## Overview
 
-* Level 2: 4
-
-* Level 3: 6
+Health Dispenser

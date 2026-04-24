@@ -1,8 +1,9 @@
-# 💣 Pulse Grenade
+# Pulse Grenade
 
 `WP_PULSE_NADE`
 
-EMP Grenade.
+> EMP Grenade.
 
-### 💡 Tips
-*   Paired with `MB_ATT_PULSE_GRENADES`.
+## Tips
+
+- Paired with `MB_ATT_PULSE_GRENADES`.

@@ -1,14 +1,9 @@
-# 💊 Medpac
+# Medpac
 
 `HI_MEDPAC`
 
-Standard BioTech Bacta Canister.
+> Standard BioTech Bacta Canister.
 
-> **Uses:** 1-time use.
+## Tips
 
-### ⚙️ Mechanics
-*   **Effect:** Heals user for **50 HP** over **10 seconds**.
-*   **Regen:** 5 HP per second.
-
-### 💡 Tips
-*   Use during retreat or cover to recover from a skirmish.
+- Use during retreat or cover to recover from a skirmish.

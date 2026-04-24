@@ -179,15 +179,19 @@ func (ip *InfoPanel) createUI() {
 	ip.idChip.TextStyle = fyne.TextStyle{Monospace: true}
 	ip.idChip.Alignment = fyne.TextAlignTrailing
 
-	// Hero background — faint accent tint, solid color for a brutalist
-	// panel feel. Paired with a 1px accent border to anchor the block.
+	// Hero background — faint accent tint, rounded corners to echo
+	// the MBII launcher's panel style. CornerRadius > 0 + filled
+	// rectangle + an inset stroke (drawn as a separate rect inside a
+	// Padded container) give the offset-stroke look the launcher uses
+	// for its boxes and buttons.
 	ip.headerBG = canvas.NewRectangle(tintWithAlpha(CurrentThemeColor, 22))
+	ip.headerBG.CornerRadius = 6
 	ip.headerFrame = canvas.NewRectangle(color.Transparent)
-	ip.headerFrame.StrokeColor = tintWithAlpha(CurrentThemeColor, 90)
+	ip.headerFrame.StrokeColor = tintWithAlpha(CurrentThemeColor, 110)
 	ip.headerFrame.StrokeWidth = 1
+	ip.headerFrame.CornerRadius = 5
 
 	// Accent marker + rule — small filled square left, thin rule right.
-	// The square is the sci-fi note the Swiss grid lets us get away with.
 	ip.headerMarker = canvas.NewRectangle(CurrentThemeColor)
 	ip.headerMarker.SetMinSize(fyne.NewSize(8, 8))
 	ip.headerRule = canvas.NewRectangle(tintWithAlpha(CurrentThemeColor, 120))
@@ -220,31 +224,45 @@ This panel provides real-time documentation and context for the field you're edi
 	ip.refreshKeys("")
 
 	// ── Hero band ─────────────────────────────────────────────────
-	// Layered composition: tinted background rectangle, 1px accent
-	// border on top, and the padded content (category/ID row, title)
-	// layered above both. Generous 16px padding so the block reads
-	// more like a poster header than a form label.
+	// Launcher-style rounded panel: tinted fill at full extent, stroke
+	// inset by 3px via a Padded wrapper so the 1px accent border sits
+	// inside the bg rather than flush with its edge. That inset is the
+	// "offset stroke" look the MBII launcher boxes use.
 	heroRow := container.NewBorder(nil, nil,
-		ip.categoryChip, // left
-		ip.idChip,       // right
-		nil,             // no flex center — the chips hug their edges
+		ip.categoryChip,
+		ip.idChip,
+		nil,
 	)
-	heroInner := container.NewPadded(container.NewVBox(
+	heroInner := container.NewPadded(container.NewPadded(container.NewVBox(
 		heroRow,
 		ip.title,
-	))
-	hero := container.NewStack(ip.headerBG, ip.headerFrame, heroInner)
+	)))
+	// Double-wrap the frame: Padded insets the frame rectangle 4px
+	// from the bg's edges so the stroke reads as its own ring instead
+	// of sharing the bg's silhouette.
+	framePadded := container.NewPadded(ip.headerFrame)
+	hero := container.NewStack(ip.headerBG, framePadded, heroInner)
 
-	// Square accent + thin rule. The square is left-aligned, flex-size
-	// horizontal rule takes the rest of the width.
+	// Double-offset rule — two parallel accent lines of different
+	// lengths + a filled square marker pinned left. The first (longer)
+	// rule hangs off the left edge with the marker; the second
+	// (shorter, dimmer) starts indented 48px and lines up underneath,
+	// giving a mild "technical diagram" air without being noisy.
 	markerBox := container.New(layout.NewGridWrapLayout(fyne.NewSize(8, 8)), ip.headerMarker)
-	rule := container.NewBorder(nil, nil, markerBox, nil, ip.headerRule)
-	// Spacer rows give the body real breathing room — MBCH docs can
-	// be dense so a tight-packed info panel feels cramped.
+	primaryRule := container.NewBorder(nil, nil, markerBox, nil, ip.headerRule)
+	secondaryLine := canvas.NewRectangle(tintWithAlpha(CurrentThemeColor, 55))
+	secondaryLine.SetMinSize(fyne.NewSize(0, 1))
+	secondaryIndent := canvas.NewRectangle(color.Transparent)
+	secondaryIndent.SetMinSize(fyne.NewSize(48, 1))
+	secondaryRule := container.NewBorder(nil, nil, secondaryIndent, nil, secondaryLine)
+	spacerBetweenRules := canvas.NewRectangle(color.Transparent)
+	spacerBetweenRules.SetMinSize(fyne.NewSize(0, 3))
+	rule := container.NewVBox(primaryRule, spacerBetweenRules, secondaryRule)
+
 	spacerTop := canvas.NewRectangle(color.Transparent)
-	spacerTop.SetMinSize(fyne.NewSize(0, 8))
+	spacerTop.SetMinSize(fyne.NewSize(0, 10))
 	spacerBottom := canvas.NewRectangle(color.Transparent)
-	spacerBottom.SetMinSize(fyne.NewSize(0, 12))
+	spacerBottom.SetMinSize(fyne.NewSize(0, 14))
 
 	details := container.NewVBox(
 		hero,

@@ -31,7 +31,7 @@ const (
 	// screen's "new version available" banner. Bump this before tagging
 	// a release — if they drift, testers get a stale banner or none at
 	// all.
-	AppVersion = "0.9.1-alpha"
+	AppVersion = "0.9.2-alpha"
 	AppName    = "MBII Foundry"
 )
 
@@ -116,6 +116,12 @@ type AppConfig struct {
 	// Hover tooltips for enum values. Default is on; users who find
 	// them distracting can flip this off in Preferences.
 	HoverTooltipsDisabled bool `json:"hover_tooltips_disabled"`
+
+	// Density scales the theme's internal padding so the UI reads
+	// tighter or airier per taste. "comfortable" = 1.0× (default),
+	// "compact" = 0.8×, "spacious" = 1.25×. Applied via FoundryTheme
+	// .Size overrides for padding-related size names.
+	Density string `json:"density"`
 
 	// Pinned folder paths — shown as quick-select shortcuts in file pickers
 	// and path-entry fields so users don't have to navigate to the same
@@ -365,7 +371,20 @@ func MonoFontResource() fyne.Resource {
 func (h FoundryTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
 	return theme.DefaultTheme().Icon(name)
 }
-func (h FoundryTheme) Size(name fyne.ThemeSizeName) float32 { return theme.DefaultTheme().Size(name) }
+// densityScale returns the multiplier the user's density preference
+// applies to padding/inner-padding theme sizes. Text size isn't
+// touched — only spacing — so the app breathes wider without
+// becoming grade-school chunky.
+var CurrentDensityScale float32 = 1.0
+
+func (h FoundryTheme) Size(name fyne.ThemeSizeName) float32 {
+	base := theme.DefaultTheme().Size(name)
+	switch name {
+	case theme.SizeNamePadding, theme.SizeNameInnerPadding, theme.SizeNameInlineIcon:
+		return base * CurrentDensityScale
+	}
+	return base
+}
 
 // Panel-push icons wrapped as themed resources so Fyne tints them
 // with the current theme's foreground color automatically.
@@ -400,6 +419,26 @@ func (a *App) applyThemeColor(colorName string) {
 		CurrentThemeColor = color.RGBA{R: 0, G: 128, B: 255, A: 255} // Default Blue
 	}
 	a.fyneApp.Settings().SetTheme(&FoundryTheme{}) // Refresh theme
+}
+
+// applyDensity wires AppConfig.Density through to the theme-size
+// scale the FoundryTheme.Size overrides read. Called at startup
+// AND whenever the user flips the Preferences selector. Unknown
+// values fall back to "comfortable" rather than error — the config
+// may have been migrated from an older layout.
+func (a *App) applyDensity(density string) {
+	switch density {
+	case "compact":
+		CurrentDensityScale = 0.8
+	case "spacious":
+		CurrentDensityScale = 1.25
+	default:
+		CurrentDensityScale = 1.0
+	}
+	a.config.Density = density
+	if a.fyneApp != nil {
+		a.fyneApp.Settings().SetTheme(a.fyneApp.Settings().Theme())
+	}
 }
 
 // applyColorVariant wires AppConfig.ColorVariant through to the
@@ -1477,6 +1516,7 @@ func (a *App) loadConfig() {
 	}
 	a.applyColorVariant(a.config.ColorVariant) // before applyThemeColor so a single SetTheme covers both
 	a.applyThemeColor(a.config.PrimaryColor)
+	a.applyDensity(a.config.Density) // theme-size scale; "" falls back to comfortable inside applyDensity
 }
 
 // currentEditorPath returns the file path of the currently-active
@@ -1629,6 +1669,20 @@ func (a *App) showPreferences() {
 		modeSelect.SetSelected("Dark")
 	}
 
+	// Density picker — scales theme padding. "Comfortable" is the
+	// default and tracks classic Fyne sizing; "Compact" tightens
+	// everything for a busier IDE feel; "Spacious" loosens it so long
+	// reading sessions in the info panel don't feel cramped.
+	densitySelect := widget.NewSelect([]string{"Compact", "Comfortable", "Spacious"}, nil)
+	switch strings.ToLower(a.config.Density) {
+	case "compact":
+		densitySelect.SetSelected("Compact")
+	case "spacious":
+		densitySelect.SetSelected("Spacious")
+	default:
+		densitySelect.SetSelected("Comfortable")
+	}
+
 	// Form rows, grouped with visible section headers instead of empty-
 	// label + separator spacer rows. The spacer rows rendered as ugly
 	// dark bands across the dialog — an accidental consequence of the
@@ -1636,6 +1690,7 @@ func (a *App) showPreferences() {
 	coreForm := widget.NewForm(
 		widget.NewFormItem("Color Mode", modeSelect),
 		widget.NewFormItem("Theme Color", themeSelect),
+		widget.NewFormItem("Density", densitySelect),
 		widget.NewFormItem("Info Tooltips", tooltipsCheck),
 	)
 
@@ -1705,6 +1760,7 @@ func (a *App) showPreferences() {
 			}
 			a.applyColorVariant(a.config.ColorVariant)
 			a.applyThemeColor(a.config.PrimaryColor)
+			a.applyDensity(strings.ToLower(densitySelect.Selected))
 
 			a.saveConfig()
 

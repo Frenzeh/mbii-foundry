@@ -2,17 +2,18 @@
 
 `CFL_SEEING_STEALTH`
 
-Advanced optical sensors that bypass standard stealth methods.
+> Hides the class from Force Sense (the user becomes invisible to `FP_SEE`).
 
-### Mechanics
-* **Detection:** Grants **Force Sense Immunity**. Wait, per wiki: "Makes a class invisible to Force Seeing".
-* **Correction:** The wiki says `CFL_SEEING_STEALTH` makes the *user* invisible to Force Sense (Immunity).
-* *Self-Correction*: The name implies "Seeing Stealth", but the wiki description says "Force Sense Immunity". Let's verify context. "Seeing Stealth" usually implies *seeing* stealth. "Force Sense Immunity" implies *being* immune.
-* *Re-reading Wiki*: "CFL_SEEING_STEALTH - Force Sense Immunity - Makes a class invisible to Force Seeing." -> Okay, the name is misleading in the code, but the function is **Immunity**.
+## What it does
 
-### Mechanics
-* **Stealth:** You **cannot be seen** by Force Sense (`FP_SEE`).
-* **Radar:** You do not appear on Force Sight radar.
+Despite the misleading name, this flag makes the *wearer* undetectable by Force Sense. In `g_active.c`, when a Force-user scans via `FP_SEE`, any targets carrying this flag are dropped from the broadcast list — they do not appear on the Sense overlay unless they have been hit by a Tracker Dart (`PW_TRACKED_R/B` powerup bypasses the flag).
 
-### Usage
-* Stealth/Infiltrator classes that need to hide from Jedi.
+## Notes
+
+- Code confirms: `g_active.c:5151` — `if (MB_FA_MODE && classflags & (1<<CFL_SEEING_STEALTH)) continue;` on the Sense scan loop.
+- Tracker Dart / `PW_TRACKED` powerup overrides the stealth — tagged targets stay visible.
+- Stealth classes (Cad Bane, infiltrators, assassin droids) pair this with low-profile weapons.
+
+---
+
+`stealth` · `anti-force` · `utility`

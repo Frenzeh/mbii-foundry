@@ -2,15 +2,19 @@
 
 `MB_ATT_FP_REPULSE`
 
-> An omni-directional blast of Force energy.
+> Omni-directional panic-button knockback.
 
-## Stats
+## What it does
 
-- **Cost** — **60 FP**.
-- **Radius** — **1024** units.
-- **Cooldown** — 1 second.
+Grants access to a 360-degree Force Push. Unlike standard Push, Repulse fires in every direction around the caster simultaneously, knocking back every nearby enemy. Activated via the Special key.
 
-## Tips
+## Notes
 
-- **Get Off Me:** Best panic button when surrounded.
-- **Breaker:** Breaks grabs and grapples instantly.
+- Cost ~60 FP; radius ~1024 units; ~1 second cooldown.
+- Best panic button when surrounded.
+- Breaks grabs and grapples instantly.
+- Countered by Absorb like any other Push.
+
+---
+
+`telekinesis` · `crowd control` · `panic button` · `jedi` · `sith`

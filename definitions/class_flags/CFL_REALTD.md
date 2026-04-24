@@ -2,17 +2,18 @@
 
 `CFL_REALTD`
 
-Unleashes the true, canon-accurate power of a Thermal Detonator.
+> Grants the class the canon "nuke" thermal detonator variant (`WP_REAL_TD`).
 
-### Mechanics
-* **Blast Radius:** **Massive** (Nuclear). Clears entire rooms.
-* **Damage:** **Instakill**. Ignores almost all damage reduction.
-* **Fuse:** Often has a longer fuse/distinct warning audio.
-* **Replacement:** Replaces Frag Grenades (`WP_FRAG_NADE`) if `WP_THERMAL` is not specified? (Check implementation). Usually applies to `WP_REAL_TD`.
+## What it does
 
-### Warning
-* **Friendly Fire:** Will almost certainly kill the user if not thrown far enough.
-* **Balance:** Extremely powerful; usually limited to 1 per life.
+Unlocks access to the Real Thermal Detonator projectile — a massive-radius, high-damage explosive that cleanly one-shots most infantry and chunks tanks. Intended for boss-flavored FA characters (Jabba's entourage, commando specialists) or map-breaker "nuke" roles.
 
-### Usage
-* Boss characters (Jabba, Leia) or objective-breaching "Nuke" classes.
+## Notes
+
+- Paired with `MB_ATT_` unlocks that grant the weapon itself — the flag on its own doesn't auto-add the grenade to the loadout.
+- Friendly-fire radius is large enough to kill the user; fuse timing and throw arc matter.
+- Historically gated behind explicit FA permission; public Open-mode classes do not carry this.
+
+---
+
+`explosive` · `boss` · `nuke`

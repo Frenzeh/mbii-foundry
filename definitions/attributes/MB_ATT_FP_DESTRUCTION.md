@@ -2,22 +2,25 @@
 
 `MB_ATT_FP_DESTRUCTION`
 
-Concentrates Force energy into a devastating explosive ball.
+> Attribute for the Sith charge-up explosive orb.
 
-**Class Specific:** Sith (Dark Side, Special).
+## What it does
 
-### Levels
+Grants access to `FP_DESTRUCTION`. Charges a destructive Force orb and hurls it forward; it explodes on contact dealing heavy AoE damage, knockback, and knockdown. The user is hand-locked during charge and vulnerable for 5 seconds after firing.
 
-* **Level 1**:
- * Small blast radius.
- * High damage.
- * Long charge time.
+## Per level
 
-* **Level 2**:
- * Large blast radius (Nuclear).
- * Instakills almost anything in center.
- * User is vulnerable while charging.
+- **Level 1** — small blast radius, shorter charge · *cost 20*
+- **Level 2** — large blast radius, near-instakill at center · *cost 20*
 
-### Notes
-* Requires both hands (cannot use saber).
-* Takes seconds to cast, leaving you open to snipers.
+## Notes
+
+- Dark-side, Sith-only.
+- Orb can be **deflected** by sabers or absorbed by active Absorb.
+- Post-fire vulnerability (`nForceVulnerabilityAfterDestruction = 5s`) is long enough to get sniped — rotate to cover.
+
+---
+
+`dark side` · `damage` · `aoe` · `sith`
+
+<!-- icon-suggestion: force_destruction -->

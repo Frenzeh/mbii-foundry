@@ -2,15 +2,26 @@
 
 `MB_ATT_FP_PUSH`
 
-Telekinetic wave that knocks enemies back.
+> Attribute for telekinetic knockback.
 
-> **Default:** 0 FP Drain (Cannot push).
+## What it does
 
-### Levels
-* **Level 1**: **20 FP**. Single target push. Knocks down weak enemies.
-* **Level 2**: **30 FP**. Cone effect (multiple targets). Stronger knockback.
-* **Level 3**: **40 FP**. **Force Wave**: 360-degree area of effect (if stationary/crouched). Massive knockback. Can break through Force Block 1/2.
+Grants access to `FP_PUSH`. Fires a cone of force that knocks enemies back, breaks stances, and redirects rockets and grenades. Rank widens the cone, extends range, and strengthens the knockdown.
 
-### Tips
-* Primary tool for crowd control and ledge kills.
-* Can deflect grenades and rockets.
+## Per level
+
+- **Level 1** — narrow cone, light knockback · *cost 20*
+- **Level 2** — wider cone, reliable knockdown · *cost 20*
+- **Level 3** — widest cone, longest range, can deflect rockets and grenades · *cost 20*
+
+## Notes
+
+- Countered by Force Absorb on the light side.
+- Two pushes clash and cancel when cast head-on at each other.
+- Primary tool for crowd control and ledge kills.
+
+---
+
+`telekinesis` · `crowd control` · `anti-projectile` · `jedi` · `sith`
+
+<!-- icon-suggestion: new_f_icon_push -->

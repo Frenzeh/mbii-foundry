@@ -2,22 +2,26 @@
 
 `MB_ATT_FP_LIGHTNING`
 
-Unleashes bolts of electricity to damage and stun enemies.
+> Attribute for streaming lightning from the fingertips.
 
-> **Default:** 0 FP Drain.
+## What it does
 
-### Stats
-* **Initial Cost:** **15 FP**.
-* **Drain Rate:**
- * **Rank 1/2:** **60 FP/sec**.
- * **Rank 3:** **50 FP/sec**.
-* **Stun:** Stacks up to 8 times.
+Grants access to `FP_LIGHTNING`. Streams electrical damage at targets, ticking FP fast. Rank 3 chains between targets and stuns gunners, preventing them from firing.
 
-### Levels
-* **Rank 1:** Single target spark. Low damage.
-* **Rank 2:** Sustained stream. Medium damage.
-* **Rank 3:** **Chain Lightning**. High damage. **Stuns** gunners (prevents firing).
+## Per level
 
-### Tips
-* **High Drain:** Burns through FP very quickly.
-* **Stun:** Rank 3 is devastating against Gunners as it stops them from shooting back.
+- **Level 1** — single-target spark, low damage · *cost 2 (per tick)*
+- **Level 2** — sustained stream, medium damage · *cost 2*
+- **Level 3** — chain lightning, high damage, stuns gunners · *cost 2*
+
+## Notes
+
+- Initial cost ~15 FP; sustain ~60 FP/sec at Rank 1-2, ~50 FP/sec at Rank 3.
+- Rank 3 stun stacks up to 8 times — devastating vs clustered gunners.
+- Countered by Absorb; partial block from saber parry at BP cost.
+
+---
+
+`dark side` · `damage` · `suppression` · `sith`
+
+<!-- icon-suggestion: new_f_icon_dk_l1 -->

@@ -2,12 +2,18 @@
 
 `CFL_DISRUPTOR_WALLS`
 
-High-power energy output for Disruptor Rifles.
+> Fully charged Disruptor shots punch through walls and doors.
 
-### Mechanics
-* **Penetration:** Fully charged Disruptor shots pass through **walls**, **doors**, and **multiple enemies**.
-* **Requirement:** Must have `MB_ATT_DISRUPTOR` (Level 2+ recommended for charge speed).
+## What it does
 
-### Usage
-* **Anti-Camper:** Kill enemies hiding behind cover.
-* **Bosses:** Makes a sniper boss terrifyingly oppressive.
+`g_weapon.c:3223` — on a full-charge Disruptor shot, if the firer has this flag **and** `MB_ATT_DISRUPTOR` at rank 2+, the projectile's trace ignores normal solid-geometry blocking and passes through walls/doors, hitting enemies in cover.
+
+## Notes
+
+- Gated on both the flag and `MB_ATT_DISRUPTOR >= FORCE_LEVEL_2` — rank 1 disruptor doesn't get wallbangs.
+- Requires a full charge — quick shots do not penetrate.
+- Extreme sniper-boss flavour; almost never given to regular roster classes.
+
+---
+
+`sniper` · `weapon-mod` · `penetration`

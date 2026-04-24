@@ -84,23 +84,6 @@
       }
     }
   },
-  "FP_MINDTRICK": {
-    "id": "FP_MINDTRICK",
-    "levels": {
-      "1": {
-        "cost": 50,
-        "description": "Cost: 50"
-      },
-      "2": {
-        "cost": 30,
-        "description": "Cost: 30"
-      },
-      "3": {
-        "cost": 30,
-        "description": "Cost: 30"
-      }
-    }
-  },
   "FP_GRIP": {
     "id": "FP_GRIP",
     "levels": {
@@ -285,23 +268,6 @@
       "3": {
         "cost": 0,
         "description": "Cost: 0"
-      }
-    }
-  },
-  "FP_SABER_THROW": {
-    "id": "FP_SABER_THROW",
-    "levels": {
-      "1": {
-        "cost": 20,
-        "description": "Cost: 20"
-      },
-      "2": {
-        "cost": 20,
-        "description": "Cost: 20"
-      },
-      "3": {
-        "cost": 20,
-        "description": "Cost: 20"
       }
     }
   },

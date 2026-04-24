@@ -102,19 +102,23 @@ func categoryTagFor(kind, bucket string) string {
 }
 
 // updateHeaderChips sets the hero band's ID chip + category chip.
-// Called from ShowInfo after the def is resolved; also used by the
-// welcome / not-found paths to keep the UI consistent.
+// Called from ShowInfo after the def is resolved; welcome / not-found
+// paths pass category="REFERENCE" and id="" so the band reads as a
+// minimal title-only block rather than showing a blank "ATTRIBUTE · "
+// chip above the welcome copy.
 func (ip *InfoPanel) updateHeaderChips(id, category string) {
 	if ip.idChip != nil {
-		if id != "" {
-			ip.idChip.Text = id
-		} else {
-			ip.idChip.Text = ""
-		}
+		ip.idChip.Text = id
 		ip.idChip.Refresh()
 	}
 	if ip.categoryChip != nil {
-		ip.categoryChip.Text = strings.ToUpper(category)
+		up := strings.ToUpper(category)
+		if up == "REFERENCE" {
+			// Welcome/not-found — drop the chip entirely so the title
+			// reads cleanly without a label that contradicts itself.
+			up = ""
+		}
+		ip.categoryChip.Text = up
 		ip.categoryChip.Refresh()
 	}
 }

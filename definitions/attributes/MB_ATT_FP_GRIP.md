@@ -2,29 +2,26 @@
 
 `MB_ATT_FP_GRIP`
 
-Chokes the target, lifting them into the air and dealing damage.
+> Attribute for choking and lifting a target with the Force.
 
-> **Default:** 0 FP Drain.
+## What it does
 
-### Stats
-* **Initial Cost:** **0 FP**.
-* **Drain Rate:**
- * **Locking On:** **2-3 FP** per tick.
- * **Holding:** **3 FP** per tick.
-* **Lock Time:** 280ms per level check.
+Grants access to `FP_GRIP`. After a brief lock-on window (~280ms), ticks HP damage on the target and drains FP from the caster per tick. Rank governs how far the caster can move while gripping and the per-tick damage.
 
-### Levels
-* **Rank 1:**
- * **Movement:** Stationary.
- * **Choke Damage:** **1** per tick.
-* **Rank 2:**
- * **Movement:** Slow walk.
- * **Choke Damage:** **5** per tick.
-* **Rank 3:**
- * **Movement:** Full walk.
- * **Effect:** **Crush**.
- * **Choke Damage:** **8** per tick.
+## Per level
 
-### Tips
-* **Counter:** Force Push/Pull can break the grip.
-* **Vulnerability:** Target can shoot back unless it is Rank 3 Crush vs non-Force user.
+- **Level 1** — stationary grip, 1 damage per tick · *cost 50*
+- **Level 2** — slow walk, 5 damage per tick · *cost 65*
+- **Level 3** — full walk, 8 damage per tick, Crush effect · *cost 70*
+
+## Notes
+
+- Costs scale **up** with rank, not down.
+- Lock-on phase costs 2-3 FP/tick; held grip costs ~3 FP/tick.
+- Countered by Absorb; targets can shoot back until Rank 3 Crush lands.
+
+---
+
+`dark side` · `crowd control` · `sith` · `anti-jedi`
+
+<!-- icon-suggestion: new_f_icon_dk_grip -->

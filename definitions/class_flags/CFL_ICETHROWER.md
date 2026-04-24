@@ -1,13 +1,19 @@
-# Icethrower
+# Icethrower (Dead Code)
 
 `CFL_ICETHROWER`
 
-Converts the Flamethrower into a Cryo-projector.
+> Historical flag for a cryo-projector variant of the flamethrower. **Commented out in `bg_saga.h` and `bg_saga.c` — not currently compiled.**
 
-### Mechanics
-* **Weapon:** `MB_ATT_FLAMETHROWER` / `WP_THROWER`.
-* **Visual:** Blue "flame".
-* **Effect:** **Freezes** enemies on contact (Stun/Slow) instead of burning.
+## What it does
 
-### Usage
-* Carbonite Troopers or specialized Droids.
+Originally intended to convert the flamethrower into a freeze weapon. In current source, `w_force.c:2211` branches on `throwerType == 3` (the numeric value formerly bound to `CFL_ICETHROWER`) — the class-flag route is dead. Cryo behaviour is driven entirely by per-weapon `throwerType`.
+
+## Notes
+
+- Real cryo weapons exist as `MB_ATT_THROWER_ICE` / `WP_THROWER` with `throwerType == 3`.
+- The enum is commented out in `bg_saga.h:43` and `bg_saga.c:443`.
+- Leave disabled in FA specs — use the corresponding thrower attribute instead.
+
+---
+
+`deprecated` · `dead-code` · `cryo`

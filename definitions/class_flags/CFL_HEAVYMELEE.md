@@ -2,19 +2,18 @@
 
 `CFL_HEAVYMELEE`
 
-Transforms melee combat into a slow, devastating brawler style.
+> Forces the class's melee hits to count as heavy-weapon damage (armor-piercing, higher knockback).
 
-### Mechanics
-* **Damage:** **+100%** (Double Damage). Base Melee is ~15-20, so Heavy is ~30-40 per hit.
-* **Animation:** Forces "Heavy" animations (Haymakers).
-* **Speed:** Attacks are slower and more telegraphed.
-* **Knockback:** Increases force, sending enemies flying.
+## What it does
 
-### Synergies
-* **Wookiee Strength:** Stacks damage modifiers.
- * Str 1: +Damage.
- * Str 3: **Lethal**. Can hit for 80+ damage.
-* **High Health:** Necessary to trade hits.
+In Siege mode, `G_MeleeHeavyMelee()` returns true for flagged classes, routing melee/kick/kata damage through the heavy-weapon damage pipeline. This bypasses some light-armor mitigation, produces stronger knockback, and is treated like a "heavy weapon" hit for knockdown/dismember checks.
 
-### Usage
-* Best for "Brute" characters like Wookiees, Gamorreans, or SBDs.
+## Notes
+
+- Ground truth: `g_combat.c:294` — `GT_SIEGE && MB_FA_MODE && classflag & (1 << CFL_HEAVYMELEE)` returns true for `IsHeavyWeapon(MOD_MELEE|MELEE_KICK|MELEE_KATA)`.
+- Stacks with `MB_ATT_WOOKIE_STRENGTH` — Wookiee Strength 3 on a Heavy Melee class is the game's hardest-hitting melee trade.
+- Does not directly double damage — it reclassifies the damage type, and the resulting number depends on target armor / flags / MODs applied downstream.
+
+---
+
+`melee` · `offense` · `armor-piercing`

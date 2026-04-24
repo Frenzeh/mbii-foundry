@@ -2,15 +2,26 @@
 
 `MB_ATT_FP_SABER_OFFENSE`
 
-Skill with the lightsaber, influencing attack speed and style availability.
+> Attribute gating saber-style access and attack speed.
 
-> **Default:** 0 (Sluggish/No styles).
+## What it does
 
-### Levels
-* **Level 1**: **Medium Style (Yellow)** unlocked. Attack speed is **1.0x**.
-* **Level 2**: **Fast Style (Blue)** unlocked. Attack speed is **1.1x**.
-* **Level 3**: **Strong Style (Red)** unlocked. Attack speed is **1.2x**. Allows access to Desann/Tavion/Staff/Dual styles (if equipped).
+Passive. Determines which saber styles are available and how fast the user swings. A prerequisite for all serious saber combat.
 
-### Tips
-* Level 3 is mandatory for any serious duelist, providing access to the most powerful styles.
-* Styles must still be selected in the **Saber Configuration** tab.
+## Per level
+
+- **Level 1** — Medium (Yellow) style, 1.0x attack speed · *cost 0*
+- **Level 2** — Fast (Blue) style unlocked, 1.1x attack speed · *cost 0*
+- **Level 3** — Strong (Red) style unlocked, 1.2x attack speed; Dual/Staff/Desann/Tavion where granted · *cost 0*
+
+## Notes
+
+- Passive skill — no FP drain at use time.
+- Style availability also depends on per-style attribute grants (`MB_ATT_SS_*`).
+- Styles are selected in the Saber Configuration tab; having the attribute just makes them selectable.
+
+---
+
+`saber` · `passive` · `jedi` · `sith`
+
+<!-- icon-suggestion: new_f_icon_saber_attack -->

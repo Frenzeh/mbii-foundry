@@ -2,15 +2,26 @@
 
 `MB_ATT_FP_RAGE`
 
-Channels the Dark Side to fuel physical prowess and durability.
+> Attribute for a dark-side combat trance.
 
-> **Default:** 0 FP Drain (Cannot rage).
+## What it does
 
-### Levels
-* **Level 1**: **40 FP** per second. **50%** Damage Reduction. Increased movement speed. Short duration.
-* **Level 2**: **50 FP** per second. **50%** Damage Reduction. Medium duration.
-* **Level 3**: **60 FP** per second. **50%** Damage Reduction. **+30%** Speed. Immune to Knockdown. Long duration.
+Grants access to `FP_RAGE`. Activates a timed combat buff: attack speed, movement speed, and damage reduction go up while FP drains per second. Leaves the user exhausted when rage ends (reduced HP/stamina regen during the downtime).
 
-### Tips
-* **Wookiee Fury** is the non-Force equivalent.
-* Essential for rushing into a room of enemies.
+## Per level
+
+- **Level 1** — 50% DR, faster movement, short duration · *cost 80*
+- **Level 2** — 50% DR, medium duration · *cost 70*
+- **Level 3** — 50% DR, +30% speed, immune to knockdown, long duration · *cost 60*
+
+## Notes
+
+- Sith-only. Wookiee Fury is the non-Force equivalent for bruisers.
+- Post-rage exhaustion is real — don't rage if you can't finish the fight.
+- Standard opener for rush/brawler Sith.
+
+---
+
+`dark side` · `self buff` · `sith` · `damage`
+
+<!-- icon-suggestion: new_f_icon_dk_rage -->

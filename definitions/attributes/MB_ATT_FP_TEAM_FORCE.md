@@ -2,19 +2,26 @@
 
 `MB_ATT_FP_TEAM_FORCE`
 
-Restores the Force Points / Energy of nearby allies.
+> Attribute for restoring allies' FP/ammo/SBD batteries.
 
-> **Class Specific:** Jedi (Light Side).
+## What it does
 
-### Levels
+Grants access to `FP_TEAM_FORCE`. Pulses a resource refill to nearby allies — FP for Force users, energy for troopers, and battery for SBDs. Radius and refill amount scale with rank.
 
-* **Rank 1:**
- * **Effect:** Restores small amount of FP/Ammo to target.
-* **Rank 2:**
- * **Effect:** Restores medium amount.
-* **Rank 3:**
- * **Effect:** Fully restores FP and Energy to nearby allies.
+## Per level
 
-### Tips
-* **Battery:** Turns you into a walking power plant.
-* **SBDs:** Can recharge SBD batteries (very powerful synergy).
+- **Level 1** — small resource pulse · *cost 50*
+- **Level 2** — moderate pulse · *cost 33*
+- **Level 3** — fully restores FP and ammo, largest radius · *cost 25*
+
+## Notes
+
+- Works on any teammate — especially strong on SBDs (recharges battery).
+- Light-side support staple; pairs with Team Heal.
+- Doesn't restore BP or HP — those come from the other powers.
+
+---
+
+`light side` · `support` · `resource` · `jedi`
+
+<!-- icon-suggestion: new_f_icon_dk_forceother -->

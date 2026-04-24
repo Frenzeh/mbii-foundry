@@ -2,16 +2,26 @@
 
 `MB_ATT_FP_HEAL`
 
-Allows the user to heal themselves using the Force.
+> Attribute gating self-heal via the Force.
 
-> **Default:** 0 FP Drain (Cannot heal).
+## What it does
 
-### Levels
-* **Level 1**: **30 FP** per tick. Heals **25 HP** over **5 seconds**. Must be stationary.
-* **Level 2**: **20 FP** per tick. Heals **50 HP** over **5 seconds**. Can move slowly.
-* **Level 3**: **15 FP** per tick. Heals **75 HP** over **5 seconds**. Can move at normal speed.
+Grants access to `FP_HEAL`. Each rank governs how much HP is restored per activation, how efficient the FP cost is, and how restricted movement is during the channel.
 
-### Tips
-* Consumes Force Pool.
-* Cannot attack while healing.
-* Healing rate is often `20 HP/s`.
+## Per level
+
+- **Level 1** — smallest heal per activation, slowest channel · *cost 50*
+- **Level 2** — larger heal, moderate channel · *cost 40*
+- **Level 3** — largest heal, most FP-efficient · *cost 30*
+
+## Notes
+
+- Light-side power. Jedi-only; Sith use Drain for sustain instead.
+- Healing rate is roughly 20 HP/second in practice.
+- Channel can be interrupted by incoming damage — heal under cover.
+
+---
+
+`light side` · `self heal` · `jedi` · `utility`
+
+<!-- icon-suggestion: new_f_icon_lt_heal -->

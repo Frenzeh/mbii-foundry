@@ -1,16 +1,27 @@
-# ⬅ Force Pull
+# Force Pull
 
 `MB_ATT_FP_PULL`
 
-> Telekinetic grip that pulls enemies closer or disarms them.
+> Attribute for telekinetic pull and disarm.
+
+## What it does
+
+Grants access to `FP_PULL`. Pulls enemies toward the caster, drags dropped items, and disarms weapons. Rank widens the cone, strengthens the pull, and improves disarm chance.
 
 ## Per level
 
-- **Level 1** — **20 FP**. Single target pull. Can pull weapons.
-- **Level 2** — **30 FP**. Cone effect. Stronger pull force.
-- **Level 3** — **40 FP**. **Force Pull**: 360-degree AoE. Massive pull force. High chance to disarm. Can knock down.
+- **Level 1** — short-range single-target pull, can pull weapons · *cost 20*
+- **Level 2** — wider cone, stronger pull force · *cost 20*
+- **Level 3** — widest cone, strongest pull, high disarm chance, can knock down · *cost 20*
 
-## Tips
+## Notes
 
-- Deadly combo with Saber throw or melee.
-- Excellent for pulling enemies off ledges.
+- Deadly combo with saber throw, melee, or a pit edge.
+- Countered by Absorb, just like Push.
+- Works on dropped weapons and items — useful to grab objectives remotely.
+
+---
+
+`telekinesis` · `crowd control` · `disarm` · `jedi` · `sith`
+
+<!-- icon-suggestion: new_f_icon_pull -->

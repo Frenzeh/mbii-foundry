@@ -1,20 +1,27 @@
-# Team Force
+# Team Energize
 
 `FP_TEAM_FORCE`
 
-> Force Energize
-EAS_FP_TEAM_FORCE
-1:
-2:
-3:
-Restores Resource of surrounding teammates.
+> Recharge nearby allies' FP, ammo, and even SBD batteries.
 
-## Overview
+## What it does
 
-Force Energize
+Emits a Force pulse that restores resources to nearby allies. Refills FP for Force users, ammo/energy for troopers, and is especially valuable recharging SBD batteries. Radius and efficiency scale with rank.
 
 ## Per level
 
-- **Level 1** — Cost: 50 · *cost 50*
-- **Level 2** — Cost: 33 · *cost 33*
-- **Level 3** — Cost: 25 · *cost 25*
+- **Level 1** — small resource pulse, short radius · *cost 50*
+- **Level 2** — moderate pulse · *cost 33*
+- **Level 3** — full refill, largest radius · *cost 25*
+
+## Notes
+
+- Works on all teammates, not just Force users — a walking power plant.
+- Strong synergy with SBDs (recharges their battery).
+- Pair with Team Heal for a full support-Jedi kit.
+
+---
+
+`light side` · `support` · `resource` · `jedi`
+
+<!-- icon-suggestion: new_f_icon_dk_forceother -->

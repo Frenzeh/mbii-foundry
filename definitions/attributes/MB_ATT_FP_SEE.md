@@ -2,26 +2,26 @@
 
 `MB_ATT_FP_SEE`
 
-Heightens senses to detect enemies through obstacles.
+> Attribute for Force-enhanced vision and radar.
 
-> **Default:** 0 FP Drain (Cannot see).
+## What it does
 
-### Stats
-* **Drain Rate:** **3 FP** per tick (Variable rate).
-* **Initial Cost:** **20 FP** (All ranks).
+Grants access to `FP_SEE`. Activates a passive ping that reveals enemies on the radar and tints them through walls. Higher ranks extend range, beat Mind Trick at matching or higher rank, and reveal additional cues.
 
-### Levels
-* **Rank 1:**
- * **Range:** **1536** units.
- * **Stealth:** See Rank 1 Invisible.
-* **Rank 2:**
- * **Range:** **2048** units.
- * **Stealth:** See Rank 2 Invisible.
-* **Rank 3:**
- * **Range:** **2560** units.
- * **Stealth:** See Rank 3 Invisible.
- * **Sniper:** Can see laser sights.
+## Per level
 
-### Tips
-* **Counter-Spy:** Essential for spotting disguised Spies (red aura).
-* **Wallhacks:** See enemies through walls (blue aura).
+- **Level 1** — 1536u range, sees Rank 1 Mind Trick · *cost 20*
+- **Level 2** — 2048u range, sees Rank 2 Mind Trick · *cost 20*
+- **Level 3** — 2560u range, sees Rank 3 Mind Trick, reveals sniper laser sights · *cost 20*
+
+## Notes
+
+- Initial cost is 20 FP; sustain ~3 FP per tick while active.
+- Counter-Spy: tints disguised Spies with a red aura.
+- Activation plays an audible Force hum — enemies nearby will hear it.
+
+---
+
+`utility` · `detection` · `jedi` · `sith` · `anti-stealth`
+
+<!-- icon-suggestion: new_f_icon_sight -->

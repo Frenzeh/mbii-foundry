@@ -2,14 +2,20 @@
 
 `CFL_ACIDBLOOD`
 
-The character's blood is highly corrosive.
+> Damages nearby attackers with a poison splash when the carrier is hit / killed.
 
-### Mechanics
-* **Trigger:** Taking damage from a close-range source (Melee/Saber).
-* **Effect:** Sprays acid on the attacker.
-* **Damage:** Poisons the attacker (Damage over Time).
-* **Death:** Release a poison cloud upon death? (Wiki: "If a player... dies, enemies nearby are briefly poisoned").
+## What it does
 
-### Usage
-* **Aliens:** Noghri, Trandoshans, Xenomorph-types.
-* **Tactics:** Punishes Jedi for aggressive melee spam.
+Two code paths in `g_combat.c`:
+- **On damage taken** — when flagged, nearby non-flagged enemies are dosed with acid (poison-like DoT), skipping enemies who are already poisoned or who themselves carry the flag (mutual immunity).
+- **On death / explosion** — the acid-splash radius is triggered as part of the death effects chain.
+
+## Notes
+
+- Immunity: carriers of the flag do not acid-dose each other.
+- Does not stack — enemies with `nAcidDosesLeft > 0` are skipped.
+- Classic uses: Trandoshan, Noghri, Xenomorph-style characters.
+
+---
+
+`defense` · `dot` · `alien`

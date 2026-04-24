@@ -2,26 +2,26 @@
 
 `MB_ATT_FP_SABERTHROW`
 
-Telekinetically throwing the lightsaber as a projectile.
+> Attribute for telekinetically throwing the lightsaber.
 
-> **Default:** 0 (Cannot throw).
+## What it does
 
-### Levels
+Grants access to `FP_SABERTHROW`. Launches the active saber as a projectile that spins forward, deals damage on contact, and returns. Rank governs range, steerability, and whether FP drains continuously mid-flight.
 
-* **Level 1**:
- * Short distance throw.
- * Saber spins flat.
- * Returns automatically.
+## Per level
 
-* **Level 2**:
- * Medium distance.
- * Can control the saber's return path slightly.
+- **Level 1** — short throw, flat spin, auto-return · *cost 20*
+- **Level 2** — medium range, slight return-path control · *cost 20*
+- **Level 3** — long range, fully steerable, FP drains while airborne · *cost 20*
 
-* **Level 3**:
- * Long distance.
- * **Steerable**: Can actively guide the saber while it is in the air.
- * Drains Force Points continuously while airborne.
+## Notes
 
-### Tips
-* Leaves you **defenseless** (cannot block) while the saber is thrown.
-* High risk, high reward against gunners or unaware Jedi.
+- You are **defenseless** (cannot parry or block) while the saber is in the air.
+- Base damage is ~30 per clean hit.
+- Classic combo: Pull to strip a weapon, then throw for the kill.
+
+---
+
+`saber` · `ranged` · `jedi` · `sith`
+
+<!-- icon-suggestion: new_f_icon_saber_throw -->

@@ -1,20 +1,27 @@
-# Speed
+# Force Speed
 
 `FP_SPEED`
 
-> Force Speed
-EAS_FP_SPEED
-1:
-2:
-3:
-Increases movement Speed, higher levels reduces the Force point cost per second.
+> Sprint past blaster bolts in a blue tunnel-vision blur.
 
-## Overview
+## What it does
 
-Force Speed
+Activates a time-dilation movement buff. While active the user moves faster and visual effects tint the screen. Drains FP continuously while active; higher ranks both move faster and drain less per tick.
 
 ## Per level
 
-- **Level 1** — Cost: 15 · *cost 15*
-- **Level 2** — Cost: 10 · *cost 10*
-- **Level 3** — Cost: 5 · *cost 5*
+- **Level 1** — modest speed boost, highest drain · *cost 15*
+- **Level 2** — better boost, moderate drain · *cost 10*
+- **Level 3** — fastest boost, lowest drain — can sustain for a long time · *cost 5*
+
+## Notes
+
+- Activation cost is paid up-front; sustain cost ticks while active.
+- Stacks with saber-style sprint quirks and some movement attributes.
+- Best used for map rotations, disengages, or chasing down runners.
+
+---
+
+`movement` · `jedi` · `sith` · `utility`
+
+<!-- icon-suggestion: new_f_icon_speed -->

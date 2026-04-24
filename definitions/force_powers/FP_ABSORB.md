@@ -1,20 +1,27 @@
-# Absorb
+# Force Absorb
 
 `FP_ABSORB`
 
-> Force Absorb
-EAS_FP_ABSORB
-1:
-2:
-3:
-Returns Force to the user by <math display="inline" alt="Square root of pi">\frac{F \times R}{3}</math> where <var style=…
+> Turn enemy Force attacks into your own Force Points.
 
-## Overview
+## What it does
 
-Force Absorb
+Activates a shield that intercepts incoming Force powers (Push, Pull, Grip, Lightning, Drain, etc.) and converts a portion of their energy back into the user's FP pool. Ticks FP per second while active. The rank determines which powers it can absorb and the conversion efficiency.
 
 ## Per level
 
-- **Level 1** — Cost: 50 · *cost 50*
-- **Level 2** — Cost: 25 · *cost 25*
-- **Level 3** — Cost: 10 · *cost 10*
+- **Level 1** — absorbs Push, Pull; small FP returned · *cost 50*
+- **Level 2** — absorbs Grip, Lightning (Rank 1/2); medium FP returned · *cost 25*
+- **Level 3** — absorbs almost everything, largest conversion · *cost 10*
+
+## Notes
+
+- Light-side only. The hard counter to Force-heavy Sith.
+- Must be **active** (toggled on) — unlike passive Force Block.
+- Does not block saber hits or gunner damage — it is Force-only.
+
+---
+
+`light side` · `defense` · `anti-force` · `jedi`
+
+<!-- icon-suggestion: new_f_icon_lt_absorb -->

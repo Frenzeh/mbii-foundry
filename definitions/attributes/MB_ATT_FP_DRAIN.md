@@ -2,22 +2,26 @@
 
 `MB_ATT_FP_DRAIN`
 
-Siphons life energy from the target to the user.
+> Attribute for vampiric Force damage.
 
-> **Class Specific:** Sith.
+## What it does
 
-### Levels
+Grants access to `FP_DRAIN`. Siphons HP (and at higher ranks, FP and stamina) from the target while healing the user for a percentage of what was drained. Small FP cost per tick.
 
-* **Rank 1:**
- * **Target:** Single.
- * **Effect:** Drains HP slowly. Heals user.
-* **Rank 2:**
- * **Target:** Single.
- * **Effect:** Drains HP and FP (Force Points).
-* **Rank 3:**
- * **Target:** Cone/Multi-target?
- * **Effect:** Rapid Drain. Drains HP, FP, and Stamina.
+## Per level
 
-### Tips
-* **Vampire:** Keeps you alive in a brawl.
-* **Anti-Jedi:** Draining their FP prevents them from Blocking or using Powers.
+- **Level 1** — single-target HP drain, heals user · *cost 10*
+- **Level 2** — drains HP and FP · *cost 10*
+- **Level 3** — cone/multi-target; drains HP, FP, and stamina · *cost 10*
+
+## Notes
+
+- Sith counterpart to Heal — vampiric rather than self-cast.
+- Anti-Jedi: stripping a Jedi's FP shuts down their entire kit.
+- Countered by Absorb (Jedi absorbs the drain back).
+
+---
+
+`dark side` · `damage` · `sustain` · `sith`
+
+<!-- icon-suggestion: new_f_icon_dk_drain -->

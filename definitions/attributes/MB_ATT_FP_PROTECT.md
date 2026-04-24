@@ -2,15 +2,26 @@
 
 `MB_ATT_FP_PROTECT`
 
-Wraps the user in a protective Force barrier.
+> Attribute for a defensive Force barrier.
 
-> **Default:** 0 FP Drain (Cannot protect).
+## What it does
 
-### Levels
-* **Level 1**: **20 FP** per tick. **25%** Damage Reduction.
-* **Level 2**: **30 FP** per tick. **50%** Damage Reduction.
-* **Level 3**: **40 FP** per tick. **75%** Damage Reduction. Very efficient FP usage.
+Grants access to `FP_PROTECT`. Activates a shield that reduces incoming damage from blasters, explosives, and other ranged sources while ticking FP per second.
 
-### Tips
-* **Tanking:** Makes a Jedi incredibly hard to kill as long as they have Force Points.
-* **Weakness:** Does not stop Cortosis or Sniper headshots (direct damage).
+## Per level
+
+- **Level 1** — 25% damage reduction · *cost 50*
+- **Level 2** — 50% damage reduction · *cost 25*
+- **Level 3** — 75% damage reduction · *cost 10*
+
+## Notes
+
+- Light-side. Combines brutally with Heal to make a Jedi near-immortal.
+- Does not stop Cortosis or sniper-headshot direct damage.
+- Does not affect saber-vs-saber BP exchanges.
+
+---
+
+`light side` · `self buff` · `jedi` · `defense`
+
+<!-- icon-suggestion: new_f_icon_lt_protect -->

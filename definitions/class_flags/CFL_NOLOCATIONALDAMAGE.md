@@ -2,13 +2,18 @@
 
 `CFL_NOLOCATIONALDAMAGE`
 
-Uniform damage reception across the entire hitbox.
+> Disables hit-location multipliers (no headshot bonus, no limb reduction).
 
-### Mechanics
-* **Headshots:** **0x Bonus** (Takes normal body damage).
-* **Leg/Arm Shots:** **0x Reduction** (Takes normal body damage).
-* **Consistency:** Makes the character feel "tanky" and consistent.
+## What it does
 
-### Usage
-* **Droids:** SBDs, Droidekas, Dark Troopers (no vital organs).
-* **Juggernauts:** Heavily armored units with no weak points.
+`g_combat.c:4956` — the hit-location resolver returns early if this flag is set, skipping the headshot / limb-shot damage adjustment. The player takes flat body damage regardless of where they were hit.
+
+## Notes
+
+- Droid-flagged classes (`classData[].isDroid`) get this behavior automatically via a separate `isDroid` early-return; the flag is for non-droid characters who need the same "no weak points" treatment (heavily armored juggernauts, bosses, certain NPC types).
+- Saber damage ignores hit-location anyway, so the flag has no effect on saber damage.
+- NPC stats file can set an equivalent `noLocationalDamage` at NPC-spawn time.
+
+---
+
+`defense` · `tank` · `hit-model`

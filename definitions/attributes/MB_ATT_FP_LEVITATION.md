@@ -1,16 +1,27 @@
-# ⬆ Force Jump
+# Force Jump
 
 `MB_ATT_FP_LEVITATION`
 
-Enhances jump height and air control.
+> Attribute for enhanced Force-assisted jumping.
 
-> **Default:** 0 FP Drain (Cannot jump high).
+## What it does
 
-### Levels
-* **Level 1**: **10 FP** per jump. Increased jump height (**~2x** normal). Can wall run briefly.
-* **Level 2**: **20 FP** per jump. Higher jump (**~4x** normal). Improved wall run.
-* **Level 3**: **30 FP** per jump. Maximum jump height (**~8x** normal). Best air control. Can Force Jump off walls.
+Grants access to `FP_LEVITATION`. Enhances jump height and mid-air control, unlocks wall-running, and reduces fall damage. Each jump drains a small amount of FP.
 
-### Tips
-* Every Jedi needs at least Level 1.
-* Combine with `MB_ATT_DEXTERITY` for advanced acrobatics.
+## Per level
+
+- **Level 1** — ~2x jump height, short wall runs · *cost 10*
+- **Level 2** — ~4x jump height, improved wall runs · *cost 10*
+- **Level 3** — ~8x jump height, full air control, best fall-damage reduction · *cost 10*
+
+## Notes
+
+- Almost mandatory on any Jedi/Sith — without it you're grounded.
+- Pairs with `MB_ATT_DEXTERITY` for advanced acrobatics.
+- Some saber specials (Red DFA, Yellow lunge) require a minimum Jump rank.
+
+---
+
+`movement` · `jedi` · `sith` · `utility`
+
+<!-- icon-suggestion: new_f_icon_jump -->

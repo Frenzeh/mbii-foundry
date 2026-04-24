@@ -1,20 +1,27 @@
-# See
+# Force Sense
 
 `FP_SEE`
 
-> Force Sense
-EAS_FP_SEE
-1:
-2:
-3:
-On activation, a sound cue plays and the user can now see enemies on radar/through walls up to a certain distance.
+> Hear the Force — see enemies through walls and sniff out cloaked Spies.
 
-## Overview
+## What it does
 
-Force Sense
+Activates a passive ping that reveals enemies on the radar and tints them through walls. Ticks FP per second while active. Range and what it can see scale with rank — higher ranks see through Mind Trick at matching rank and reveal Spy disguises.
 
 ## Per level
 
-- **Level 1** — Cost: 20 · *cost 20*
-- **Level 2** — Cost: 20 · *cost 20*
-- **Level 3** — Cost: 20 · *cost 20*
+- **Level 1** — 1536u range, sees Rank 1 Mind Trick · *cost 20*
+- **Level 2** — 2048u range, sees Rank 2 Mind Trick · *cost 20*
+- **Level 3** — 2560u range, sees Rank 3 Mind Trick, reveals sniper laser sights · *cost 20*
+
+## Notes
+
+- Listed cost is activation — sustain drain is ~3 FP per tick.
+- Counter-Spy: tints disguised Spies with a red aura.
+- Activation plays a Force hum audible to everyone nearby.
+
+---
+
+`utility` · `detection` · `jedi` · `sith` · `anti-stealth`
+
+<!-- icon-suggestion: new_f_icon_sight -->

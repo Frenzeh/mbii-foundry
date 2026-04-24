@@ -2,25 +2,26 @@
 
 `MB_ATT_FP_SPEED`
 
-Temporarily increases movement speed.
+> Attribute for Force-enhanced movement speed.
 
-> **Default:** 0 FP Drain (Cannot speed).
+## What it does
 
-### Stats
-* **Drain Rate:** **16 FP/sec** (8 FP per 500ms).
-* **Duration:** ~60 seconds (if not drained).
+Grants access to `FP_SPEED`. Activation pays an initial cost, then drains FP continuously while active. Duration is effectively capped by your FP pool.
 
-### Levels
-* **Rank 1:**
- * **Initial Cost:** **20 FP**.
- * **Speed:** **1.2x** Boost.
-* **Rank 2:**
- * **Initial Cost:** **15 FP**.
- * **Speed:** **1.4x** Boost.
-* **Rank 3:**
- * **Initial Cost:** **10 FP**.
- * **Speed:** **1.6x** Boost.
+## Per level
 
-### Tips
-* Higher ranks cost *less* to activate.
-* Sprint (`Shift`) does not drain extra Force, but Speed drains continuously.
+- **Level 1** — 1.2x speed · *cost 15*
+- **Level 2** — 1.4x speed · *cost 10*
+- **Level 3** — 1.6x speed · *cost 5*
+
+## Notes
+
+- Activation cost drops with rank — Rank 3 is very cheap to toggle.
+- Sustain drain is roughly 16 FP/sec (8 FP per 500ms).
+- Stacks with other movement attributes like Dexterity and Acrobatics.
+
+---
+
+`movement` · `jedi` · `sith` · `utility`
+
+<!-- icon-suggestion: new_f_icon_speed -->

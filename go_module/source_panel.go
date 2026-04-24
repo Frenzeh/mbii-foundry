@@ -102,20 +102,25 @@ func NewSourcePanel(a *App) *SourcePanel {
 	sp.byteCount = widget.NewLabel("")
 	sp.byteCount.TextStyle = fyne.TextStyle{Italic: true, Monospace: true}
 
-	// Highlighted view (default). TextWrapBreak wraps at any
-	// character boundary, which matters for MBCH source — long
-	// tokens (MB_ATT_POISON_DART, full PK3 paths) are single
-	// "words" to TextWrapWord so they wouldn't wrap at all and
-	// would clip at the pane edge. Break lets them wrap mid-token
-	// so nothing important gets hidden behind the right edge.
+	// Highlighted view (default). TextWrapWord wraps at whitespace so
+	// tokens stay intact. MBCH source has a couple of "pipe-separated
+	// mega-lists" (forcepowers, attributes) that blow past any pane
+	// width — those get pre-processed by wrapSourceForDisplay below
+	// into multi-line pretty-printed form before highlighting, so they
+	// wrap at pipe boundaries instead of degenerate char-by-char
+	// breaks. Previous TextWrapBreak caused a "vertical alphabet soup"
+	// of one-character lines for overflowing pipe runs.
 	sp.highlighted = widget.NewRichText()
-	sp.highlighted.Wrapping = fyne.TextWrapBreak
+	sp.highlighted.Wrapping = fyne.TextWrapWord
 	sp.setPlaceholder("Select a file to see its live source here.")
 
-	// Edit view (hidden until toggled). Same break-wrap reasoning.
+	// Edit view (hidden until toggled). TextWrapWord so typing a long
+	// pipe-list wraps at whitespace rather than breaking mid-token.
+	// Users editing a long forcepowers value can still scroll right if
+	// a single unbreakable token extends past the viewport.
 	sp.editor = widget.NewMultiLineEntry()
 	sp.editor.TextStyle = fyne.TextStyle{Monospace: true}
-	sp.editor.Wrapping = fyne.TextWrapBreak
+	sp.editor.Wrapping = fyne.TextWrapWord
 	sp.editor.OnChanged = func(s string) {
 		if sp.provider == nil {
 			return
@@ -126,7 +131,7 @@ func NewSourcePanel(a *App) *SourcePanel {
 		// types — swapping back to View then shows the latest edits
 		// already highlighted, and anyone peeking at the preview
 		// during edit mode sees the right colors.
-		sp.highlighted.Segments = highlightedSegments(s)
+		sp.highlighted.Segments = highlightedSegments(wrapSourceForDisplay(s))
 		sp.highlighted.Refresh()
 		sp.validateEdits(s)
 	}
@@ -242,7 +247,12 @@ func (sp *SourcePanel) renderFromProvider(src string) {
 		sp.setPlaceholder("(no source yet — the editor is empty)")
 		sp.editor.SetText("")
 	} else {
-		sp.highlighted.Segments = highlightedSegments(src)
+		// The highlighted view gets a display-wrapped copy — long
+		// pipe-separated lists get line breaks at pipe boundaries so
+		// TextWrapWord can flow them cleanly. The Entry gets the raw
+		// source because edits must save byte-identical to the form's
+		// output (the display wrap is purely cosmetic).
+		sp.highlighted.Segments = highlightedSegments(wrapSourceForDisplay(src))
 		sp.highlighted.Refresh()
 		// Only overwrite the Entry if we're not in edit mode — editing
 		// should feel uninterrupted even if the form is still ticking.

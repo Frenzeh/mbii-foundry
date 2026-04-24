@@ -24,9 +24,71 @@ package main
 // active accent theme.
 
 import (
+	"strings"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/widget"
 )
+
+// wrapSourceForDisplay rewrites MBCH/MBII source for the highlighted
+// preview pane — NOT for saving. The game format crams long lists
+// like forcepowers / attributes / classflags onto a single line that
+// can easily exceed a thousand characters. With TextWrapWord on the
+// preview's RichText, that one-liner either clips at the right edge
+// or, in earlier TextWrapBreak mode, broke character-by-character
+// into a "vertical alphabet soup." Neither reads.
+//
+// Fix: for any line longer than displayWrapWidth that contains '|'
+// pipe separators, insert a newline + continuation indent after each
+// chunk so the line wraps at token boundaries. The Entry (edit mode)
+// still shows the raw source — edits save byte-identical to the form
+// output. This is purely cosmetic for View mode.
+func wrapSourceForDisplay(src string) string {
+	const displayWrapWidth = 100
+	lines := strings.Split(src, "\n")
+	var out strings.Builder
+	out.Grow(len(src) + 128)
+	for i, line := range lines {
+		if i > 0 {
+			out.WriteByte('\n')
+		}
+		if len(line) <= displayWrapWidth || !strings.Contains(line, "|") {
+			out.WriteString(line)
+			continue
+		}
+		// Separate the leading whitespace from the line's content so
+		// continuation rows indent consistently with the key/value
+		// rhythm the game format uses.
+		trimmed := strings.TrimLeft(line, " \t")
+		indent := line[:len(line)-len(trimmed)]
+		// A bit of extra indent on continuation rows visually threads
+		// them to the line above without confusing them for a new key.
+		contIndent := indent + "    "
+
+		parts := strings.Split(trimmed, "|")
+		cur := indent
+		first := true
+		for j, p := range parts {
+			sep := "|"
+			if j == len(parts)-1 {
+				sep = "" // no trailing pipe on the last chunk
+			}
+			chunk := p + sep
+			// Start a new row once the current row would exceed the
+			// soft cap — except on the very first chunk, which always
+			// goes on the initial (indented) line even if long.
+			if !first && len(cur)+len(chunk) > displayWrapWidth {
+				out.WriteString(cur)
+				out.WriteByte('\n')
+				cur = contIndent
+			}
+			cur += chunk
+			first = false
+		}
+		out.WriteString(cur)
+	}
+	return out.String()
+}
 
 type synTokenKind int
 

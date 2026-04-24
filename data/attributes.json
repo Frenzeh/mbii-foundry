@@ -214,16 +214,6 @@
     "description": "Force Attunement"
   },
   {
-    "id": "FP_REDACTED_03",
-    "name": "FP_REDACTED_03",
-    "overview": "Description needed.\n## Level 1\n**Cost:** 20\nCost: 20\n## Level 2\n**Cost:** 20\nCost: 20\n## Level 3\n**Cost:** 20\nCost: 20",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [],
-    "description": "Description needed."
-  },
-  {
     "id": "FP_BLIND",
     "name": "FP_BLIND",
     "overview": "Force Blinding\nEAS_FP_BLIND\n1:\n2:\n3:\nCauses Temporary \"Blindness\" to the target, requires direct aim. Force Sense can partially counter.",
@@ -307,16 +297,6 @@
     "id": "FP_MINDTRICK",
     "name": "FP_MINDTRICK",
     "overview": "Description needed.\n## Level 1\n**Cost:** 50\nCost: 50\n## Level 2\n**Cost:** 30\nCost: 30\n## Level 3\n**Cost:** 30\nCost: 30",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [],
-    "description": "Description needed."
-  },
-  {
-    "id": "FP_REDACTED_01",
-    "name": "FP_REDACTED_01",
-    "overview": "Description needed.\n## Level 1\n**Cost:** 20\nCost: 20\n## Level 2\n**Cost:** 20\nCost: 20\n## Level 3\n**Cost:** 20\nCost: 20",
     "tips": [],
     "levels": {},
     "stats": {},
@@ -422,16 +402,6 @@
     "stats": {},
     "tags": [],
     "description": "Force Speed"
-  },
-  {
-    "id": "FP_REDACTED_02",
-    "name": "FP_REDACTED_02",
-    "overview": "Description needed.\n## Level 1\n**Cost:** 20\nCost: 20\n## Level 2\n**Cost:** 20\nCost: 20\n## Level 3\n**Cost:** 20\nCost: 20",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [],
-    "description": "Description needed."
   },
   {
     "id": "FP_TEAM_FORCE",
@@ -3222,7 +3192,6 @@
     "overview": "Advanced sensor array that detects nearby enemies.\n> **Default:** None.",
     "tips": [
       "**Consumes Battery/Energy** while active.",
-      "Can be jammed by **Redacted Skill** or specific counter-measures.",
       "Invaluable for SBDs to prevent flanking."
     ],
     "levels": {

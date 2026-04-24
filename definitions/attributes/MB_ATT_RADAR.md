@@ -11,5 +11,4 @@
 ## Tips
 
 - **Consumes Battery/Energy** while active.
-- Can be jammed by **Redacted Skill** or specific counter-measures.
 - Invaluable for SBDs to prevent flanking.

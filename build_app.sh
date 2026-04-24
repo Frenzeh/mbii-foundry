@@ -62,6 +62,14 @@ for rsrc in data definitions schemas templates; do
     fi
 done
 
+# Optional dev overlay: private/ is gitignored and absent from CI
+# release artifacts, but local dev builds pick it up if present.
+# When bundled, hidden_content.go's runtime loader applies it.
+if [ -d "$SCRIPT_DIR/private" ]; then
+    cp -r "$SCRIPT_DIR/private" "$APP_BUNDLE/Contents/Resources/"
+    echo "  ✓ Copied private/ (dev overlay — local-only)"
+fi
+
 # Code sign for macOS (required for newer macOS versions)
 echo "  Signing app bundle..."
 codesign -s - -f --deep "$APP_BUNDLE" 2>/dev/null || echo "  (signing skipped - codesign not available)"

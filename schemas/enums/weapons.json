@@ -4,13 +4,7 @@
   "description": "All weapon types from bg_weapons.h weapon_t enum",
   "version": "1.0.0",
   "source_file": "game/bg_weapons.h",
-
   "weapons": {
-    "WP_NONE": {
-      "value": 0,
-      "description": "No weapon",
-      "useable": false
-    },
     "WP_STUN_BATON": {
       "value": 1,
       "description": "Stun baton melee weapon",
@@ -239,69 +233,6 @@
       "description": "Projectile rifle",
       "useable": true
     },
-    "WP_REDACTED_01": {
-      "value": 45,
-      "description": "Impact grenade (ifdef REDACTED_FLAG_02)",
-      "useable": true,
-      "category": "grenade",
-      "conditional": "REDACTED_FLAG_02"
-    },
-    "WP_REDACTED_02": {
-      "value": 46,
-      "description": "Bacta healing bomb (ifdef REDACTED_FLAG_02)",
-      "useable": true,
-      "category": "grenade",
-      "conditional": "REDACTED_FLAG_02"
-    },
-    "WP_REDACTED_03": {
-      "value": 47,
-      "description": "Gas grenade (ifdef REDACTED_FLAG_02)",
-      "useable": true,
-      "category": "grenade",
-      "conditional": "REDACTED_FLAG_02"
-    },
-    "WP_REDACTED_04": {
-      "value": 48,
-      "description": "Flashbang grenade (ifdef REDACTED_FLAG_02)",
-      "useable": true,
-      "category": "grenade",
-      "conditional": "REDACTED_FLAG_02"
-    },
-    "WP_REDACTED_05": {
-      "value": 49,
-      "description": "Glop grenade (ifdef REDACTED_FLAG_02)",
-      "useable": true,
-      "category": "grenade",
-      "conditional": "REDACTED_FLAG_02"
-    },
-    "WP_REDACTED_06": {
-      "value": 50,
-      "description": "Imploder grenade (ifdef REDACTED_FLAG_02)",
-      "useable": true,
-      "category": "grenade",
-      "conditional": "REDACTED_FLAG_02"
-    },
-    "WP_REDACTED_07": {
-      "value": 51,
-      "description": "Smoke grenade (ifdef REDACTED_FLAG_02)",
-      "useable": true,
-      "category": "grenade",
-      "conditional": "REDACTED_FLAG_02"
-    },
-    "WP_REDACTED_08": {
-      "value": 52,
-      "description": "Shield grenade (ifdef REDACTED_FLAG_02)",
-      "useable": true,
-      "category": "grenade",
-      "conditional": "REDACTED_FLAG_02"
-    },
-    "WP_REDACTED_09": {
-      "value": 53,
-      "description": "Proton grenade (ifdef REDACTED_FLAG_02)",
-      "useable": true,
-      "category": "grenade",
-      "conditional": "REDACTED_FLAG_02"
-    },
     "WP_UGL": {
       "value": 54,
       "description": "Universal Grenade Launcher (FRENZY_GL)",
@@ -312,31 +243,74 @@
       "description": "Micro Grenade Launcher - sticky launcher (FRENZY_STICKY)",
       "useable": true
     },
-    "WP_EMPLACED_GUN": {
-      "value": 56,
-      "description": "Emplaced turret gun",
-      "useable": false
-    },
-    "WP_TURRET": {
-      "value": 57,
-      "description": "Turret weapon",
-      "useable": false
-    },
     "WP_NUM_WEAPONS": {
       "value": 58,
       "description": "Total weapon count marker",
       "useable": false
     }
   },
-
   "categories": {
-    "melee": ["WP_STUN_BATON", "WP_MELEE", "WP_SABER"],
-    "pistols": ["WP_BRYAR_PISTOL", "WP_CLONE_PISTOL", "WP_MANDO_PISTOL", "WP_CR2", "WP_BRYAR_OLD"],
-    "rifles": ["WP_BLASTER", "WP_DC_CARBINE", "WP_E_22", "WP_CLONE_RIFLE", "WP_A280", "WP_DLT20A", "WP_M5", "WP_EE3", "WP_EE4", "WP_PROJ", "WP_AMBAN"],
-    "heavy": ["WP_REPEATER", "WP_MINIGUN", "WP_FLECHETTE", "WP_T21", "WP_CONCUSSION"],
-    "special": ["WP_DISRUPTOR", "WP_BOWCASTER", "WP_DEMP2", "WP_SHOTGUN", "WP_THROWER"],
-    "explosives": ["WP_ROCKET_LAUNCHER", "WP_PLX1", "WP_DET_PACK", "WP_TRIP_MINE", "WP_UGL", "WP_MGL"],
-    "grenades": ["WP_THERMAL", "WP_FRAG_NADE", "WP_REAL_TD", "WP_PULSE_NADE", "WP_FIRE_NADE", "WP_SONIC_NADE", "WP_CRYO_NADE", "WP_CONC_NADE"],
-    "droid": ["WP_SBD", "WP_WELD_PULSE", "WP_WELD_BEAM"]
+    "melee": [
+      "WP_STUN_BATON",
+      "WP_MELEE",
+      "WP_SABER"
+    ],
+    "pistols": [
+      "WP_BRYAR_PISTOL",
+      "WP_CLONE_PISTOL",
+      "WP_MANDO_PISTOL",
+      "WP_CR2",
+      "WP_BRYAR_OLD"
+    ],
+    "rifles": [
+      "WP_BLASTER",
+      "WP_DC_CARBINE",
+      "WP_E_22",
+      "WP_CLONE_RIFLE",
+      "WP_A280",
+      "WP_DLT20A",
+      "WP_M5",
+      "WP_EE3",
+      "WP_EE4",
+      "WP_PROJ",
+      "WP_AMBAN"
+    ],
+    "heavy": [
+      "WP_REPEATER",
+      "WP_MINIGUN",
+      "WP_FLECHETTE",
+      "WP_T21",
+      "WP_CONCUSSION"
+    ],
+    "special": [
+      "WP_DISRUPTOR",
+      "WP_BOWCASTER",
+      "WP_DEMP2",
+      "WP_SHOTGUN",
+      "WP_THROWER"
+    ],
+    "explosives": [
+      "WP_ROCKET_LAUNCHER",
+      "WP_PLX1",
+      "WP_DET_PACK",
+      "WP_TRIP_MINE",
+      "WP_UGL",
+      "WP_MGL"
+    ],
+    "grenades": [
+      "WP_THERMAL",
+      "WP_FRAG_NADE",
+      "WP_REAL_TD",
+      "WP_PULSE_NADE",
+      "WP_FIRE_NADE",
+      "WP_SONIC_NADE",
+      "WP_CRYO_NADE",
+      "WP_CONC_NADE"
+    ],
+    "droid": [
+      "WP_SBD",
+      "WP_WELD_PULSE",
+      "WP_WELD_BEAM"
+    ]
   }
 }

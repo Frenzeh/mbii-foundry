@@ -47,3 +47,9 @@ fa_creator_config.json
 
 # extract-icons built binary (run `go build ./tools/extract-icons` to regenerate)
 tools/extract-icons/extract-icons
+
+
+# Private overlay for dev-only unreleased content (attributes/classes/
+# weapons/docs that are not live in the shipping game build). Loaded
+# at runtime from ./private if present; absent in public releases.
+private/

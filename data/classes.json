@@ -60,16 +60,6 @@
     "description": "ARC Trooper\nComes with Stamina (0), default binds CS1:"
   },
   {
-    "id": "MB_CLASS_OBSERVER",
-    "name": "MB_CLASS_OBSERVER",
-    "overview": "Spectator\n}",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [],
-    "description": "Spectator\n}"
-  },
-  {
     "id": "MB_CLASS_MANDALORIAN",
     "name": "MB_CLASS_MANDALORIAN",
     "overview": "Mandalorian",
@@ -144,116 +134,6 @@
   {
     "id": "MB_CLASS_SITH",
     "name": "MB_CLASS_SITH",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "MB_CLASS_REDACTED_01",
-    "name": "MB_CLASS_REDACTED_01",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "MB_CLASS_REDACTED_02",
-    "name": "MB_CLASS_REDACTED_02",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "MB_CLASS_REDACTED_03",
-    "name": "MB_CLASS_REDACTED_03",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "MB_CLASS_REDACTED_04",
-    "name": "MB_CLASS_REDACTED_04",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "MB_CLASS_REDACTED_05",
-    "name": "MB_CLASS_REDACTED_05",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "MB_CLASS_REDACTED_06",
-    "name": "MB_CLASS_REDACTED_06",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "MB_CLASS_REDACTED_07",
-    "name": "MB_CLASS_REDACTED_07",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "MB_CLASS_REDACTED_08",
-    "name": "MB_CLASS_REDACTED_08",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "MB_CLASS_REDACTED_09",
-    "name": "MB_CLASS_REDACTED_09",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "MB_CLASS_REDACTED_10",
-    "name": "MB_CLASS_REDACTED_10",
     "overview": "",
     "tips": [],
     "levels": {},

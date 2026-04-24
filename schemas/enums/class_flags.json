@@ -4,7 +4,6 @@
   "description": "All class flag types from bg_saga.h siegeClassFlags_t enum",
   "version": "1.0.0",
   "source_file": "game/bg_saga.h",
-
   "class_flags": {
     "CFL_STRONGAGAINSTPHYSICAL": {
       "value": 0,
@@ -52,12 +51,12 @@
     },
     "CFL_INSTAGIB": {
       "value": 11,
-      "description": "One-hit kill attacks (ifdef INSTAGIB)",
+      "description": "One-hit kill attacks",
       "conditional": "INSTAGIB"
     },
     "CFL_ACIDBLOOD": {
       "value": 12,
-      "description": "Bleeds acid that damages attackers (ifdef ACIDBLOOD)",
+      "description": "Bleeds acid that damages attackers",
       "conditional": "ACIDBLOOD"
     },
     "CFL_DISMEMBERFRAGILE": {
@@ -98,7 +97,7 @@
     },
     "CFL_RUNFASTMELEE": {
       "value": 22,
-      "description": "Move faster while in melee stance (ifdef NEW_CLASSFLAGS)",
+      "description": "Move faster while in melee stance",
       "conditional": "NEW_CLASSFLAGS"
     },
     "CFL_NODISMEMBER": {
@@ -106,9 +105,8 @@
       "description": "Cannot be dismembered"
     }
   },
-
   "weapon_held_flags": {
-    "_description": "These are weapon-specific flags (ifdef WEAPON_HELD_FLAGS)",
+    "_description": "These are weapon-specific flags",
     "HELD_HEAL": "Weapon heals user on hit",
     "HELD_AMMOREGEN": "Weapon regenerates ammo",
     "HELD_SPEED": "Weapon grants speed boost",
@@ -135,7 +133,6 @@
     "HELD_FREEZE": "Causes short freeze on hit",
     "HELD_IGNOREBLOCK": "Ignores saber blocking"
   },
-
   "usage": {
     "single_flag": "classflags CFL_HASQ3",
     "multiple_flags": "classflags CFL_HASQ3|CFL_HEAVYMELEE|CFL_REALTD",

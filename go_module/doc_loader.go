@@ -29,6 +29,17 @@ func InitDefinitions() {
 	}
 	LogInfo("Found definitions at: %s", found)
 	loadDefinitionsFromPath(found)
+
+	// Optional dev overlay: private/definitions/ alongside the binary.
+	// Present in dev environments that have opted in; absent in
+	// public releases. Overlay entries win over public ones via the
+	// same key so a dev-specific stub can override the public doc.
+	if priv := resolvePrivatePath("definitions"); priv != "" {
+		if info, err := os.Stat(priv); err == nil && info.IsDir() {
+			LogInfo("Applying doc overlay from: %s", priv)
+			loadDefinitionsFromPath(priv)
+		}
+	}
 }
 
 func resolveDefinitionsPath() string {

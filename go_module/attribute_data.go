@@ -22,14 +22,11 @@ type AttributeDef struct {
 	Tips     []string            `json:"tips,omitempty"`
 	Tags     []string            `json:"tags,omitempty"`
 
-	// Hidden marks an attribute that's defined in the enum but not
-	// live in the current build (behind an #ifdef in bg_public.h /
-	// bg_weapons.h). Hidden entries are filtered from GetAttributes
-	// but remain accessible via GetAllAttributes so loaded files that
-	// happen to reference them still display meaningfully. Populated
-	// from hiddenAttributeIDs at load time, not from JSON — the JSON
-	// stays a flat list since hidden status is a property of the
-	// build, not the content.
+	// Hidden marks an attribute that is defined but not exposed in
+	// the default picker. Loaded files that reference a hidden entry
+	// still render meaningfully via GetAllAttributes. Populated at
+	// load time from the runtime-merged visibility rules (see
+	// hidden_content.go) rather than from JSON.
 	Hidden bool `json:"-"`
 }
 
@@ -139,10 +136,7 @@ var MBIIAttributes = []AttributeDef{
 	{ID: "MB_ATT_FP_SABERTHROW", Name: "Force Saberthrow", MaxLevel: 3, Category: "Force", Description: ""},
 	{ID: "MB_ATT_FP_BLIND", Name: "Force Blind", MaxLevel: 3, Category: "Force", Description: ""},
 	{ID: "MB_ATT_FP_DESTRUCTION", Name: "Force Destruction", MaxLevel: 3, Category: "Force", Description: ""},
-	{ID: "MB_ATT_REDACTED_01", Name: "Redacted Ability", MaxLevel: 3, Category: "Force", Description: ""},
 	{ID: "MB_ATT_FP_DEADLYSIGHT", Name: "Force Deadlysight", MaxLevel: 3, Category: "Force", Description: ""},
-	{ID: "MB_ATT_REDACTED_02", Name: "Redacted Ability", MaxLevel: 3, Category: "Force", Description: ""},
-	{ID: "MB_ATT_REDACTED_03", Name: "Redacted Ability", MaxLevel: 3, Category: "Force", Description: ""},
 	{ID: "MB_ATT_PISTOL", Name: "Pistol", MaxLevel: 3, Category: "Weapons", Description: ""},
 	{ID: "MB_ATT_BLASTER", Name: "Blaster", MaxLevel: 3, Category: "Weapons", Description: ""},
 	{ID: "MB_ATT_DISRUPTOR", Name: "Disruptor", MaxLevel: 3, Category: "General", Description: ""},
@@ -229,7 +223,6 @@ var MBIIAttributes = []AttributeDef{
 	{ID: "MB_ATT_WOOKIE_BALANCE", Name: "Wookie Balance", MaxLevel: 3, Category: "Class Specific", Description: ""},
 	{ID: "MB_ATT_CCTRAINING", Name: "Cctraining", MaxLevel: 3, Category: "General", Description: ""},
 	{ID: "MB_ATT_ET_CCTRAINING", Name: "Et Cctraining", MaxLevel: 3, Category: "General", Description: ""},
-	{ID: "MB_ATT_REDACTED_05", Name: "Md Cctraining", MaxLevel: 3, Category: "General", Description: ""},
 	{ID: "MB_ATT_SBD_CANNON", Name: "Sbd Cannon", MaxLevel: 3, Category: "Class Specific", Description: ""},
 	{ID: "MB_ATT_WRISTLASER", Name: "Wristlaser", MaxLevel: 3, Category: "General", Description: ""},
 	{ID: "MB_ATT_SHOCKWAVE", Name: "Shockwave", MaxLevel: 3, Category: "General", Description: ""},
@@ -237,7 +230,6 @@ var MBIIAttributes = []AttributeDef{
 	{ID: "MB_ATT_SHIELD_RECHARGE2", Name: "Shield Recharge2", MaxLevel: 3, Category: "General", Description: ""},
 	{ID: "MB_ATT_RALLY", Name: "Rally", MaxLevel: 3, Category: "General", Description: ""},
 	{ID: "MB_ATT_ASSEMBLE", Name: "Assemble", MaxLevel: 3, Category: "General", Description: ""},
-	{ID: "MB_ATT_REDACTED_23", Name: "Redacted Skill", MaxLevel: 3, Category: "Class Specific", Description: ""},
 	{ID: "MB_ATT_ARC_RIFLE_SCOPE", Name: "Arc Rifle Scope", MaxLevel: 3, Category: "Weapons", Description: ""},
 	{ID: "MB_ATT_ARC_RIFLE_GRENADELAUNCHER", Name: "Arc Rifle Grenadelauncher", MaxLevel: 3, Category: "Weapons", Description: ""},
 	{ID: "MB_ATT_WOOKIEE_FURY", Name: "Wookiee Fury", MaxLevel: 3, Category: "Class Specific", Description: ""},
@@ -246,21 +238,11 @@ var MBIIAttributes = []AttributeDef{
 	{ID: "MB_ATT_ZOOM", Name: "Zoom", MaxLevel: 3, Category: "General", Description: ""},
 	{ID: "MB_ATT_RADAR", Name: "Radar", MaxLevel: 3, Category: "General", Description: ""},
 	{ID: "MB_ATT_GRAPPLE_HOOK", Name: "Grapple Hook", MaxLevel: 3, Category: "General", Description: ""},
-	{ID: "MB_ATT_REDACTED_25", Name: "Redacted Weapon", MaxLevel: 3, Category: "General", Description: ""},
 	{ID: "MB_ATT_FIRE_GRENADES", Name: "Fire Grenades", MaxLevel: 3, Category: "Weapons", Description: ""},
 	{ID: "MB_ATT_CRYOBAN_GRENADES", Name: "Cryoban Grenades", MaxLevel: 3, Category: "Weapons", Description: ""},
 	{ID: "MB_ATT_SONIC_DETONATOR", Name: "Sonic Detonator", MaxLevel: 3, Category: "General", Description: ""},
 	{ID: "MB_ATT_QUICKDRAW", Name: "Quickdraw", MaxLevel: 3, Category: "General", Description: ""},
 	{ID: "MB_ATT_MICRO_GRENADES", Name: "Micro Grenades", MaxLevel: 3, Category: "Weapons", Description: ""},
-	{ID: "MB_ATT_REDACTED_14", Name: "Redacted Grenade", MaxLevel: 3, Category: "Weapons", Description: ""},
-	{ID: "MB_ATT_REDACTED_15", Name: "Redacted Grenade", MaxLevel: 3, Category: "General", Description: ""},
-	{ID: "MB_ATT_REDACTED_16", Name: "Redacted Grenade", MaxLevel: 3, Category: "Weapons", Description: ""},
-	{ID: "MB_ATT_REDACTED_17", Name: "Redacted Grenade", MaxLevel: 3, Category: "Weapons", Description: ""},
-	{ID: "MB_ATT_REDACTED_18", Name: "Redacted Grenade", MaxLevel: 3, Category: "Weapons", Description: ""},
-	{ID: "MB_ATT_REDACTED_19", Name: "Redacted Grenade", MaxLevel: 3, Category: "Weapons", Description: ""},
-	{ID: "MB_ATT_REDACTED_20", Name: "Redacted Grenade", MaxLevel: 3, Category: "Weapons", Description: ""},
-	{ID: "MB_ATT_REDACTED_21", Name: "Redacted Grenade", MaxLevel: 3, Category: "Weapons", Description: ""},
-	{ID: "MB_ATT_REDACTED_22", Name: "Redacted Grenade", MaxLevel: 3, Category: "Weapons", Description: ""},
 	{ID: "MB_ATT_STRONGBLOBS", Name: "Strongblobs", MaxLevel: 3, Category: "General", Description: ""},
 	{ID: "MB_ATT_STEALTH", Name: "Stealth", MaxLevel: 3, Category: "General", Description: ""},
 	{ID: "MB_ATT_BACKSTAB", Name: "Backstab", MaxLevel: 3, Category: "General", Description: ""},
@@ -269,7 +251,6 @@ var MBIIAttributes = []AttributeDef{
 	{ID: "MB_ATT_VIEWBASEDDRAIN", Name: "Viewbaseddrain", MaxLevel: 3, Category: "General", Description: ""},
 	{ID: "MB_ATT_CLONE_PISTOL", Name: "Clone Pistol", MaxLevel: 3, Category: "Weapons", Description: ""},
 	{ID: "MB_ATT_MANDO_PISTOL", Name: "Mando Pistol", MaxLevel: 3, Category: "Weapons", Description: ""},
-	{ID: "MB_ATT_REDACTED_24", Name: "Redacted Weapon", MaxLevel: 3, Category: "Weapons", Description: ""},
 	{ID: "MB_ATT_IMP_PISTOL", Name: "Imp Pistol", MaxLevel: 3, Category: "Weapons", Description: ""},
 	{ID: "MB_ATT_KNIFE", Name: "Knife", MaxLevel: 3, Category: "General", Description: ""},
 	{ID: "MB_ATT_ELECTRO_STAFF", Name: "Electro Staff", MaxLevel: 3, Category: "General", Description: ""},
@@ -340,7 +321,6 @@ var MBIIAttributes = []AttributeDef{
 	{ID: "MB_ATT_FLIPKICK", Name: "Flipkick", MaxLevel: 3, Category: "General", Description: ""},
 	{ID: "MB_ATT_LIGHTS_BEACON", Name: "Lights Beacon", MaxLevel: 3, Category: "General", Description: ""},
 	{ID: "MB_ATT_TRIP_MINES", Name: "Trip Mines", MaxLevel: 3, Category: "General", Description: ""},
-	{ID: "MB_ATT_REDACTED_06", Name: "Manualsaberthrow", MaxLevel: 3, Category: "Saber", Description: ""},
 	{ID: "MB_ATT_ASTRO_JUMPJETS", Name: "Astro Jumpjets", MaxLevel: 3, Category: "General", Description: ""},
 	{ID: "MB_ATT_HEAT_DUMPS", Name: "Heat Dumps", MaxLevel: 3, Category: "General", Description: ""},
 	{ID: "MB_ATT_WELDING_LASER", Name: "Welding Laser", MaxLevel: 3, Category: "General", Description: ""},
@@ -348,13 +328,6 @@ var MBIIAttributes = []AttributeDef{
 	{ID: "MB_ATT_FIRE_EXTINGUISHER", Name: "Fire Extinguisher", MaxLevel: 3, Category: "General", Description: ""},
 	{ID: "MB_ATT_DATA_SPIKES", Name: "Data Spikes", MaxLevel: 3, Category: "General", Description: ""},
 	{ID: "MB_ATT_WATER_BREATHING", Name: "Water Breathing", MaxLevel: 3, Category: "General", Description: ""},
-	{ID: "MB_ATT_REDACTED_07", Name: "Sbd Battery", MaxLevel: 3, Category: "Class Specific", Description: ""},
-	{ID: "MB_ATT_REDACTED_08", Name: "Sbd Mode Armor", MaxLevel: 3, Category: "Class Specific", Description: ""},
-	{ID: "MB_ATT_REDACTED_09", Name: "Sbd Mode Speed", MaxLevel: 3, Category: "Class Specific", Description: ""},
-	{ID: "MB_ATT_REDACTED_10", Name: "Sbd Mode Firepower", MaxLevel: 3, Category: "Class Specific", Description: ""},
-	{ID: "MB_ATT_REDACTED_11", Name: "Sbd Mode Strength", MaxLevel: 3, Category: "Class Specific", Description: ""},
-	{ID: "MB_ATT_REDACTED_12", Name: "Sbd Wristrocket", MaxLevel: 3, Category: "Weapons", Description: ""},
-	{ID: "MB_ATT_REDACTED_13", Name: "Sbd Dualblasters", MaxLevel: 3, Category: "Weapons", Description: ""},
 	{ID: "MB_ATT_WRIST_AMMO", Name: "Wrist Ammo", MaxLevel: 3, Category: "General", Description: ""},
 	{ID: "MB_ATT_INAIR_FORCE_REGEN", Name: "Inair Force Regen", MaxLevel: 3, Category: "General", Description: ""},
 	{ID: "MB_ATT_BUNNY_HOP", Name: "Bunny Hop", MaxLevel: 3, Category: "General", Description: ""},

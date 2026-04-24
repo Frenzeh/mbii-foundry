@@ -119,7 +119,6 @@ var attributeIconAliases = map[string]string{
 	"MB_ATT_PISTOL":           "icon_stats_pistol",
 	"MB_ATT_HEAVY_PISTOL":     "icon_stats_pistol",
 	"MB_ATT_MANDO_PISTOL":     "icon_stats_pistol",
-	"MB_ATT_REDACTED_24":       "icon_stats_pistol",
 	"MB_ATT_IMP_PISTOL":       "icon_stats_pistol",
 	"MB_ATT_PLX1":             "icon_stats_plx",
 	"MB_ATT_PROJECTILE_RIFLE": "icon_stats_proj",

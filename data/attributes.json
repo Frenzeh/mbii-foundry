@@ -3622,35 +3622,6 @@
     "description": "MB_ATT_SPAWNER"
   },
   {
-    "id": "MB_ATT_REDACTED_23",
-    "name": "\ud83d\udd75\ufe0f Redacted Skill",
-    "overview": "Allows the Spy to impersonate enemy units.\n> **Default:** None.",
-    "tips": [
-      "**Attacking breaks the disguise** instantly.",
-      "Jedi/Sith with **Force Sense** (`MB_ATT_FP_SEE`) can see through disguises (red aura)."
-    ],
-    "levels": {
-      "1": {
-        "name": "Level 1",
-        "effect": "**Grunt**. Can disguise as basic enemy soldiers. Weapon is hidden (appears to hold enemy weapon).",
-        "fp_cost": 0
-      },
-      "2": {
-        "name": "Level 2",
-        "effect": "**Elite**. Can disguise as elite units (e.g. Commander, ARC). Harder to detect visually.",
-        "fp_cost": 0
-      },
-      "3": {
-        "name": "Level 3",
-        "effect": "**Infiltrator**. Can disguise as **Jedi/Sith**. Mimics saber sounds and blocking animations. Only detected by touch or attacking.",
-        "fp_cost": 0
-      }
-    },
-    "stats": {},
-    "tags": [],
-    "description": "Allows the Spy to impersonate enemy units."
-  },
-  {
     "id": "MB_ATT_STAMINA",
     "name": "\ud83c\udfc3 Stamina",
     "overview": "Determines the size of the \"Stamina Bar\" used for sprinting (`Shift`), wall-running, and acrobatics.\n> **Default:** 0 (Base movement only).",
@@ -4072,52 +4043,8 @@
     ]
   },
   {
-    "id": "MB_ATT_REDACTED_01",
-    "name": "MB_ATT_REDACTED_01",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
     "id": "MB_ATT_FP_DEADLYSIGHT",
     "name": "MB_ATT_FP_DEADLYSIGHT",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "MB_ATT_REDACTED_02",
-    "name": "MB_ATT_REDACTED_02",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "MB_ATT_REDACTED_03",
-    "name": "MB_ATT_REDACTED_03",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "MB_ATT_REDACTED_04",
-    "name": "MB_ATT_REDACTED_04",
     "overview": "",
     "tips": [],
     "levels": {},
@@ -4534,17 +4461,6 @@
     ]
   },
   {
-    "id": "MB_ATT_REDACTED_25",
-    "name": "MB_ATT_REDACTED_25",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
     "id": "MB_ATT_CRYOBAN_GRENADES",
     "name": "MB_ATT_CRYOBAN_GRENADES",
     "overview": "",
@@ -4589,105 +4505,6 @@
     ]
   },
   {
-    "id": "MB_ATT_REDACTED_14",
-    "name": "MB_ATT_REDACTED_14",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "MB_ATT_REDACTED_15",
-    "name": "MB_ATT_REDACTED_15",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "MB_ATT_REDACTED_16",
-    "name": "MB_ATT_REDACTED_16",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "MB_ATT_REDACTED_17",
-    "name": "MB_ATT_REDACTED_17",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "MB_ATT_REDACTED_18",
-    "name": "MB_ATT_REDACTED_18",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "MB_ATT_REDACTED_19",
-    "name": "MB_ATT_REDACTED_19",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "MB_ATT_REDACTED_20",
-    "name": "MB_ATT_REDACTED_20",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "MB_ATT_REDACTED_21",
-    "name": "MB_ATT_REDACTED_21",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "MB_ATT_REDACTED_22",
-    "name": "MB_ATT_REDACTED_22",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
     "id": "MB_ATT_STEALTH",
     "name": "MB_ATT_STEALTH",
     "overview": "",
@@ -4712,17 +4529,6 @@
   {
     "id": "MB_ATT_VIEWBASEDDRAIN",
     "name": "MB_ATT_VIEWBASEDDRAIN",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "MB_ATT_REDACTED_24",
-    "name": "MB_ATT_REDACTED_24",
     "overview": "",
     "tips": [],
     "levels": {},
@@ -5229,17 +5035,6 @@
   {
     "id": "MB_ATT_GUNBASH",
     "name": "MB_ATT_GUNBASH",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "MB_ATT_REDACTED_06",
-    "name": "MB_ATT_REDACTED_06",
     "overview": "",
     "tips": [],
     "levels": {},

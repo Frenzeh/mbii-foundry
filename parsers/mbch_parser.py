@@ -900,19 +900,10 @@ class MBCHParser:
         if not char.MBClass:
             errors.append("Missing required field: MBClass")
 
-        # Validate MBClass enum
-        valid_classes = [
-            "MB_CLASS_NOCLASS", "MB_CLASS_SOLDIER", "MB_CLASS_TROOPER",
-            "MB_CLASS_COMMANDER", "MB_CLASS_ELITETROOPER", "MB_CLASS_SITH",
-            "MB_CLASS_JEDI", "MB_CLASS_BOUNTY_HUNTER", "MB_CLASS_HERO",
-            "MB_CLASS_SBD", "MB_CLASS_WOOKIE", "MB_CLASS_DROIDEKA",
-            "MB_CLASS_CLONETROOPER", "MB_CLASS_MANDALORIAN", "MB_CLASS_ARCTROOPER",
-            "MB_CLASS_REDACTED_01", "MB_CLASS_REDACTED_02", "MB_CLASS_REDACTED_03",
-            "MB_CLASS_REDACTED_04", "MB_CLASS_REDACTED_05", "MB_CLASS_REDACTED_06",
-            "MB_CLASS_REDACTED_07", "MB_CLASS_REDACTED_08",
-            "MB_CLASS_REDACTED_09", "MB_CLASS_REDACTED_10"
-        ]
-        if char.MBClass and char.MBClass not in valid_classes:
+        # Validate MBClass enum — shape-check only. We accept any
+        # MB_CLASS_* prefix so files authored against extended builds
+        # still parse without this module needing a curated list.
+        if char.MBClass and not char.MBClass.startswith("MB_CLASS_"):
             errors.append(f"Invalid MBClass: {char.MBClass}")
 
         # Validate weapon format

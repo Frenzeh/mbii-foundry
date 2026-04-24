@@ -5,14 +5,15 @@
   "description": "Comprehensive schema for MBII Full Authentic character files. ALL fields from bg_saga.c BG_SiegeParseClassFile().",
   "version": "2.0.0",
   "sourceReference": "moviebattles/game/bg_saga.c lines 2142-2890",
-
   "definitions": {
     "ClassInfo": {
       "type": "object",
       "description": "Main character class definition block - ClassInfo { }",
       "properties": {
-
-        "_section_identity": {"type": "null", "description": "=== IDENTITY & BASIC INFO ==="},
+        "_section_identity": {
+          "type": "null",
+          "description": "=== IDENTITY & BASIC INFO ==="
+        },
         "name": {
           "type": "string",
           "description": "Internal class name (e.g., '_H_C1_JSage')",
@@ -21,516 +22,1742 @@
         "MBClass": {
           "type": "string",
           "description": "Base class type - determines inherent abilities",
-          "enum": ["MB_CLASS_NOCLASS", "MB_CLASS_SOLDIER", "MB_CLASS_TROOPER", "MB_CLASS_COMMANDER",
-                   "MB_CLASS_ELITETROOPER", "MB_CLASS_SITH", "MB_CLASS_JEDI", "MB_CLASS_BOUNTY_HUNTER",
-                   "MB_CLASS_HERO", "MB_CLASS_SBD", "MB_CLASS_WOOKIE", "MB_CLASS_DROIDEKA",
-                   "MB_CLASS_CLONETROOPER", "MB_CLASS_MANDALORIAN", "MB_CLASS_ARCTROOPER",
-                   "MB_CLASS_REDACTED_01", "MB_CLASS_REDACTED_02", "MB_CLASS_REDACTED_03", "MB_CLASS_REDACTED_04",
-                   "MB_CLASS_REDACTED_05", "MB_CLASS_REDACTED_06", "MB_CLASS_REDACTED_07",
-                   "MB_CLASS_REDACTED_08", "MB_CLASS_REDACTED_09", "MB_CLASS_REDACTED_10"]
+          "enum": [
+            "MB_CLASS_SOLDIER",
+            "MB_CLASS_TROOPER",
+            "MB_CLASS_COMMANDER",
+            "MB_CLASS_ELITETROOPER",
+            "MB_CLASS_SITH",
+            "MB_CLASS_JEDI",
+            "MB_CLASS_BOUNTY_HUNTER",
+            "MB_CLASS_HERO",
+            "MB_CLASS_SBD",
+            "MB_CLASS_WOOKIE",
+            "MB_CLASS_DROIDEKA",
+            "MB_CLASS_CLONETROOPER",
+            "MB_CLASS_MANDALORIAN",
+            "MB_CLASS_ARCTROOPER"
+          ]
         },
-
-        "_section_model": {"type": "null", "description": "=== MODEL & APPEARANCE ==="},
-        "model": {"type": "string", "description": "Primary model path (e.g., 'cultist')"},
-        "skin": {"type": "string", "description": "Primary skin name", "default": "default"},
-        "modelscale": {"type": "number", "description": "Model scale multiplier", "default": 1.0},
-        "soundset": {"type": "string", "description": "Voice/sound set override"},
-
-        "_section_model_variants": {"type": "null", "description": "=== MODEL VARIANTS (up to MAX_SIEGE_VARIANTS) ==="},
-        "model_1": {"type": "string", "description": "Model variant 1"},
-        "model_2": {"type": "string", "description": "Model variant 2"},
-        "model_3": {"type": "string", "description": "Model variant 3"},
-        "skin_1": {"type": "string", "description": "Skin variant 1"},
-        "skin_2": {"type": "string", "description": "Skin variant 2"},
-        "skin_3": {"type": "string", "description": "Skin variant 3"},
-
-        "_section_colors": {"type": "null", "description": "=== CUSTOM RGB COLORS ==="},
-        "customred": {"type": "number", "description": "Custom red color (0.0-1.0)", "default": 1.0},
-        "customgreen": {"type": "number", "description": "Custom green color (0.0-1.0)", "default": 1.0},
-        "customblue": {"type": "number", "description": "Custom blue color (0.0-1.0)", "default": 1.0},
-        "customred_1": {"type": "number", "description": "Variant 1 red"},
-        "customgreen_1": {"type": "number", "description": "Variant 1 green"},
-        "customblue_1": {"type": "number", "description": "Variant 1 blue"},
-        "customred_2": {"type": "number", "description": "Variant 2 red"},
-        "customgreen_2": {"type": "number", "description": "Variant 2 green"},
-        "customblue_2": {"type": "number", "description": "Variant 2 blue"},
-        "userRGB": {"type": "integer", "description": "Enable user RGB selection (0/1)", "default": 0},
-        "userRGB_1": {"type": "integer", "description": "User RGB for variant 1"},
-        "userRGB_2": {"type": "integer", "description": "User RGB for variant 2"},
-
-        "_section_ui": {"type": "null", "description": "=== UI SHADERS & ICONS ==="},
-        "uishader": {"type": "string", "description": "Main UI portrait shader path"},
-        "uishader_1": {"type": "string", "description": "UI shader variant 1"},
-        "uishader_2": {"type": "string", "description": "UI shader variant 2"},
-        "uishader_3": {"type": "string", "description": "UI shader variant 3"},
-        "uiglobal": {"type": "string", "description": "Global UI shader (conquest)"},
-        "uioverlay": {"type": "string", "description": "UI overlay shader"},
-        "uioverlay_l": {"type": "string", "description": "UI overlay left"},
-        "uioverlay_c": {"type": "string", "description": "UI overlay center"},
-        "uioverlay_r": {"type": "string", "description": "UI overlay right"},
-
-        "_section_saber": {"type": "null", "description": "=== SABER CONFIGURATION ==="},
-        "saber1": {"type": "string", "description": "Primary saber hilt name"},
-        "saber2": {"type": "string", "description": "Secondary saber hilt (dual wield)"},
-        "sabercolor": {"type": ["integer", "string"], "description": "Primary saber color (0-8 or HSL decimal)"},
-        "saber2color": {"type": ["integer", "string"], "description": "Secondary saber color"},
-        "saberstyle": {"type": "string", "description": "Pipe-separated saber styles (SS_*)"},
-        "saberDamage": {"type": "integer", "description": "Saber damage modifier", "default": 0},
-        "saberThrowDamage": {"type": "integer", "description": "Saber throw damage modifier", "default": 0},
-        "saberMaxChain": {"type": "integer", "description": "Max saber chain hits", "default": 0},
-
-        "_section_saber_variants": {"type": "null", "description": "=== SABER VARIANTS ==="},
-        "saber1_1": {"type": "string", "description": "Saber1 variant 1"},
-        "saber1_2": {"type": "string", "description": "Saber1 variant 2"},
-        "saber2_1": {"type": "string", "description": "Saber2 variant 1"},
-        "saber2_2": {"type": "string", "description": "Saber2 variant 2"},
-        "sabercolor_1": {"type": ["integer", "string"], "description": "Saber color variant 1"},
-        "sabercolor_2": {"type": ["integer", "string"], "description": "Saber color variant 2"},
-        "saber2color_1": {"type": ["integer", "string"], "description": "Saber2 color variant 1"},
-        "saber2color_2": {"type": ["integer", "string"], "description": "Saber2 color variant 2"},
-        "saberstyle_1": {"type": "string", "description": "Saber style variant 1"},
-        "saberstyle_2": {"type": "string", "description": "Saber style variant 2"},
-
-        "_section_equipment": {"type": "null", "description": "=== EQUIPMENT & LOADOUT ==="},
-        "weapons": {"type": "string", "description": "Pipe-separated weapons (WP_*)"},
-        "holdables": {"type": "string", "description": "Pipe-separated holdable items (HI_*)"},
-        "powerups": {"type": "string", "description": "Pipe-separated powerups"},
-        "forcepowers": {"type": "string", "description": "Force powers with levels (FP_*,level)"},
-        "attributes": {"type": "string", "description": "Attributes with levels (MB_ATT_*,level)"},
-        "classflags": {"type": "string", "description": "Pipe-separated class flags (CFL_*)"},
-
-        "_section_stats_health": {"type": "null", "description": "=== HEALTH & ARMOR STATS ==="},
-        "maxhealth": {"type": "integer", "description": "Maximum health points", "default": 100},
-        "starthealth": {"type": "integer", "description": "Starting health (-1 = maxhealth)", "default": -1},
-        "maxarmor": {"type": "integer", "description": "Maximum armor points", "default": 0},
-        "startarmor": {"type": "integer", "description": "Starting armor (-1 = maxarmor)", "default": -1},
-        "forcepool": {"type": "integer", "description": "Maximum force pool", "default": 100},
-        "forceregen": {"type": "number", "description": "Force regeneration multiplier", "default": 1.0},
-
-        "_section_stats_speed": {"type": "null", "description": "=== SPEED & MOVEMENT ==="},
-        "speed": {"type": "number", "description": "Movement speed multiplier", "default": 1.0},
-        "baseSpeed": {"type": "integer", "description": "Base speed value override", "default": 0},
-
-        "_section_multipliers": {"type": "null", "description": "=== STAT MULTIPLIERS ==="},
-        "APmultiplier": {"type": "number", "description": "Ability Points multiplier", "default": 1.0},
-        "BPmultiplier": {"type": "number", "description": "Block Points multiplier", "default": 1.0},
-        "CSmultiplier": {"type": "number", "description": "Clash Strength multiplier", "default": 1.0},
-        "ASmultiplier": {"type": "number", "description": "Attack Speed multiplier", "default": 1.0},
-        "FPmultiplier": {"type": "number", "description": "Force Power multiplier", "default": 1.0},
-
-        "_section_damage": {"type": "null", "description": "=== DAMAGE MODIFIERS ==="},
-        "damageTaken": {"type": "number", "description": "Damage taken multiplier", "default": 1.0},
-        "damageGiven": {"type": "number", "description": "Damage given multiplier", "default": 1.0},
-        "rateOfFire": {"type": "number", "description": "Rate of fire multiplier", "default": 1.0},
-        "rateOfFire_Melee": {"type": "number", "description": "Melee rate of fire multiplier", "default": 1.0},
-        "knockbackTaken": {"type": "number", "description": "Knockback taken multiplier", "default": 1.0},
-        "knockbackGiven": {"type": "number", "description": "Knockback given multiplier", "default": 1.0},
-        "skillTimerMod": {"type": "number", "description": "Skill timer modifier", "default": 1.0},
-        "hackRate": {"type": "number", "description": "Hacking rate modifier", "default": 1.0},
-
-        "_section_melee": {"type": "null", "description": "=== MELEE CONFIGURATION ==="},
-        "meleeknockback": {"type": "number", "description": "Melee knockback value", "default": 0.0},
-        "meleeknockback_flat": {"type": "number", "description": "Flat melee knockback", "default": 0.0},
-        "meleeknockback_mult": {"type": "number", "description": "Melee knockback multiplier", "default": 1.0},
-        "meleeMoves": {"type": "string", "description": "Melee moveset (MeleeTable)"},
-        "disableGunBash": {"type": "integer", "description": "Disable gun bash (0/1)", "default": 0},
-
-        "_section_health_regen": {"type": "null", "description": "=== HEALTH REGENERATION ==="},
-        "healthRegenAmount": {"type": "integer", "description": "HP regenerated per tick", "default": 0},
-        "healthRegenRate": {"type": "integer", "description": "Time between regen ticks (ms)", "default": 0},
-        "healthRegenCap": {"type": "integer", "description": "Max HP to regen to", "default": 0},
-
-        "_section_armor_regen": {"type": "null", "description": "=== ARMOR REGENERATION ==="},
-        "armourRegenAmount": {"type": "integer", "description": "Armor regenerated per tick", "default": 0},
-        "armourRegenRate": {"type": "integer", "description": "Time between armor regen ticks (ms)", "default": 0},
-        "armourRegenCap": {"type": "integer", "description": "Max armor to regen to", "default": 0},
-
-        "_section_resource_regen": {"type": "null", "description": "=== RESOURCE REGENERATION (Jetpack/Cloak) ==="},
-        "resourceRegenAmount": {"type": "integer", "description": "Resource regenerated per tick", "default": 0},
-        "resourceRegenRate": {"type": "integer", "description": "Time between resource regen ticks (ms)", "default": 0},
-        "resourceRegenCap": {"type": "integer", "description": "Max resource to regen to", "default": 0},
-
-        "_section_block_regen": {"type": "null", "description": "=== BLOCK POINT REGENERATION ==="},
-        "blockRegenAmount": {"type": "integer", "description": "BP regenerated per tick", "default": 0},
-        "blockRegenRate": {"type": "integer", "description": "Time between BP regen ticks (ms)", "default": 0},
-        "blockRegenCap": {"type": "integer", "description": "Max BP to regen to", "default": 0},
-
-        "_section_rank_stats": {"type": "null", "description": "=== RANK-BASED STAT PROGRESSION (comma-separated per rank) ==="},
-        "rankHealth": {"type": "string", "description": "Health per rank (r1,r2,r3)"},
-        "rankArmor": {"type": "string", "description": "Armor per rank"},
-        "rankForcePool": {"type": "string", "description": "Force pool per rank"},
-        "rankForceRegen": {"type": "string", "description": "Force regen per rank"},
-        "rankAP": {"type": "string", "description": "AP multiplier per rank"},
-        "rankBP": {"type": "string", "description": "BP multiplier per rank"},
-        "rankCS": {"type": "string", "description": "Clash strength per rank"},
-        "rankAS": {"type": "string", "description": "Attack speed per rank"},
-        "rankFP": {"type": "string", "description": "Force power per rank"},
-        "rankROF": {"type": "string", "description": "Rate of fire per rank"},
-        "rankSTM": {"type": "string", "description": "Skill timer mod per rank"},
-        "rankHack": {"type": "string", "description": "Hack rate per rank"},
-        "rankKbTaken": {"type": "string", "description": "Knockback taken per rank"},
-        "rankKbGiven": {"type": "string", "description": "Knockback given per rank"},
-        "rankDmgTaken": {"type": "string", "description": "Damage taken per rank"},
-        "rankDmgGiven": {"type": "string", "description": "Damage given per rank"},
-        "rankBaseSpeed": {"type": "string", "description": "Base speed per rank"},
-        "rankSaberDamage": {"type": "string", "description": "Saber damage per rank"},
-        "rankSaberThrowDamage": {"type": "string", "description": "Saber throw damage per rank"},
-        "rankSaberMaxChain": {"type": "string", "description": "Max saber chain per rank"},
-        "rankModelScale": {"type": "string", "description": "Model scale per rank"},
-        "rankROFMelee": {"type": "string", "description": "Melee ROF per rank"},
-
-        "_section_rank_regen": {"type": "null", "description": "=== RANK-BASED REGEN PROGRESSION ==="},
-        "rankHealthRegenCap": {"type": "string", "description": "Health regen cap per rank"},
-        "rankHealthRegenAmount": {"type": "string", "description": "Health regen amount per rank"},
-        "rankHealthRegenRate": {"type": "string", "description": "Health regen rate per rank"},
-        "rankArmourRegenCap": {"type": "string", "description": "Armor regen cap per rank"},
-        "rankArmourRegenAmount": {"type": "string", "description": "Armor regen amount per rank"},
-        "rankArmourRegenRate": {"type": "string", "description": "Armor regen rate per rank"},
-        "rankResourceRegenCap": {"type": "string", "description": "Resource regen cap per rank"},
-        "rankResourceRegenAmount": {"type": "string", "description": "Resource regen amount per rank"},
-        "rankResourceRegenRate": {"type": "string", "description": "Resource regen rate per rank"},
-        "rankBlockRegenCap": {"type": "string", "description": "Block regen cap per rank"},
-        "rankBlockRegenAmount": {"type": "string", "description": "Block regen amount per rank"},
-        "rankBlockRegenRate": {"type": "string", "description": "Block regen rate per rank"},
-
-        "_section_animations": {"type": "null", "description": "=== ANIMATION OVERRIDES ==="},
-        "runForward": {"type": "string", "description": "Forward run animation"},
-        "runBackward": {"type": "string", "description": "Backward run animation"},
-        "walkForward": {"type": "string", "description": "Forward walk animation"},
-        "walkBackward": {"type": "string", "description": "Backward walk animation"},
-        "deathAnim": {"type": "string", "description": "Death animation"},
-        "tauntAnim": {"type": "string", "description": "Taunt animation"},
-        "bowAnim": {"type": "string", "description": "Bow animation"},
-        "meditateAnim": {"type": "string", "description": "Meditate animation"},
-        "flourishAnim": {"type": "string", "description": "Flourish animation"},
-        "gloatAnim": {"type": "string", "description": "Gloat animation"},
-        "saberStanceAnim": {"type": "string", "description": "Saber stance animation"},
-
-        "_section_sounds": {"type": "null", "description": "=== SOUND OVERRIDES ==="},
-        "bargeSoundOverride": {"type": "string", "description": "Barge sound override path"},
-        "rageSoundOverride": {"type": "string", "description": "Rage sound override path"},
-
-        "_section_special": {"type": "null", "description": "=== SPECIAL ABILITIES (EAS_*) ==="},
-        "special1": {"type": "string", "description": "Special ability slot 1"},
-        "special2": {"type": "string", "description": "Special ability slot 2"},
-        "special3": {"type": "string", "description": "Special ability slot 3"},
-        "special4": {"type": "string", "description": "Special ability slot 4"},
-        "resource": {"type": "string", "description": "Resource type (resourceTable)"},
-
-        "_section_limits": {"type": "null", "description": "=== CLASS LIMITS & SPAWNING ==="},
-        "classNumberLimit": {"type": "integer", "description": "Max players using this class (0=unlimited)", "default": 0},
-        "respawnWait": {"type": "integer", "description": "Respawn wait time", "default": 0},
-        "respawnCustomTime": {"type": "integer", "description": "Custom respawn time (ms)", "default": -1},
-        "extralives": {"type": "integer", "description": "Extra lives beyond default", "default": 0},
-
-        "_section_misc": {"type": "null", "description": "=== MISCELLANEOUS ==="},
-        "humanoidSkeleton": {"type": "integer", "description": "Use humanoid skeleton (0/1)", "default": 0},
-        "customveh": {"type": "string", "description": "Custom vehicle to spawn with"},
-        "headSwapModel": {"type": "string", "description": "Head swap model path"},
-        "headSwapSkin": {"type": "string", "description": "Head swap skin"},
-
-        "_section_custom_build": {"type": "null", "description": "=== CUSTOM BUILD SYSTEM (Point Buy) ==="},
-        "isCustomBuild": {"type": "integer", "description": "Enable custom build system (0/1)", "default": 0},
-        "mbPoints": {"type": "integer", "description": "Starting points for custom build", "default": 0},
-        "hasCustomSpec": {"type": "integer", "description": "Has custom specialization tabs (0/1)", "default": 0},
-        "isOnlyOneSpec": {"type": "integer", "description": "Can only invest in one spec (0/1)", "default": 0},
-        "defaultSpec": {"type": "integer", "description": "Default specialization (1-3)", "default": 0},
-        "customSpecName_1": {"type": "string", "description": "Name for spec tab 1"},
-        "customSpecName_2": {"type": "string", "description": "Name for spec tab 2"},
-        "customSpecName_3": {"type": "string", "description": "Name for spec tab 3"},
-        "customSpecIcon_1": {"type": "string", "description": "Icon shader for spec 1"},
-        "customSpecIcon_2": {"type": "string", "description": "Icon shader for spec 2"},
-        "customSpecIcon_3": {"type": "string", "description": "Icon shader for spec 3"},
-        "customSpecDesc_1": {"type": "string", "description": "Description for spec 1"},
-        "customSpecDesc_2": {"type": "string", "description": "Description for spec 2"},
-        "customSpecDesc_3": {"type": "string", "description": "Description for spec 3"},
-
-        "_section_custom_skills": {"type": "null", "description": "=== CUSTOM BUILD SKILL SLOTS (0-14) ==="},
-        "c_att_skill_0": {"type": "string", "description": "Skill slot 0 attribute (MB_ATT_*)"},
-        "c_att_skill_1": {"type": "string"},
-        "c_att_skill_2": {"type": "string"},
-        "c_att_skill_3": {"type": "string"},
-        "c_att_skill_4": {"type": "string"},
-        "c_att_skill_5": {"type": "string"},
-        "c_att_skill_6": {"type": "string"},
-        "c_att_skill_7": {"type": "string"},
-        "c_att_skill_8": {"type": "string"},
-        "c_att_skill_9": {"type": "string"},
-        "c_att_skill_10": {"type": "string"},
-        "c_att_skill_11": {"type": "string"},
-        "c_att_skill_12": {"type": "string"},
-        "c_att_skill_13": {"type": "string"},
-        "c_att_skill_14": {"type": "string"},
-        "c_att_names_0": {"type": "string", "description": "Display name for slot 0"},
-        "c_att_names_1": {"type": "string"},
-        "c_att_names_2": {"type": "string"},
-        "c_att_names_3": {"type": "string"},
-        "c_att_names_4": {"type": "string"},
-        "c_att_names_5": {"type": "string"},
-        "c_att_names_6": {"type": "string"},
-        "c_att_names_7": {"type": "string"},
-        "c_att_names_8": {"type": "string"},
-        "c_att_names_9": {"type": "string"},
-        "c_att_names_10": {"type": "string"},
-        "c_att_names_11": {"type": "string"},
-        "c_att_names_12": {"type": "string"},
-        "c_att_names_13": {"type": "string"},
-        "c_att_names_14": {"type": "string"},
-        "c_att_ranks_0": {"type": "string", "description": "Max ranks per level (comma-sep)"},
-        "c_att_ranks_1": {"type": "string"},
-        "c_att_ranks_2": {"type": "string"},
-        "c_att_ranks_3": {"type": "string"},
-        "c_att_ranks_4": {"type": "string"},
-        "c_att_ranks_5": {"type": "string"},
-        "c_att_ranks_6": {"type": "string"},
-        "c_att_ranks_7": {"type": "string"},
-        "c_att_ranks_8": {"type": "string"},
-        "c_att_ranks_9": {"type": "string"},
-        "c_att_ranks_10": {"type": "string"},
-        "c_att_ranks_11": {"type": "string"},
-        "c_att_ranks_12": {"type": "string"},
-        "c_att_ranks_13": {"type": "string"},
-        "c_att_ranks_14": {"type": "string"},
-        "c_att_descs_0": {"type": "string", "description": "Description for slot 0"},
-        "c_att_descs_1": {"type": "string"},
-        "c_att_descs_2": {"type": "string"},
-        "c_att_descs_3": {"type": "string"},
-        "c_att_descs_4": {"type": "string"},
-        "c_att_descs_5": {"type": "string"},
-        "c_att_descs_6": {"type": "string"},
-        "c_att_descs_7": {"type": "string"},
-        "c_att_descs_8": {"type": "string"},
-        "c_att_descs_9": {"type": "string"},
-        "c_att_descs_10": {"type": "string"},
-        "c_att_descs_11": {"type": "string"},
-        "c_att_descs_12": {"type": "string"},
-        "c_att_descs_13": {"type": "string"},
-        "c_att_descs_14": {"type": "string"}
+        "_section_model": {
+          "type": "null",
+          "description": "=== MODEL & APPEARANCE ==="
+        },
+        "model": {
+          "type": "string",
+          "description": "Primary model path (e.g., 'cultist')"
+        },
+        "skin": {
+          "type": "string",
+          "description": "Primary skin name",
+          "default": "default"
+        },
+        "modelscale": {
+          "type": "number",
+          "description": "Model scale multiplier",
+          "default": 1.0
+        },
+        "soundset": {
+          "type": "string",
+          "description": "Voice/sound set override"
+        },
+        "_section_model_variants": {
+          "type": "null",
+          "description": "=== MODEL VARIANTS (up to MAX_SIEGE_VARIANTS) ==="
+        },
+        "model_1": {
+          "type": "string",
+          "description": "Model variant 1"
+        },
+        "model_2": {
+          "type": "string",
+          "description": "Model variant 2"
+        },
+        "model_3": {
+          "type": "string",
+          "description": "Model variant 3"
+        },
+        "skin_1": {
+          "type": "string",
+          "description": "Skin variant 1"
+        },
+        "skin_2": {
+          "type": "string",
+          "description": "Skin variant 2"
+        },
+        "skin_3": {
+          "type": "string",
+          "description": "Skin variant 3"
+        },
+        "_section_colors": {
+          "type": "null",
+          "description": "=== CUSTOM RGB COLORS ==="
+        },
+        "customred": {
+          "type": "number",
+          "description": "Custom red color (0.0-1.0)",
+          "default": 1.0
+        },
+        "customgreen": {
+          "type": "number",
+          "description": "Custom green color (0.0-1.0)",
+          "default": 1.0
+        },
+        "customblue": {
+          "type": "number",
+          "description": "Custom blue color (0.0-1.0)",
+          "default": 1.0
+        },
+        "customred_1": {
+          "type": "number",
+          "description": "Variant 1 red"
+        },
+        "customgreen_1": {
+          "type": "number",
+          "description": "Variant 1 green"
+        },
+        "customblue_1": {
+          "type": "number",
+          "description": "Variant 1 blue"
+        },
+        "customred_2": {
+          "type": "number",
+          "description": "Variant 2 red"
+        },
+        "customgreen_2": {
+          "type": "number",
+          "description": "Variant 2 green"
+        },
+        "customblue_2": {
+          "type": "number",
+          "description": "Variant 2 blue"
+        },
+        "userRGB": {
+          "type": "integer",
+          "description": "Enable user RGB selection (0/1)",
+          "default": 0
+        },
+        "userRGB_1": {
+          "type": "integer",
+          "description": "User RGB for variant 1"
+        },
+        "userRGB_2": {
+          "type": "integer",
+          "description": "User RGB for variant 2"
+        },
+        "_section_ui": {
+          "type": "null",
+          "description": "=== UI SHADERS & ICONS ==="
+        },
+        "uishader": {
+          "type": "string",
+          "description": "Main UI portrait shader path"
+        },
+        "uishader_1": {
+          "type": "string",
+          "description": "UI shader variant 1"
+        },
+        "uishader_2": {
+          "type": "string",
+          "description": "UI shader variant 2"
+        },
+        "uishader_3": {
+          "type": "string",
+          "description": "UI shader variant 3"
+        },
+        "uiglobal": {
+          "type": "string",
+          "description": "Global UI shader (conquest)"
+        },
+        "uioverlay": {
+          "type": "string",
+          "description": "UI overlay shader"
+        },
+        "uioverlay_l": {
+          "type": "string",
+          "description": "UI overlay left"
+        },
+        "uioverlay_c": {
+          "type": "string",
+          "description": "UI overlay center"
+        },
+        "uioverlay_r": {
+          "type": "string",
+          "description": "UI overlay right"
+        },
+        "_section_saber": {
+          "type": "null",
+          "description": "=== SABER CONFIGURATION ==="
+        },
+        "saber1": {
+          "type": "string",
+          "description": "Primary saber hilt name"
+        },
+        "saber2": {
+          "type": "string",
+          "description": "Secondary saber hilt (dual wield)"
+        },
+        "sabercolor": {
+          "type": [
+            "integer",
+            "string"
+          ],
+          "description": "Primary saber color (0-8 or HSL decimal)"
+        },
+        "saber2color": {
+          "type": [
+            "integer",
+            "string"
+          ],
+          "description": "Secondary saber color"
+        },
+        "saberstyle": {
+          "type": "string",
+          "description": "Pipe-separated saber styles (SS_*)"
+        },
+        "saberDamage": {
+          "type": "integer",
+          "description": "Saber damage modifier",
+          "default": 0
+        },
+        "saberThrowDamage": {
+          "type": "integer",
+          "description": "Saber throw damage modifier",
+          "default": 0
+        },
+        "saberMaxChain": {
+          "type": "integer",
+          "description": "Max saber chain hits",
+          "default": 0
+        },
+        "_section_saber_variants": {
+          "type": "null",
+          "description": "=== SABER VARIANTS ==="
+        },
+        "saber1_1": {
+          "type": "string",
+          "description": "Saber1 variant 1"
+        },
+        "saber1_2": {
+          "type": "string",
+          "description": "Saber1 variant 2"
+        },
+        "saber2_1": {
+          "type": "string",
+          "description": "Saber2 variant 1"
+        },
+        "saber2_2": {
+          "type": "string",
+          "description": "Saber2 variant 2"
+        },
+        "sabercolor_1": {
+          "type": [
+            "integer",
+            "string"
+          ],
+          "description": "Saber color variant 1"
+        },
+        "sabercolor_2": {
+          "type": [
+            "integer",
+            "string"
+          ],
+          "description": "Saber color variant 2"
+        },
+        "saber2color_1": {
+          "type": [
+            "integer",
+            "string"
+          ],
+          "description": "Saber2 color variant 1"
+        },
+        "saber2color_2": {
+          "type": [
+            "integer",
+            "string"
+          ],
+          "description": "Saber2 color variant 2"
+        },
+        "saberstyle_1": {
+          "type": "string",
+          "description": "Saber style variant 1"
+        },
+        "saberstyle_2": {
+          "type": "string",
+          "description": "Saber style variant 2"
+        },
+        "_section_equipment": {
+          "type": "null",
+          "description": "=== EQUIPMENT & LOADOUT ==="
+        },
+        "weapons": {
+          "type": "string",
+          "description": "Pipe-separated weapons (WP_*)"
+        },
+        "holdables": {
+          "type": "string",
+          "description": "Pipe-separated holdable items (HI_*)"
+        },
+        "powerups": {
+          "type": "string",
+          "description": "Pipe-separated powerups"
+        },
+        "forcepowers": {
+          "type": "string",
+          "description": "Force powers with levels (FP_*,level)"
+        },
+        "attributes": {
+          "type": "string",
+          "description": "Attributes with levels (MB_ATT_*,level)"
+        },
+        "classflags": {
+          "type": "string",
+          "description": "Pipe-separated class flags (CFL_*)"
+        },
+        "_section_stats_health": {
+          "type": "null",
+          "description": "=== HEALTH & ARMOR STATS ==="
+        },
+        "maxhealth": {
+          "type": "integer",
+          "description": "Maximum health points",
+          "default": 100
+        },
+        "starthealth": {
+          "type": "integer",
+          "description": "Starting health (-1 = maxhealth)",
+          "default": -1
+        },
+        "maxarmor": {
+          "type": "integer",
+          "description": "Maximum armor points",
+          "default": 0
+        },
+        "startarmor": {
+          "type": "integer",
+          "description": "Starting armor (-1 = maxarmor)",
+          "default": -1
+        },
+        "forcepool": {
+          "type": "integer",
+          "description": "Maximum force pool",
+          "default": 100
+        },
+        "forceregen": {
+          "type": "number",
+          "description": "Force regeneration multiplier",
+          "default": 1.0
+        },
+        "_section_stats_speed": {
+          "type": "null",
+          "description": "=== SPEED & MOVEMENT ==="
+        },
+        "speed": {
+          "type": "number",
+          "description": "Movement speed multiplier",
+          "default": 1.0
+        },
+        "baseSpeed": {
+          "type": "integer",
+          "description": "Base speed value override",
+          "default": 0
+        },
+        "_section_multipliers": {
+          "type": "null",
+          "description": "=== STAT MULTIPLIERS ==="
+        },
+        "APmultiplier": {
+          "type": "number",
+          "description": "Ability Points multiplier",
+          "default": 1.0
+        },
+        "BPmultiplier": {
+          "type": "number",
+          "description": "Block Points multiplier",
+          "default": 1.0
+        },
+        "CSmultiplier": {
+          "type": "number",
+          "description": "Clash Strength multiplier",
+          "default": 1.0
+        },
+        "ASmultiplier": {
+          "type": "number",
+          "description": "Attack Speed multiplier",
+          "default": 1.0
+        },
+        "FPmultiplier": {
+          "type": "number",
+          "description": "Force Power multiplier",
+          "default": 1.0
+        },
+        "_section_damage": {
+          "type": "null",
+          "description": "=== DAMAGE MODIFIERS ==="
+        },
+        "damageTaken": {
+          "type": "number",
+          "description": "Damage taken multiplier",
+          "default": 1.0
+        },
+        "damageGiven": {
+          "type": "number",
+          "description": "Damage given multiplier",
+          "default": 1.0
+        },
+        "rateOfFire": {
+          "type": "number",
+          "description": "Rate of fire multiplier",
+          "default": 1.0
+        },
+        "rateOfFire_Melee": {
+          "type": "number",
+          "description": "Melee rate of fire multiplier",
+          "default": 1.0
+        },
+        "knockbackTaken": {
+          "type": "number",
+          "description": "Knockback taken multiplier",
+          "default": 1.0
+        },
+        "knockbackGiven": {
+          "type": "number",
+          "description": "Knockback given multiplier",
+          "default": 1.0
+        },
+        "skillTimerMod": {
+          "type": "number",
+          "description": "Skill timer modifier",
+          "default": 1.0
+        },
+        "hackRate": {
+          "type": "number",
+          "description": "Hacking rate modifier",
+          "default": 1.0
+        },
+        "_section_melee": {
+          "type": "null",
+          "description": "=== MELEE CONFIGURATION ==="
+        },
+        "meleeknockback": {
+          "type": "number",
+          "description": "Melee knockback value",
+          "default": 0.0
+        },
+        "meleeknockback_flat": {
+          "type": "number",
+          "description": "Flat melee knockback",
+          "default": 0.0
+        },
+        "meleeknockback_mult": {
+          "type": "number",
+          "description": "Melee knockback multiplier",
+          "default": 1.0
+        },
+        "meleeMoves": {
+          "type": "string",
+          "description": "Melee moveset (MeleeTable)"
+        },
+        "disableGunBash": {
+          "type": "integer",
+          "description": "Disable gun bash (0/1)",
+          "default": 0
+        },
+        "_section_health_regen": {
+          "type": "null",
+          "description": "=== HEALTH REGENERATION ==="
+        },
+        "healthRegenAmount": {
+          "type": "integer",
+          "description": "HP regenerated per tick",
+          "default": 0
+        },
+        "healthRegenRate": {
+          "type": "integer",
+          "description": "Time between regen ticks (ms)",
+          "default": 0
+        },
+        "healthRegenCap": {
+          "type": "integer",
+          "description": "Max HP to regen to",
+          "default": 0
+        },
+        "_section_armor_regen": {
+          "type": "null",
+          "description": "=== ARMOR REGENERATION ==="
+        },
+        "armourRegenAmount": {
+          "type": "integer",
+          "description": "Armor regenerated per tick",
+          "default": 0
+        },
+        "armourRegenRate": {
+          "type": "integer",
+          "description": "Time between armor regen ticks (ms)",
+          "default": 0
+        },
+        "armourRegenCap": {
+          "type": "integer",
+          "description": "Max armor to regen to",
+          "default": 0
+        },
+        "_section_resource_regen": {
+          "type": "null",
+          "description": "=== RESOURCE REGENERATION (Jetpack/Cloak) ==="
+        },
+        "resourceRegenAmount": {
+          "type": "integer",
+          "description": "Resource regenerated per tick",
+          "default": 0
+        },
+        "resourceRegenRate": {
+          "type": "integer",
+          "description": "Time between resource regen ticks (ms)",
+          "default": 0
+        },
+        "resourceRegenCap": {
+          "type": "integer",
+          "description": "Max resource to regen to",
+          "default": 0
+        },
+        "_section_block_regen": {
+          "type": "null",
+          "description": "=== BLOCK POINT REGENERATION ==="
+        },
+        "blockRegenAmount": {
+          "type": "integer",
+          "description": "BP regenerated per tick",
+          "default": 0
+        },
+        "blockRegenRate": {
+          "type": "integer",
+          "description": "Time between BP regen ticks (ms)",
+          "default": 0
+        },
+        "blockRegenCap": {
+          "type": "integer",
+          "description": "Max BP to regen to",
+          "default": 0
+        },
+        "_section_rank_stats": {
+          "type": "null",
+          "description": "=== RANK-BASED STAT PROGRESSION (comma-separated per rank) ==="
+        },
+        "rankHealth": {
+          "type": "string",
+          "description": "Health per rank (r1,r2,r3)"
+        },
+        "rankArmor": {
+          "type": "string",
+          "description": "Armor per rank"
+        },
+        "rankForcePool": {
+          "type": "string",
+          "description": "Force pool per rank"
+        },
+        "rankForceRegen": {
+          "type": "string",
+          "description": "Force regen per rank"
+        },
+        "rankAP": {
+          "type": "string",
+          "description": "AP multiplier per rank"
+        },
+        "rankBP": {
+          "type": "string",
+          "description": "BP multiplier per rank"
+        },
+        "rankCS": {
+          "type": "string",
+          "description": "Clash strength per rank"
+        },
+        "rankAS": {
+          "type": "string",
+          "description": "Attack speed per rank"
+        },
+        "rankFP": {
+          "type": "string",
+          "description": "Force power per rank"
+        },
+        "rankROF": {
+          "type": "string",
+          "description": "Rate of fire per rank"
+        },
+        "rankSTM": {
+          "type": "string",
+          "description": "Skill timer mod per rank"
+        },
+        "rankHack": {
+          "type": "string",
+          "description": "Hack rate per rank"
+        },
+        "rankKbTaken": {
+          "type": "string",
+          "description": "Knockback taken per rank"
+        },
+        "rankKbGiven": {
+          "type": "string",
+          "description": "Knockback given per rank"
+        },
+        "rankDmgTaken": {
+          "type": "string",
+          "description": "Damage taken per rank"
+        },
+        "rankDmgGiven": {
+          "type": "string",
+          "description": "Damage given per rank"
+        },
+        "rankBaseSpeed": {
+          "type": "string",
+          "description": "Base speed per rank"
+        },
+        "rankSaberDamage": {
+          "type": "string",
+          "description": "Saber damage per rank"
+        },
+        "rankSaberThrowDamage": {
+          "type": "string",
+          "description": "Saber throw damage per rank"
+        },
+        "rankSaberMaxChain": {
+          "type": "string",
+          "description": "Max saber chain per rank"
+        },
+        "rankModelScale": {
+          "type": "string",
+          "description": "Model scale per rank"
+        },
+        "rankROFMelee": {
+          "type": "string",
+          "description": "Melee ROF per rank"
+        },
+        "_section_rank_regen": {
+          "type": "null",
+          "description": "=== RANK-BASED REGEN PROGRESSION ==="
+        },
+        "rankHealthRegenCap": {
+          "type": "string",
+          "description": "Health regen cap per rank"
+        },
+        "rankHealthRegenAmount": {
+          "type": "string",
+          "description": "Health regen amount per rank"
+        },
+        "rankHealthRegenRate": {
+          "type": "string",
+          "description": "Health regen rate per rank"
+        },
+        "rankArmourRegenCap": {
+          "type": "string",
+          "description": "Armor regen cap per rank"
+        },
+        "rankArmourRegenAmount": {
+          "type": "string",
+          "description": "Armor regen amount per rank"
+        },
+        "rankArmourRegenRate": {
+          "type": "string",
+          "description": "Armor regen rate per rank"
+        },
+        "rankResourceRegenCap": {
+          "type": "string",
+          "description": "Resource regen cap per rank"
+        },
+        "rankResourceRegenAmount": {
+          "type": "string",
+          "description": "Resource regen amount per rank"
+        },
+        "rankResourceRegenRate": {
+          "type": "string",
+          "description": "Resource regen rate per rank"
+        },
+        "rankBlockRegenCap": {
+          "type": "string",
+          "description": "Block regen cap per rank"
+        },
+        "rankBlockRegenAmount": {
+          "type": "string",
+          "description": "Block regen amount per rank"
+        },
+        "rankBlockRegenRate": {
+          "type": "string",
+          "description": "Block regen rate per rank"
+        },
+        "_section_animations": {
+          "type": "null",
+          "description": "=== ANIMATION OVERRIDES ==="
+        },
+        "runForward": {
+          "type": "string",
+          "description": "Forward run animation"
+        },
+        "runBackward": {
+          "type": "string",
+          "description": "Backward run animation"
+        },
+        "walkForward": {
+          "type": "string",
+          "description": "Forward walk animation"
+        },
+        "walkBackward": {
+          "type": "string",
+          "description": "Backward walk animation"
+        },
+        "deathAnim": {
+          "type": "string",
+          "description": "Death animation"
+        },
+        "tauntAnim": {
+          "type": "string",
+          "description": "Taunt animation"
+        },
+        "bowAnim": {
+          "type": "string",
+          "description": "Bow animation"
+        },
+        "meditateAnim": {
+          "type": "string",
+          "description": "Meditate animation"
+        },
+        "flourishAnim": {
+          "type": "string",
+          "description": "Flourish animation"
+        },
+        "gloatAnim": {
+          "type": "string",
+          "description": "Gloat animation"
+        },
+        "saberStanceAnim": {
+          "type": "string",
+          "description": "Saber stance animation"
+        },
+        "_section_sounds": {
+          "type": "null",
+          "description": "=== SOUND OVERRIDES ==="
+        },
+        "bargeSoundOverride": {
+          "type": "string",
+          "description": "Barge sound override path"
+        },
+        "rageSoundOverride": {
+          "type": "string",
+          "description": "Rage sound override path"
+        },
+        "_section_special": {
+          "type": "null",
+          "description": "=== SPECIAL ABILITIES (EAS_*) ==="
+        },
+        "special1": {
+          "type": "string",
+          "description": "Special ability slot 1"
+        },
+        "special2": {
+          "type": "string",
+          "description": "Special ability slot 2"
+        },
+        "special3": {
+          "type": "string",
+          "description": "Special ability slot 3"
+        },
+        "special4": {
+          "type": "string",
+          "description": "Special ability slot 4"
+        },
+        "resource": {
+          "type": "string",
+          "description": "Resource type (resourceTable)"
+        },
+        "_section_limits": {
+          "type": "null",
+          "description": "=== CLASS LIMITS & SPAWNING ==="
+        },
+        "classNumberLimit": {
+          "type": "integer",
+          "description": "Max players using this class (0=unlimited)",
+          "default": 0
+        },
+        "respawnWait": {
+          "type": "integer",
+          "description": "Respawn wait time",
+          "default": 0
+        },
+        "respawnCustomTime": {
+          "type": "integer",
+          "description": "Custom respawn time (ms)",
+          "default": -1
+        },
+        "extralives": {
+          "type": "integer",
+          "description": "Extra lives beyond default",
+          "default": 0
+        },
+        "_section_misc": {
+          "type": "null",
+          "description": "=== MISCELLANEOUS ==="
+        },
+        "humanoidSkeleton": {
+          "type": "integer",
+          "description": "Use humanoid skeleton (0/1)",
+          "default": 0
+        },
+        "customveh": {
+          "type": "string",
+          "description": "Custom vehicle to spawn with"
+        },
+        "headSwapModel": {
+          "type": "string",
+          "description": "Head swap model path"
+        },
+        "headSwapSkin": {
+          "type": "string",
+          "description": "Head swap skin"
+        },
+        "_section_custom_build": {
+          "type": "null",
+          "description": "=== CUSTOM BUILD SYSTEM (Point Buy) ==="
+        },
+        "isCustomBuild": {
+          "type": "integer",
+          "description": "Enable custom build system (0/1)",
+          "default": 0
+        },
+        "mbPoints": {
+          "type": "integer",
+          "description": "Starting points for custom build",
+          "default": 0
+        },
+        "hasCustomSpec": {
+          "type": "integer",
+          "description": "Has custom specialization tabs (0/1)",
+          "default": 0
+        },
+        "isOnlyOneSpec": {
+          "type": "integer",
+          "description": "Can only invest in one spec (0/1)",
+          "default": 0
+        },
+        "defaultSpec": {
+          "type": "integer",
+          "description": "Default specialization (1-3)",
+          "default": 0
+        },
+        "customSpecName_1": {
+          "type": "string",
+          "description": "Name for spec tab 1"
+        },
+        "customSpecName_2": {
+          "type": "string",
+          "description": "Name for spec tab 2"
+        },
+        "customSpecName_3": {
+          "type": "string",
+          "description": "Name for spec tab 3"
+        },
+        "customSpecIcon_1": {
+          "type": "string",
+          "description": "Icon shader for spec 1"
+        },
+        "customSpecIcon_2": {
+          "type": "string",
+          "description": "Icon shader for spec 2"
+        },
+        "customSpecIcon_3": {
+          "type": "string",
+          "description": "Icon shader for spec 3"
+        },
+        "customSpecDesc_1": {
+          "type": "string",
+          "description": "Description for spec 1"
+        },
+        "customSpecDesc_2": {
+          "type": "string",
+          "description": "Description for spec 2"
+        },
+        "customSpecDesc_3": {
+          "type": "string",
+          "description": "Description for spec 3"
+        },
+        "_section_custom_skills": {
+          "type": "null",
+          "description": "=== CUSTOM BUILD SKILL SLOTS (0-14) ==="
+        },
+        "c_att_skill_0": {
+          "type": "string",
+          "description": "Skill slot 0 attribute (MB_ATT_*)"
+        },
+        "c_att_skill_1": {
+          "type": "string"
+        },
+        "c_att_skill_2": {
+          "type": "string"
+        },
+        "c_att_skill_3": {
+          "type": "string"
+        },
+        "c_att_skill_4": {
+          "type": "string"
+        },
+        "c_att_skill_5": {
+          "type": "string"
+        },
+        "c_att_skill_6": {
+          "type": "string"
+        },
+        "c_att_skill_7": {
+          "type": "string"
+        },
+        "c_att_skill_8": {
+          "type": "string"
+        },
+        "c_att_skill_9": {
+          "type": "string"
+        },
+        "c_att_skill_10": {
+          "type": "string"
+        },
+        "c_att_skill_11": {
+          "type": "string"
+        },
+        "c_att_skill_12": {
+          "type": "string"
+        },
+        "c_att_skill_13": {
+          "type": "string"
+        },
+        "c_att_skill_14": {
+          "type": "string"
+        },
+        "c_att_names_0": {
+          "type": "string",
+          "description": "Display name for slot 0"
+        },
+        "c_att_names_1": {
+          "type": "string"
+        },
+        "c_att_names_2": {
+          "type": "string"
+        },
+        "c_att_names_3": {
+          "type": "string"
+        },
+        "c_att_names_4": {
+          "type": "string"
+        },
+        "c_att_names_5": {
+          "type": "string"
+        },
+        "c_att_names_6": {
+          "type": "string"
+        },
+        "c_att_names_7": {
+          "type": "string"
+        },
+        "c_att_names_8": {
+          "type": "string"
+        },
+        "c_att_names_9": {
+          "type": "string"
+        },
+        "c_att_names_10": {
+          "type": "string"
+        },
+        "c_att_names_11": {
+          "type": "string"
+        },
+        "c_att_names_12": {
+          "type": "string"
+        },
+        "c_att_names_13": {
+          "type": "string"
+        },
+        "c_att_names_14": {
+          "type": "string"
+        },
+        "c_att_ranks_0": {
+          "type": "string",
+          "description": "Max ranks per level (comma-sep)"
+        },
+        "c_att_ranks_1": {
+          "type": "string"
+        },
+        "c_att_ranks_2": {
+          "type": "string"
+        },
+        "c_att_ranks_3": {
+          "type": "string"
+        },
+        "c_att_ranks_4": {
+          "type": "string"
+        },
+        "c_att_ranks_5": {
+          "type": "string"
+        },
+        "c_att_ranks_6": {
+          "type": "string"
+        },
+        "c_att_ranks_7": {
+          "type": "string"
+        },
+        "c_att_ranks_8": {
+          "type": "string"
+        },
+        "c_att_ranks_9": {
+          "type": "string"
+        },
+        "c_att_ranks_10": {
+          "type": "string"
+        },
+        "c_att_ranks_11": {
+          "type": "string"
+        },
+        "c_att_ranks_12": {
+          "type": "string"
+        },
+        "c_att_ranks_13": {
+          "type": "string"
+        },
+        "c_att_ranks_14": {
+          "type": "string"
+        },
+        "c_att_descs_0": {
+          "type": "string",
+          "description": "Description for slot 0"
+        },
+        "c_att_descs_1": {
+          "type": "string"
+        },
+        "c_att_descs_2": {
+          "type": "string"
+        },
+        "c_att_descs_3": {
+          "type": "string"
+        },
+        "c_att_descs_4": {
+          "type": "string"
+        },
+        "c_att_descs_5": {
+          "type": "string"
+        },
+        "c_att_descs_6": {
+          "type": "string"
+        },
+        "c_att_descs_7": {
+          "type": "string"
+        },
+        "c_att_descs_8": {
+          "type": "string"
+        },
+        "c_att_descs_9": {
+          "type": "string"
+        },
+        "c_att_descs_10": {
+          "type": "string"
+        },
+        "c_att_descs_11": {
+          "type": "string"
+        },
+        "c_att_descs_12": {
+          "type": "string"
+        },
+        "c_att_descs_13": {
+          "type": "string"
+        },
+        "c_att_descs_14": {
+          "type": "string"
+        }
       },
-      "required": ["name", "MBClass"]
+      "required": [
+        "name",
+        "MBClass"
+      ]
     },
-
     "WeaponFlags": {
       "type": "object",
       "description": "Per-weapon class flag overrides (WP_*Flags)",
       "properties": {
-        "WP_MeleeFlags": {"type": "string", "description": "Melee weapon flags"},
-        "WP_StunBatonFlags": {"type": "string"},
-        "WP_SaberFlags": {"type": "string"},
-        "WP_BlasterPistolFlags": {"type": "string"},
-        "WP_ClonePistolFlags": {"type": "string"},
-        "WP_MandoPistolFlags": {"type": "string"},
-        "WP_BlasterFlags": {"type": "string"},
-        "WP_DisruptorFlags": {"type": "string"},
-        "WP_BowcasterFlags": {"type": "string"},
-        "WP_RepeaterFlags": {"type": "string"},
-        "WP_CloneRifleFlags": {"type": "string"},
-        "WP_ThrowerFlags": {"type": "string"},
-        "WP_MinigunFlags": {"type": "string"},
-        "WP_DEMP2Flags": {"type": "string"},
-        "WP_ShotgunFlags": {"type": "string"},
-        "WP_FlechetteFlags": {"type": "string"},
-        "WP_a280Flags": {"type": "string"},
-        "WP_dlt20aFlags": {"type": "string"},
-        "WP_m5Flags": {"type": "string"},
-        "WP_t21Flags": {"type": "string"},
-        "WP_ee3Flags": {"type": "string"},
-        "WP_ee4Flags": {"type": "string"},
-        "WP_AmbanFlags": {"type": "string"},
-        "WP_cr2Flags": {"type": "string"},
-        "WP_DCCarbineFlags": {"type": "string"},
-        "WP_E22Flags": {"type": "string"},
-        "WP_RocketLauncherFlags": {"type": "string"},
-        "WP_plx1Flags": {"type": "string"},
-        "WP_ThermalFlags": {"type": "string"},
-        "WP_FragNadeFlags": {"type": "string"},
-        "WP_TripMineFlags": {"type": "string"},
-        "WP_PulseNadeFlags": {"type": "string"},
-        "WP_DetPackFlags": {"type": "string"},
-        "WP_ConcussionFlags": {"type": "string"},
-        "WP_sbdFlags": {"type": "string"},
-        "WP_BryarOldFlags": {"type": "string"},
-        "WP_RealTDFlags": {"type": "string"},
-        "WP_FireNadeFlags": {"type": "string"},
-        "WP_SonicNadeFlags": {"type": "string"},
-        "WP_CryoNadeFlags": {"type": "string"},
-        "WP_ConcNadeFlags": {"type": "string"},
-        "WP_projFlags": {"type": "string"},
-        "WP_ImpactNadeFlags": {"type": "string"},
-        "WP_BactaBombFlags": {"type": "string"},
-        "WP_GasNadeFlags": {"type": "string"},
-        "WP_FlashNadeFlags": {"type": "string"},
-        "WP_GlopNadeFlags": {"type": "string"},
-        "WP_ImploderNadeFlags": {"type": "string"},
-        "WP_SmokeNadeFlags": {"type": "string"},
-        "WP_ShieldNadeFlags": {"type": "string"},
-        "WP_ProtonNadeFlags": {"type": "string"},
-        "WP_GrenadeLauncherFlags": {"type": "string"},
-        "WP_StickyLauncherFlags": {"type": "string"}
+        "WP_MeleeFlags": {
+          "type": "string",
+          "description": "Melee weapon flags"
+        },
+        "WP_StunBatonFlags": {
+          "type": "string"
+        },
+        "WP_SaberFlags": {
+          "type": "string"
+        },
+        "WP_BlasterPistolFlags": {
+          "type": "string"
+        },
+        "WP_ClonePistolFlags": {
+          "type": "string"
+        },
+        "WP_MandoPistolFlags": {
+          "type": "string"
+        },
+        "WP_BlasterFlags": {
+          "type": "string"
+        },
+        "WP_DisruptorFlags": {
+          "type": "string"
+        },
+        "WP_BowcasterFlags": {
+          "type": "string"
+        },
+        "WP_RepeaterFlags": {
+          "type": "string"
+        },
+        "WP_CloneRifleFlags": {
+          "type": "string"
+        },
+        "WP_ThrowerFlags": {
+          "type": "string"
+        },
+        "WP_MinigunFlags": {
+          "type": "string"
+        },
+        "WP_DEMP2Flags": {
+          "type": "string"
+        },
+        "WP_ShotgunFlags": {
+          "type": "string"
+        },
+        "WP_FlechetteFlags": {
+          "type": "string"
+        },
+        "WP_a280Flags": {
+          "type": "string"
+        },
+        "WP_dlt20aFlags": {
+          "type": "string"
+        },
+        "WP_m5Flags": {
+          "type": "string"
+        },
+        "WP_t21Flags": {
+          "type": "string"
+        },
+        "WP_ee3Flags": {
+          "type": "string"
+        },
+        "WP_ee4Flags": {
+          "type": "string"
+        },
+        "WP_AmbanFlags": {
+          "type": "string"
+        },
+        "WP_cr2Flags": {
+          "type": "string"
+        },
+        "WP_DCCarbineFlags": {
+          "type": "string"
+        },
+        "WP_E22Flags": {
+          "type": "string"
+        },
+        "WP_RocketLauncherFlags": {
+          "type": "string"
+        },
+        "WP_plx1Flags": {
+          "type": "string"
+        },
+        "WP_ThermalFlags": {
+          "type": "string"
+        },
+        "WP_FragNadeFlags": {
+          "type": "string"
+        },
+        "WP_TripMineFlags": {
+          "type": "string"
+        },
+        "WP_PulseNadeFlags": {
+          "type": "string"
+        },
+        "WP_DetPackFlags": {
+          "type": "string"
+        },
+        "WP_ConcussionFlags": {
+          "type": "string"
+        },
+        "WP_sbdFlags": {
+          "type": "string"
+        },
+        "WP_BryarOldFlags": {
+          "type": "string"
+        },
+        "WP_RealTDFlags": {
+          "type": "string"
+        },
+        "WP_FireNadeFlags": {
+          "type": "string"
+        },
+        "WP_SonicNadeFlags": {
+          "type": "string"
+        },
+        "WP_CryoNadeFlags": {
+          "type": "string"
+        },
+        "WP_ConcNadeFlags": {
+          "type": "string"
+        },
+        "WP_projFlags": {
+          "type": "string"
+        },
+        "WP_ImpactNadeFlags": {
+          "type": "string"
+        },
+        "WP_BactaBombFlags": {
+          "type": "string"
+        },
+        "WP_GasNadeFlags": {
+          "type": "string"
+        },
+        "WP_FlashNadeFlags": {
+          "type": "string"
+        },
+        "WP_GlopNadeFlags": {
+          "type": "string"
+        },
+        "WP_ImploderNadeFlags": {
+          "type": "string"
+        },
+        "WP_SmokeNadeFlags": {
+          "type": "string"
+        },
+        "WP_ShieldNadeFlags": {
+          "type": "string"
+        },
+        "WP_ProtonNadeFlags": {
+          "type": "string"
+        },
+        "WP_GrenadeLauncherFlags": {
+          "type": "string"
+        },
+        "WP_StickyLauncherFlags": {
+          "type": "string"
+        }
       }
     },
-
     "WeaponInfo": {
       "type": "object",
       "description": "Weapon override block (WeaponInfo0, WeaponInfo1, etc.)",
       "properties": {
-        "_section_required": {"type": "null", "description": "=== REQUIRED FIELDS ==="},
-        "WeaponToReplace": {"type": "string", "description": "REQUIRED: Weapon type to replace (WP_*)"},
-        "WeaponBasedOff": {"type": "string", "description": "REQUIRED: Base weapon behavior (WP_*)"},
-        "NewWorldModel": {"type": "string", "description": "REQUIRED: World model path"},
-        "NewViewModel": {"type": "string", "description": "REQUIRED: First-person view model path"},
-        "Icon": {"type": "string", "description": "REQUIRED: HUD icon shader path"},
-
-        "_section_basic": {"type": "null", "description": "=== BASIC SETTINGS ==="},
-        "WeaponName": {"type": "string", "description": "Display name"},
-        "altFireEnabled": {"type": "integer", "description": "Enable alt-fire (0/1)", "default": 1},
-        "primFireEnabled": {"type": "integer", "description": "Enable primary fire (0/1)", "default": 1},
-        "clipSize": {"type": "integer", "description": "Clip/magazine size", "default": 0},
-        "isMinigun": {"type": "integer", "description": "Is minigun type (0/1)", "default": 0},
-        "customAmmo": {"type": "integer", "description": "Custom ammo count", "default": 0},
-
-        "_section_hitscan": {"type": "null", "description": "=== HITSCAN SETTINGS ==="},
-        "primHitscanShot": {"type": "integer", "description": "Primary is hitscan (0/1)", "default": 0},
-        "primHitscanTracer": {"type": "integer", "description": "Primary hitscan tracer type", "default": 0},
-        "altHitscanShot": {"type": "integer", "description": "Alt-fire is hitscan (0/1)", "default": 0},
-        "altHitscanTracer": {"type": "integer", "description": "Alt-fire hitscan tracer type", "default": 0},
-
-        "_section_models": {"type": "null", "description": "=== MODEL OVERRIDES ==="},
-        "NewHandsModel": {"type": "string", "description": "Hands model path"},
-        "NewHandModel": {"type": "string", "description": "Hand model path (alias)"},
-        "NewBarrelModel": {"type": "string", "description": "Barrel model path"},
-        "CorrectedWorldModel": {"type": "string", "description": "Corrected world model"},
-        "missileModel": {"type": "string", "description": "Primary projectile model"},
-        "altMissileModel": {"type": "string", "description": "Alt-fire projectile model"},
-
-        "_section_effects": {"type": "null", "description": "=== VISUAL EFFECTS ==="},
-        "MuzzleEffect": {"type": "string", "description": "Primary muzzle flash effect"},
-        "AltMuzzleEffect": {"type": "string", "description": "Alt-fire muzzle flash effect"},
-        "missileEffect": {"type": "string", "description": "Primary projectile trail effect"},
-        "AltmissileEffect": {"type": "string", "description": "Alt-fire projectile trail"},
-        "missile3Effect": {"type": "string", "description": "Third missile effect variant"},
-        "PowerupShotEffect": {"type": "string", "description": "Powerup shot effect"},
-        "ChargeEffect": {"type": "string", "description": "Charging visual effect"},
-
-        "_section_impact_effects": {"type": "null", "description": "=== IMPACT EFFECTS ==="},
-        "missileMissEffect": {"type": "string", "description": "Primary miss/wall impact"},
-        "missileMissEffectEnhanced": {"type": "string", "description": "Enhanced miss effect"},
-        "altMissileMissEffect": {"type": "string", "description": "Alt-fire miss effect"},
-        "altMissileMissEffectEnhanced": {"type": "string", "description": "Alt enhanced miss effect"},
-        "missileHitHumanEffect": {"type": "string", "description": "Primary hit human effect"},
-        "missileHitDroidEffect": {"type": "string", "description": "Primary hit droid effect"},
-        "altMissileHitHumanEffect": {"type": "string", "description": "Alt hit human effect"},
-        "altMissileHitDroidEffect": {"type": "string", "description": "Alt hit droid effect"},
-
-        "_section_disruptor": {"type": "null", "description": "=== DISRUPTOR BEAM EFFECTS ==="},
-        "disruptorBeam1": {"type": "string", "description": "Disruptor beam effect 1"},
-        "disruptorBeam2": {"type": "string", "description": "Disruptor beam effect 2"},
-
-        "_section_sounds": {"type": "null", "description": "=== SOUND EFFECTS ==="},
-        "FlashSound0": {"type": "string", "description": "Primary fire sound 1"},
-        "FlashSound1": {"type": "string", "description": "Primary fire sound 2"},
-        "FlashSound2": {"type": "string", "description": "Primary fire sound 3"},
-        "FlashSound3": {"type": "string", "description": "Primary fire sound 4"},
-        "AltFlashSound0": {"type": "string", "description": "Alt-fire sound 1"},
-        "AltFlashSound1": {"type": "string", "description": "Alt-fire sound 2"},
-        "AltFlashSound2": {"type": "string", "description": "Alt-fire sound 3"},
-        "AltFlashSound3": {"type": "string", "description": "Alt-fire sound 4"},
-        "ChargeSound": {"type": "string", "description": "Charging sound"},
-        "primChargeSound": {"type": "string", "description": "Primary charge sound"},
-        "altChargeSound": {"type": "string", "description": "Alt charge sound"},
-        "SelectSound": {"type": "string", "description": "Weapon select sound"},
-        "missileSound": {"type": "string", "description": "Projectile flight sound"},
-        "altMissileSound": {"type": "string", "description": "Alt projectile sound"},
-
-        "_section_modifiers": {"type": "null", "description": "=== STAT MODIFIERS ==="},
-        "ReloadTimeModifier": {"type": "number", "description": "Reload time multiplier", "default": -1.0},
-        "damageMod": {"type": "number", "description": "Damage multiplier", "default": 1.0},
-        "velocityMod": {"type": "number", "description": "Projectile velocity multiplier", "default": 1.0},
-        "rateMod": {"type": "number", "description": "Fire rate multiplier", "default": 1.0},
-
-        "_section_fp_block": {"type": "null", "description": "=== FORCE POINT BLOCKING ==="},
-        "FPBlockMinMult": {"type": "number", "description": "FP block min multiplier", "default": 0.0},
-        "FPBlockMaxMult": {"type": "number", "description": "FP block max multiplier", "default": 0.0},
-        "FPNoBlockMinMult": {"type": "number", "description": "FP no-block min multiplier", "default": 0.0},
-        "FPNoBlockMaxMult": {"type": "number", "description": "FP no-block max multiplier", "default": 0.0},
-        "FPChargeMult": {"type": "number", "description": "FP charge multiplier", "default": 0.0},
-        "FPMult": {"type": "number", "description": "General FP multiplier", "default": 0.0},
-
-        "_section_gore": {"type": "null", "description": "=== GORE SETTINGS ==="},
-        "primGore": {"type": "integer", "description": "Primary fire gore (0/1)", "default": 0},
-        "altGore": {"type": "integer", "description": "Alt-fire gore (0/1)", "default": 0},
-
-        "_section_animations": {"type": "null", "description": "=== ANIMATION OVERRIDES ==="},
-        "hasAnimOverrides": {"type": "integer", "description": "Enable anim overrides (0/1)", "default": 0},
-        "animReady": {"type": "string", "description": "Ready animation"},
-        "animReadyWalk": {"type": "string", "description": "Ready walk animation"},
-        "animReadyNoAmmo": {"type": "string", "description": "Ready no-ammo animation"},
-        "animReadyZoom": {"type": "string", "description": "Ready zoom animation"},
-        "animAttack": {"type": "string", "description": "Attack animation"},
-        "animAttackWalk": {"type": "string", "description": "Attack walk animation"},
-        "animAttackZoom": {"type": "string", "description": "Attack zoom animation"},
-        "animStand": {"type": "string", "description": "Standing animation"},
-        "animCharge": {"type": "string", "description": "Charging animation"},
-        "typeCharge": {"type": "integer", "description": "Charge type (0=none, 1=regular, 2=continue)"},
-        "animRunAttackR": {"type": "string", "description": "Run attack right (dual)"},
-        "animRunAttackL": {"type": "string", "description": "Run attack left (dual)"},
-        "animWalkAttackR": {"type": "string", "description": "Walk attack right (dual)"},
-        "animWalkAttackL": {"type": "string", "description": "Walk attack left (dual)"}
+        "_section_required": {
+          "type": "null",
+          "description": "=== REQUIRED FIELDS ==="
+        },
+        "WeaponToReplace": {
+          "type": "string",
+          "description": "REQUIRED: Weapon type to replace (WP_*)"
+        },
+        "WeaponBasedOff": {
+          "type": "string",
+          "description": "REQUIRED: Base weapon behavior (WP_*)"
+        },
+        "NewWorldModel": {
+          "type": "string",
+          "description": "REQUIRED: World model path"
+        },
+        "NewViewModel": {
+          "type": "string",
+          "description": "REQUIRED: First-person view model path"
+        },
+        "Icon": {
+          "type": "string",
+          "description": "REQUIRED: HUD icon shader path"
+        },
+        "_section_basic": {
+          "type": "null",
+          "description": "=== BASIC SETTINGS ==="
+        },
+        "WeaponName": {
+          "type": "string",
+          "description": "Display name"
+        },
+        "altFireEnabled": {
+          "type": "integer",
+          "description": "Enable alt-fire (0/1)",
+          "default": 1
+        },
+        "primFireEnabled": {
+          "type": "integer",
+          "description": "Enable primary fire (0/1)",
+          "default": 1
+        },
+        "clipSize": {
+          "type": "integer",
+          "description": "Clip/magazine size",
+          "default": 0
+        },
+        "isMinigun": {
+          "type": "integer",
+          "description": "Is minigun type (0/1)",
+          "default": 0
+        },
+        "customAmmo": {
+          "type": "integer",
+          "description": "Custom ammo count",
+          "default": 0
+        },
+        "_section_hitscan": {
+          "type": "null",
+          "description": "=== HITSCAN SETTINGS ==="
+        },
+        "primHitscanShot": {
+          "type": "integer",
+          "description": "Primary is hitscan (0/1)",
+          "default": 0
+        },
+        "primHitscanTracer": {
+          "type": "integer",
+          "description": "Primary hitscan tracer type",
+          "default": 0
+        },
+        "altHitscanShot": {
+          "type": "integer",
+          "description": "Alt-fire is hitscan (0/1)",
+          "default": 0
+        },
+        "altHitscanTracer": {
+          "type": "integer",
+          "description": "Alt-fire hitscan tracer type",
+          "default": 0
+        },
+        "_section_models": {
+          "type": "null",
+          "description": "=== MODEL OVERRIDES ==="
+        },
+        "NewHandsModel": {
+          "type": "string",
+          "description": "Hands model path"
+        },
+        "NewHandModel": {
+          "type": "string",
+          "description": "Hand model path (alias)"
+        },
+        "NewBarrelModel": {
+          "type": "string",
+          "description": "Barrel model path"
+        },
+        "CorrectedWorldModel": {
+          "type": "string",
+          "description": "Corrected world model"
+        },
+        "missileModel": {
+          "type": "string",
+          "description": "Primary projectile model"
+        },
+        "altMissileModel": {
+          "type": "string",
+          "description": "Alt-fire projectile model"
+        },
+        "_section_effects": {
+          "type": "null",
+          "description": "=== VISUAL EFFECTS ==="
+        },
+        "MuzzleEffect": {
+          "type": "string",
+          "description": "Primary muzzle flash effect"
+        },
+        "AltMuzzleEffect": {
+          "type": "string",
+          "description": "Alt-fire muzzle flash effect"
+        },
+        "missileEffect": {
+          "type": "string",
+          "description": "Primary projectile trail effect"
+        },
+        "AltmissileEffect": {
+          "type": "string",
+          "description": "Alt-fire projectile trail"
+        },
+        "missile3Effect": {
+          "type": "string",
+          "description": "Third missile effect variant"
+        },
+        "PowerupShotEffect": {
+          "type": "string",
+          "description": "Powerup shot effect"
+        },
+        "ChargeEffect": {
+          "type": "string",
+          "description": "Charging visual effect"
+        },
+        "_section_impact_effects": {
+          "type": "null",
+          "description": "=== IMPACT EFFECTS ==="
+        },
+        "missileMissEffect": {
+          "type": "string",
+          "description": "Primary miss/wall impact"
+        },
+        "missileMissEffectEnhanced": {
+          "type": "string",
+          "description": "Enhanced miss effect"
+        },
+        "altMissileMissEffect": {
+          "type": "string",
+          "description": "Alt-fire miss effect"
+        },
+        "altMissileMissEffectEnhanced": {
+          "type": "string",
+          "description": "Alt enhanced miss effect"
+        },
+        "missileHitHumanEffect": {
+          "type": "string",
+          "description": "Primary hit human effect"
+        },
+        "missileHitDroidEffect": {
+          "type": "string",
+          "description": "Primary hit droid effect"
+        },
+        "altMissileHitHumanEffect": {
+          "type": "string",
+          "description": "Alt hit human effect"
+        },
+        "altMissileHitDroidEffect": {
+          "type": "string",
+          "description": "Alt hit droid effect"
+        },
+        "_section_disruptor": {
+          "type": "null",
+          "description": "=== DISRUPTOR BEAM EFFECTS ==="
+        },
+        "disruptorBeam1": {
+          "type": "string",
+          "description": "Disruptor beam effect 1"
+        },
+        "disruptorBeam2": {
+          "type": "string",
+          "description": "Disruptor beam effect 2"
+        },
+        "_section_sounds": {
+          "type": "null",
+          "description": "=== SOUND EFFECTS ==="
+        },
+        "FlashSound0": {
+          "type": "string",
+          "description": "Primary fire sound 1"
+        },
+        "FlashSound1": {
+          "type": "string",
+          "description": "Primary fire sound 2"
+        },
+        "FlashSound2": {
+          "type": "string",
+          "description": "Primary fire sound 3"
+        },
+        "FlashSound3": {
+          "type": "string",
+          "description": "Primary fire sound 4"
+        },
+        "AltFlashSound0": {
+          "type": "string",
+          "description": "Alt-fire sound 1"
+        },
+        "AltFlashSound1": {
+          "type": "string",
+          "description": "Alt-fire sound 2"
+        },
+        "AltFlashSound2": {
+          "type": "string",
+          "description": "Alt-fire sound 3"
+        },
+        "AltFlashSound3": {
+          "type": "string",
+          "description": "Alt-fire sound 4"
+        },
+        "ChargeSound": {
+          "type": "string",
+          "description": "Charging sound"
+        },
+        "primChargeSound": {
+          "type": "string",
+          "description": "Primary charge sound"
+        },
+        "altChargeSound": {
+          "type": "string",
+          "description": "Alt charge sound"
+        },
+        "SelectSound": {
+          "type": "string",
+          "description": "Weapon select sound"
+        },
+        "missileSound": {
+          "type": "string",
+          "description": "Projectile flight sound"
+        },
+        "altMissileSound": {
+          "type": "string",
+          "description": "Alt projectile sound"
+        },
+        "_section_modifiers": {
+          "type": "null",
+          "description": "=== STAT MODIFIERS ==="
+        },
+        "ReloadTimeModifier": {
+          "type": "number",
+          "description": "Reload time multiplier",
+          "default": -1.0
+        },
+        "damageMod": {
+          "type": "number",
+          "description": "Damage multiplier",
+          "default": 1.0
+        },
+        "velocityMod": {
+          "type": "number",
+          "description": "Projectile velocity multiplier",
+          "default": 1.0
+        },
+        "rateMod": {
+          "type": "number",
+          "description": "Fire rate multiplier",
+          "default": 1.0
+        },
+        "_section_fp_block": {
+          "type": "null",
+          "description": "=== FORCE POINT BLOCKING ==="
+        },
+        "FPBlockMinMult": {
+          "type": "number",
+          "description": "FP block min multiplier",
+          "default": 0.0
+        },
+        "FPBlockMaxMult": {
+          "type": "number",
+          "description": "FP block max multiplier",
+          "default": 0.0
+        },
+        "FPNoBlockMinMult": {
+          "type": "number",
+          "description": "FP no-block min multiplier",
+          "default": 0.0
+        },
+        "FPNoBlockMaxMult": {
+          "type": "number",
+          "description": "FP no-block max multiplier",
+          "default": 0.0
+        },
+        "FPChargeMult": {
+          "type": "number",
+          "description": "FP charge multiplier",
+          "default": 0.0
+        },
+        "FPMult": {
+          "type": "number",
+          "description": "General FP multiplier",
+          "default": 0.0
+        },
+        "_section_gore": {
+          "type": "null",
+          "description": "=== GORE SETTINGS ==="
+        },
+        "primGore": {
+          "type": "integer",
+          "description": "Primary fire gore (0/1)",
+          "default": 0
+        },
+        "altGore": {
+          "type": "integer",
+          "description": "Alt-fire gore (0/1)",
+          "default": 0
+        },
+        "_section_animations": {
+          "type": "null",
+          "description": "=== ANIMATION OVERRIDES ==="
+        },
+        "hasAnimOverrides": {
+          "type": "integer",
+          "description": "Enable anim overrides (0/1)",
+          "default": 0
+        },
+        "animReady": {
+          "type": "string",
+          "description": "Ready animation"
+        },
+        "animReadyWalk": {
+          "type": "string",
+          "description": "Ready walk animation"
+        },
+        "animReadyNoAmmo": {
+          "type": "string",
+          "description": "Ready no-ammo animation"
+        },
+        "animReadyZoom": {
+          "type": "string",
+          "description": "Ready zoom animation"
+        },
+        "animAttack": {
+          "type": "string",
+          "description": "Attack animation"
+        },
+        "animAttackWalk": {
+          "type": "string",
+          "description": "Attack walk animation"
+        },
+        "animAttackZoom": {
+          "type": "string",
+          "description": "Attack zoom animation"
+        },
+        "animStand": {
+          "type": "string",
+          "description": "Standing animation"
+        },
+        "animCharge": {
+          "type": "string",
+          "description": "Charging animation"
+        },
+        "typeCharge": {
+          "type": "integer",
+          "description": "Charge type (0=none, 1=regular, 2=continue)"
+        },
+        "animRunAttackR": {
+          "type": "string",
+          "description": "Run attack right (dual)"
+        },
+        "animRunAttackL": {
+          "type": "string",
+          "description": "Run attack left (dual)"
+        },
+        "animWalkAttackR": {
+          "type": "string",
+          "description": "Walk attack right (dual)"
+        },
+        "animWalkAttackL": {
+          "type": "string",
+          "description": "Walk attack left (dual)"
+        }
       },
-      "required": ["WeaponToReplace", "WeaponBasedOff"]
+      "required": [
+        "WeaponToReplace",
+        "WeaponBasedOff"
+      ]
     },
-
     "ForceInfo": {
       "type": "object",
       "description": "Force power override block (ForceInfo0, ForceInfo1, etc.)",
       "properties": {
-        "_section_required": {"type": "null", "description": "=== REQUIRED FIELDS ==="},
-        "ForceToReplace": {"type": "string", "description": "REQUIRED: Force power to replace (FP_*)"},
-        "Icon": {"type": "string", "description": "REQUIRED: Force power icon shader"},
-
-        "_section_basic": {"type": "null", "description": "=== BASIC SETTINGS ==="},
-        "ForcePowerName": {"type": "string", "description": "Display name override"},
-
-        "_section_hand_effects": {"type": "null", "description": "=== HAND SHADER EFFECTS ==="},
-        "HandShader": {"type": "string", "description": "Primary hand glow shader"},
-        "HandShaderRed": {"type": "number", "description": "Hand shader red (0-255)", "default": 255},
-        "HandShaderGreen": {"type": "number", "description": "Hand shader green (0-255)", "default": 255},
-        "HandShaderBlue": {"type": "number", "description": "Hand shader blue (0-255)", "default": 255},
-        "HandShader2": {"type": "string", "description": "Secondary hand shader"},
-        "HandShader2Red": {"type": "number", "description": "Hand shader 2 red", "default": 255},
-        "HandShader2Green": {"type": "number", "description": "Hand shader 2 green", "default": 255},
-        "HandShader2Blue": {"type": "number", "description": "Hand shader 2 blue", "default": 255},
-
-        "_section_effects": {"type": "null", "description": "=== VISUAL EFFECTS ==="},
-        "ConeEffect": {"type": "string", "description": "Cone/area effect path"},
-
-        "_section_sounds": {"type": "null", "description": "=== SOUND EFFECTS ==="},
-        "StartSound": {"type": "string", "description": "Activation sound"},
-        "LoopSound": {"type": "string", "description": "Looping/sustained sound"},
-        "HitSound": {"type": "string", "description": "Impact/hit sound"}
+        "_section_required": {
+          "type": "null",
+          "description": "=== REQUIRED FIELDS ==="
+        },
+        "ForceToReplace": {
+          "type": "string",
+          "description": "REQUIRED: Force power to replace (FP_*)"
+        },
+        "Icon": {
+          "type": "string",
+          "description": "REQUIRED: Force power icon shader"
+        },
+        "_section_basic": {
+          "type": "null",
+          "description": "=== BASIC SETTINGS ==="
+        },
+        "ForcePowerName": {
+          "type": "string",
+          "description": "Display name override"
+        },
+        "_section_hand_effects": {
+          "type": "null",
+          "description": "=== HAND SHADER EFFECTS ==="
+        },
+        "HandShader": {
+          "type": "string",
+          "description": "Primary hand glow shader"
+        },
+        "HandShaderRed": {
+          "type": "number",
+          "description": "Hand shader red (0-255)",
+          "default": 255
+        },
+        "HandShaderGreen": {
+          "type": "number",
+          "description": "Hand shader green (0-255)",
+          "default": 255
+        },
+        "HandShaderBlue": {
+          "type": "number",
+          "description": "Hand shader blue (0-255)",
+          "default": 255
+        },
+        "HandShader2": {
+          "type": "string",
+          "description": "Secondary hand shader"
+        },
+        "HandShader2Red": {
+          "type": "number",
+          "description": "Hand shader 2 red",
+          "default": 255
+        },
+        "HandShader2Green": {
+          "type": "number",
+          "description": "Hand shader 2 green",
+          "default": 255
+        },
+        "HandShader2Blue": {
+          "type": "number",
+          "description": "Hand shader 2 blue",
+          "default": 255
+        },
+        "_section_effects": {
+          "type": "null",
+          "description": "=== VISUAL EFFECTS ==="
+        },
+        "ConeEffect": {
+          "type": "string",
+          "description": "Cone/area effect path"
+        },
+        "_section_sounds": {
+          "type": "null",
+          "description": "=== SOUND EFFECTS ==="
+        },
+        "StartSound": {
+          "type": "string",
+          "description": "Activation sound"
+        },
+        "LoopSound": {
+          "type": "string",
+          "description": "Looping/sustained sound"
+        },
+        "HitSound": {
+          "type": "string",
+          "description": "Impact/hit sound"
+        }
       },
-      "required": ["ForceToReplace", "Icon"]
+      "required": [
+        "ForceToReplace",
+        "Icon"
+      ]
     }
   },
-
   "type": "object",
   "properties": {
-    "ClassInfo": {"$ref": "#/definitions/ClassInfo"},
-    "WeaponFlags": {"$ref": "#/definitions/WeaponFlags"},
+    "ClassInfo": {
+      "$ref": "#/definitions/ClassInfo"
+    },
+    "WeaponFlags": {
+      "$ref": "#/definitions/WeaponFlags"
+    },
     "WeaponInfo": {
       "type": "array",
       "description": "Array of weapon override blocks",
-      "items": {"$ref": "#/definitions/WeaponInfo"}
+      "items": {
+        "$ref": "#/definitions/WeaponInfo"
+      }
     },
     "ForceInfo": {
       "type": "array",
       "description": "Array of force power override blocks",
-      "items": {"$ref": "#/definitions/ForceInfo"}
+      "items": {
+        "$ref": "#/definitions/ForceInfo"
+      }
     },
     "description": {
       "type": "string",
       "description": "Lore text and ability description displayed in-game"
     }
   },
-  "required": ["ClassInfo"]
+  "required": [
+    "ClassInfo"
+  ]
 }

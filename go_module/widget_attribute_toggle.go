@@ -107,7 +107,9 @@ func (w *AttributeToggleWidget) createUI(onInfo func(string, string), iconRes fy
 		btnBox.Add(btn)
 	}
 
-	// Color Coding
+	// Category color — drives the left strip and the tile's accent
+	// border. Re-uses the same palette as the info-panel's category
+	// chip so the same row identity reads consistently across surfaces.
 	var catColor color.Color
 	switch w.Category {
 	case "Force":
@@ -118,21 +120,46 @@ func (w *AttributeToggleWidget) createUI(onInfo func(string, string), iconRes fy
 		catColor = color.RGBA{255, 215, 0, 255} // Gold
 	case "Class Specific":
 		catColor = color.RGBA{50, 205, 50, 255} // Lime Green
+	case "Supply":
+		catColor = color.RGBA{195, 130, 80, 255} // Bronze
+	case "Regen":
+		catColor = color.RGBA{120, 200, 140, 255} // Mint
+	case "Multipliers":
+		catColor = color.RGBA{180, 140, 220, 255} // Lavender
+	case "Advanced":
+		catColor = color.RGBA{100, 100, 110, 255} // Slate
 	default:
 		catColor = color.RGBA{128, 128, 128, 255} // Grey
 	}
 
-	rect := canvas.NewRectangle(catColor)
-	rect.SetMinSize(fyne.NewSize(5, 0)) // 5px wide strip
+	// Left category strip — narrower (3px) + rounded so it reads as
+	// an accent rule rather than a chunky bar. Pairs with the tile bg
+	// + offset stroke below to echo the launcher's box treatment.
+	stripRect := canvas.NewRectangle(catColor)
+	stripRect.CornerRadius = 1.5
+	stripRect.SetMinSize(fyne.NewSize(3, 0))
+	strip := container.New(layout.NewGridWrapLayout(fyne.NewSize(3, 28)), stripRect)
 
 	// Layout: [Strip] [Info] [Icon] [Label] -- Spacer -- Buttons (Right)
-	leftContainer := container.NewHBox(rect, w.infoBtn, iconObj, w.label)
+	leftContainer := container.NewHBox(strip, w.infoBtn, iconObj, w.label)
 
-	w.container = container.NewBorder(nil, nil,
-		leftContainer,      // Left
-		btnBox,             // Right
-		layout.NewSpacer(), // Center (filler)
+	row := container.NewBorder(nil, nil,
+		leftContainer,
+		btnBox,
+		layout.NewSpacer(),
 	)
+
+	// Tile shell — faint tinted fill + offset stroke matching the
+	// info-panel hero's launcher-style rounded panel. Gives every
+	// attribute row its own card identity without adding visual weight.
+	tileBG := canvas.NewRectangle(tintWithAlpha(catColor, 14))
+	tileBG.CornerRadius = 6
+	tileFrame := canvas.NewRectangle(color.Transparent)
+	tileFrame.StrokeColor = tintWithAlpha(catColor, 60)
+	tileFrame.StrokeWidth = 1
+	tileFrame.CornerRadius = 5
+	framePadded := container.NewPadded(tileFrame)
+	w.container = container.NewStack(tileBG, framePadded, container.NewPadded(row))
 
 	w.refreshButtons()
 }

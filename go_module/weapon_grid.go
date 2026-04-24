@@ -1,10 +1,12 @@
 package main
 
 import (
+	"image/color"
 	"sort"
 	"strings"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/widget"
@@ -165,11 +167,25 @@ func (wg *WeaponGrid) createUI() {
 				row = container.NewVBox(primary, caption)
 			}
 
+			// Tile shell — same launcher-style rounded panel + offset
+			// stroke as the attribute toggle widget so the two grids
+			// read as siblings. Faint accent tint + 1px stroke at low
+			// alpha; the inner content sits in a Padded container so
+			// nothing butts the rounded edges.
+			tileBG := canvas.NewRectangle(tintWithAlpha(CurrentThemeColor, 10))
+			tileBG.CornerRadius = 6
+			tileFrame := canvas.NewRectangle(color.Transparent)
+			tileFrame.StrokeColor = tintWithAlpha(CurrentThemeColor, 50)
+			tileFrame.StrokeWidth = 1
+			tileFrame.CornerRadius = 5
+			framePadded := container.NewPadded(tileFrame)
+			tile := container.NewStack(tileBG, framePadded, container.NewPadded(row))
+
 			// Wrap in HoverContainer. Pair the enter event with a
 			// leave event so the info panel's sticky context reverts
 			// when the mouse moves off the row — otherwise the panel
 			// would freeze on whatever weapon the mouse last grazed.
-			hoverContainer := NewHoverContainer(row, func() {
+			hoverContainer := NewHoverContainer(tile, func() {
 				if wg.onHover != nil {
 					wg.onHover(weaponID, w.Description)
 				}

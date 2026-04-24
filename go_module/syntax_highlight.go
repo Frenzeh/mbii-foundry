@@ -44,10 +44,15 @@ import (
 // still shows the raw source — edits save byte-identical to the form
 // output. This is purely cosmetic for View mode.
 func wrapSourceForDisplay(src string) string {
-	const displayWrapWidth = 100
+	// Threshold is conservative — Fyne's RichText wrap is flaky on
+	// long per-token segments, so we pre-break any pipe-separated line
+	// that crosses this width and put a single token per row. One
+	// attribute-per-line reads better than a stuffed-line-plus-partial-
+	// overflow anyway.
+	const displayWrapWidth = 70
 	lines := strings.Split(src, "\n")
 	var out strings.Builder
-	out.Grow(len(src) + 128)
+	out.Grow(len(src) + 256)
 	for i, line := range lines {
 		if i > 0 {
 			out.WriteByte('\n')
@@ -61,31 +66,27 @@ func wrapSourceForDisplay(src string) string {
 		// rhythm the game format uses.
 		trimmed := strings.TrimLeft(line, " \t")
 		indent := line[:len(line)-len(trimmed)]
-		// A bit of extra indent on continuation rows visually threads
-		// them to the line above without confusing them for a new key.
+		// Extra indent on continuation rows visually threads them to
+		// the line above without confusing them for a new key.
 		contIndent := indent + "    "
 
 		parts := strings.Split(trimmed, "|")
-		cur := indent
-		first := true
+		// First part stays on the original-indent line with the key.
+		// Every subsequent pipe-separated value goes on its own line
+		// with the continuation indent. This avoids the TextWrapWord
+		// glitch that showed MB_ATT_LIGHTS_BEACON as a vertical
+		// character column when a segment overflowed the view.
 		for j, p := range parts {
-			sep := "|"
-			if j == len(parts)-1 {
-				sep = "" // no trailing pipe on the last chunk
-			}
-			chunk := p + sep
-			// Start a new row once the current row would exceed the
-			// soft cap — except on the very first chunk, which always
-			// goes on the initial (indented) line even if long.
-			if !first && len(cur)+len(chunk) > displayWrapWidth {
-				out.WriteString(cur)
+			if j == 0 {
+				out.WriteString(indent)
+				out.WriteString(p)
+			} else {
 				out.WriteByte('\n')
-				cur = contIndent
+				out.WriteString(contIndent)
+				out.WriteByte('|')
+				out.WriteString(p)
 			}
-			cur += chunk
-			first = false
 		}
-		out.WriteString(cur)
 	}
 	return out.String()
 }

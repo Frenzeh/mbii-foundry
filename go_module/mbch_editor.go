@@ -160,11 +160,20 @@ func (e *MBCHEditor) interact(key, context string) {
 }
 func (e *MBCHEditor) SetAssetBrowser(ab *AssetBrowser) {
 	e.assetBrowser = ab
-	if ab != nil && ab.vfs != nil {
-		e.iconResolver = NewIconResolver(ab.vfs)
-		if e.attrGrid != nil {
-			e.attrGrid.Refresh()
-		}
+	// Always build the resolver — its alias tables are VFS-independent
+	// and drive the embedded-icon lookup. The VFS is optional backup
+	// for IDs that aren't in the alias tables. Refresh both grids so
+	// icon columns repopulate now that the resolver is in place.
+	var vfs *VirtualFileSystem
+	if ab != nil {
+		vfs = ab.vfs
+	}
+	e.iconResolver = NewIconResolver(vfs)
+	if e.attrGrid != nil {
+		e.attrGrid.Refresh()
+	}
+	if e.weaponGrid != nil {
+		e.weaponGrid.Refresh()
 	}
 }
 func (e *MBCHEditor) SetHolocronClient(client *HolocronClient) { e.holocronClient = client }
@@ -1121,14 +1130,29 @@ func (e *MBCHEditor) updateIconPreview() {
 }
 
 func (e *MBCHEditor) resolveIconResource(id string) fyne.Resource {
-	if e.iconResolver == nil || e.assetBrowser == nil {
-		return nil
+	// Compute the path. Prefer the resolver (handles both alias lookup
+	// and VFS-backed candidate fallback); if unavailable, do the alias
+	// table lookup ourselves so embedded icons still render without a
+	// populated VFS.
+	var path string
+	if e.iconResolver != nil {
+		path = e.iconResolver.ResolveAttributeIcon(id)
+	} else if alias, ok := attributeIconAliases[id]; ok {
+		path = "gfx/menus/alpha/" + alias
 	}
-	path := e.iconResolver.ResolveAttributeIcon(id)
 	if path == "" {
 		return nil
 	}
-	return e.assetBrowser.LoadIconResource(path)
+	// Embedded first — LoadGameIcon keys on basename and doesn't need
+	// the AssetBrowser / VFS to be initialized.
+	if img, ok := LoadGameIcon(nil, path); ok {
+		return staticPNGResource(filepath.Base(path)+".png", img)
+	}
+	// VFS fallback — only if the AssetBrowser is connected.
+	if e.assetBrowser != nil {
+		return e.assetBrowser.LoadIconResource(path)
+	}
+	return nil
 }
 
 // resolveWeaponIconResource mirrors resolveIconResource but uses the

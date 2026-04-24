@@ -31,3 +31,5 @@ The standard **DL-44 Blaster Pistol**. Reliable sidearm with decent damage and a
 ### Tips
 * Level 3 Pistol is a viable primary weapon for aggressive "Run & Gun" styles (Hero/Bounty Hunter).
 * Often overlooked, but has higher DPS than many rifles at close range.
+
+<!-- icon-suggestion: icon_stats_pistol -->

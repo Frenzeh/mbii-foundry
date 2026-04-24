@@ -30,3 +30,5 @@ Illegal sniper rifle that disintegrates targets.
 * A fully charged headshot dissolves the enemy (no revive).
 * Body shots on unarmored targets are often lethal.
 * Ignores most armor damage reduction? (Needs verification).
+
+<!-- icon-suggestion: icon_stats_disruptor -->

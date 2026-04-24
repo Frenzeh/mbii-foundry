@@ -28,3 +28,4 @@ Heavy Blaster Rifle used by the Rebel Alliance. Hard-hitting but slower firing.
 ### Tips
 * Similar to the E-11 but trades fire rate for raw stopping power per bolt.
 * Velocity is significantly higher than E-11 (8075 vs 6325), making it easier to hit moving targets.
+<!-- icon-suggestion: icon_stats_a280 -->

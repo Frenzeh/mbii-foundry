@@ -25,3 +25,5 @@ Powerful, high-caliber blaster pistol.
 ### Tips
 * A hard-hitting sidearm, capable of quickly dispatching enemies.
 * Good for a "Sheriff" or "Lawman" type character.
+
+<!-- icon-suggestion: icon_stats_pistol -->

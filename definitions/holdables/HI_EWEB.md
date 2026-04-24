@@ -2,17 +2,20 @@
 
 `HI_EWEB`
 
-Deployable heavy blaster cannon.
+> Deployable heavy blaster cannon.
 
-> **Uses:** Unlimited until destroyed.
+## What it does
 
-### Mechanics
-* **Deploy:** Spawns a manned turret at a fixed point.
-* **Firepower:** Fast rate of fire, high damage, unlimited ammo.
-* **Movement:** Stationary. Can be slowly rotated.
-* **Despawn:** Moving backward un-deploys the cannon (can be re-deployed later).
-* **Vulnerability:** Destroyed after taking set damage. User cannot use other weapons while manned.
+Sets up a manned E-Web turret at the user's feet. Locks the player to the gun position with a fast, high-damage forward arc and infinite ammo — but no movement and limited side-to-side traverse. Moving backward un-deploys (and the cannon can be redeployed later).
 
-### Tips
-* Great for locking down hallways.
-* Inherits weapon flags from the user's Blaster Rifle.
+## Notes
+
+- Stationary while manned; the cannon is destructible by sustained enemy fire.
+- Inherits weapon flags from the user's Blaster Rifle — `HELD_HIGHDAMAGE` etc. carries over.
+- Best on chokepoints or fixed angles where rotation isn't needed.
+
+---
+
+`holdable` · `deployable` · `turret` · `heavy`
+
+<!-- icon-suggestion: eweb -->

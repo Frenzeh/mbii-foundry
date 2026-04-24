@@ -2,9 +2,20 @@
 
 `MB_ATT_AP_MULTIPLIER`
 
-> Multiplies the Attack Power of saber attacks.
+> Multiplier for saber Attack Power (block-break pressure).
 
-## Tips
+## What it does
 
-- A higher value makes your saber attacks harder to block and increases overall damage potential.
-- Often used to balance a class with very fast attack speed (`MB_ATT_FP_SABER_OFFENSE`).
+Scales how much pressure each saber swing applies to the opponent's Block Points. Higher values make swings harder to block and more likely to break guard. Distinct from raw saber damage — AP is the "guard pressure" axis.
+
+## Notes
+
+- Pairs with `MB_ATT_BP_MULTIPLIER` (defender side) — both feed the saber duel resource exchange.
+- Used to balance fast-attack classes against slow-but-heavy Strong stance.
+- Stacks with `MB_ATT_FP_SABER_OFFENSE` rank-based AP.
+
+---
+
+`multiplier` · `saber` · `attack-power`
+
+<!-- icon-suggestion: ap-multiplier -->

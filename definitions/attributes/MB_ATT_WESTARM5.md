@@ -25,3 +25,5 @@ Heavy ARC Trooper Rifle. Modular and powerful.
 ### Tips
 * The **Sniper Mode** hits extremely hard (69 damage), capable of 2-shotting many classes.
 * Requires `MB_ATT_ARC_RIFLE_SCOPE` to use the sniper mode.
+
+<!-- icon-suggestion: icon_stats_westarm5 -->

@@ -31,3 +31,5 @@ The standard **Imperial E-11 Blaster Rifle**. Versatile and effective at medium 
 ### Tips
 * The Level 3 Sniper Mode makes this weapon very deadly at long range.
 * A staple for Stormtrooper Commanders.
+
+<!-- icon-suggestion: icon_stats_e11 -->

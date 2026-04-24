@@ -26,3 +26,5 @@ A more conventional Bowcaster, firing a single, powerful bolt.
 ### Tips
 * High damage potential, especially with charged shots.
 * Less spread than the standard Bowcaster, making it more accurate.
+
+<!-- icon-suggestion: icon_stats_bowcaster -->

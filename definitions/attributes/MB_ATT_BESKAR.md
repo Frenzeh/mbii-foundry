@@ -48,3 +48,5 @@ Values below are multipliers applied to incoming damage. `×0.60` = take 60% of 
 ---
 
 *This is the reference template for a well-written definition. If the definition you're editing lacks a stats table, mechanics breakdown, and source refs, it probably needs work. See [`docs/DEFINITIONS_GUIDE.md`](../../docs/DEFINITIONS_GUIDE.md).*
+
+<!-- icon-suggestion: icon_stats_beskar -->

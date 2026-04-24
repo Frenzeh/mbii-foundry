@@ -15,3 +15,5 @@ Launcher for tracking beacons that tag enemies for the entire team.
 ### Tips
 * Tagged enemies have a **green triangle** over their head.
 * Wall-hacks for the whole team! Invaluable for coordination.
+
+<!-- icon-suggestion: icon_stats_tdart -->

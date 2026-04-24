@@ -2,9 +2,20 @@
 
 `MB_ATT_BP_MULTIPLIER`
 
-> Multiplies the maximum Block Points (stamina for blocking) of a saberist.
+> Multiplier for the maximum Block Point pool.
 
-## Tips
+## What it does
 
-- A higher value allows you to block more incoming blaster fire or saber attacks before your guard breaks.
-- Combine with `MB_ATT_FP_SABER_DEFENSE` for maximum defensive capabilities.
+Scales the user's maximum BP — the resource consumed by saber blocks and gunfire deflects. Higher values = more sustained defense before guard-break. Default 1.0.
+
+## Notes
+
+- Stacks with `MB_ATT_FP_SABER_DEFENSE` rank-based BP pool.
+- Doesn't change BP regen rate — pair with `MB_ATT_BLOCK_REGEN_*` siblings if you want both.
+- Set to 0 for "no block" classes (gunners with sabers as decoration).
+
+---
+
+`multiplier` · `block` · `bp` · `saber`
+
+<!-- icon-suggestion: bp-multiplier -->

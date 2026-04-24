@@ -26,3 +26,5 @@ Fires a burst of shrapnel or a bouncing explosive ball.
 ### Tips
 * Versatile weapon for close to medium range.
 * Alt-Fire can clear rooms or hit enemies around corners.
+
+<!-- icon-suggestion: icon_stats_flechette -->

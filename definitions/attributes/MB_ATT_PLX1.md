@@ -28,3 +28,5 @@ A compact rocket launcher, often equipped with guided missiles.
 ### Tips
 * Functionally very similar to `MB_ATT_ROCKET_LAUNCHER`, but potentially has different cosmetic overrides or specific class access.
 * Often seen with ARC Troopers.
+
+<!-- icon-suggestion: icon_stats_plx -->

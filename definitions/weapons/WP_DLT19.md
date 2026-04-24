@@ -1,17 +1,36 @@
-# DLT-19
+# DLT-19 Heavy Blaster Rifle
 
 `WP_DLT19`
 
-> Heavy Repeating Blaster.
+> Imperial heavy repeater. Sustained primary, scoped marksman secondary.
 
-## Stats
+## What it does
 
-- **Damage** — **26** (Primary) / **35** (Secondary)
-- **Velocity** — 4500 (Primary) / 9500 (Secondary)
-- **Ammo Cost** — 4 (Primary) / 10 (Secondary)
-- **Force Drain (Close/Far)** — **9/6** (Primary), **14/11** (Secondary)
-- **Force Drain Blocking (Close/Far)** — **8/4** (Primary), **13/9** (Secondary)
+The DLT-19 is a scoped heavy rifle. Primary delivers a fast metal-bolt cadence (220ms), while the alt-fire goes to a long-cycle, high-velocity scoped shot via `CHGE_BOWCASTER`. Mode-cycle weapon — `swapMode` lets you flip to use the alt as primary.
 
-## Tips
+## Primary fire
 
-- Paired with `MB_ATT_DLT19`.
+- **Damage** — 26
+- **Velocity** — 4500 units/sec
+- **Ammo cost** — 4
+- **Fire rate** — 220ms
+
+## Secondary fire
+
+- **Mode** — Scoped marksman shot (`ZOOM_PROJ`, `CHGE_BOWCASTER`)
+- **Damage** — 35
+- **Velocity** — 9500 units/sec
+- **Ammo cost** — 10
+- **Fire rate** — 900ms
+
+## Notes
+
+- Pairs with `MB_ATT_DLT19`.
+- Force drain (Close/Far): 9/6 primary, 14/11 secondary; blocking 8/4 / 13/9.
+- Common Imperial Officer / Stormtrooper Commander loadout.
+
+---
+
+`heavy` · `imperial` · `repeater`
+
+<!-- icon-suggestion: w_icon_dlt19scoped -->

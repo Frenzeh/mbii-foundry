@@ -25,3 +25,5 @@ Incendiary grenade that creates a burning area of effect.
 ### Tips
 * Good for area denial and flushing out enemies.
 * Deals damage over time, bypassing some armor.
+
+<!-- icon-suggestion: icon_stats_fire -->

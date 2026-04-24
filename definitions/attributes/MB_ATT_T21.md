@@ -28,3 +28,5 @@ A devastating repeating blaster with high damage and splash.
 ### Tips
 * Primary fire deals massive damage (78!), capable of 2-shotting standard soldiers.
 * Very high ammo cost.
+
+<!-- icon-suggestion: icon_stats_t21 -->

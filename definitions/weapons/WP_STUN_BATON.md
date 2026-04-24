@@ -2,23 +2,31 @@
 
 `WP_STUN_BATON`
 
-A melee weapon that delivers an electric shock.
+> Electrified melee club. Short reach, mini-stun on hit; pulse effect at higher rank.
 
-> **Default:** None.
+## What it does
 
-### Stats
-* **Damage:** **25** (Standard)
-* **Effect:** Mini-stun on hit.
-* **Reach:** Short.
+The Stun Baton is a melee weapon that delivers a 25-damage electric jolt and applies a brief stun/stagger on hit. Primary swings at 400ms; secondary delivers a 1000ms heavier strike. At higher ranks (`swapEnable: 3`) it gains a shock pulse effect.
 
-### Levels
-* **Level 1:**
- * **Damage**: 25.
- * **Pulse**: No shock pulse.
-* **Level 2/3:**
- * **Damage**: 25.
- * **Pulse**: Emits a shock pulse effect on hit.
+## Primary fire
 
-### Tips
-* Often used as a "Prison Guard" or "Riot Trooper" weapon.
-* Can bypass some block mechanics? (Needs verification).
+- **Damage** — 25
+- **Fire rate** — 400ms
+
+## Secondary fire
+
+- **Mode** — Heavy strike
+- **Fire rate** — 1000ms (level 3+ unlocks shock pulse)
+
+## Notes
+
+- Pairs with `MB_ATT_STUN_BATON`.
+- Short reach — close-quarters only.
+- Uses `MBF_MELEE` flag — counts as melee for block/dodge interactions.
+- Common on Prison Guard, Imperial Officer, and Riot Trooper kits.
+
+---
+
+`melee` · `stun` · `non-lethal`
+
+<!-- icon-suggestion: w_icon_stunbaton -->

@@ -2,15 +2,26 @@
 
 `MB_ATT_HEALING`
 
-> Ability to heal self or teammates using a Bacta Canister or Force Heal logic (non-Jedi).
+> Use-key heal — self and allies, non-Jedi medic logic.
+
+## What it does
+
+Hold-to-heal ability for medic-style classes (Soldiers, Commanders, Scientists). Targeting self when no ally is in cone; otherwise targets the nearest ally. Slow but sustained heal — interruptible by damage.
 
 ## Per level
 
-- **Level 1** — **Self Heal**. Hold 'Use' on self to apply bacta. Slow.
-- **Level 2** — **Triage**. Can heal adjacent teammates. Faster rate.
-- **Level 3** — **Combat Medic**. Fast healing for self and allies.
+- **Level 1** — self heal only.
+- **Level 2** — adds adjacent ally heal at faster rate.
+- **Level 3** — full combat-medic — fast self and ally heal.
 
-## Tips
+## Notes
 
-- Commonly given to **Soldiers**, **Commanders**, or **Scientists**.
-- Interruptible by taking damage.
+- Animation interruptible — taking damage breaks the heal.
+- Distinct from Force Heal (`MB_ATT_FP_HEAL`); this is the gunner-medic equivalent.
+- Pairs with `MB_ATT_DISP_HEALTH` for true team-medic builds.
+
+---
+
+`support` · `heal` · `medic`
+
+<!-- icon-suggestion: healing -->

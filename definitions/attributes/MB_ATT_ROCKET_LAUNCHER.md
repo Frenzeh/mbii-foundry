@@ -29,3 +29,5 @@ Merr-Sonn Missile System. Fires unguided rockets.
 * **Anti-Vehicle:** Excellent against vehicles and droids.
 * **Area Denial:** Effective for flushing enemies out of cover.
 * **Danger:** High risk of self-damage in close quarters.
+
+<!-- icon-suggestion: icon_stats_rocket -->

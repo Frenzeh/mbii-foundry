@@ -24,3 +24,5 @@ EMP grenade, designed to disable electronics and drain energy.
 ### Tips
 * Highly effective against droids and Jedi (drains FP).
 * Can cause targets to drop weapons if their energy is drained.
+
+<!-- icon-suggestion: icon_stats_concblob -->

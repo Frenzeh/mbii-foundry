@@ -1,10 +1,21 @@
-# Hack Multiplier
+# Hack Speed Multiplier
 
 `MB_ATT_HACK_MULTIPLIER`
 
-> Multiplies the speed at which hacking objectives are completed.
+> Multiplier for objective-hacking speed.
 
-## Tips
+## What it does
 
-- A value of `0.25` combined with `CFL_FASTHACKING` can make hacking almost instantaneous.
-- Crucial for Slicer/Tech classes.
+Scales how fast the user completes hack/use objectives in Siege/FA. Lower values = faster hack. Stacks with the `CFL_FASTHACKING` class flag for objective-runner builds.
+
+## Notes
+
+- 0.25 with `CFL_FASTHACKING` is near-instant — used on dedicated Slicer roles.
+- Default 1.0 = baseline hack speed.
+- Set per-class, not per-weapon.
+
+---
+
+`multiplier` · `hack` · `objective`
+
+<!-- icon-suggestion: hack -->

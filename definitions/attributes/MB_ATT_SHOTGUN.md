@@ -25,3 +25,5 @@ Close-range scattergun, effective in tight spaces.
 ### Tips
 * Devastating at close range.
 * Can be used to clear rooms quickly.
+
+<!-- icon-suggestion: icon_stats_shotgun -->

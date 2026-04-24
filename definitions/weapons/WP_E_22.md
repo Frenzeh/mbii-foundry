@@ -1,17 +1,36 @@
-# E-22
+# E-22 Heavy Blaster
 
 `WP_E_22`
 
-> Imperial Heavy Blaster.
+> Imperial heavy blaster. Slow precise primary, rapid secondary.
 
-## Stats
+## What it does
 
-- **Damage** — **33** (Primary) / **45** (Secondary)
-- **Velocity** — 8000 (Primary) / 6000 (Secondary)
-- **Ammo Cost** — 6 (Primary) / 8 (Secondary)
-- **Force Drain (Close/Far)** — **13/9** (Primary), **14/11** (Secondary)
-- **Force Drain Blocking (Close/Far)** — **11/7** (Primary), **13/9** (Secondary)
+The E-22 is the Imperial counterpart to the A280 / DLT-20A — a slow-firing, high-velocity primary paired with a faster three-round secondary on mode swap. Mode-cycle weapon (swap unlocked at level 3) and `ZOOM_PROJ` scope.
 
-## Tips
+## Primary fire
 
-- Paired with `MB_ATT_E_22`.
+- **Damage** — 33
+- **Velocity** — 8000 units/sec
+- **Ammo cost** — 6
+- **Fire rate** — 900ms
+
+## Secondary fire
+
+- **Mode** — Rapid burst
+- **Damage** — 45
+- **Velocity** — 6000 units/sec
+- **Ammo cost** — 8
+- **Fire rate** — 300ms
+
+## Notes
+
+- Pairs with `MB_ATT_E_22`.
+- Force drain (Close/Far): 13/9 primary, 14/11 secondary; blocking 11/7 / 13/9.
+- `ZOOM_PROJ` scope at level 2; mode swap unlocked at level 3.
+
+---
+
+`heavy` · `imperial` · `mid-range`
+
+<!-- icon-suggestion: w_icon_e_22 -->

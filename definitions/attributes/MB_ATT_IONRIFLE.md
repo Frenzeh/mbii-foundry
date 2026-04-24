@@ -23,3 +23,5 @@ Specialized weapon designed to disable droids and disrupt energy shields.
 ### Tips
 * Essential for anti-droid loadouts.
 * Can be used to temporarily disable Droideka shields or SBDs.
+
+<!-- icon-suggestion: icon_stats_emp -->

@@ -24,3 +24,5 @@ Rapid-fire repeating blaster pistol.
 ### Tips
 * "Bullet hose" weapon. Good for suppression and close-quarters.
 * Can quickly drain an opponent's Block Points.
+
+<!-- icon-suggestion: icon_stats_cr2 -->

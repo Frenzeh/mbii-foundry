@@ -28,3 +28,5 @@ A heavy repeating blaster rifle with a high rate of fire.
 ### Tips
 * Excellent for suppressing large groups of enemies.
 * The secondary fire can clear out entrenched positions.
+
+<!-- icon-suggestion: icon_stats_dlt19 -->

@@ -27,3 +27,5 @@ Portable rotary blaster cannon with an extremely high rate of fire.
 * Excellent for suppressing large groups and area denial.
 * Highly effective against vehicles and droids.
 * User is slowed (`HELD_SLOW`) while firing.
+
+<!-- icon-suggestion: icon_stats_minigun -->

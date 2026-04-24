@@ -26,3 +26,5 @@ Heavy Blaster Rifle used by Imperial Death Troopers.
 ### Tips
 * Combines heavy damage with a decent fire rate.
 * The secondary fire is excellent for dislodging enemies.
+
+<!-- icon-suggestion: icon_stats_e22 -->

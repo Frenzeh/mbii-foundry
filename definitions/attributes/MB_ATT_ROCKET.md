@@ -2,18 +2,27 @@
 
 `MB_ATT_ROCKET`
 
-Mandalorian Wrist-Mounted Rocket Launcher.
+> Mandalorian wrist-mounted rocket launcher. Single-use Special Class Ability rocket.
 
-**Class Specific:** Mandalorian.
+## What it does
 
-### Levels
+Mandalorian-specific attribute — adds a wrist-mounted rocket launcher fired via Special Class Ability 2. Single high-explosive shot per ability charge; instakill on direct hit for most classes; large knockdown radius.
 
-* **Level 1**:
- * Unlocks the Wrist Rocket ability (Special Class Ability 2).
- * Single-use projectile (unless ammo replenished).
- * High explosive damage (instakill on direct hit for most classes).
- * Knocks down enemies in radius.
+## Per level
 
-### Notes
-* Has a minimum arming distance (won't explode point-blank to prevent suicide).
-* Can be fired while flying (Jetpack).
+- **Level 1** — Single wrist rocket per spawn.
+- **Level 2** — Faster reload / regen on the rocket charge.
+- **Level 3** — Maximum damage / radius; fastest charge.
+
+## Notes
+
+- Class-specific: Mandalorian.
+- Has minimum arming distance — won't detonate point-blank (no suicide).
+- Can be fired while flying with jetpack.
+- Distinct from `MB_ATT_ROCKET_LAUNCHER` (the full Merr-Sonn launcher).
+
+---
+
+`mando` · `rocket` · `wrist-mounted`
+
+<!-- icon-suggestion: icon_stats_rocket -->

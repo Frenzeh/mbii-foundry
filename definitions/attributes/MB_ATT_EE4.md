@@ -23,3 +23,5 @@ Short-range burst carbine, known for its rapid-fire capabilities.
 
 ### Tips
 * The Level 3 sniper mode transforms it into a versatile weapon, similar to the E-11.
+
+<!-- icon-suggestion: icon_stats_ee3 -->

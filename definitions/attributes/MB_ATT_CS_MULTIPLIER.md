@@ -1,10 +1,21 @@
-# ⏱ Chain Speed Multiplier
+# Chain Speed Multiplier
 
 `MB_ATT_CS_MULTIPLIER`
 
-> Multiplies the speed at which saber combos can be chained.
+> Multiplier for saber combo chain transition speed.
 
-## Tips
+## What it does
 
-- A higher value makes your saber attacks flow more smoothly and rapidly, allowing for more hits in a shorter time.
-- Crucial for aggressive duelists.
+Scales how quickly the player can transition from one swing into the next. Higher values mean more swings land per second within a combo. Distinct from `MB_ATT_AS_MULTIPLIER` (animation speed) — this controls the gap between swings.
+
+## Notes
+
+- High values let aggressive duelists chain strings without dead-time openings.
+- Pairs with `MB_ATT_SABER_MAXCHAIN` to extend combo length and `MB_ATT_AS_MULTIPLIER` for raw swing speed.
+- 1.0 is default.
+
+---
+
+`multiplier` · `saber` · `combo`
+
+<!-- icon-suggestion: chain-speed -->

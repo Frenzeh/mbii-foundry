@@ -27,3 +27,5 @@ A heavy rifle firing concussive blasts.
 ### Tips
 * Excellent for crowd control and area denial.
 * Can knock down multiple enemies.
+
+<!-- icon-suggestion: icon_stats_conc -->

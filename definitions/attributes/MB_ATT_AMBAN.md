@@ -27,3 +27,5 @@ Mandalorian phase-pulse blaster, capable of disintegrating targets.
 ### Tips
 * **Disintegration**: The secondary fire is an instant-kill on most unarmored targets.
 * **Charge**: Requires careful timing to maximize secondary damage.
+
+<!-- icon-suggestion: icon_stats_amban -->

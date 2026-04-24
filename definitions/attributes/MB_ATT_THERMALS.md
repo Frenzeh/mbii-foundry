@@ -24,3 +24,5 @@ A powerful explosive device.
 ### Tips
 * A fully charged thermal can clear a room or one-shot most unarmored targets.
 * Use `CFL_REALTD` for an ultra-powerful, cinematic version.
+
+<!-- icon-suggestion: icon_stats_thermal -->

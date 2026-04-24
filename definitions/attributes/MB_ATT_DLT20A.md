@@ -26,3 +26,5 @@ Long-range blaster rifle, favored by some Imperial snipers and bounty hunters.
 ### Tips
 * Higher velocity than the E-11 or A280, making it very effective at hitting distant targets.
 * The burst fire can melt opponents at close range.
+
+<!-- icon-suggestion: icon_stats_dlt20a -->

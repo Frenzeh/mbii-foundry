@@ -1,14 +1,21 @@
-# Staff Style
+# Staff
 
 `SS_STAFF`
 
-Double-bladed lightsaber style (Darth Maul).
+> Double-bladed saberstaff — Maul flavor.
 
-### Characteristics
-* **Speed**: Very Fast.
-* **Defense**: Excellent all-around defense (large block box).
-* **Special**: Can perform the "Staff Twirl" and unique kicks.
-* **Weakness**: Lower damage per hit compared to Strong style.
+## What it does
 
-### Use Cases
-* Crowd control and high defense.
+Single hilt with two energized blades, used in a quarterstaff stance. Very fast swings with the largest block box of any style — excellent all-around defense. Comes with the staff-twirl deflection move and unique kick variants.
+
+## Notes
+
+- Lower per-hit damage than Strong, but trades that for reach and defense.
+- Block radius is wider, which means fewer cheap angles for opponents to land.
+- Requires `numBlades 2` on the saber definition; `saberType SABER_STAFF`.
+
+---
+
+`saber-style` · `staff` · `defensive` · `crowd-control`
+
+<!-- icon-suggestion: saber-staff -->

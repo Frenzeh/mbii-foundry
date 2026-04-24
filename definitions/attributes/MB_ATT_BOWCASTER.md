@@ -29,3 +29,5 @@ Wookiee traditional weapon. Fires explosive quarrels.
 ### Tips
 * Fully charged shots can one-hit kill if all bolts connect.
 * Bolts bounce off walls, allowing for trick shots.
+
+<!-- icon-suggestion: icon_stats_bowcaster -->

@@ -27,3 +27,5 @@ DC-15A Blaster Rifle. The backbone of the Grand Army of the Republic.
 ### Tips
 * Rely on volume of fire to suppress enemies.
 * The real power comes from **Clone Blobs** (`MB_ATT_CLONEBLOBS`) or **Concussion Blobs** (`MB_ATT_STRONGBLOBS`).
+
+<!-- icon-suggestion: icon_stats_clonerifle -->

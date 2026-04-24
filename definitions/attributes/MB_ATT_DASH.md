@@ -2,18 +2,25 @@
 
 `MB_ATT_DASH`
 
-> A quick, evasive burst of movement.
+> Quick, evasive burst of movement.
+
+## What it does
+
+Engine-level configuration for the Dash special. Determines cooldown, distance, and i-frame coverage of each dash. Bound to `EAS_HI_DASH`.
 
 ## Per level
 
-- **Level 1** — **
-**Cooldown:** 4 seconds.
-**Direction:** Can dash in 8 directions (WASD + Alt-fire).
-- **Level 2** — **
-**Cooldown:** 3 seconds.
-**Effect:** Immune to damage during the dash animation.
+- **Level 1** — 4-second cooldown · 8-direction dash (WASD + alt-fire backward) · cost 0.
+- **Level 2** — 3-second cooldown · damage-immune during the dash animation · cost 0.
 
-## Tips
+## Notes
 
-- Use `EAS_HI_DASH` to bind to a special ability key.
-- Excellent for closing gaps or avoiding incoming fire.
+- Pairs with `MB_ATT_DASH_JUMP` for jump-cancel mid-dash.
+- Bound by Hero (special2) and many trooper kits.
+- i-frames at Level 2 mean the dash itself can be a defensive escape, not just an offensive close.
+
+---
+
+`movement` · `dash` · `mobility`
+
+<!-- icon-suggestion: dash -->

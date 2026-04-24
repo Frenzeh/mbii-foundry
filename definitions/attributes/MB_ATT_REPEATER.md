@@ -30,3 +30,5 @@ The standard heavy repeating blaster rifle for Imperial forces. Effective for su
 ### Tips
 * Excellent for **suppression** and crowd control.
 * The Alt-Fire is good for dislodging enemies from cover.
+
+<!-- icon-suggestion: icon_stats_repeater -->

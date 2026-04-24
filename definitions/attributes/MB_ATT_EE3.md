@@ -27,3 +27,5 @@ Boba Fett's iconic carbine. Fires in short, powerful bursts.
 ### Tips
 * Known for its high burst damage.
 * The secondary fire is a single shot, good for accuracy.
+
+<!-- icon-suggestion: icon_stats_ee3 -->

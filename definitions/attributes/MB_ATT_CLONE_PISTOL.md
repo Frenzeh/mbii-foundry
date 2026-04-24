@@ -29,3 +29,5 @@ Standard DC-17 Blaster Pistol of the Clone Troopers.
 ### Tips
 * Good for suppressing enemies.
 * Can be dual-wielded.
+
+<!-- icon-suggestion: icon_stats_clonepistol -->

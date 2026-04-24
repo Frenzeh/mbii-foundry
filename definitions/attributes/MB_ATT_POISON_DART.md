@@ -2,16 +2,27 @@
 
 `MB_ATT_POISON_DART`
 
-Launcher for neurotoxin darts that damage over time and blur vision.
+> Neurotoxin dart launcher. Damage-over-time with screen blur disorientation.
 
-> **Default:** 0.
+## What it does
 
-### Levels
+Launches small neurotoxin darts that apply a damage-over-time poison effect plus a screen-blur disorientation on the target. Headshots deliver bonus initial damage. Pairs with the `EAS_HI_POISON` quick-fire ability for use without weapon-swap.
 
-* **Level 1**: **3 Darts**. Minor DoT. Slight screen blur.
-* **Level 2**: **6 Darts**. Moderate DoT. Significant screen blur.
-* **Level 3**: **9 Darts**. **Lethal DoT**. Severe disorientation (drunk effect). Can kill low HP targets easily.
+## Per level
 
-### Tips
-* **Headshots** deal bonus initial damage.
-* Poison can be cured by **Healing** (Bacta or Force Heal).
+- **Level 1** — 3 darts. Minor DoT, slight screen blur.
+- **Level 2** — 6 darts. Moderate DoT, significant screen blur.
+- **Level 3** — 9 darts. Lethal DoT, severe drunk-effect disorientation.
+
+## Notes
+
+- Pair with `EAS_HI_POISON` to fire darts without switching weapons.
+- Headshots deal bonus initial damage.
+- Poison can be cured by `MB_ATT_BACTA` / `MB_ATT_FP_HEAL`.
+- Bounty Hunter, Mandalorian, Imperial Officer assassin kits.
+
+---
+
+`dart` · `poison` · `dot`
+
+<!-- icon-suggestion: icon_stats_pdart -->

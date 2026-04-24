@@ -2,9 +2,20 @@
 
 `MB_ATT_KB_TAKEN_MULTIPLIER`
 
-> Multiplies how much knockback the character receives from sources like Force Push, explosions, or melee.
+> Multiplier for how far this character is knocked back.
 
-## Tips
+## What it does
 
-- A lower value makes the character feel heavier and more resistant to crowd control.
-- Crucial for "Tank" classes or characters that operate on ledges.
+Scales incoming knockback from Force Push, explosions, and melee. Lower values make the character feel heavier and harder to displace; 0.0 makes them effectively immovable. Default is 1.0.
+
+## Notes
+
+- Droidekas and SBDs commonly use 0.5–0.8 for "weighty" feel.
+- 0.0 makes the user immune to ledge-pushes and Force-Push displacement (use sparingly — ground knockdowns may still apply).
+- Sibling of `MB_ATT_KB_GIVEN_MULTIPLIER` (outgoing knockback).
+
+---
+
+`multiplier` · `knockback` · `defense`
+
+<!-- icon-suggestion: knockback-take -->

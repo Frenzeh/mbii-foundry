@@ -2,17 +2,35 @@
 
 `WP_DISRUPTOR`
 
-> Illegal sniper rifle capable of disintegration.
+> Illegal sniper rifle. Snap-fire primary; chargeable disintegrator scope alt.
 
-## Stats
+## What it does
 
-- **Damage** — **31** (Primary) / **36** (Secondary Base)
-- **Charge Max** — ~125+ (Secondary)
-- **Ammo Cost** — 5 (Primary) / 6 (Secondary)
-- **Force Drain (Close/Far)** — **26/14** (Primary)
-- **Force Drain Blocking (Close/Far)** — **17/11** (Primary)
+The Disruptor is the precision sniper of the Bounty Hunter / Mercenary side. Primary shoots a fixed-power disruptor bolt; secondary holds a charge through the `ZOOM_ADJUST` scope and releases an increasingly lethal beam — at full charge it can punch through Force shields and disintegrate the kill. Best at long lanes; weaker than other rifles up close.
 
-## Tips
+## Primary fire
 
-- Paired with `MB_ATT_DISRUPTOR`.
-- Can shoot through shields at high charge.
+- **Damage** — 31
+- **Ammo cost** — 5
+- **Fire rate** — 1000ms
+
+## Secondary fire
+
+- **Mode** — Charged scoped beam (`CHGE_RUPTOR1`)
+- **Damage** — 36 base, scaling to ~125+ at full charge
+- **Ammo cost** — 6
+- **Fire rate** — 1300ms
+- **Effect** — Can shoot through Force shielding at high charge; disintegrates on lethal hit
+
+## Notes
+
+- Pairs with `MB_ATT_DISRUPTOR`.
+- Force drain (Close/Far): 26/14 primary; blocking 17/11.
+- Scope walks (`scopeWalk`); zoom is charge-coupled (`zoomCharges`).
+- Bounty Hunter, Mandalorian, and Imperial Officer signature pick.
+
+---
+
+`sniper` · `disruptor` · `charge`
+
+<!-- icon-suggestion: w_icon_disruptor -->

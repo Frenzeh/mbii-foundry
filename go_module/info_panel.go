@@ -46,12 +46,58 @@ type InfoPanel struct {
 // them, and the AccordionItem that wraps the list. Refresh rebuilds
 // the slice in place and refreshes both the list and the parent item
 // title (so counts stay in sync with the filter).
+//
+// When subGroups is non-nil the group renders an inner Accordion of
+// per-category sub-sections instead of a single flat List. Used by
+// the Attributes section since the ~200-entry list reads better as
+// a grouped tree than a flat scroll.
 type libraryGroup struct {
+	title     string
+	keys      []string
+	source    func(filter string) []string
+	list      *widget.List
+	item      *widget.AccordionItem
+	subGroups []*librarySubGroup
+	subHost   *widget.Accordion
+}
+
+type librarySubGroup struct {
 	title  string
 	keys   []string
 	source func(filter string) []string
 	list   *widget.List
 	item   *widget.AccordionItem
+}
+
+// isHiddenLibraryKey reports whether a Definitions-map key names an
+// ID that is in the hidden set. Used to filter the Library's legacy
+// catch-all so private-overlay markdown doesn't leak into the glossary
+// (e.g. a dev-installed MB_ATT_FP_STASIS.md shouldn't appear in the
+// Library just because it was loaded from private/definitions/).
+func isHiddenLibraryKey(key string) bool {
+	// Keys come in two flavors: bare filename ("MB_ATT_FP_STASIS") and
+	// relative path ("attributes/MB_ATT_FP_STASIS"). Normalize by
+	// taking the basename.
+	base := key
+	if i := strings.LastIndex(key, "/"); i >= 0 {
+		base = key[i+1:]
+	}
+	if hiddenAttributeIDs[base] {
+		return true
+	}
+	if hiddenWeaponIDs[base] {
+		return true
+	}
+	if hiddenClassIDs[base] {
+		return true
+	}
+	// Force-power .md filenames are FP_* (no MB_ATT_ prefix); map back
+	// to the attribute form for the lookup.
+	if strings.HasPrefix(base, "FP_") && hiddenAttributeIDs["MB_ATT_"+base] {
+		return true
+	}
+	// Weapon markdowns keyed by WP_* — already caught by hiddenWeaponIDs.
+	return false
 }
 
 func NewInfoPanel() *InfoPanel {
@@ -133,12 +179,24 @@ func (ip *InfoPanel) buildLibraryGroups() {
 		return filter == "" || strings.Contains(strings.ToLower(s), filter)
 	}
 
-	ip.libraryGroups = []*libraryGroup{
-		{
-			title: "Attributes",
+	// Attributes sub-groups — mirror the category order used in the
+	// editor's attribute grid so the Library's categorization reads
+	// the same way the author sees attributes elsewhere in the app.
+	attrCategoryOrder := []string{
+		"Weapons", "Force", "Saber", "Class Specific",
+		"Supply", "Regen", "Multipliers", "Advanced", "General",
+	}
+	var attrSubs []*librarySubGroup
+	for _, cat := range attrCategoryOrder {
+		cat := cat // closure capture
+		attrSubs = append(attrSubs, &librarySubGroup{
+			title: cat,
 			source: func(filter string) []string {
 				var out []string
 				for _, a := range GetAttributes() {
+					if a.Category != cat {
+						continue
+					}
 					if match(a.Name, filter) || match(a.ID, filter) {
 						out = append(out, a.Name)
 					}
@@ -146,6 +204,13 @@ func (ip *InfoPanel) buildLibraryGroups() {
 				sort.Strings(out)
 				return out
 			},
+		})
+	}
+
+	ip.libraryGroups = []*libraryGroup{
+		{
+			title:     "Attributes",
+			subGroups: attrSubs,
 		},
 		{
 			title: "Weapons",
@@ -211,9 +276,14 @@ func (ip *InfoPanel) buildLibraryGroups() {
 				// Legacy Definitions map — raw .md filenames that don't
 				// belong to the typed getters. Dumped into Glossary as a
 				// catch-all so they stay reachable without crowding the
-				// top-level sections.
+				// top-level sections. Filter out any key that names a
+				// hidden ID so private-overlay markdown doesn't surface
+				// here on dev machines where the overlay is installed.
 				DefinitionsLock.RLock()
 				for k := range Definitions {
+					if isHiddenLibraryKey(k) {
+						continue
+					}
 					if match(k, filter) {
 						out = append(out, k)
 					}
@@ -227,6 +297,37 @@ func (ip *InfoPanel) buildLibraryGroups() {
 
 	for _, g := range ip.libraryGroups {
 		group := g // closure capture
+		if len(group.subGroups) > 0 {
+			// Sub-accordion layout — e.g. Attributes by category.
+			group.subHost = widget.NewAccordion()
+			group.subHost.MultiOpen = true
+			for _, sg := range group.subGroups {
+				sub := sg
+				sub.list = widget.NewList(
+					func() int { return len(sub.keys) },
+					func() fyne.CanvasObject { return widget.NewLabel("Topic") },
+					func(id widget.ListItemID, obj fyne.CanvasObject) {
+						if id < len(sub.keys) {
+							obj.(*widget.Label).SetText(sub.keys[id])
+						}
+					},
+				)
+				sub.list.OnSelected = func(id widget.ListItemID) {
+					if id < len(sub.keys) {
+						ip.ShowSticky(sub.keys[id], "")
+						ip.tabs.SelectIndex(0)
+					}
+					sub.list.UnselectAll()
+				}
+				scroll := container.NewVScroll(sub.list)
+				scroll.SetMinSize(fyne.NewSize(0, 200))
+				sub.item = widget.NewAccordionItem(sub.title, scroll)
+				group.subHost.Append(sub.item)
+			}
+			group.item = widget.NewAccordionItem(group.title, group.subHost)
+			ip.library.Append(group.item)
+			continue
+		}
 		group.list = widget.NewList(
 			func() int { return len(group.keys) },
 			func() fyne.CanvasObject { return widget.NewLabel("Topic") },
@@ -257,6 +358,24 @@ func (ip *InfoPanel) refreshKeys(filter string) {
 	filter = strings.ToLower(filter)
 	filtering := filter != ""
 	for _, g := range ip.libraryGroups {
+		if len(g.subGroups) > 0 {
+			total := 0
+			for _, sg := range g.subGroups {
+				sg.keys = sg.source(filter)
+				sg.item.Title = fmt.Sprintf("%s (%d)", sg.title, len(sg.keys))
+				if filtering && len(sg.keys) > 0 {
+					sg.item.Open = true
+				}
+				sg.list.Refresh()
+				total += len(sg.keys)
+			}
+			g.item.Title = fmt.Sprintf("%s (%d)", g.title, total)
+			if filtering && total > 0 {
+				g.item.Open = true
+			}
+			g.subHost.Refresh()
+			continue
+		}
 		g.keys = g.source(filter)
 		g.item.Title = fmt.Sprintf("%s (%d)", g.title, len(g.keys))
 		// Auto-expand any section that has matches under an active

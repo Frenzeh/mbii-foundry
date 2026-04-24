@@ -3533,18 +3533,6 @@
     "description": "Integrated arm blaster for Super Battle Droids."
   },
   {
-    "id": "MB_ATT_SHIELD_PROJ",
-    "name": "\ud83d\udee1\ufe0f Shield Projector",
-    "overview": "Determines the coverage and integrity of the Droideka's projected shield.\n> **Class Specific:** Droideka.\n\n**\u2699\ufe0f Mechanics**\n*   **Rank 1:** Basic coverage.\n*   **Rank 2:** Improved integrity.\n*   **Rank 3:** Maximum projection stability.",
-    "tips": [
-      "Separate from `MB_ATT_DEKA_SHIELD` (which is raw HP). This affects the *quality* or specific mechanics of the projection? (Needs verification, often used in tandem)."
-    ],
-    "levels": {},
-    "stats": {},
-    "tags": [],
-    "description": "Determines the coverage and integrity of the Droideka's projected shield."
-  },
-  {
     "id": "MB_ATT_SHIELD_RECHARGE",
     "name": "MB_ATT_SHIELD_RECHARGE",
     "overview": "Armor Regen\nShield regeneration with the same bounds as heal. see: armourRegenAmount\narmourRegenRate\narmourRegenCap",
@@ -3871,18 +3859,6 @@
     "stats": {},
     "tags": [],
     "description": "Increases the range at which the character can interact with objects."
-  },
-  {
-    "id": "MB_ATT_WATER_BREATHING",
-    "name": "\ud83e\udd3f Underwater Breathing",
-    "overview": "Rebreather implant or gear.\n\n**\u2699\ufe0f Mechanics**\n*   **Effect:** Immunity to drowning damage while submerged.",
-    "tips": [
-      "Situational; only useful on maps with water (e.g., Manaan, Naboo)."
-    ],
-    "levels": {},
-    "stats": {},
-    "tags": [],
-    "description": "Rebreather implant or gear."
   },
   {
     "id": "MB_ATT_WESTARM5",
@@ -4725,28 +4701,6 @@
     ]
   },
   {
-    "id": "MB_ATT_HULL_REPAIR",
-    "name": "MB_ATT_HULL_REPAIR",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "MB_ATT_SECURITY_INTERFACE",
-    "name": "MB_ATT_SECURITY_INTERFACE",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
     "id": "MB_ATT_DEKA_FIREPOWER",
     "name": "MB_ATT_DEKA_FIREPOWER",
     "overview": "",
@@ -5035,72 +4989,6 @@
   {
     "id": "MB_ATT_GUNBASH",
     "name": "MB_ATT_GUNBASH",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "MB_ATT_ASTRO_JUMPJETS",
-    "name": "MB_ATT_ASTRO_JUMPJETS",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "MB_ATT_HEAT_DUMPS",
-    "name": "MB_ATT_HEAT_DUMPS",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "MB_ATT_WELDING_LASER",
-    "name": "MB_ATT_WELDING_LASER",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "MB_ATT_SHOCK_ARM",
-    "name": "MB_ATT_SHOCK_ARM",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "MB_ATT_FIRE_EXTINGUISHER",
-    "name": "MB_ATT_FIRE_EXTINGUISHER",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "MB_ATT_DATA_SPIKES",
-    "name": "MB_ATT_DATA_SPIKES",
     "overview": "",
     "tips": [],
     "levels": {},

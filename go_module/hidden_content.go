@@ -223,18 +223,10 @@ func categorizeAttribute(id string) string {
 		id == "MB_ATT_ET_CCTRAINING",
 		id == "MB_ATT_STRONGBLOBS",
 		id == "MB_ATT_HULL_STRENGTH",
-		id == "MB_ATT_HULL_REPAIR",
-		id == "MB_ATT_SECURITY_INTERFACE",
 		id == "MB_ATT_ASSEMBLE",
 		id == "MB_ATT_RALLY",
 		id == "MB_ATT_WRIST_AMMO",
-		id == "MB_ATT_WRISTLASER",
-		id == "MB_ATT_HEAT_DUMPS",
-		id == "MB_ATT_WELDING_LASER",
-		id == "MB_ATT_SHOCK_ARM",
-		id == "MB_ATT_FIRE_EXTINGUISHER",
-		id == "MB_ATT_DATA_SPIKES",
-		id == "MB_ATT_WATER_BREATHING":
+		id == "MB_ATT_WRISTLASER":
 		return "Class Specific"
 	}
 
@@ -272,7 +264,6 @@ var advancedAttributeIDs = map[string]bool{
 	"MB_ATT_KNOCKDOWN_ROLL":    true,
 	"MB_ATT_TRACKING_BEACON":   true,
 	"MB_ATT_SHIELD_RECHARGE2":  true,
-	"MB_ATT_SHIELD_PROJ":       true,
 	"MB_ATT_FP_MIRALUKA":       true,
 	"MB_ATT_FP_REPULSE":        true,
 	"MB_ATT_GUNBASH":           true,

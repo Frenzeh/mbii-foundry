@@ -198,16 +198,6 @@
       "description": "SBD wrist blaster",
       "useable": true
     },
-    "WP_WELD_PULSE": {
-      "value": 38,
-      "description": "Astromech weld pulse",
-      "useable": true
-    },
-    "WP_WELD_BEAM": {
-      "value": 39,
-      "description": "Astromech weld beam",
-      "useable": true
-    },
     "WP_BRYAR_OLD": {
       "value": 40,
       "description": "Old Bryar pistol (legacy)",
@@ -308,9 +298,7 @@
       "WP_CONC_NADE"
     ],
     "droid": [
-      "WP_SBD",
-      "WP_WELD_PULSE",
-      "WP_WELD_BEAM"
+      "WP_SBD"
     ]
   }
 }

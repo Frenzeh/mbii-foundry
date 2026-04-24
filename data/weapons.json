@@ -762,28 +762,6 @@
     ]
   },
   {
-    "id": "WP_WELD_PULSE",
-    "name": "WP_WELD_PULSE",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "WP_WELD_BEAM",
-    "name": "WP_WELD_BEAM",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
     "id": "WP_BRYAR_OLD",
     "name": "WP_BRYAR_OLD",
     "overview": "",

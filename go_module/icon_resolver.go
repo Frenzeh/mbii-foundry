@@ -70,8 +70,6 @@ var weaponIconAliases = map[string]string{
 	"WP_DET_PACK":      "w_icon_detpack",
 	"WP_CONCUSSION":    "w_icon_c_rifle",
 	"WP_SBD":           "w_icon_sbdarm",
-	"WP_WELD_PULSE":    "w_icon_blaster_pistol",
-	"WP_WELD_BEAM":     "w_icon_blaster_pistol",
 	"WP_BRYAR_OLD":     "w_icon_briar",
 	"WP_EE3":           "w_icon_ee-3",
 	"WP_EE4":           "w_icon_ee-4",
@@ -150,7 +148,6 @@ var attributeIconAliases = map[string]string{
 	"MB_ATT_HULL_STRENGTH":   "icon_stats_armor",
 	"MB_ATT_DEKA_SHIELD":     "icon_stats_armor",
 	"MB_ATT_DEKA_HULL":       "icon_stats_armor",
-	"MB_ATT_SHIELD_PROJ":     "icon_stats_armor",
 	"MB_ATT_WOOKIE_HEALTH":   "icon_stats_health",
 
 	// Health / bacta / healing.

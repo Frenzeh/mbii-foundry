@@ -137,6 +137,7 @@ var MBIIAttributes = []AttributeDef{
 	{ID: "MB_ATT_FP_BLIND", Name: "Force Blind", MaxLevel: 3, Category: "Force", Description: ""},
 	{ID: "MB_ATT_FP_DESTRUCTION", Name: "Force Destruction", MaxLevel: 3, Category: "Force", Description: ""},
 	{ID: "MB_ATT_FP_DEADLYSIGHT", Name: "Force Deadlysight", MaxLevel: 3, Category: "Force", Description: ""},
+	{ID: "MB_ATT_FP_STASIS", Name: "Force Stasis", MaxLevel: 3, Category: "Force", Description: ""},
 	{ID: "MB_ATT_PISTOL", Name: "Pistol", MaxLevel: 3, Category: "Weapons", Description: ""},
 	{ID: "MB_ATT_BLASTER", Name: "Blaster", MaxLevel: 3, Category: "Weapons", Description: ""},
 	{ID: "MB_ATT_DISRUPTOR", Name: "Disruptor", MaxLevel: 3, Category: "General", Description: ""},

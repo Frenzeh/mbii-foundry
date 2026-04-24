@@ -5260,5 +5260,16 @@
     "tags": [
       "stub"
     ]
+  },
+  {
+    "id": "MB_ATT_FP_STASIS",
+    "name": "MB_ATT_FP_STASIS",
+    "overview": "",
+    "tips": [],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "stub"
+    ]
   }
 ]

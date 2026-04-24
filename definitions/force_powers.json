@@ -355,5 +355,22 @@
         "description": "Cost: 20"
       }
     }
+  },
+  "FP_STASIS": {
+    "id": "FP_STASIS",
+    "levels": {
+      "1": {
+        "cost": 20,
+        "description": "Cost: 20"
+      },
+      "2": {
+        "cost": 20,
+        "description": "Cost: 20"
+      },
+      "3": {
+        "cost": 20,
+        "description": "Cost: 20"
+      }
+    }
   }
 }

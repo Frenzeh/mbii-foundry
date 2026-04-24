@@ -130,6 +130,13 @@
       "description": "Deadly Sight",
       "type": "hold/duration",
       "alignment": "dark"
+    },
+    "FP_STASIS": {
+      "value": 22,
+      "description": "Force Stasis (ifdef GCJ_NEW_FORCE)",
+      "type": "duration",
+      "alignment": "light",
+      "conditional": "GCJ_NEW_FORCE"
     }
   },
   "categories": {

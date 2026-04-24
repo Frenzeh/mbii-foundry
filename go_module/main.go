@@ -46,7 +46,8 @@ type App struct {
 	editors map[*container.TabItem]Editor
 
 	assetBrowser *AssetBrowser
-	infoPanel    *InfoPanel
+	infoPanel        *InfoPanel
+	infoPanelMirrors []*InfoPanel // pop-out windows hosting fresh InfoPanel instances
 	sourcePanel  *SourcePanel
 	activityBar  *SidebarHeader  // top-of-sidebar horizontal activity switcher (legacy field name)
 	sidebarHost  *fyne.Container // swap target for the active activity's content
@@ -575,6 +576,7 @@ func (a *App) setupUI() {
 	a.assetBrowser = NewAssetBrowser(a.config.GamedataPath, a.config.TextAssetsPath)
 	a.infoPanel = NewInfoPanel()
 	a.infoPanel.SetHolocronClient(a.holocronClient)
+	a.infoPanel.SetOnPopOut(a.popOutInfoPanel)
 	a.sourcePanel = NewSourcePanel(a)
 
 	a.modpackManager = NewModpackManager(a)
@@ -787,6 +789,9 @@ func (a *App) showStickyContext(key, context string) {
 		return
 	}
 	a.infoPanel.ShowSticky(key, context)
+	for _, m := range a.infoPanelMirrors {
+		m.ShowSticky(key, context)
+	}
 }
 
 // showHoverContext is called on mouseover of hoverable targets (grid
@@ -805,6 +810,9 @@ func (a *App) showHoverContext(key, context string) {
 		return
 	}
 	a.infoPanel.ShowHover(key, context)
+	for _, m := range a.infoPanelMirrors {
+		m.ShowHover(key, context)
+	}
 }
 
 // clearHoverContext reverts the panel to its sticky state after a
@@ -816,6 +824,49 @@ func (a *App) clearHoverContext() {
 		return
 	}
 	a.infoPanel.ClearHover()
+	for _, m := range a.infoPanelMirrors {
+		m.ClearHover()
+	}
+}
+
+// popOutInfoPanel opens the info panel in a fresh window — the dual-
+// monitor workflow. Each pop-out is a fully independent InfoPanel
+// instance registered as a "mirror" on the App; show/hover/clear
+// pipelines broadcast updates to every mirror so the new window
+// stays in sync with what the user is doing in the main window. On
+// close, the mirror is unregistered so we don't leak event delivery
+// to a dead window.
+func (a *App) popOutInfoPanel() {
+	if a.fyneApp == nil {
+		return
+	}
+	win := a.fyneApp.NewWindow("Info — MBII Foundry")
+	mirror := NewInfoPanel()
+	mirror.SetHolocronClient(a.holocronClient)
+	// New mirrors don't need their own pop-out button; suppress the
+	// callback so the icon does nothing rather than spawning a chain.
+	mirror.SetOnPopOut(nil)
+	a.infoPanelMirrors = append(a.infoPanelMirrors, mirror)
+
+	// Seed the mirror with whatever the primary panel is currently
+	// showing — without this the new window opens on the welcome
+	// copy and the user has to mouse around to populate it.
+	if a.infoPanel.stickyKey != "" {
+		mirror.ShowSticky(a.infoPanel.stickyKey, a.infoPanel.stickyContext)
+	}
+
+	win.SetContent(mirror.GetContent())
+	win.Resize(fyne.NewSize(420, 720))
+	win.SetOnClosed(func() {
+		out := a.infoPanelMirrors[:0]
+		for _, m := range a.infoPanelMirrors {
+			if m != mirror {
+				out = append(out, m)
+			}
+		}
+		a.infoPanelMirrors = out
+	})
+	win.Show()
 }
 
 // showHoverTooltip is kept as a thin shim for existing editors that

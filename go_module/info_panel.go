@@ -47,6 +47,13 @@ type InfoPanel struct {
 
 	holocronClient *HolocronClient
 
+	// onPopOut, if set, opens this panel's content in a new window
+	// (dual-monitor workflow). The pop-out button on the hero band
+	// invokes it; the App wires this to a method that creates a fresh
+	// InfoPanel mirror so the new window updates live as the user
+	// edits in the main window.
+	onPopOut func()
+
 	// Sticky state = what the user last INTERACTED with (clicked,
 	// focused, edited). Hover state is transient — appears while
 	// the mouse is over a target, reverts to sticky on mouse-out.
@@ -164,6 +171,15 @@ func (ip *InfoPanel) SetHolocronClient(client *HolocronClient) {
 	ip.holocronClient = client
 }
 
+// SetOnPopOut wires the pop-out button on the hero band. When the
+// caller wants pop-out support (e.g. the main App), they pass a
+// callback that opens a new window with a mirror panel; otherwise
+// the button is still rendered but does nothing useful — App always
+// wires it, so this only no-ops in test contexts.
+func (ip *InfoPanel) SetOnPopOut(cb func()) {
+	ip.onPopOut = cb
+}
+
 func (ip *InfoPanel) createUI() {
 	// Title — large, bold, wrapping. Sits inside the header hero below.
 	ip.title = widget.NewLabelWithStyle("Information", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
@@ -232,9 +248,16 @@ This panel provides real-time documentation and context for the field you're edi
 	// inset by 3px via a Padded wrapper so the 1px accent border sits
 	// inside the bg rather than flush with its edge. That inset is the
 	// "offset stroke" look the MBII launcher boxes use.
+	popOutBtn := widget.NewButtonWithIcon("", theme.ComputerIcon(), func() {
+		if ip.onPopOut != nil {
+			ip.onPopOut()
+		}
+	})
+	popOutBtn.Importance = widget.LowImportance
+	rightChip := container.NewHBox(ip.idChip, popOutBtn)
 	heroRow := container.NewBorder(nil, nil,
 		ip.categoryChip,
-		ip.idChip,
+		rightChip,
 		nil,
 	)
 	heroInner := container.NewPadded(container.NewPadded(container.NewVBox(

@@ -41,14 +41,23 @@ import (
 var prefixRules = []struct {
 	src, dst string
 }{
-	{"gfx/hud/w_icon_", "weapons"},                 // in-HUD weapon icons
-	{"gfx/menus/alpha/icon_stats_", "attributes"},  // MBII's class-builder attribute icons
-	{"gfx/menus/alpha/icon_stat_", "attributes"},   // alternate singular form
-	{"gfx/hud/chk_", "attributes"},                 // legacy checkbox icons
-	{"gfx/hud/i_icon_", "attributes"},              // alternate attribute icon pattern
-	{"gfx/2d/forcepowers/", "force"},               // force power icons
+	{"gfx/hud/w_icon_", "weapons"},                // in-HUD weapon icons
+	{"gfx/menus/alpha/icon_stats_", "attributes"}, // MBII's class-builder attribute icons
+	{"gfx/menus/alpha/icon_stat_", "attributes"},  // alternate singular form
+	{"gfx/hud/chk_", "attributes"},                // legacy checkbox icons
+	{"gfx/hud/i_icon_", "attributes"},             // alternate attribute icon pattern
+	// Force power icons — MBII's shaders/fp_icons.shader points at
+	// gfx/mp/new_f_icon_* (push, pull, speed, jump, sight, heal,
+	// absorb, protect, mind_trick, drain, grip, rage, lightning, etc)
+	// plus the standalone force_blind / force_destruction / deadly_sight
+	// textures and the forcepowers/ level-specific variants.
+	{"gfx/mp/new_f_icon_", "force"},
+	{"gfx/mp/force_", "force"},
+	{"gfx/mp/deadly_sight", "force"},
+	{"gfx/forcepowers/", "force"},
+	{"gfx/2d/forcepowers/", "force"},
 	{"gfx/menus/forcepowers/", "force"},
-	{"gfx/menus/classes/", "classes"},              // class builder class icons
+	{"gfx/menus/classes/", "classes"}, // class builder class icons
 }
 
 const thumbMax = 96 // px — small enough to keep binary size modest

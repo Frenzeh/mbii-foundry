@@ -168,6 +168,34 @@ var attributeIconAliases = map[string]string{
 	"MB_ATT_JETPACK":   "icon_stats_fuel",
 }
 
+// forceIconAliases maps MB_ATT_FP_* IDs to the basename of the icon
+// MBII actually ships at `gfx/mp/` (per shaders/fp_icons.shader).
+// Curated set mirrors the class-builder menu's force-power icons.
+// Kept separate from attributeIconAliases because force icons live
+// in a different directory (gfx/mp/) and the extracted PNGs land in
+// assets/icons/force/ — LoadGameIcon's basename lookup still finds
+// them, but callers benefit from a direct FP_* → basename map.
+var forceIconAliases = map[string]string{
+	"MB_ATT_FP_PUSH":          "new_f_icon_push",
+	"MB_ATT_FP_PULL":          "new_f_icon_pull",
+	"MB_ATT_FP_LEVITATION":    "new_f_icon_jump",
+	"MB_ATT_FP_SPEED":         "new_f_icon_speed",
+	"MB_ATT_FP_SEE":           "new_f_icon_sight",
+	"MB_ATT_FP_HEAL":          "new_f_icon_lt_heal",
+	"MB_ATT_FP_ABSORB":        "new_f_icon_lt_absorb",
+	"MB_ATT_FP_PROTECT":       "new_f_icon_lt_protect",
+	"MB_ATT_FP_TELEPATHY":     "new_f_icon_lt_mind_trick",
+	"MB_ATT_FP_TEAM_HEAL":     "new_f_icon_lt_healother",
+	"MB_ATT_FP_TEAM_FORCE":    "new_f_icon_dk_forceother",
+	"MB_ATT_FP_DRAIN":         "new_f_icon_dk_drain",
+	"MB_ATT_FP_GRIP":          "new_f_icon_dk_grip",
+	"MB_ATT_FP_LIGHTNING":     "new_f_icon_dk_l1",
+	"MB_ATT_FP_RAGE":          "new_f_icon_dk_rage",
+	"MB_ATT_FP_BLIND":         "force_blind",
+	"MB_ATT_FP_DESTRUCTION":   "force_destruction",
+	"MB_ATT_FP_DEADLYSIGHT":   "deadly_sight",
+}
+
 // ResolveAttributeIcon returns the gfx path for an MB_ATT_* ID.
 // Prefers the curated alias table (backed by extracted icon_stats_*
 // and i_icon_* PNGs embedded in the binary); falls back to the
@@ -175,6 +203,9 @@ var attributeIconAliases = map[string]string{
 // letting the VFS path still find something when the user has PK3s
 // indexed that Foundry hasn't explicitly mapped.
 func (ir *IconResolver) ResolveAttributeIcon(attID string) string {
+	if alias, ok := forceIconAliases[attID]; ok {
+		return "gfx/mp/" + alias
+	}
 	if alias, ok := attributeIconAliases[attID]; ok {
 		return "gfx/menus/alpha/" + alias
 	}

@@ -194,6 +194,9 @@ var forceIconAliases = map[string]string{
 	"MB_ATT_FP_BLIND":         "force_blind",
 	"MB_ATT_FP_DESTRUCTION":   "force_destruction",
 	"MB_ATT_FP_DEADLYSIGHT":   "deadly_sight",
+	"MB_ATT_FP_SABER_OFFENSE": "new_f_icon_saber_attack",
+	"MB_ATT_FP_SABER_DEFENSE": "new_f_icon_saber_defend",
+	"MB_ATT_FP_SABERTHROW":    "new_f_icon_saber_throw",
 }
 
 // ResolveAttributeIcon returns the gfx path for an MB_ATT_* ID.

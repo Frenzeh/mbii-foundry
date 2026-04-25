@@ -199,17 +199,10 @@ func (ip *InfoPanel) createUI() {
 	ip.idChip.TextStyle = fyne.TextStyle{Monospace: true}
 	ip.idChip.Alignment = fyne.TextAlignTrailing
 
-	// Hero background — faint accent tint, rounded corners to echo
-	// the MBII launcher's panel style. CornerRadius > 0 + filled
-	// rectangle + an inset stroke (drawn as a separate rect inside a
-	// Padded container) give the offset-stroke look the launcher uses
-	// for its boxes and buttons.
-	ip.headerBG = canvas.NewRectangle(tintWithAlpha(CurrentThemeColor, 22))
-	ip.headerBG.CornerRadius = 6
-	ip.headerFrame = canvas.NewRectangle(color.Transparent)
-	ip.headerFrame.StrokeColor = tintWithAlpha(CurrentThemeColor, 110)
-	ip.headerFrame.StrokeWidth = 1
-	ip.headerFrame.CornerRadius = 5
+	// Hero panel — managed by NewTilePanel below. The headerBG /
+	// headerFrame fields on InfoPanel are now historical (the TilePanel
+	// primitive owns the offset-stroke shapes); kept on the struct for
+	// the few legacy refresh paths but not initialized here.
 
 	// Accent marker + rule — small filled square left, thin rule right.
 	ip.headerMarker = canvas.NewRectangle(CurrentThemeColor)
@@ -248,7 +241,7 @@ This panel provides real-time documentation and context for the field you're edi
 	// inset by 3px via a Padded wrapper so the 1px accent border sits
 	// inside the bg rather than flush with its edge. That inset is the
 	// "offset stroke" look the MBII launcher boxes use.
-	popOutBtn := widget.NewButtonWithIcon("", theme.ComputerIcon(), func() {
+	popOutBtn := widget.NewButtonWithIcon("", theme.WindowMaximizeIcon(), func() {
 		if ip.onPopOut != nil {
 			ip.onPopOut()
 		}
@@ -260,15 +253,11 @@ This panel provides real-time documentation and context for the field you're edi
 		rightChip,
 		nil,
 	)
-	heroInner := container.NewPadded(container.NewPadded(container.NewVBox(
-		heroRow,
-		ip.title,
-	)))
-	// Double-wrap the frame: Padded insets the frame rectangle 4px
-	// from the bg's edges so the stroke reads as its own ring instead
-	// of sharing the bg's silhouette.
-	framePadded := container.NewPadded(ip.headerFrame)
-	hero := container.NewStack(ip.headerBG, framePadded, heroInner)
+	// Hero body — the inner double-pad is intentional: the outer
+	// Padded comes from TilePanel itself; the inner one reserves
+	// breathing room around the title block specifically.
+	heroBody := container.NewPadded(container.NewVBox(heroRow, ip.title))
+	hero := NewTilePanel(heroBody, TileOpts{Padded: true})
 
 	// Double-offset rule — two parallel accent lines of different
 	// lengths + a filled square marker pinned left. The first (longer)

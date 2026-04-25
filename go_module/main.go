@@ -32,7 +32,7 @@ const (
 	// screen's "new version available" banner. Bump this before tagging
 	// a release — if they drift, testers get a stale banner or none at
 	// all.
-	AppVersion = "0.10.0-alpha"
+	AppVersion = "0.10.1-alpha"
 	AppName    = "MBII Foundry"
 )
 
@@ -1494,7 +1494,7 @@ func (a *App) createToolbar() fyne.CanvasObject {
 		// the dual-monitor workflow alongside info-panel + source-panel
 		// pop-outs. Dirty-state is preserved; closing the popped-out
 		// window reattaches the tab rather than destroying unsaved work.
-		btn(theme.ComputerIcon(), func() { a.popOutCurrentTab() }, "Pop Out Current Tab"),
+		btn(theme.WindowMaximizeIcon(), func() { a.popOutCurrentTab() }, "Pop out tab"),
 	}
 
 	// Dev-only: maintainer "share with Holocron" button. Uploads the

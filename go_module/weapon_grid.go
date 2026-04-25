@@ -1,12 +1,11 @@
 package main
 
 import (
-	"image/color"
+	"fmt"
 	"sort"
 	"strings"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/widget"
@@ -167,19 +166,16 @@ func (wg *WeaponGrid) createUI() {
 				row = container.NewVBox(primary, caption)
 			}
 
-			// Tile shell — same launcher-style rounded panel + offset
-			// stroke as the attribute toggle widget so the two grids
-			// read as siblings. Faint accent tint + 1px stroke at low
-			// alpha; the inner content sits in a Padded container so
-			// nothing butts the rounded edges.
-			tileBG := canvas.NewRectangle(tintWithAlpha(CurrentThemeColor, 10))
-			tileBG.CornerRadius = 6
-			tileFrame := canvas.NewRectangle(color.Transparent)
-			tileFrame.StrokeColor = tintWithAlpha(CurrentThemeColor, 50)
-			tileFrame.StrokeWidth = 1
-			tileFrame.CornerRadius = 5
-			framePadded := container.NewPadded(tileFrame)
-			tile := container.NewStack(tileBG, framePadded, container.NewPadded(row))
+			// Tile shell via the shared TilePanel primitive — same look
+			// as attribute rows so the two grids read as siblings.
+			// Slightly lower alpha (10/50) than attribute rows (14/60)
+			// since weapon cards are smaller and the visual weight
+			// stacks tighter when there are more of them on screen.
+			tile := NewTilePanel(row, TileOpts{
+				FillAlpha:   10,
+				StrokeAlpha: 50,
+				Padded:      true,
+			})
 
 			// Wrap in HoverContainer. Pair the enter event with a
 			// leave event so the info panel's sticky context reverts
@@ -198,6 +194,18 @@ func (wg *WeaponGrid) createUI() {
 		}
 		content.Add(catGrid)
 		content.Add(widget.NewSeparator())
+	}
+
+	if len(content.Objects) == 0 {
+		hint := "No weapons match the current filter."
+		if filterLower != "" {
+			hint = fmt.Sprintf("No weapons match \"%s\".", wg.filter)
+		}
+		content.Add(NewEmptyStateTile("NO RESULTS", hint, "Clear filter", func() {
+			if wg.search != nil {
+				wg.search.SetText("")
+			}
+		}))
 	}
 
 	if wg.container != nil {

@@ -183,7 +183,7 @@ func NewSourcePanel(a *App) *SourcePanel {
 	})
 	collapseBtn.Importance = widget.LowImportance
 
-	popOutBtn := widget.NewButtonWithIcon("", theme.ComputerIcon(), func() {
+	popOutBtn := widget.NewButtonWithIcon("", theme.WindowMaximizeIcon(), func() {
 		if sp.onPopOut != nil {
 			sp.onPopOut()
 		}
@@ -205,7 +205,13 @@ func NewSourcePanel(a *App) *SourcePanel {
 
 	headerRow := container.NewBorder(nil, nil, sp.header, container.NewHBox(sp.byteCount, copyBtn, popOutBtn, collapseBtn))
 	actionRow := container.NewHBox(sp.editToggle, sp.applyBtn, sp.revertBtn)
-	topBlock := container.NewVBox(headerRow, actionRow, validationRow, rule)
+	// Wrap chrome in a TilePanel so the source panel reads as a peer
+	// surface to the info-panel hero (same offset-stroke language).
+	chrome := NewTilePanel(
+		container.NewVBox(headerRow, actionRow, validationRow),
+		TileOpts{Padded: true},
+	)
+	topBlock := container.NewVBox(chrome, rule)
 
 	sp.container = container.NewBorder(topBlock, nil, nil, nil, sp.viewHost)
 	return sp

@@ -163,7 +163,22 @@ func (ag *AttributeGrid) createUI() {
 		accordion.Append(item)
 	}
 
-	content.Add(accordion)
+	if len(accordion.Items) == 0 {
+		// All categories filtered to zero — show an empty-state tile
+		// instead of a silently-blank scroll. The filter Entry stays
+		// visible at the top so the user can edit/clear it.
+		hint := "No attributes match the current filter."
+		if filterLower != "" {
+			hint = fmt.Sprintf("No attributes match \"%s\".", ag.filter)
+		}
+		content.Add(NewEmptyStateTile("NO RESULTS", hint, "Clear filter", func() {
+			if ag.search != nil {
+				ag.search.SetText("")
+			}
+		}))
+	} else {
+		content.Add(accordion)
+	}
 }
 
 func (ag *AttributeGrid) createAttributeItem(attr AttributeDef) fyne.CanvasObject {

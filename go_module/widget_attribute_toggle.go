@@ -149,17 +149,15 @@ func (w *AttributeToggleWidget) createUI(onInfo func(string, string), iconRes fy
 		layout.NewSpacer(),
 	)
 
-	// Tile shell — faint tinted fill + offset stroke matching the
-	// info-panel hero's launcher-style rounded panel. Gives every
-	// attribute row its own card identity without adding visual weight.
-	tileBG := canvas.NewRectangle(tintWithAlpha(catColor, 14))
-	tileBG.CornerRadius = 6
-	tileFrame := canvas.NewRectangle(color.Transparent)
-	tileFrame.StrokeColor = tintWithAlpha(catColor, 60)
-	tileFrame.StrokeWidth = 1
-	tileFrame.CornerRadius = 5
-	framePadded := container.NewPadded(tileFrame)
-	w.container = container.NewStack(tileBG, framePadded, container.NewPadded(row))
+	// Tile shell via the shared TilePanel primitive. Card-weight tint
+	// (14/60) is dialled lower than the info-panel hero (22/110) so
+	// rows don't compete with the panel-level chrome around them.
+	w.container = NewTilePanel(row, TileOpts{
+		AccentColor: catColor,
+		FillAlpha:   14,
+		StrokeAlpha: 60,
+		Padded:      true,
+	})
 
 	w.refreshButtons()
 }

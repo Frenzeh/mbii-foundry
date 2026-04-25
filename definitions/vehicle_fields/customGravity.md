@@ -1,14 +1,24 @@
-# ⬇ Custom Gravity
+# Custom Gravity
 
 `customGravity`
 
+> Sets the gravity affecting this specific vehicle.
+
+## What it does
+
 Sets the gravity affecting this specific vehicle.
 
-> **Default:** 800 (Standard gravity).
+**Default:** 800 (Standard gravity).
 
-### Mechanics
-* **Lower:** Vehicle floats/falls slowly.
-* **Higher:** Vehicle sticks to the ground.
+## Valid values
 
-### Tips
-* Use low gravity for "Hover" vehicles that shouldn't crash down hard after a jump.
+- **Lower:** Vehicle floats/falls slowly.
+- **Higher:** Vehicle sticks to the ground.
+
+## Notes
+
+- Use low gravity for "Hover" vehicles that shouldn't crash down hard after a jump.
+
+---
+
+`vehicle`

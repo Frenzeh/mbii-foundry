@@ -2,13 +2,23 @@
 
 `rankHealth`
 
+> Defines the Health values for Point Buy ranks.
+
+## What it does
+
 Defines the Health values for Point Buy ranks.
 
-> **Format:** `rank1,rank2,rank3` (e.g., `100,120,150`)
+**Format:** `rank1,rank2,rank3` (e.g., `100,120,150`)
 
-### Mechanics
-* **Rank 1:** Health value when purchasing the first level of `MB_ATT_HEALTH` (or custom equivalent).
-* **Rank 2/3:** Subsequent levels.
+## Valid values
 
-### Tips
-* Overrides standard `+X` logic if used in a Custom Build.
+- **Rank 1:** Health value when purchasing the first level of `MB_ATT_HEALTH` (or custom equivalent).
+- **Rank 2/3:** Subsequent levels.
+
+## Notes
+
+- Overrides standard `+X` logic if used in a Custom Build.
+
+---
+
+`character` · `loadout`

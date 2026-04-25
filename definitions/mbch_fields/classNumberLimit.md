@@ -2,14 +2,24 @@
 
 `classNumberLimit`
 
+> Restricts how many players can pick this class simultaneously.
+
+## What it does
+
 Restricts how many players can pick this class simultaneously.
 
-> **Default:** -1 (Unlimited).
+**Default:** -1 (Unlimited).
 
-### Mechanics
-* **Value:** Integer count.
-* **Effect:** Once the limit is reached, the class icon grays out for other players.
+## Valid values
 
-### Tips
-* **1:** Unique Hero/Boss (Luke, Vader).
-* **2-3:** Elite units (ARC Troopers, Droidekas).
+- **Value:** Integer count.
+- **Effect:** Once the limit is reached, the class icon grays out for other players.
+
+## Notes
+
+- **1:** Unique Hero/Boss (Luke, Vader).
+- **2-3:** Elite units (ARC Troopers, Droidekas).
+
+---
+
+`character` · `loadout`

@@ -2,14 +2,24 @@
 
 `saberLength`
 
+> The physical length of the blade in game units.
+
+## What it does
+
 The physical length of the blade in game units.
 
-> **Default:** 32.0
+**Default:** 32.0
 
-### Common Values
-* **32.0:** Standard one-handed hilt.
-* **40.0:** Long blade (Desann/Galak style). Good for reach, bad for close quarters (wall hits).
-* **24.0:** Shoto / Short blade (Yoda style). Fast, low reach.
+## Valid values
 
-### Tips
-* Does not affect damage directly, but affects **reach** which is critical in duels.
+- **32.0:** Standard one-handed hilt.
+- **40.0:** Long blade (Desann/Galak style). Good for reach, bad for close quarters (wall hits).
+- **24.0:** Shoto / Short blade (Yoda style). Fast, low reach.
+
+## Notes
+
+- Does not affect damage directly, but affects **reach** which is critical in duels.
+
+---
+
+`saber` · `combat`

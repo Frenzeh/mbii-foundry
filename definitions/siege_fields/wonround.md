@@ -2,7 +2,16 @@
 
 `wonround`
 
+> Text displayed when this team wins.
+
+## What it does
+
 Text displayed when this team wins.
 
-### Tips
-* Example: "The Imperials have crushed the Rebel scum!"
+## Notes
+
+- Example: "The Imperials have crushed the Rebel scum!"
+
+---
+
+`siege`

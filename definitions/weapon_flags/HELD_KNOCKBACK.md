@@ -2,10 +2,20 @@
 
 `HELD_KNOCKBACK`
 
+> Projectiles push targets away.
+
+## What it does
+
 Projectiles push targets away.
 
-### Mechanics
-* **Effect:** Pushes enemy on hit (Similar to Force Push 1).
+## Valid values
 
-### Tips
-* Good for "Concussive" weapons.
+- **Effect:** Pushes enemy on hit (Similar to Force Push 1).
+
+## Notes
+
+- Good for "Concussive" weapons.
+
+---
+
+`weapon` · `flag`

@@ -2,13 +2,23 @@
 
 `RESOURCE_DEKASHIELD`
 
+> Droideka shield generator pool.
+
+## What it does
+
 Droideka shield generator pool.
 
-> **Default:** Droideka
+**Default:** Droideka
 
-### Mechanics
-* **Drain:** Depleted by incoming damage when Shield is active.
-* **Regen:** Only regenerates when Shield is OFF (Ball mode usually).
+## Valid values
 
-### Tips
-* Keep an eye on this bar. When it hits 0, your hull takes damage.
+- **Drain:** Depleted by incoming damage when Shield is active.
+- **Regen:** Only regenerates when Shield is OFF (Ball mode usually).
+
+## Notes
+
+- Keep an eye on this bar. When it hits 0, your hull takes damage.
+
+---
+
+`resource`

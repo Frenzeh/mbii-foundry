@@ -2,13 +2,23 @@
 
 `rollLimit`
 
+> Maximum angle the vehicle can roll (tilt sideways).
+
+## What it does
+
 Maximum angle the vehicle can roll (tilt sideways).
 
-> **Default:** ~45 degrees.
+**Default:** ~45 degrees.
 
-### Mechanics
-* **Value:** Degrees.
-* **Effect:** Limits how much the vehicle leans when turning.
+## Valid values
 
-### Tips
-* Set to **0** for stable platforms (Skiffs, Tanks) that shouldn't lean.
+- **Value:** Degrees.
+- **Effect:** Limits how much the vehicle leans when turning.
+
+## Notes
+
+- Set to **0** for stable platforms (Skiffs, Tanks) that shouldn't lean.
+
+---
+
+`vehicle`

@@ -31,7 +31,7 @@ const (
 	// screen's "new version available" banner. Bump this before tagging
 	// a release — if they drift, testers get a stale banner or none at
 	// all.
-	AppVersion = "0.9.5-alpha"
+	AppVersion = "0.9.6-alpha"
 	AppName    = "MBII Foundry"
 )
 

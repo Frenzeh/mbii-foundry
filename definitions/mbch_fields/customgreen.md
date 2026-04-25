@@ -2,9 +2,18 @@
 
 `customgreen`
 
+> Green component of the custom color.
+
+## What it does
+
 Green component of the custom color.
 
-> **Range:** 0.0 to 1.0
+**Range:** 0.0 to 1.0
 
-### Tips
-* `1.0` = Max Green.
+## Notes
+
+- `1.0` = Max Green.
+
+---
+
+`character`

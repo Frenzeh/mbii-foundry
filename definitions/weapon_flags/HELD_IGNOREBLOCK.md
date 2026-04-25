@@ -2,10 +2,20 @@
 
 `HELD_IGNOREBLOCK`
 
+> Bypasses Blaster Defense.
+
+## What it does
+
 Bypasses Blaster Defense.
 
-### Mechanics
-* **Effect:** Ignores Jedi Blaster Defense (and possibly SBD Magnetic Plating?).
+## Valid values
 
-### Tips
-* Dangerous anti-Jedi tool.
+- **Effect:** Ignores Jedi Blaster Defense (and possibly SBD Magnetic Plating?).
+
+## Notes
+
+- Dangerous anti-Jedi tool.
+
+---
+
+`weapon` · `flag`

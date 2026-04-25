@@ -2,15 +2,25 @@
 
 `extralives`
 
+> Number of times the player can respawn.
+
+## What it does
+
 Number of times the player can respawn.
 
-> **Default:** 0 (1 Life total).
+**Default:** 0 (1 Life total).
 
-### Mechanics
-* **Value:** Number of *respawns* (not total lives).
-* **1:** You play, die, respawn once. (2 Lives total).
-* **4:** Standard Soldier count (5 Lives total).
+## Valid values
 
-### Tips
-* **Soldiers:** Typically 2-4 extra lives.
-* **Jedi/Sith/Heroes:** Typically 0 extra lives.
+- **Value:** Number of *respawns* (not total lives).
+- **1:** You play, die, respawn once. (2 Lives total).
+- **4:** Standard Soldier count (5 Lives total).
+
+## Notes
+
+- **Soldiers:** Typically 2-4 extra lives.
+- **Jedi/Sith/Heroes:** Typically 0 extra lives.
+
+---
+
+`character` · `loadout`

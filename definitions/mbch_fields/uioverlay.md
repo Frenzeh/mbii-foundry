@@ -2,11 +2,21 @@
 
 `uioverlay`
 
+> Displays a custom image overlay on the class portrait.
+
+## What it does
+
 Displays a custom image overlay on the class portrait.
 
-### Mechanics
-* **Value:** Path to shader/image.
-* **Usage:** Often used to show rank insignias (Commander stars, Sergeant stripes) over the base icon.
+## Valid values
 
-### Tips
-* Example: `gfx/icons/infantry`
+- **Value:** Path to shader/image.
+- **Usage:** Often used to show rank insignias (Commander stars, Sergeant stripes) over the base icon.
+
+## Notes
+
+- Example: `gfx/icons/infantry`
+
+---
+
+`character`

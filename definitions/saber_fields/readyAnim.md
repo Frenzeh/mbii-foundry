@@ -2,13 +2,23 @@
 
 `readyAnim`
 
+> Overrides the idle stance animation.
+
+## What it does
+
 Overrides the idle stance animation.
 
-> **Default:** Based on Saber Style.
+**Default:** Based on Saber Style.
 
-### Mechanics
-* **Value:** Enum string (e.g., `BOTH_STAND1`).
-* **Visual:** Changes how the character holds the saber when not attacking.
+## Valid values
 
-### Tips
-* Use `BOTH_SABERDUAL_STANCE` for a cool dual-wielding pose even with a single saber.
+- **Value:** Enum string (e.g., `BOTH_STAND1`).
+- **Visual:** Changes how the character holds the saber when not attacking.
+
+## Notes
+
+- Use `BOTH_SABERDUAL_STANCE` for a cool dual-wielding pose even with a single saber.
+
+---
+
+`saber`

@@ -2,11 +2,21 @@
 
 `HELD_FREEZE`
 
+> Projectiles freeze targets on impact.
+
+## What it does
+
 Projectiles freeze targets on impact.
 
-### Mechanics
-* **Effect:** Freezes target in place.
-* **Duration:** Split second (very short compared to Cryo Grenades).
+## Valid values
 
-### Tips
-* Good for "Ice" themed weapons or slowing enemies.
+- **Effect:** Freezes target in place.
+- **Duration:** Split second (very short compared to Cryo Grenades).
+
+## Notes
+
+- Good for "Ice" themed weapons or slowing enemies.
+
+---
+
+`weapon` · `flag`

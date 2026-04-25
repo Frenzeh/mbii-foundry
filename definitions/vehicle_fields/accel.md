@@ -2,11 +2,21 @@
 
 `accel`
 
+> How quickly the vehicle reaches top speed.
+
+## What it does
+
 How quickly the vehicle reaches top speed.
 
-### Mechanics
-* **Higher:** Snappy, responsive takeoff.
-* **Lower:** Heavy, sluggish takeoff.
+## Valid values
 
-### Tips
-* Tanks should have low accel. Speeder bikes high.
+- **Higher:** Snappy, responsive takeoff.
+- **Lower:** Heavy, sluggish takeoff.
+
+## Notes
+
+- Tanks should have low accel. Speeder bikes high.
+
+---
+
+`vehicle`

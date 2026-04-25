@@ -2,12 +2,22 @@
 
 `armor`
 
+> Hull integrity of the vehicle.
+
+## What it does
+
 Hull integrity of the vehicle.
 
-### Mechanics
-* **Health:** When this hits 0, the vehicle explodes.
-* **Resistance:** Vehicles generally resist small arms fire better than players.
+## Valid values
 
-### Tips
-* **Speeder Bike:** ~200-400.
-* **Tank:** ~2000+.
+- **Health:** When this hits 0, the vehicle explodes.
+- **Resistance:** Vehicles generally resist small arms fire better than players.
+
+## Notes
+
+- **Speeder Bike:** ~200-400.
+- **Tank:** ~2000+.
+
+---
+
+`vehicle`

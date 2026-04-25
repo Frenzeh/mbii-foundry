@@ -2,11 +2,21 @@
 
 `goalname`
 
+> Internal identifier for an objective.
+
+## What it does
+
 Internal identifier for an objective.
 
-### Mechanics
-* **Usage:** Used by scripts (ICARUS) to trigger completion.
-* **Example:** `destroy_console`, `hack_door`.
+## Valid values
 
-### Tips
-* Must match the targetname in the map entity or script.
+- **Usage:** Used by scripts (ICARUS) to trigger completion.
+- **Example:** `destroy_console`, `hack_door`.
+
+## Notes
+
+- Must match the targetname in the map entity or script.
+
+---
+
+`siege`

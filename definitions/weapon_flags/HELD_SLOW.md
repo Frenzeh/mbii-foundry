@@ -2,12 +2,22 @@
 
 `HELD_SLOW`
 
+> Heavy weapon bulk impedes movement.
+
+## What it does
+
 Heavy weapon bulk impedes movement.
 
-### Mechanics
-* **Speed:** **0.85x** (15% Slower movement).
-* **Condition:** Active only while holding the weapon.
+## Valid values
 
-### Tips
-* **Usage:** Miniguns, Rocket Launchers, Heavy Repeaters.
-* **Balance:** Use this to balance high-DPS weapons by making the user a stationary target.
+- **Speed:** **0.85x** (15% Slower movement).
+- **Condition:** Active only while holding the weapon.
+
+## Notes
+
+- **Usage:** Miniguns, Rocket Launchers, Heavy Repeaters.
+- **Balance:** Use this to balance high-DPS weapons by making the user a stationary target.
+
+---
+
+`weapon` · `flag`

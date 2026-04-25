@@ -2,12 +2,22 @@
 
 `RESOURCE_SUPPLY`
 
+> A generic supply counter.
+
+## What it does
+
 A generic supply counter.
 
-> **Default Regen:** 6 / 1000ms
+**Default Regen:** 6 / 1000ms
 
-### Mechanics
-* **Usage:** Can be used for custom ability drain.
+## Valid values
 
-### Tips
-* Flexible resource for custom classes.
+- **Usage:** Can be used for custom ability drain.
+
+## Notes
+
+- Flexible resource for custom classes.
+
+---
+
+`resource`

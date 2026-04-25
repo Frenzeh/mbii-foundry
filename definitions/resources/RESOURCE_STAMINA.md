@@ -2,14 +2,24 @@
 
 `RESOURCE_STAMINA`
 
+> Physical endurance.
+
+## What it does
+
 Physical endurance.
 
-> **Color:** Blue
-> **Default Regen:** (level*2) + 3 / 1000ms
+**Color:** Blue
+**Default Regen:** (level*2) + 3 / 1000ms
 
-### Mechanics
-* **Usage:** Sprinting, Wall-running, Acrobatics, Dodge.
-* **Usage:** Clone/ARC Trooper, Hero.
+## Valid values
 
-### Tips
-* Regenerates quickly when walking/standing.
+- **Usage:** Sprinting, Wall-running, Acrobatics, Dodge.
+- **Usage:** Clone/ARC Trooper, Hero.
+
+## Notes
+
+- Regenerates quickly when walking/standing.
+
+---
+
+`resource`

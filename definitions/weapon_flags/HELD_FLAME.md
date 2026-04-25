@@ -2,11 +2,21 @@
 
 `HELD_FLAME`
 
+> Projectiles set targets on fire.
+
+## What it does
+
 Projectiles set targets on fire.
 
-### Mechanics
-* **Effect:** Ignites target (DoT).
-* **Duration:** Shorter than Fire Grenade/Flamethrower.
+## Valid values
 
-### Tips
-* Good for "Incendiary" ammo types.
+- **Effect:** Ignites target (DoT).
+- **Duration:** Shorter than Fire Grenade/Flamethrower.
+
+## Notes
+
+- Good for "Incendiary" ammo types.
+
+---
+
+`weapon` · `flag`

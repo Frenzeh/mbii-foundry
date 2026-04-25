@@ -31,7 +31,7 @@ const (
 	// screen's "new version available" banner. Bump this before tagging
 	// a release — if they drift, testers get a stale banner or none at
 	// all.
-	AppVersion = "0.9.4-alpha"
+	AppVersion = "0.9.5-alpha"
 	AppName    = "MBII Foundry"
 )
 
@@ -48,7 +48,8 @@ type App struct {
 	assetBrowser *AssetBrowser
 	infoPanel        *InfoPanel
 	infoPanelMirrors []*InfoPanel // pop-out windows hosting fresh InfoPanel instances
-	sourcePanel  *SourcePanel
+	sourcePanel        *SourcePanel
+	sourcePanelMirrors []*SourcePanel // pop-out windows tracking the same active editor
 	activityBar  *SidebarHeader  // top-of-sidebar horizontal activity switcher (legacy field name)
 	sidebarHost  *fyne.Container // swap target for the active activity's content
 
@@ -578,6 +579,7 @@ func (a *App) setupUI() {
 	a.infoPanel.SetHolocronClient(a.holocronClient)
 	a.infoPanel.SetOnPopOut(a.popOutInfoPanel)
 	a.sourcePanel = NewSourcePanel(a)
+	a.sourcePanel.SetOnPopOut(a.popOutSourcePanel)
 
 	a.modpackManager = NewModpackManager(a)
 
@@ -589,9 +591,9 @@ func (a *App) setupUI() {
 		// at the newly-active editor. Home/welcome tabs aren't
 		// editors and show a placeholder in the source pane.
 		if editor, ok := a.editors[tab]; ok {
-			a.sourcePanel.SetActiveEditor(editor)
+			a.setSourceEditorForAll(editor)
 		} else {
-			a.sourcePanel.SetActiveEditor(nil)
+			a.setSourceEditorForAll(nil)
 		}
 	}
 	a.docTabs.SetTabLocation(container.TabLocationTop)
@@ -829,6 +831,47 @@ func (a *App) clearHoverContext() {
 	}
 }
 
+// setSourceEditorForAll points the primary source panel and every
+// mirror at the same Editor so a pop-out window mirrors the main
+// source view as the user switches files.
+func (a *App) setSourceEditorForAll(ed Editor) {
+	if a.sourcePanel != nil {
+		a.sourcePanel.SetActiveEditor(ed)
+	}
+	for _, m := range a.sourcePanelMirrors {
+		m.SetActiveEditor(ed)
+	}
+}
+
+// popOutSourcePanel opens the source panel in a fresh window. New
+// instance of SourcePanel registered as a mirror so the broadcast
+// pipeline keeps it in sync with whatever editor is active in the
+// main window. On close the mirror is unregistered.
+func (a *App) popOutSourcePanel() {
+	if a.fyneApp == nil {
+		return
+	}
+	win := a.fyneApp.NewWindow("Source — MBII Foundry")
+	mirror := NewSourcePanel(a)
+	mirror.SetOnPopOut(nil) // suppress chained pop-outs
+	a.sourcePanelMirrors = append(a.sourcePanelMirrors, mirror)
+	if a.sourcePanel != nil && a.sourcePanel.editorRef != nil {
+		mirror.SetActiveEditor(a.sourcePanel.editorRef)
+	}
+	win.SetContent(mirror.GetContent())
+	win.Resize(fyne.NewSize(560, 720))
+	win.SetOnClosed(func() {
+		out := a.sourcePanelMirrors[:0]
+		for _, m := range a.sourcePanelMirrors {
+			if m != mirror {
+				out = append(out, m)
+			}
+		}
+		a.sourcePanelMirrors = out
+	})
+	win.Show()
+}
+
 // popOutInfoPanel opens the info panel in a fresh window — the dual-
 // monitor workflow. Each pop-out is a fully independent InfoPanel
 // instance registered as a "mirror" on the App; show/hover/clear
@@ -952,7 +995,7 @@ func (a *App) toggleSourcePanel() {
 	if a.config.SourcePanelVisible && a.sourcePanel != nil {
 		if tab := a.docTabs.Selected(); tab != nil {
 			if editor, ok := a.editors[tab]; ok {
-				a.sourcePanel.SetActiveEditor(editor)
+				a.setSourceEditorForAll(editor)
 			}
 		}
 	}
@@ -986,7 +1029,7 @@ func (a *App) createNewFile(title string, editor interface{}) {
 		// wire-up directly is cheap and guarantees the live-source view
 		// shows content on the first open.
 		if a.sourcePanel != nil {
-			a.sourcePanel.SetActiveEditor(ed)
+			a.setSourceEditorForAll(ed)
 		}
 
 		// Set up dirty change handler to update tab title
@@ -1214,7 +1257,7 @@ func (a *App) removeTab(tab *container.TabItem) {
 	// about to be torn down (or has been), so leaving the panel
 	// pointed at it risks stale refreshes.
 	if a.sourcePanel != nil {
-		a.sourcePanel.SetActiveEditor(nil)
+		a.setSourceEditorForAll(nil)
 	}
 
 	// If no tabs remain, the user closed the last editor (or Home).

@@ -65,6 +65,13 @@ type SourcePanel struct {
 	// the auto-refresh from form → source is paused.
 	userDirty bool
 
+	// onPopOut, if set, opens this panel's content in a new window
+	// for dual-monitor workflows. The pop-out button next to the
+	// collapse arrow invokes it; App wires this to a method that
+	// creates a fresh SourcePanel mirror tracking the same active
+	// editor as the primary.
+	onPopOut func()
+
 	// inEditMode reflects which view is on top of the Stack.
 	inEditMode bool
 
@@ -176,6 +183,13 @@ func NewSourcePanel(a *App) *SourcePanel {
 	})
 	collapseBtn.Importance = widget.LowImportance
 
+	popOutBtn := widget.NewButtonWithIcon("", theme.ComputerIcon(), func() {
+		if sp.onPopOut != nil {
+			sp.onPopOut()
+		}
+	})
+	popOutBtn.Importance = widget.LowImportance
+
 	rule := NewAccentRule()
 
 	// Validation indicator — confirm icon + message. Hidden outside
@@ -189,7 +203,7 @@ func NewSourcePanel(a *App) *SourcePanel {
 	// Save a reference so we can toggle visibility with edit mode.
 	sp.validationRow = validationRow
 
-	headerRow := container.NewBorder(nil, nil, sp.header, container.NewHBox(sp.byteCount, copyBtn, collapseBtn))
+	headerRow := container.NewBorder(nil, nil, sp.header, container.NewHBox(sp.byteCount, copyBtn, popOutBtn, collapseBtn))
 	actionRow := container.NewHBox(sp.editToggle, sp.applyBtn, sp.revertBtn)
 	topBlock := container.NewVBox(headerRow, actionRow, validationRow, rule)
 
@@ -199,6 +213,10 @@ func NewSourcePanel(a *App) *SourcePanel {
 
 // GetContent returns the panel's root widget.
 func (sp *SourcePanel) GetContent() fyne.CanvasObject { return sp.container }
+
+// SetOnPopOut wires the pop-out button. Pass nil to disable (used
+// by mirror panels so they don't spawn their own pop-outs).
+func (sp *SourcePanel) SetOnPopOut(cb func()) { sp.onPopOut = cb }
 
 // SetActiveEditor tells the panel which editor to track. Safe to
 // pass nil.

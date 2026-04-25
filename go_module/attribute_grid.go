@@ -131,17 +131,32 @@ func (ag *AttributeGrid) createUI() {
 		}
 
 		// Grid for this category — GridWrap so rows stack on narrow
-		// viewports and flex on wide ones.
-		catGrid := container.NewGridWrap(fyne.NewSize(480, 46))
-		for _, attr := range visibleAttrs {
-			catGrid.Add(ag.createAttributeItem(attr))
+		// viewports and flex on wide ones. Regen + Supply get extra
+		// structure: Regen rows are visually grouped by base resource
+		// (Health / Armour / Block / Resource) into amount/rate/cap
+		// triplets; Supply rows split into a 3-row matrix (DISP /
+		// DROP / STIM) of 5 sub-types each. The grouping is purely
+		// visual — each underlying attribute toggle still owns its
+		// own widget so existing handlers stay unchanged.
+		var catContent fyne.CanvasObject
+		switch catName {
+		case "Regen":
+			catContent = ag.buildRegenGroupedView(visibleAttrs)
+		case "Supply":
+			catContent = ag.buildSupplyMatrixView(visibleAttrs)
+		default:
+			grid := container.NewGridWrap(fyne.NewSize(480, 46))
+			for _, attr := range visibleAttrs {
+				grid.Add(ag.createAttributeItem(attr))
+			}
+			catContent = grid
 		}
 
 		// Title with count suffix so the header carries quick context
 		// even when the section is collapsed. "Weapons (42)" beats
 		// "Weapons" for at-a-glance triage.
 		title := fmt.Sprintf("%s (%d)", catName, len(visibleAttrs))
-		item := widget.NewAccordionItem(title, catGrid)
+		item := widget.NewAccordionItem(title, catContent)
 		if filterLower != "" || defaultOpen[catName] {
 			item.Open = true
 		}
@@ -225,6 +240,116 @@ func (ag *AttributeGrid) Refresh() {
 	if ag.container != nil {
 		ag.container.Refresh()
 	}
+}
+
+// buildRegenGroupedView arranges the Regen category as four base-
+// resource sub-sections (Health / Armour / Block / Resource), each
+// with its (amount, rate, cap) triplet shown together. Anything that
+// doesn't match a base resource (defensive — shouldn't happen with
+// the canonical *_REGEN_* set) falls into a trailing "Other" row.
+func (ag *AttributeGrid) buildRegenGroupedView(attrs []AttributeDef) fyne.CanvasObject {
+	// MBII's regen families. Order is health-first because that's what
+	// authors care about most.
+	groups := []struct {
+		title  string
+		prefix string
+	}{
+		{"Health regen", "MB_ATT_HEALTH_REGEN_"},
+		{"Armour regen", "MB_ATT_ARMOUR_REGEN_"},
+		{"Block regen", "MB_ATT_BLOCK_REGEN_"},
+		{"Resource regen", "MB_ATT_RESOURCE_REGEN_"},
+	}
+	box := container.NewVBox()
+	used := map[string]bool{}
+	for _, g := range groups {
+		var members []AttributeDef
+		for _, a := range attrs {
+			if strings.HasPrefix(a.ID, g.prefix) {
+				members = append(members, a)
+				used[a.ID] = true
+			}
+		}
+		if len(members) == 0 {
+			continue
+		}
+		sub := widget.NewLabelWithStyle(g.title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+		grid := container.NewGridWrap(fyne.NewSize(480, 46))
+		for _, a := range members {
+			grid.Add(ag.createAttributeItem(a))
+		}
+		box.Add(sub)
+		box.Add(grid)
+	}
+	// Catch any *_REGEN_* outside the canonical four bases.
+	var leftovers []AttributeDef
+	for _, a := range attrs {
+		if !used[a.ID] {
+			leftovers = append(leftovers, a)
+		}
+	}
+	if len(leftovers) > 0 {
+		sub := widget.NewLabelWithStyle("Other regen", fyne.TextAlignLeading, fyne.TextStyle{Bold: true, Italic: true})
+		grid := container.NewGridWrap(fyne.NewSize(480, 46))
+		for _, a := range leftovers {
+			grid.Add(ag.createAttributeItem(a))
+		}
+		box.Add(sub)
+		box.Add(grid)
+	}
+	return box
+}
+
+// buildSupplyMatrixView arranges the Supply category by delivery
+// mode (Dispenser / Drop / Stim) so the 5×3 matrix structure the
+// agents identified reads as a clear set instead of fifteen flat
+// rows. Other supply-bucket entries (BACTA, MEDI/AMMO_PACK,
+// SUPPLYDROP itself, SPAWNER) tail at the end.
+func (ag *AttributeGrid) buildSupplyMatrixView(attrs []AttributeDef) fyne.CanvasObject {
+	groups := []struct {
+		title  string
+		prefix string
+	}{
+		{"Dispenser", "MB_ATT_DISP_"},
+		{"Drop", "MB_ATT_DROP_"},
+		{"Stim", "MB_ATT_STIM_"},
+	}
+	box := container.NewVBox()
+	used := map[string]bool{}
+	for _, g := range groups {
+		var members []AttributeDef
+		for _, a := range attrs {
+			if strings.HasPrefix(a.ID, g.prefix) {
+				members = append(members, a)
+				used[a.ID] = true
+			}
+		}
+		if len(members) == 0 {
+			continue
+		}
+		sub := widget.NewLabelWithStyle(g.title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+		grid := container.NewGridWrap(fyne.NewSize(480, 46))
+		for _, a := range members {
+			grid.Add(ag.createAttributeItem(a))
+		}
+		box.Add(sub)
+		box.Add(grid)
+	}
+	var leftovers []AttributeDef
+	for _, a := range attrs {
+		if !used[a.ID] {
+			leftovers = append(leftovers, a)
+		}
+	}
+	if len(leftovers) > 0 {
+		sub := widget.NewLabelWithStyle("Other supply", fyne.TextAlignLeading, fyne.TextStyle{Bold: true, Italic: true})
+		grid := container.NewGridWrap(fyne.NewSize(480, 46))
+		for _, a := range leftovers {
+			grid.Add(ag.createAttributeItem(a))
+		}
+		box.Add(sub)
+		box.Add(grid)
+	}
+	return box
 }
 
 func (ag *AttributeGrid) GetContent() fyne.CanvasObject {

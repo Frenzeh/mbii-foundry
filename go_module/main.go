@@ -31,7 +31,7 @@ const (
 	// screen's "new version available" banner. Bump this before tagging
 	// a release — if they drift, testers get a stale banner or none at
 	// all.
-	AppVersion = "0.9.6-alpha"
+	AppVersion = "0.9.7-alpha"
 	AppName    = "MBII Foundry"
 )
 
@@ -831,6 +831,70 @@ func (a *App) clearHoverContext() {
 	}
 }
 
+// popOutCurrentTab tears the active editor tab out of docTabs and
+// rehosts it in its own window. The editor stays fully alive — its
+// AssetBrowser / Hover / Holocron wiring is preserved, the only
+// thing that changes is the parent container. On window close the
+// dirty-state guard kicks in (matches closeTab's behaviour) so the
+// user doesn't lose unsaved work, and the editor is reattached to
+// docTabs as a fresh tab if they cancel the close.
+//
+// This is the "tab tear-off" feature that pairs with the info-panel
+// + source-panel pop-outs to complete the dual-monitor workflow.
+// We can't lean on Fyne's drag-out API because DocTabs doesn't
+// expose one — a button + active-tab read is the pragmatic shape.
+func (a *App) popOutCurrentTab() {
+	if a.fyneApp == nil || a.docTabs == nil {
+		return
+	}
+	tab := a.docTabs.Selected()
+	if tab == nil {
+		return
+	}
+	ed, ok := a.editors[tab]
+	if !ok {
+		return // welcome / non-editor tab — nothing to tear off
+	}
+
+	title := tab.Text
+	a.docTabs.Remove(tab)
+	delete(a.editors, tab)
+
+	win := a.fyneApp.NewWindow(title + " — MBII Foundry")
+	win.SetContent(ed.GetContent())
+	win.Resize(fyne.NewSize(1100, 800))
+
+	// Reattach helper — used both on user-cancelled close and on
+	// re-merge requests. Reuses the editor instance + its unsaved
+	// state, so the user picks up exactly where they left off.
+	reattach := func() {
+		newTab := container.NewTabItem(title, ed.GetContent())
+		a.editors[newTab] = ed
+		a.docTabs.Append(newTab)
+		a.docTabs.Select(newTab)
+	}
+
+	win.SetCloseIntercept(func() {
+		if d, ok := ed.(interface{ IsDirty() bool }); ok && d.IsDirty() {
+			dialog.ShowConfirm("Unsaved Changes",
+				"This file has unsaved changes. Close window and discard?",
+				func(confirmed bool) {
+					if confirmed {
+						win.Close()
+					}
+				}, win)
+			return
+		}
+		win.Close()
+	})
+	win.SetOnClosed(func() {
+		// Reattach so the editor isn't lost — user can finish editing
+		// in the main window if they want it back.
+		reattach()
+	})
+	win.Show()
+}
+
 // setSourceEditorForAll points the primary source panel and every
 // mirror at the same Editor so a pop-out window mirrors the main
 // source view as the user switches files.
@@ -1304,6 +1368,12 @@ func (a *App) createToolbar() fyne.CanvasObject {
 
 		// Validate
 		btn(theme.WarningIcon(), func() { a.validateFile() }, "Validate Current File"),
+
+		// Pop out current editor tab into its own window — completes
+		// the dual-monitor workflow alongside info-panel + source-panel
+		// pop-outs. Dirty-state is preserved; closing the popped-out
+		// window reattaches the tab rather than destroying unsaved work.
+		btn(theme.ComputerIcon(), func() { a.popOutCurrentTab() }, "Pop Out Current Tab"),
 	}
 
 	// Dev-only: maintainer "share with Holocron" button. Uploads the

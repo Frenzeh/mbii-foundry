@@ -37,6 +37,12 @@ type Editor interface {
 	IsDirty() bool
 	MarkClean()
 	SetOnDirtyChanged(func(bool))
+
+	// Validate returns a list of human-readable issues with the
+	// current file. Empty slice means no issues. Required so the
+	// app's "Validate" toolbar button can dispatch polymorphically
+	// instead of type-switching across every editor concrete type.
+	Validate() []string
 }
 
 // SourceProvider is an optional capability an Editor may implement to

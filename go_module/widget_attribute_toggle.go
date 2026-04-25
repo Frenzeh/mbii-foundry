@@ -207,32 +207,3 @@ func (w *AttributeToggleWidget) CreateRenderer() fyne.WidgetRenderer {
 	return widget.NewSimpleRenderer(w.container)
 }
 
-// Helper container that aligns content to the right
-type rightAlignedLayout struct{}
-
-func (d *rightAlignedLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
-	w, h := float32(0), float32(0)
-	for _, o := range objects {
-		childSize := o.MinSize()
-		w += childSize.Width
-		if childSize.Height > h {
-			h = childSize.Height
-		}
-	}
-	return fyne.NewSize(w, h)
-}
-
-func (d *rightAlignedLayout) Layout(objects []fyne.CanvasObject, containerSize fyne.Size) {
-	pos := fyne.NewPos(containerSize.Width, 0)
-	for i := len(objects) - 1; i >= 0; i-- {
-		o := objects[i]
-		size := o.MinSize()
-		pos = pos.Subtract(fyne.NewPos(size.Width, 0))
-		o.Move(pos)
-		o.Resize(fyne.NewSize(size.Width, containerSize.Height))
-	}
-}
-
-func NewRightAligned(content ...fyne.CanvasObject) *fyne.Container {
-	return container.New(&rightAlignedLayout{}, content...)
-}

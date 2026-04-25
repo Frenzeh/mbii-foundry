@@ -18,6 +18,7 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/theme"
@@ -31,7 +32,7 @@ const (
 	// screen's "new version available" banner. Bump this before tagging
 	// a release — if they drift, testers get a stale banner or none at
 	// all.
-	AppVersion = "0.9.7-alpha"
+	AppVersion = "0.10.0-alpha"
 	AppName    = "MBII Foundry"
 )
 
@@ -529,19 +530,47 @@ func main() {
 	application.fyneApp = app.NewWithID("com.frenzeh.mbii-foundry")
 	application.fyneApp.Settings().SetTheme(&FoundryTheme{})
 	application.mainWindow = application.fyneApp.NewWindow(fmt.Sprintf("%s - MBII Content Editor", AppName))
-	application.mainWindow.Resize(fyne.NewSize(1400, 900))
+	// Restore last-session window size if persisted; else default
+	// 1400x900. Sub-1200x600 is treated as corrupt config (Fyne
+	// rounding glitches at very small initial sizes) and ignored.
+	w, h := application.config.WindowWidth, application.config.WindowHeight
+	if w < 1200 || h < 600 {
+		w, h = 1400, 900
+	}
+	application.mainWindow.Resize(fyne.NewSize(w, h))
 
 	application.loadConfig()
 
 	application.setupUI()
+	application.setupShortcuts()
 
 	// Check for first run / missing configuration
 	application.checkFirstRun()
 
-	// Persist whatever the user dragged the split dividers to as the
-	// window closes — no other code path captures a last-minute drag.
+	// Persist split-dragged offsets + final window size on close, and
+	// guard against silent data loss: if any open editor is dirty,
+	// prompt before exiting. Without this guard the user could close
+	// the app via Cmd+Q and lose every dirty tab without warning;
+	// per-tab close prompts didn't fire on app exit.
 	application.mainWindow.SetCloseIntercept(func() {
 		application.persistSplitOffsets()
+		application.persistWindowSize()
+		dirtyTabs := []string{}
+		for tab, ed := range application.editors {
+			if ed != nil && ed.IsDirty() {
+				dirtyTabs = append(dirtyTabs, tab.Text)
+			}
+		}
+		if len(dirtyTabs) > 0 {
+			msg := fmt.Sprintf("These tabs have unsaved changes:\n\n  • %s\n\nQuit anyway?",
+				strings.Join(dirtyTabs, "\n  • "))
+			dialog.ShowConfirm("Unsaved Changes", msg, func(confirmed bool) {
+				if confirmed {
+					application.mainWindow.Close()
+				}
+			}, application.mainWindow)
+			return
+		}
 		application.mainWindow.Close()
 	})
 
@@ -1047,6 +1076,122 @@ func (a *App) persistSplitOffsets() {
 	}
 }
 
+// setupShortcuts wires keyboard shortcuts + a macOS-style main menu.
+// Until this landed the README and welcome screen advertised Cmd+N /
+// Cmd+O / Cmd+S etc. but none were actually bound — typing them did
+// nothing. This brings the app to parity with the docs and gives Mac
+// users the system-bar menu they expect.
+func (a *App) setupShortcuts() {
+	if a.mainWindow == nil {
+		return
+	}
+	c := a.mainWindow.Canvas()
+	add := func(key fyne.KeyName, mods fyne.KeyModifier, fn func()) {
+		c.AddShortcut(&desktop.CustomShortcut{KeyName: key, Modifier: mods}, func(_ fyne.Shortcut) { fn() })
+	}
+	mod := fyne.KeyModifierShortcutDefault // Cmd on macOS, Ctrl elsewhere
+
+	// File ops.
+	add(fyne.KeyN, mod, func() { a.createNewFile("Character", NewMBCHEditor(a)) })
+	add(fyne.KeyO, mod, func() { a.openFile() })
+	add(fyne.KeyS, mod, func() { a.saveFile() })
+	add(fyne.KeyS, mod|fyne.KeyModifierShift, func() { a.saveFileAs() })
+	add(fyne.KeyW, mod, func() {
+		if t := a.docTabs.Selected(); t != nil {
+			a.closeTab(t)
+		}
+	})
+
+	// Validate.
+	add(fyne.KeyR, mod, func() { a.validateFile() })
+
+	// Preferences (Cmd+,).
+	add(fyne.KeyComma, mod, func() { a.showPreferences() })
+
+	// Tab navigation — Cmd+1..9.
+	for i := 1; i <= 9; i++ {
+		idx := i
+		var key fyne.KeyName
+		switch i {
+		case 1:
+			key = fyne.Key1
+		case 2:
+			key = fyne.Key2
+		case 3:
+			key = fyne.Key3
+		case 4:
+			key = fyne.Key4
+		case 5:
+			key = fyne.Key5
+		case 6:
+			key = fyne.Key6
+		case 7:
+			key = fyne.Key7
+		case 8:
+			key = fyne.Key8
+		case 9:
+			key = fyne.Key9
+		}
+		add(key, mod, func() {
+			if a.docTabs == nil || idx > len(a.docTabs.Items) {
+				return
+			}
+			a.docTabs.Select(a.docTabs.Items[idx-1])
+		})
+	}
+
+	// macOS main menu — gives Cmd-anything a system-bar entry so the
+	// shortcuts above also show up where Mac users look for them.
+	fileMenu := fyne.NewMenu("File",
+		fyne.NewMenuItem("New Character", func() { a.createNewFile("Character", NewMBCHEditor(a)) }),
+		fyne.NewMenuItem("Open File…", func() { a.openFile() }),
+		fyne.NewMenuItemSeparator(),
+		fyne.NewMenuItem("Save", func() { a.saveFile() }),
+		fyne.NewMenuItem("Save As…", func() { a.saveFileAs() }),
+		fyne.NewMenuItemSeparator(),
+		fyne.NewMenuItem("Validate", func() { a.validateFile() }),
+		fyne.NewMenuItemSeparator(),
+		fyne.NewMenuItem("Close Tab", func() {
+			if t := a.docTabs.Selected(); t != nil {
+				a.closeTab(t)
+			}
+		}),
+	)
+	editMenu := fyne.NewMenu("Edit",
+		fyne.NewMenuItem("Preferences…", func() { a.showPreferences() }),
+	)
+	viewMenu := fyne.NewMenu("View",
+		fyne.NewMenuItem("Toggle Sidebar", func() { a.toggleSidebar() }),
+		fyne.NewMenuItem("Toggle Source Panel", func() { a.toggleSourcePanel() }),
+		fyne.NewMenuItemSeparator(),
+		fyne.NewMenuItem("Pop Out Current Tab", func() { a.popOutCurrentTab() }),
+		fyne.NewMenuItem("Pop Out Info Panel", func() { a.popOutInfoPanel() }),
+		fyne.NewMenuItem("Pop Out Source Panel", func() { a.popOutSourcePanel() }),
+	)
+	helpMenu := fyne.NewMenu("Help",
+		fyne.NewMenuItem("About MBII Foundry", func() { a.showAbout() }),
+		fyne.NewMenuItem("Debug Logs", func() { a.showLogs() }),
+		fyne.NewMenuItem("Check for Updates", func() { a.checkForUpdatesNow() }),
+	)
+	a.mainWindow.SetMainMenu(fyne.NewMainMenu(fileMenu, editMenu, viewMenu, helpMenu))
+}
+
+// persistWindowSize captures the main window's final dimensions and
+// writes them to config so the next launch reopens at the same size.
+// Called from the close intercept; AppConfig.WindowWidth/Height were
+// declared but never actually written before this.
+func (a *App) persistWindowSize() {
+	if a.mainWindow == nil {
+		return
+	}
+	sz := a.mainWindow.Canvas().Size()
+	if sz.Width >= 600 && sz.Height >= 400 {
+		a.config.WindowWidth = sz.Width
+		a.config.WindowHeight = sz.Height
+		a.saveConfig()
+	}
+}
+
 func (a *App) toggleSourcePanel() {
 	a.config.SourcePanelVisible = !a.config.SourcePanelVisible
 	if a.config.SourcePanelOffset <= 0 {
@@ -1096,24 +1241,12 @@ func (a *App) createNewFile(title string, editor interface{}) {
 			a.setSourceEditorForAll(ed)
 		}
 
-		// Set up dirty change handler to update tab title
-		if mbch, ok := ed.(*MBCHEditor); ok {
-			mbch.SetOnDirtyChanged(func(isDirty bool) {
-				a.updateTabTitle(tab, isDirty)
-			})
-		} else if sab, ok := ed.(*SABEditor); ok {
-			sab.SetOnDirtyChanged(func(isDirty bool) {
-				a.updateTabTitle(tab, isDirty)
-			})
-		} else if veh, ok := ed.(*VEHEditor); ok {
-			veh.SetOnDirtyChanged(func(isDirty bool) {
-				a.updateTabTitle(tab, isDirty)
-			})
-		} else if siege, ok := ed.(*SiegeEditor); ok {
-			siege.SetOnDirtyChanged(func(isDirty bool) {
-				a.updateTabTitle(tab, isDirty)
-			})
-		}
+		// Dirty handler — Editor interface already requires
+		// SetOnDirtyChanged, so the four-way type-switch this
+		// previously did was redundant.
+		ed.SetOnDirtyChanged(func(isDirty bool) {
+			a.updateTabTitle(tab, isDirty)
+		})
 	}
 }
 
@@ -1288,29 +1421,17 @@ func (a *App) openFileFromAsset(asset *AssetEntry) {
 }
 
 func (a *App) closeTab(tab *container.TabItem) {
-	// Check for unsaved changes
-	if editor, ok := a.editors[tab]; ok {
-		isDirty := false
-		if mbch, ok := editor.(*MBCHEditor); ok {
-			isDirty = mbch.IsDirty()
-		} else if sab, ok := editor.(*SABEditor); ok {
-			isDirty = sab.IsDirty()
-		} else if veh, ok := editor.(*VEHEditor); ok {
-			isDirty = veh.IsDirty()
-		} else if siege, ok := editor.(*SiegeEditor); ok {
-			isDirty = siege.IsDirty()
-		}
-
-		if isDirty {
-			dialog.ShowConfirm("Unsaved Changes",
-				"This file has unsaved changes. Close anyway?",
-				func(confirmed bool) {
-					if confirmed {
-						a.removeTab(tab)
-					}
-				}, a.mainWindow)
-			return
-		}
+	// Editor interface already requires IsDirty(); the four-way type
+	// switch was a leftover from before the interface was complete.
+	if editor, ok := a.editors[tab]; ok && editor.IsDirty() {
+		dialog.ShowConfirm("Unsaved Changes",
+			"This file has unsaved changes. Close anyway?",
+			func(confirmed bool) {
+				if confirmed {
+					a.removeTab(tab)
+				}
+			}, a.mainWindow)
+		return
 	}
 	a.removeTab(tab)
 }
@@ -1424,28 +1545,18 @@ func (a *App) validateFile() {
 		return
 	}
 
-	var issues []string
+	// Editor.Validate() is on the interface; the four-way type switch
+	// was redundant. MBCH alone reports a character count for the
+	// 8192-byte cap warning — keep that as a narrow type assertion.
+	issues := editor.Validate()
 	var charCount int
-
 	if mbch, ok := editor.(*MBCHEditor); ok {
-		issues = mbch.Validate()
 		charCount = mbch.GetCharacterCount()
-
-		// Add character limit check to validation
 		if charCount > 8192 {
 			issues = append([]string{fmt.Sprintf("CRITICAL: File exceeds 8192 character limit (%d chars)", charCount)}, issues...)
 		} else if charCount > 7500 {
 			issues = append([]string{fmt.Sprintf("Warning: Approaching 8192 character limit (%d/8192)", charCount)}, issues...)
 		}
-	} else if sab, ok := editor.(*SABEditor); ok {
-		issues = sab.Validate()
-	} else if veh, ok := editor.(*VEHEditor); ok {
-		issues = veh.Validate()
-	} else if siege, ok := editor.(*SiegeEditor); ok {
-		issues = siege.Validate()
-	} else {
-		dialog.ShowInformation("Validation", "Validation not available for this file type.", a.mainWindow)
-		return
 	}
 
 	if len(issues) == 0 {
@@ -1558,19 +1669,9 @@ func (a *App) saveFile() {
 		return
 	}
 
-	var path string
-	if ed, ok := editor.(*MBCHEditor); ok {
-		path = ed.GetCurrentPath()
-	}
-	if ed, ok := editor.(*SABEditor); ok {
-		path = ed.GetCurrentPath()
-	}
-	if ed, ok := editor.(*VEHEditor); ok {
-		path = ed.GetCurrentPath()
-	}
-	if ed, ok := editor.(*SiegeEditor); ok {
-		path = ed.GetCurrentPath()
-	}
+	// Editor.GetCurrentPath() is already on the interface; the four
+	// per-type checks were redundant.
+	path := editor.GetCurrentPath()
 
 	if path == "" {
 		a.saveFileAs()
@@ -2033,7 +2134,68 @@ For support, file an issue at github.com/Frenzeh/mbii-foundry or ask in the MBII
 	dialog.ShowCustom("About MBII Foundry", "Close", scroll, a.mainWindow)
 }
 
-func (a *App) buildPK3(source, dest string) {}
+// buildPK3 zips the contents of `source` into a .pk3 at `dest`.
+// MBII PK3 files are plain zip archives — engine-side they're just
+// renamed zips, so `archive/zip` produces a fully valid PK3 with
+// no special header massaging needed.
+//
+// Walks the source tree, preserving relative paths inside the
+// archive so `gfx/menus/...` ends up at `gfx/menus/...` in the PK3
+// (NOT `<projectname>/gfx/menus/...`). Returns an error if any
+// file fails to read/write; the dialog caller surfaces it.
+func (a *App) buildPK3(source, dest string) error {
+	if source == "" || dest == "" {
+		return fmt.Errorf("buildPK3: source and dest required")
+	}
+	out, err := os.Create(dest)
+	if err != nil {
+		return fmt.Errorf("create %s: %w", dest, err)
+	}
+	defer out.Close()
+	zw := zip.NewWriter(out)
+	defer zw.Close()
+
+	walked := 0
+	err = filepath.Walk(source, func(path string, info os.FileInfo, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if info.IsDir() {
+			return nil
+		}
+		// Skip hidden files (.DS_Store etc.) and editor noise.
+		base := filepath.Base(path)
+		if strings.HasPrefix(base, ".") || base == "Thumbs.db" {
+			return nil
+		}
+		rel, err := filepath.Rel(source, path)
+		if err != nil {
+			return fmt.Errorf("rel path %s: %w", path, err)
+		}
+		// PK3s use forward slashes regardless of host OS.
+		rel = filepath.ToSlash(rel)
+		w, err := zw.Create(rel)
+		if err != nil {
+			return fmt.Errorf("zip create %s: %w", rel, err)
+		}
+		f, err := os.Open(path)
+		if err != nil {
+			return fmt.Errorf("open %s: %w", path, err)
+		}
+		_, err = io.Copy(w, f)
+		f.Close()
+		if err != nil {
+			return fmt.Errorf("write %s: %w", rel, err)
+		}
+		walked++
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	a.updateStatus(fmt.Sprintf("Built %s (%d files)", filepath.Base(dest), walked))
+	return nil
+}
 
 func (a *App) syncWorkspace() {
 	if a.githubManager == nil {

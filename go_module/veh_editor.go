@@ -23,6 +23,14 @@ type VEHEditor struct {
 	lastError   string
 	onHover     func(string, string)
 
+	// Dirty tracking — mirrors SABEditor's pattern. Without this,
+	// closing a tab with unsaved .veh edits silently discarded the
+	// work because the close-guard's IsDirty() check returned false
+	// unconditionally.
+	isDirty        bool
+	onDirtyChanged func(bool)
+	onSourceChanged func()
+
 	nameEntry  *widget.Entry
 	typeSelect *widget.Select
 	modelEntry *widget.Entry
@@ -64,10 +72,22 @@ func (e *VEHEditor) SetAssetBrowser(ab *AssetBrowser)         { e.assetBrowser =
 func (e *VEHEditor) SetHolocronClient(client *HolocronClient) { e.holocronClient = client }
 
 func (e *VEHEditor) createUI() {
+	// dirty wires markDirty into every text/select OnChanged handler.
+	// Closure form lets us pass it as the OnChanged itself for simple
+	// cases; for entries that update vehicle state on edit, the handler
+	// chains: update + dirty.
+	dirty := func() { e.markDirty() }
+
 	e.nameEntry = NewInputEntry()
-	e.typeSelect = widget.NewSelect(VehicleTypes, func(s string) { e.vehicle.Type = s })
+	e.nameEntry.OnChanged = func(s string) { dirty() }
+	e.typeSelect = widget.NewSelect(VehicleTypes, func(s string) {
+		e.vehicle.Type = s
+		dirty()
+	})
 	e.modelEntry = NewInputEntry()
+	e.modelEntry.OnChanged = func(s string) { dirty() }
 	e.skinEntry = NewInputEntry()
+	e.skinEntry.OnChanged = func(s string) { dirty() }
 
 	browseModelBtn := widget.NewButtonWithIcon("", theme.FolderOpenIcon(), func() {
 		if e.app != nil {
@@ -82,11 +102,17 @@ func (e *VEHEditor) createUI() {
 	)
 
 	e.speedEntry = NewInputEntry()
+	e.speedEntry.OnChanged = func(s string) { dirty() }
 	e.turboEntry = NewInputEntry()
+	e.turboEntry.OnChanged = func(s string) { dirty() }
 	e.accelEntry = NewInputEntry()
+	e.accelEntry.OnChanged = func(s string) { dirty() }
 	e.decelEntry = NewInputEntry()
+	e.decelEntry.OnChanged = func(s string) { dirty() }
 	e.strafeEntry = NewInputEntry()
+	e.strafeEntry.OnChanged = func(s string) { dirty() }
 	e.brakingEntry = NewInputEntry()
+	e.brakingEntry.OnChanged = func(s string) { dirty() }
 
 	statsForm := widget.NewForm(
 		widget.NewFormItem("Max Speed", e.speedEntry),
@@ -98,8 +124,11 @@ func (e *VEHEditor) createUI() {
 	)
 
 	e.armorEntry = NewInputEntry()
+	e.armorEntry.OnChanged = func(s string) { dirty() }
 	e.shieldsEntry = NewInputEntry()
+	e.shieldsEntry.OnChanged = func(s string) { dirty() }
 	e.weaponsEntry = NewInputEntry()
+	e.weaponsEntry.OnChanged = func(s string) { dirty() }
 
 	combatForm := widget.NewForm(
 		widget.NewFormItem("Armor", e.armorEntry),
@@ -204,6 +233,7 @@ func (e *VEHEditor) LoadFile(path string) error {
 		e.fileManager.AddRecentFile(path)
 	}
 	e.lastError = ""
+	e.MarkClean() // updateUI's SetText calls fired markDirty; reset.
 	return nil
 }
 
@@ -233,6 +263,7 @@ func (e *VEHEditor) SaveFile(path string) error {
 	if e.fileManager != nil {
 		e.fileManager.AddRecentFile(path)
 	}
+	e.MarkClean()
 	return nil
 }
 
@@ -240,12 +271,30 @@ func (e *VEHEditor) SetCurrentPath(path string) {
 	e.currentPath = path
 }
 
-func (e *VEHEditor) MarkClean()                     {}
-func (e *VEHEditor) SetOnDirtyChanged(f func(bool)) {}
-func (e *VEHEditor) IsDirty() bool                  { return false }
+func (e *VEHEditor) SetOnDirtyChanged(f func(bool)) { e.onDirtyChanged = f }
+func (e *VEHEditor) IsDirty() bool                  { return e.isDirty }
+func (e *VEHEditor) MarkClean() {
+	e.isDirty = false
+	if e.onDirtyChanged != nil {
+		e.onDirtyChanged(false)
+	}
+}
 
-// SourceProvider impl — SourcePanel's timer fallback handles refresh
-// since VEH doesn't have a markDirty/onChanged propagation chain yet.
+// markDirty propagates the dirty flag + fires the source-changed
+// callback so the SourcePanel re-renders. Wired into every Entry
+// OnChanged + Select OnChanged handler in createUI.
+func (e *VEHEditor) markDirty() {
+	if !e.isDirty {
+		e.isDirty = true
+		if e.onDirtyChanged != nil {
+			e.onDirtyChanged(true)
+		}
+	}
+	if e.onSourceChanged != nil {
+		e.onSourceChanged()
+	}
+}
+
 func (e *VEHEditor) GenerateSource() string {
 	if e.vehicle == nil {
 		return ""
@@ -257,7 +306,7 @@ func (e *VEHEditor) GenerateSource() string {
 	}
 	return content
 }
-func (e *VEHEditor) SetOnSourceChanged(f func()) {}
+func (e *VEHEditor) SetOnSourceChanged(f func()) { e.onSourceChanged = f }
 
 func (e *VEHEditor) WriteContent(w io.Writer) {
 	e.SaveToWriter(w)

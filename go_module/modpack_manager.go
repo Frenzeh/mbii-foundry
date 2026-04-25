@@ -271,10 +271,13 @@ func (mm *ModpackManager) showProjectDetails(p *Modpack) {
 	})
 
 	buildBtn := widget.NewButtonWithIcon("Build PK3", theme.DownloadIcon(), func() {
-		// Call main build function (not yet implemented in main.go but we can stub)
 		pk3Path := filepath.Join(p.Path, "..", p.Name+".pk3")
-		// mm.app.buildPK3(p.Path, pk3Path) // Stub
-		fmt.Println("Building PK3 to", pk3Path)
+		if err := mm.app.buildPK3(p.Path, pk3Path); err != nil {
+			dialog.ShowError(fmt.Errorf("Build failed: %w", err), mm.app.mainWindow)
+			return
+		}
+		dialog.ShowInformation("PK3 built",
+			fmt.Sprintf("Wrote %s", pk3Path), mm.app.mainWindow)
 	})
 
 	// Remove-from-list button. Danger importance + explicit confirm

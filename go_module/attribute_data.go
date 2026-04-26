@@ -113,6 +113,7 @@ var MBIIClasses = []ClassDef{
 	{ID: "MB_CLASS_MANDALORIAN", Name: "Mandalorian", Description: "Jetpack warrior."},
 	{ID: "MB_CLASS_ARCTROOPER", Name: "ARC Trooper", Description: "Elite clone trooper."},
 	{ID: "MB_CLASS_ELITETROOPER", Name: "Elite Trooper", Description: "Heavy weapons specialist."},
+	{ID: "MB_CLASS_BATTLEDROID", Name: "Battle Droid", Description: "FA-only humanoid droid. Immune to poison/sonic/drowning/locational damage; takes 5x ion/pulse without Battery."},
 }
 
 var MBIIAttributes = []AttributeDef{
@@ -348,9 +349,13 @@ var MBIIAttributes = []AttributeDef{
 	{ID: "MB_ATT_THROWER_FLAME", Name: "Thrower Flame", MaxLevel: 3, Category: "General", Description: ""},
 	{ID: "MB_ATT_REMOTE_DETONATE", Name: "Remote Detonate", MaxLevel: 3, Category: "General", Description: ""},
 	{ID: "MB_ATT_GETUPS", Name: "Getups", MaxLevel: 3, Category: "General", Description: ""},
-	// MB_ATT_FP_FINAL was here — it's a #define alias for (MB_ATT_PISTOL-1),
-	// not a real enum member, so it has no business in the picker.
-	// Duplicate MB_ATT_PISTOL entry was here too — already defined above
-	// in the Weapons section. Both removed so the grid stops showing a
-	// phantom "Force Final" row and double pistols.
+
+	// R22.0.00 additions — promoted out of hidden / new attributes.
+	{ID: "MB_ATT_SPEEDLUNGE", Name: "Speedlunge", MaxLevel: 1, Category: "General", Description: "Allows speedlunge without Jump 3 + Speed 3."},
+	{ID: "MB_ATT_BARGE", Name: "Barge", MaxLevel: 1, Category: "Class Specific", Description: "Wookiee shoulder barge as a standalone special."},
+	{ID: "MB_ATT_SABER", Name: "Saber (point-buy)", MaxLevel: 1, Category: "Saber", Description: "Buyable WP_SABER for point-buy classes. Requires saber1 set."},
+	{ID: "MB_ATT_PETCONTROL", Name: "Pet Control", MaxLevel: 1, Category: "General", Description: "Lets the class control NPCs spawned via MB_ATT_SPAWNER."},
+	{ID: "MB_ATT_PSHIELD", Name: "Personal Energy Shield", MaxLevel: 1, Category: "General", Description: "Activates a 20-second 50% damage-reduction shield."},
+	{ID: "MB_ATT_DEMP2_BLASTS", Name: "DEMP2 Ion Blasts", MaxLevel: 3, Category: "Weapons", Description: "Separate ammo pool for DEMP2 alt-fire ion blasts (2/level)."},
+	{ID: "MB_ATT_FLECHETTE_ALT_NUM", Name: "Flechette Alt Count", MaxLevel: 5, Category: "Weapons", Description: "Number of grenades fired by Flechette alt-fire (default 2, max 5)."},
 }

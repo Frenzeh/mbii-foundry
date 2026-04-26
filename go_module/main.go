@@ -32,7 +32,7 @@ const (
 	// screen's "new version available" banner. Bump this before tagging
 	// a release — if they drift, testers get a stale banner or none at
 	// all.
-	AppVersion = "0.10.9-alpha"
+	AppVersion = "0.11.0-alpha"
 	AppName    = "MBII Foundry"
 )
 
@@ -1608,23 +1608,24 @@ func (a *App) validateFile() {
 	var charCount int
 	if mbch, ok := editor.(*MBCHEditor); ok {
 		charCount = mbch.GetCharacterCount()
-		if charCount > 8192 {
-			issues = append([]string{fmt.Sprintf("CRITICAL: File exceeds 8192 character limit (%d chars)", charCount)}, issues...)
-		} else if charCount > 7500 {
-			issues = append([]string{fmt.Sprintf("Warning: Approaching 8192 character limit (%d/8192)", charCount)}, issues...)
+		// R22.0.00 raised the cap from 8192 to 16384.
+		if charCount > 16384 {
+			issues = append([]string{fmt.Sprintf("CRITICAL: File exceeds 16384 character limit (%d chars)", charCount)}, issues...)
+		} else if charCount > 15000 {
+			issues = append([]string{fmt.Sprintf("Warning: Approaching 16384 character limit (%d/16384)", charCount)}, issues...)
 		}
 	}
 
 	if len(issues) == 0 {
 		msg := "✓ No issues found!"
 		if charCount > 0 {
-			msg += fmt.Sprintf("\n\nCharacter count: %d/8192", charCount)
+			msg += fmt.Sprintf("\n\nCharacter count: %d/16384", charCount)
 		}
 		dialog.ShowInformation("Validation Passed", msg, a.mainWindow)
 	} else {
 		msg := fmt.Sprintf("Found %d issue(s):\n\n• %s", len(issues), strings.Join(issues, "\n• "))
 		if charCount > 0 {
-			msg += fmt.Sprintf("\n\nCharacter count: %d/8192", charCount)
+			msg += fmt.Sprintf("\n\nCharacter count: %d/16384", charCount)
 		}
 		dialog.ShowInformation("Validation Results", msg, a.mainWindow)
 	}

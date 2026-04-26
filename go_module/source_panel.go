@@ -413,10 +413,11 @@ func (sp *SourcePanel) updateByteCount(src string) {
 	switch {
 	case sp.provider == nil, n == 0:
 		sp.byteCount.SetText("")
-	case n > 8192:
-		sp.byteCount.SetText(fmt.Sprintf("%d / 8192 ⚠ over limit", n))
-	case n > 7500:
-		sp.byteCount.SetText(fmt.Sprintf("%d / 8192 (near limit)", n))
+	// R22.0.00 raised the .mbch overall cap from 8192 to 16384.
+	case n > 16384:
+		sp.byteCount.SetText(fmt.Sprintf("%d / 16384 ⚠ over limit", n))
+	case n > 15000:
+		sp.byteCount.SetText(fmt.Sprintf("%d / 16384 (near limit)", n))
 	default:
 		sp.byteCount.SetText(fmt.Sprintf("%d bytes", n))
 	}

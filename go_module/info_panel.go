@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"image/color"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -93,6 +94,46 @@ type librarySubGroup struct {
 	source func(filter string) []string
 	list   *widget.List
 	item   *widget.AccordionItem
+}
+
+// addEnumWrapPoints injects zero-width spaces (U+200B) after every
+// underscore inside long ALL_CAPS enum tokens so the markdown body
+// can break those tokens at logical points when the sidebar is
+// narrow. Without this, a token like MB_ATT_CCTRAINING is treated
+// as a single un-breakable word by TextWrapWord — Fyne falls back
+// to wrapping each character on its own line, which looked like a
+// "vertical alphabet soup" bug. The U+200B characters are invisible
+// in normal flow but mark soft-break points.
+//
+// Code spans (inline `...` or fenced ``` blocks) are deliberately
+// SKIPPED so paths/IDs that should display monospace stay un-broken.
+var enumTokenRE = regexp.MustCompile(`\b(?:MB_ATT|MB_CLASS|MB_RES|WP|FP|EAS|HI|CFL|SS)(?:_[A-Z0-9]+)+\b`)
+
+func addEnumWrapPoints(md string) string {
+	const zwsp = "\u200b"
+	// Split on inline-code/fence boundaries so we don't mutate
+	// content inside `...`. The split keeps even-indexed parts
+	// outside code, odd-indexed parts inside.
+	codeSpan := regexp.MustCompile("(?s)`+[^`]*`+")
+	out := strings.Builder{}
+	prev := 0
+	for _, m := range codeSpan.FindAllStringIndex(md, -1) {
+		// Mutate the chunk before the code span.
+		chunk := md[prev:m[0]]
+		out.WriteString(enumTokenRE.ReplaceAllStringFunc(chunk, func(tok string) string {
+			return strings.ReplaceAll(tok, "_", "_"+zwsp)
+		}))
+		// Append the code span verbatim.
+		out.WriteString(md[m[0]:m[1]])
+		prev = m[1]
+	}
+	// Trailing chunk after the last code span (or the whole thing
+	// when there are no code spans).
+	tail := md[prev:]
+	out.WriteString(enumTokenRE.ReplaceAllStringFunc(tail, func(tok string) string {
+		return strings.ReplaceAll(tok, "_", "_"+zwsp)
+	}))
+	return out.String()
 }
 
 // categoryTagFor builds the small-caps chip text for the info panel
@@ -868,7 +909,7 @@ func (ip *InfoPanel) ShowInfo(key, context string) {
 	}
 	ip.updateHeaderChips(resolvedID, resolvedCategory)
 
-	ip.content.ParseMarkdown(md)
+	ip.content.ParseMarkdown(addEnumWrapPoints(md))
 
 	// Dev-only: async query the local Holocron server for extra context.
 	// Client is nil for regular users (see holocron_client.go); this
@@ -880,9 +921,9 @@ func (ip *InfoPanel) ShowInfo(key, context string) {
 			summary, err := ip.holocronClient.Ask(query)
 			if err == nil && summary != "" {
 				newContent := md + "\n\n**DEV INSIGHT**\n" + summary
-				ip.content.ParseMarkdown(newContent)
+				ip.content.ParseMarkdown(addEnumWrapPoints(newContent))
 			} else {
-				ip.content.ParseMarkdown(md) // Revert
+				ip.content.ParseMarkdown(addEnumWrapPoints(md)) // Revert
 			}
 		}(key)
 	}

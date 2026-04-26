@@ -162,6 +162,10 @@ func (ag *AttributeGrid) createUI() {
 			catContent = ag.buildWeaponsGroupedView(visibleAttrs)
 		case "Class Specific":
 			catContent = ag.buildClassSpecificGroupedView(visibleAttrs)
+		case "General":
+			catContent = ag.buildGeneralGroupedView(visibleAttrs)
+		case "Advanced":
+			catContent = ag.buildAdvancedGroupedView(visibleAttrs)
 		default:
 			catContent = ag.buildAlphaSortedGrid(visibleAttrs)
 		}
@@ -511,30 +515,41 @@ func (ag *AttributeGrid) buildForceGroupedView(attrs []AttributeDef) fyne.Canvas
 
 func (ag *AttributeGrid) buildSaberGroupedView(attrs []AttributeDef) fyne.CanvasObject {
 	damage := map[string]bool{
-		"MB_ATT_SABER_DAMAGE": true, "MB_ATT_SABERTHROW_DAMAGE": true,
-		"MB_ATT_SABERSPECIAL_DAMAGE": true, "MB_ATT_SABER_MAXCHAIN": true,
+		"MB_ATT_SABER_DAMAGE":        true,
+		"MB_ATT_SABERTHROW_DAMAGE":   true,
+		"MB_ATT_SABERSPECIAL_DAMAGE": true,
+		"MB_ATT_SABER_MAXCHAIN":      true,
 	}
-	training := map[string]bool{
-		"MB_ATT_SABER_FAST": true, "MB_ATT_SABER_MEDIUM": true,
-		"MB_ATT_SABER_STRONG": true, "MB_ATT_SABER_DOUBLES": true,
-		"MB_ATT_SABER_MASTERY": true, "MB_ATT_SABER_COMBO": true,
+	// "Proficiency" = the 1-3 mastery levels per style + Doubles +
+	// Mastery. These are damage/BP/AP-shaping ranks, not training in
+	// the EX-combo sense.
+	proficiency := map[string]bool{
+		"MB_ATT_SABER_FAST":    true,
+		"MB_ATT_SABER_MEDIUM":  true,
+		"MB_ATT_SABER_STRONG":  true,
+		"MB_ATT_SABER_DOUBLES": true,
+		"MB_ATT_SABER_MASTERY": true,
+	}
+	// "Combo" = the EX-saber-training and No-saber-training toggles.
+	combo := map[string]bool{
+		"MB_ATT_SABER_COMBO":      true,
 		"MB_ATT_SABER_COMBO_NONE": true,
 	}
 	classify := func(a AttributeDef) string {
 		switch {
 		case damage[a.ID]:
 			return "Damage"
-		case training[a.ID]:
-			return "Style training"
+		case proficiency[a.ID]:
+			return "Proficiency"
+		case combo[a.ID]:
+			return "Combo"
 		case strings.HasPrefix(a.ID, "MB_ATT_SS_"):
 			return "Style unlocks"
-		case a.ID == "MB_ATT_SABER":
-			return "Saber"
 		}
 		return ""
 	}
 	return ag.buildSubGroupedView(attrs,
-		[]string{"Saber", "Damage", "Style training", "Style unlocks"},
+		[]string{"Damage", "Proficiency", "Combo", "Style unlocks"},
 		classify)
 }
 
@@ -614,6 +629,166 @@ func (ag *AttributeGrid) buildWeaponsGroupedView(attrs []AttributeDef) fyne.Canv
 	}
 	return ag.buildSubGroupedView(attrs,
 		[]string{"Pistols", "Rifles", "Heavy", "Grenades", "Launchers", "Explosives", "Melee", "Specials"},
+		classify)
+}
+
+// buildGeneralGroupedView splits the General bucket into more
+// meaningful sub-sections so the most-used attributes (resource caps,
+// armor, regen-summary, defense gates) sit at the top in Essentials,
+// followed by Defense / Movement / Jetpack & Fuel / Stamina / Saber-
+// side passives / Supply / Misc. Force Block / Force Focus / Force
+// Attunement live here despite being FP_ in flavor because they aren't
+// MB_ATT_FP_ — they're flat caps the user wanted promoted.
+func (ag *AttributeGrid) buildGeneralGroupedView(attrs []AttributeDef) fyne.CanvasObject {
+	essentials := map[string]bool{
+		"MB_ATT_HEALTH":      true,
+		"MB_ATT_ARMOUR":      true,
+		"MB_ATT_AMMO":        true,
+		"MB_ATT_POWER":       true,
+		"MB_ATT_REGEN":       true,
+		"MB_ATT_HEALING":     true,
+		"MB_ATT_BASESPEED":   true,
+		"MB_ATT_FORCEBLOCK":  true,
+		"MB_ATT_FORCEFOCUS":  true,
+		"MB_ATT_FORCEATTUNE": true,
+		"MB_ATT_RESPAWNS":    true,
+	}
+	defense := map[string]bool{
+		"MB_ATT_DURABILITY":       true,
+		"MB_ATT_BLAST_ARMOUR":     true,
+		"MB_ATT_MAGNETIC_PLATING": true,
+		"MB_ATT_CORTOSIS":         true,
+		"MB_ATT_GUN_DEFENSE":      true,
+		"MB_ATT_DEFLECT":          true,
+		"MB_ATT_SHIELD_RECHARGE":  true,
+		"MB_ATT_DODGE":            true,
+		"MB_ATT_KNOCKDOWN_ROLL":   true,
+	}
+	movement := map[string]bool{
+		"MB_ATT_DEXTERITY": true,
+		"MB_ATT_ACROBACY":  true,
+		"MB_ATT_DASH":      true,
+		"MB_ATT_DASH_JUMP": true,
+		"MB_ATT_BACKSTAB":  true,
+		"MB_ATT_STEALTH":   true,
+		"MB_ATT_CLOAK":     true,
+	}
+	jetpack := map[string]bool{
+		"MB_ATT_JETPACK":      true,
+		"MB_ATT_FUEL":         true,
+		"MB_ATT_FUELREGEN":    true,
+		"MB_ATT_FLAMETHROWER": true,
+	}
+	stamina := map[string]bool{
+		"MB_ATT_STAMINA":   true,
+		"MB_ATT_TURN_RATE": true,
+	}
+	saberSide := map[string]bool{
+		"MB_ATT_GETUPS":   true,
+		"MB_ATT_FLIPKICK": true,
+	}
+	supply := map[string]bool{
+		"MB_ATT_MEDI_PACK":     true,
+		"MB_ATT_AMMO_PACK":     true,
+		"MB_ATT_STIMPACK":      true,
+		"MB_ATT_BACTA":         true,
+		"MB_ATT_BACTA_BIG":     true,
+		"MB_ATT_SUPPLYDROP":    true,
+		"MB_ATT_USE_DISTANCE":  true,
+		"MB_ATT_SPAWNER":       true,
+		"MB_ATT_FORCEFIELD":    true,
+		"MB_ATT_EWEB":          true,
+		"MB_ATT_SENTRY":        true,
+		"MB_ATT_LASERCOVER":    true,
+	}
+	misc := map[string]bool{
+		"MB_ATT_RADAR":          true,
+		"MB_ATT_ZOOM":           true,
+		"MB_ATT_QUICKDRAW":      true,
+		"MB_ATT_QUICKTHROW":     true,
+		"MB_ATT_GRAPPLE_HOOK":   true,
+		"MB_ATT_LIGHTS_BEACON":  true,
+		"MB_ATT_TRACKING_DART":  true,
+		"MB_ATT_POISON_DART":    true,
+	}
+	classify := func(a AttributeDef) string {
+		switch {
+		case essentials[a.ID]:
+			return "Essentials"
+		case defense[a.ID]:
+			return "Defense"
+		case movement[a.ID]:
+			return "Movement"
+		case jetpack[a.ID]:
+			return "Jetpack & Fuel"
+		case stamina[a.ID]:
+			return "Stamina"
+		case saberSide[a.ID]:
+			return "Saber-side"
+		case supply[a.ID]:
+			return "Supply & deployables"
+		case misc[a.ID]:
+			return "Utility"
+		}
+		return ""
+	}
+	return ag.buildSubGroupedView(attrs,
+		[]string{
+			"Essentials",
+			"Defense",
+			"Movement",
+			"Jetpack & Fuel",
+			"Stamina",
+			"Saber-side",
+			"Supply & deployables",
+			"Utility",
+		},
+		classify)
+}
+
+// buildAdvancedGroupedView buckets the Advanced engine-tuning bag
+// into Movement tech / Internals / Niche force / Misc taunts so the
+// section reads at a glance instead of as one alphabetical scroll.
+func (ag *AttributeGrid) buildAdvancedGroupedView(attrs []AttributeDef) fyne.CanvasObject {
+	movement := map[string]bool{
+		"MB_ATT_BUNNY_HOP":   true,
+		"MB_ATT_FLOAT_HOP":   true,
+		"MB_ATT_GRAPPLE_HOP": true,
+	}
+	internals := map[string]bool{
+		"MB_ATT_INAIR_FORCE_REGEN": true,
+		"MB_ATT_TURN_RATE":         true,
+		"MB_ATT_USE_DISTANCE":      true,
+		"MB_ATT_KNOCKDOWN_ROLL":    true,
+		"MB_ATT_TRACKING_BEACON":   true,
+		"MB_ATT_SHIELD_RECHARGE2":  true,
+		"MB_ATT_WRIST_AMMO":        true,
+	}
+	nicheForce := map[string]bool{
+		"MB_ATT_FP_MIRALUKA": true,
+		"MB_ATT_FP_REPULSE":  true,
+	}
+	melee := map[string]bool{
+		"MB_ATT_GUNBASH":  true,
+		"MB_ATT_FLIPKICK": true,
+	}
+	classify := func(a AttributeDef) string {
+		switch {
+		case movement[a.ID]:
+			return "Movement tech"
+		case internals[a.ID]:
+			return "Internals"
+		case nicheForce[a.ID]:
+			return "Niche force"
+		case melee[a.ID]:
+			return "Melee tech"
+		case a.ID == "MB_ATT_ROSHTAUNT" || a.ID == "MB_ATT_ANTI_MT":
+			return "Misc"
+		}
+		return ""
+	}
+	return ag.buildSubGroupedView(attrs,
+		[]string{"Movement tech", "Internals", "Niche force", "Melee tech", "Misc"},
 		classify)
 }
 

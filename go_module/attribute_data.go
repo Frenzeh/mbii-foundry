@@ -295,7 +295,7 @@ var MBIIAttributes = []AttributeDef{
 	{ID: "MB_ATT_DEFLECT", Name: "Deflect", MaxLevel: 3, Category: "General", Description: ""},
 	{ID: "MB_ATT_FORCEBLOCK", Name: "Forceblock", MaxLevel: 3, Category: "General", Description: ""},
 	{ID: "MB_ATT_FORCEFOCUS", Name: "Forcefocus", MaxLevel: 3, Category: "General", Description: ""},
-	{ID: "MB_ATT_FORCEATTUNE", Name: "Forceattune", MaxLevel: 3, Category: "General", Description: ""},
+	{ID: "MB_ATT_FORCEATTUNE", Name: "Force Attunement", MaxLevel: 3, Category: "General", Description: ""},
 	{ID: "MB_ATT_GUN_DEFENSE", Name: "Gun Defense", MaxLevel: 3, Category: "General", Description: ""},
 	{ID: "MB_ATT_SABER_FAST", Name: "Saber Fast", MaxLevel: 3, Category: "Saber", Description: ""},
 	{ID: "MB_ATT_SABER_MEDIUM", Name: "Saber Medium", MaxLevel: 3, Category: "Saber", Description: ""},

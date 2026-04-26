@@ -68,8 +68,8 @@ type AttributeToggleWidget struct {
 	// UI Components
 	label     *widget.Label
 	buttons   []*HoverButton
-	infoBtn   *widget.Button
-	container *fyne.Container
+	infoBtn   *TooltipButton
+	container fyne.CanvasObject
 }
 
 func NewAttributeToggleWidget(attr AttributeDef, currentVal int, onChange func(int), onInfo func(string, string), icon fyne.Resource) *AttributeToggleWidget {
@@ -115,12 +115,18 @@ func (w *AttributeToggleWidget) createUI(onInfo func(string, string), iconRes fy
 	w.label = widget.NewLabel(displayName)
 	w.label.TextStyle = fyne.TextStyle{Bold: true}
 
-	w.infoBtn = widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
+	// Info button click fires the same hover signal — ShowHover ends
+	// up routed by App.showHoverContext / showHoverTooltip. The
+	// outer HoverContainer wraps the whole row so mousing over the
+	// label or icon area (not just the level buttons) also fires
+	// hover; without it, only the level buttons reported hover and
+	// the info panel rarely repainted.
+	w.infoBtn = NewTooltipButton("", theme.InfoIcon(), func() {
 		if onInfo != nil {
 			onInfo(w.ID, "")
 		}
-	})
-	w.infoBtn.Importance = widget.LowImportance // Less intrusive
+	}, "View documentation for this attribute")
+	w.infoBtn.Importance = widget.LowImportance
 
 	// Icon — canvas.Image (via NewRasterIconFromResource) renders the
 	// full extracted PNG at 24×24. widget.Icon would downscale to the
@@ -203,12 +209,27 @@ func (w *AttributeToggleWidget) createUI(onInfo func(string, string), iconRes fy
 	// Tile shell via the shared TilePanel primitive. Card-weight tint
 	// (14/60) is dialled lower than the info-panel hero (22/110) so
 	// rows don't compete with the panel-level chrome around them.
-	w.container = NewTilePanel(row, TileOpts{
+	tile := NewTilePanel(row, TileOpts{
 		AccentColor: catColor,
 		FillAlpha:   14,
 		StrokeAlpha: 60,
 		Padded:      true,
 	})
+
+	// Wrap the whole tile in a HoverContainer so mousing over the
+	// label/icon/strip area fires the info-panel hover the same way
+	// hovering a level button does. Previously only level buttons
+	// reported hover, so the info panel rarely repainted unless the
+	// user's mouse landed precisely on a numeric pill.
+	hover := NewHoverContainer(tile, func() {
+		if onInfo != nil {
+			onInfo(w.ID, "")
+		}
+	})
+	if w.OnInfoLeave != nil {
+		hover.SetOnLeave(w.OnInfoLeave)
+	}
+	w.container = hover
 
 	w.refreshButtons()
 }

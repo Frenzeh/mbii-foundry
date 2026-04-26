@@ -474,7 +474,11 @@ func setField(char *MBCHCharacter, key, value string) {
 	case "extralives":
 		char.ExtraLives, _ = strconv.Atoi(value)
 	case "iscustombuild":
-		char.IsCustomBuild = 1
+		// Parse the actual int — earlier code unconditionally set
+		// IsCustomBuild=1 on any presence of the key, which made
+		// every loaded MBCH show the Custom Build toggle as ON in
+		// the Context tab regardless of the file's `iscustombuild 0`.
+		char.IsCustomBuild, _ = strconv.Atoi(value)
 	case "mbpoints":
 		char.MBPoints, _ = strconv.Atoi(value)
 	default:

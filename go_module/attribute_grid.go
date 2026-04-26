@@ -144,12 +144,16 @@ func (ag *AttributeGrid) createUI() {
 			catContent = ag.buildRegenGroupedView(visibleAttrs)
 		case "Supply":
 			catContent = ag.buildSupplyMatrixView(visibleAttrs)
+		case "Force":
+			catContent = ag.buildForceGroupedView(visibleAttrs)
+		case "Saber":
+			catContent = ag.buildSaberGroupedView(visibleAttrs)
+		case "Weapons":
+			catContent = ag.buildWeaponsGroupedView(visibleAttrs)
+		case "Class Specific":
+			catContent = ag.buildClassSpecificGroupedView(visibleAttrs)
 		default:
-			grid := container.NewGridWrap(fyne.NewSize(480, 46))
-			for _, attr := range visibleAttrs {
-				grid.Add(ag.createAttributeItem(attr))
-			}
-			catContent = grid
+			catContent = ag.buildAlphaSortedGrid(visibleAttrs)
 		}
 
 		// Title with count suffix so the header carries quick context
@@ -288,7 +292,7 @@ func (ag *AttributeGrid) buildRegenGroupedView(attrs []AttributeDef) fyne.Canvas
 			continue
 		}
 		sub := widget.NewLabelWithStyle(g.title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-		grid := container.NewGridWrap(fyne.NewSize(480, 46))
+		grid := container.NewGridWrap(fyne.NewSize(480, 64))
 		for _, a := range members {
 			grid.Add(ag.createAttributeItem(a))
 		}
@@ -304,7 +308,7 @@ func (ag *AttributeGrid) buildRegenGroupedView(attrs []AttributeDef) fyne.Canvas
 	}
 	if len(leftovers) > 0 {
 		sub := widget.NewLabelWithStyle("Other regen", fyne.TextAlignLeading, fyne.TextStyle{Bold: true, Italic: true})
-		grid := container.NewGridWrap(fyne.NewSize(480, 46))
+		grid := container.NewGridWrap(fyne.NewSize(480, 64))
 		for _, a := range leftovers {
 			grid.Add(ag.createAttributeItem(a))
 		}
@@ -342,7 +346,7 @@ func (ag *AttributeGrid) buildSupplyMatrixView(attrs []AttributeDef) fyne.Canvas
 			continue
 		}
 		sub := widget.NewLabelWithStyle(g.title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-		grid := container.NewGridWrap(fyne.NewSize(480, 46))
+		grid := container.NewGridWrap(fyne.NewSize(480, 64))
 		for _, a := range members {
 			grid.Add(ag.createAttributeItem(a))
 		}
@@ -357,7 +361,7 @@ func (ag *AttributeGrid) buildSupplyMatrixView(attrs []AttributeDef) fyne.Canvas
 	}
 	if len(leftovers) > 0 {
 		sub := widget.NewLabelWithStyle("Other supply", fyne.TextAlignLeading, fyne.TextStyle{Bold: true, Italic: true})
-		grid := container.NewGridWrap(fyne.NewSize(480, 46))
+		grid := container.NewGridWrap(fyne.NewSize(480, 64))
 		for _, a := range leftovers {
 			grid.Add(ag.createAttributeItem(a))
 		}
@@ -365,6 +369,264 @@ func (ag *AttributeGrid) buildSupplyMatrixView(attrs []AttributeDef) fyne.Canvas
 		box.Add(grid)
 	}
 	return box
+}
+
+// buildAlphaSortedGrid renders attributes in a flat grid sorted by
+// the same display name the rows show. Used by every category whose
+// shape isn't already sub-grouped explicitly. Without this, Fyne
+// emits rows in struct-init order which on-screen reads as random.
+func (ag *AttributeGrid) buildAlphaSortedGrid(attrs []AttributeDef) fyne.CanvasObject {
+	sorted := make([]AttributeDef, len(attrs))
+	copy(sorted, attrs)
+	sort.SliceStable(sorted, func(i, j int) bool {
+		return attrDisplayName(sorted[i]) < attrDisplayName(sorted[j])
+	})
+	grid := container.NewGridWrap(fyne.NewSize(480, 64))
+	for _, a := range sorted {
+		grid.Add(ag.createAttributeItem(a))
+	}
+	return grid
+}
+
+// attrDisplayName returns the same name the AttributeToggleWidget
+// shows on its primary label — display name when set, prettied enum
+// otherwise. Used by group sorters so on-screen order matches what
+// the user reads.
+func attrDisplayName(a AttributeDef) string {
+	if a.Name != "" && a.Name != a.ID && !strings.HasPrefix(a.Name, "MB_ATT_") {
+		return strings.ToLower(a.Name)
+	}
+	return strings.ToLower(prettyAttributeName(a.ID))
+}
+
+// buildSubGroupedView is the shared engine for the Force / Saber /
+// Weapons / Class Specific sub-accordions. Buckets each attribute
+// via classify(); renders each non-empty bucket alphabetized under
+// a bold header; tails leftovers as "Other".
+func (ag *AttributeGrid) buildSubGroupedView(attrs []AttributeDef, bucketOrder []string, classify func(AttributeDef) string) fyne.CanvasObject {
+	groups := map[string][]AttributeDef{}
+	used := map[string]bool{}
+	for _, a := range attrs {
+		bucket := classify(a)
+		if bucket != "" {
+			groups[bucket] = append(groups[bucket], a)
+			used[a.ID] = true
+		}
+	}
+	box := container.NewVBox()
+	for _, name := range bucketOrder {
+		members, ok := groups[name]
+		if !ok || len(members) == 0 {
+			continue
+		}
+		sort.SliceStable(members, func(i, j int) bool {
+			return attrDisplayName(members[i]) < attrDisplayName(members[j])
+		})
+		sub := widget.NewLabelWithStyle(name, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+		grid := container.NewGridWrap(fyne.NewSize(480, 64))
+		for _, a := range members {
+			grid.Add(ag.createAttributeItem(a))
+		}
+		box.Add(sub)
+		box.Add(grid)
+	}
+	var leftovers []AttributeDef
+	for _, a := range attrs {
+		if !used[a.ID] {
+			leftovers = append(leftovers, a)
+		}
+	}
+	if len(leftovers) > 0 {
+		sort.SliceStable(leftovers, func(i, j int) bool {
+			return attrDisplayName(leftovers[i]) < attrDisplayName(leftovers[j])
+		})
+		sub := widget.NewLabelWithStyle("Other", fyne.TextAlignLeading, fyne.TextStyle{Bold: true, Italic: true})
+		grid := container.NewGridWrap(fyne.NewSize(480, 64))
+		for _, a := range leftovers {
+			grid.Add(ag.createAttributeItem(a))
+		}
+		box.Add(sub)
+		box.Add(grid)
+	}
+	return box
+}
+
+func (ag *AttributeGrid) buildForceGroupedView(attrs []AttributeDef) fyne.CanvasObject {
+	core := map[string]bool{
+		"MB_ATT_FP_PUSH": true, "MB_ATT_FP_PULL": true, "MB_ATT_FP_LEVITATION": true,
+		"MB_ATT_FP_SPEED": true, "MB_ATT_FP_SEE": true, "MB_ATT_FP_TELEPATHY": true,
+	}
+	defensive := map[string]bool{
+		"MB_ATT_FP_HEAL": true, "MB_ATT_FP_PROTECT": true, "MB_ATT_FP_ABSORB": true,
+		"MB_ATT_FP_TEAM_HEAL": true, "MB_ATT_FP_TEAM_FORCE": true,
+	}
+	offensive := map[string]bool{
+		"MB_ATT_FP_GRIP": true, "MB_ATT_FP_LIGHTNING": true, "MB_ATT_FP_RAGE": true,
+		"MB_ATT_FP_DRAIN": true, "MB_ATT_FP_BLIND": true,
+		"MB_ATT_FP_DESTRUCTION": true, "MB_ATT_FP_DEADLYSIGHT": true,
+		"MB_ATT_FP_STASIS": true,
+	}
+	saberGate := map[string]bool{
+		"MB_ATT_FP_SABER_OFFENSE": true, "MB_ATT_FP_SABER_DEFENSE": true,
+		"MB_ATT_FP_SABERTHROW": true,
+	}
+	classify := func(a AttributeDef) string {
+		switch {
+		case core[a.ID]:
+			return "Core"
+		case defensive[a.ID]:
+			return "Defensive"
+		case offensive[a.ID]:
+			return "Offensive"
+		case saberGate[a.ID]:
+			return "Saber-gating"
+		case a.ID == "MB_ATT_FP_MULTIPLIER":
+			return "Tuning"
+		}
+		return ""
+	}
+	return ag.buildSubGroupedView(attrs,
+		[]string{"Core", "Defensive", "Offensive", "Saber-gating", "Tuning"},
+		classify)
+}
+
+func (ag *AttributeGrid) buildSaberGroupedView(attrs []AttributeDef) fyne.CanvasObject {
+	damage := map[string]bool{
+		"MB_ATT_SABER_DAMAGE": true, "MB_ATT_SABERTHROW_DAMAGE": true,
+		"MB_ATT_SABERSPECIAL_DAMAGE": true, "MB_ATT_SABER_MAXCHAIN": true,
+	}
+	training := map[string]bool{
+		"MB_ATT_SABER_FAST": true, "MB_ATT_SABER_MEDIUM": true,
+		"MB_ATT_SABER_STRONG": true, "MB_ATT_SABER_DOUBLES": true,
+		"MB_ATT_SABER_MASTERY": true, "MB_ATT_SABER_COMBO": true,
+		"MB_ATT_SABER_COMBO_NONE": true,
+	}
+	classify := func(a AttributeDef) string {
+		switch {
+		case damage[a.ID]:
+			return "Damage"
+		case training[a.ID]:
+			return "Style training"
+		case strings.HasPrefix(a.ID, "MB_ATT_SS_"):
+			return "Style unlocks"
+		case a.ID == "MB_ATT_SABER":
+			return "Saber"
+		}
+		return ""
+	}
+	return ag.buildSubGroupedView(attrs,
+		[]string{"Saber", "Damage", "Style training", "Style unlocks"},
+		classify)
+}
+
+func (ag *AttributeGrid) buildWeaponsGroupedView(attrs []AttributeDef) fyne.CanvasObject {
+	pistols := map[string]bool{
+		"MB_ATT_PISTOL": true, "MB_ATT_HEAVY_PISTOL": true,
+		"MB_ATT_BRYAR_OLD": true, "MB_ATT_CR2": true,
+		"MB_ATT_CLONE_PISTOL": true, "MB_ATT_MANDO_PISTOL": true,
+		"MB_ATT_IMP_PISTOL": true,
+	}
+	rifles := map[string]bool{
+		"MB_ATT_BLASTER": true, "MB_ATT_A280": true, "MB_ATT_DLT20A": true,
+		"MB_ATT_DLT19": true, "MB_ATT_E_22": true, "MB_ATT_EE3": true,
+		"MB_ATT_EE4": true, "MB_ATT_T21": true, "MB_ATT_DC_CARBINE": true,
+		"MB_ATT_AMBAN": true, "MB_ATT_CLONERIFLE": true,
+		"MB_ATT_PROJECTILE_RIFLE": true, "MB_ATT_WESTARM5": true,
+	}
+	heavy := map[string]bool{
+		"MB_ATT_DISRUPTOR": true, "MB_ATT_BOWCASTER": true,
+		"MB_ATT_TRAD_BOWCASTER": true, "MB_ATT_REPEATER": true,
+		"MB_ATT_FLECHETTE": true, "MB_ATT_DEMP2": true,
+		"MB_ATT_IONRIFLE": true, "MB_ATT_MINIGUN": true,
+		"MB_ATT_SHOTGUN": true, "MB_ATT_CONCUSSION": true,
+	}
+	grenades := map[string]bool{
+		"MB_ATT_THERMAL": true, "MB_ATT_THERMALS": true,
+		"MB_ATT_FRAGS": true, "MB_ATT_PULSE_GRENADES": true,
+		"MB_ATT_FIRE_GRENADES": true, "MB_ATT_CRYOBAN_GRENADES": true,
+		"MB_ATT_MICRO_GRENADES": true, "MB_ATT_SONIC_DETONATOR": true,
+		"MB_ATT_BASE_TD": true, "MB_ATT_REPEATER_NADES": true,
+		"MB_ATT_FLECHETTE_NADES": true, "MB_ATT_WHISTLINGBIRD": true,
+	}
+	launchers := map[string]bool{
+		"MB_ATT_ROCKET": true, "MB_ATT_ROCKET_LAUNCHER": true,
+		"MB_ATT_PLX1": true, "MB_ATT_UGL": true,
+		"MB_ATT_UGL_BURST": true, "MB_ATT_UGL_IMPACT": true,
+		"MB_ATT_UGL_BURST_MIXED": true, "MB_ATT_MGL": true,
+		"MB_ATT_MGL_IMPACT": true, "MB_ATT_MGL_BURST": true,
+	}
+	explosives := map[string]bool{
+		"MB_ATT_DET_PACK": true, "MB_ATT_STICKY_BOMBS": true,
+		"MB_ATT_TRIP_MINES": true, "MB_ATT_REMOTE_DETONATE": true,
+	}
+	melee := map[string]bool{
+		"MB_ATT_KNIFE": true, "MB_ATT_ELECTRO_STAFF": true,
+		"MB_ATT_STUN_BATON": true, "MB_ATT_SWORD": true,
+	}
+	specials := map[string]bool{
+		"MB_ATT_DRONE": true, "MB_ATT_BESKAR": true,
+		"MB_ATT_TRACKING_DART": true, "MB_ATT_POISON_DART": true,
+		"MB_ATT_QUICKDRAW": true, "MB_ATT_QUICKTHROW": true,
+		"MB_ATT_THROWER": true, "MB_ATT_THROWER_LIGHTNING": true,
+		"MB_ATT_THROWER_ICE": true, "MB_ATT_THROWER_PLASMA": true,
+		"MB_ATT_THROWER_FLAME": true, "MB_ATT_THROWER_POISON": true,
+		"MB_ATT_FLAMETHROWER": true, "MB_ATT_WPFLAMETHROWER": true,
+	}
+	classify := func(a AttributeDef) string {
+		switch {
+		case pistols[a.ID]:
+			return "Pistols"
+		case rifles[a.ID]:
+			return "Rifles"
+		case heavy[a.ID]:
+			return "Heavy"
+		case grenades[a.ID]:
+			return "Grenades"
+		case launchers[a.ID]:
+			return "Launchers"
+		case explosives[a.ID]:
+			return "Explosives"
+		case melee[a.ID]:
+			return "Melee"
+		case specials[a.ID]:
+			return "Specials"
+		}
+		return ""
+	}
+	return ag.buildSubGroupedView(attrs,
+		[]string{"Pistols", "Rifles", "Heavy", "Grenades", "Launchers", "Explosives", "Melee", "Specials"},
+		classify)
+}
+
+func (ag *AttributeGrid) buildClassSpecificGroupedView(attrs []AttributeDef) fyne.CanvasObject {
+	classify := func(a AttributeDef) string {
+		switch {
+		case strings.HasPrefix(a.ID, "MB_ATT_WOOKIE"):
+			return "Wookiee"
+		case strings.HasPrefix(a.ID, "MB_ATT_DEKA"):
+			return "Droideka"
+		case strings.HasPrefix(a.ID, "MB_ATT_CLONE"),
+			strings.HasPrefix(a.ID, "MB_ATT_ARC_RIFLE_"),
+			a.ID == "MB_ATT_CCTRAINING",
+			a.ID == "MB_ATT_ET_CCTRAINING":
+			return "Clone / ARC / ET"
+		case strings.HasPrefix(a.ID, "MB_ATT_MANDO_"):
+			return "Mandalorian"
+		case strings.HasPrefix(a.ID, "MB_ATT_IMP_"):
+			return "Imperial"
+		case a.ID == "MB_ATT_STRONGBLOBS",
+			a.ID == "MB_ATT_HULL_STRENGTH",
+			a.ID == "MB_ATT_ASSEMBLE",
+			a.ID == "MB_ATT_RALLY",
+			a.ID == "MB_ATT_WRIST_AMMO",
+			a.ID == "MB_ATT_WRISTLASER":
+			return "Misc class kit"
+		}
+		return ""
+	}
+	return ag.buildSubGroupedView(attrs,
+		[]string{"Wookiee", "Droideka", "Clone / ARC / ET", "Mandalorian", "Imperial", "Misc class kit"},
+		classify)
 }
 
 func (ag *AttributeGrid) GetContent() fyne.CanvasObject {

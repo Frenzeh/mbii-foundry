@@ -3,6 +3,7 @@ package main
 import (
 	"image/color"
 	"strconv"
+	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -11,6 +12,38 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
+
+// prettyAttributeName turns an MB_ATT_* enum into a Title Case display
+// name for grids that don't have curated display names. Honors a few
+// well-known acronyms (UGL/MGL/SS/FP/etc.) that should stay all-caps
+// rather than being mangled to "Ugl"/"Mgl"/etc.
+func prettyAttributeName(id string) string {
+	s := strings.TrimPrefix(id, "MB_ATT_")
+	parts := strings.Split(s, "_")
+	keepCaps := map[string]bool{
+		"UGL": true, "MGL": true, "SS": true, "FP": true,
+		"AP": true, "BP": true, "CS": true, "AS": true,
+		"ROF": true, "STM": true, "KB": true, "DMG": true,
+		"TD": true, "SBD": true, "MT": true, "ARC": true,
+		"MD": true, "ET": true, "DC": true, "EE3": true,
+		"EE4": true, "DLT19": true, "DLT20A": true, "T21": true,
+		"PLX1": true, "DEMP2": true, "CR2": true, "A280": true,
+		"E_22": true, "ID": true, "AOE": true, "HP": true,
+	}
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		up := strings.ToUpper(p)
+		if keepCaps[up] {
+			out = append(out, up)
+			continue
+		}
+		// Standard Title Case for the rest.
+		if len(p) > 0 {
+			out = append(out, strings.ToUpper(p[:1])+strings.ToLower(p[1:]))
+		}
+	}
+	return strings.Join(out, " ")
+}
 
 // AttributeToggleWidget is a custom widget for selecting attribute levels
 type AttributeToggleWidget struct {
@@ -70,7 +103,16 @@ func (w *AttributeToggleWidget) SetOnInfoLeave(f func()) {
 }
 
 func (w *AttributeToggleWidget) createUI(onInfo func(string, string), iconRes fyne.Resource) {
-	w.label = widget.NewLabel(w.Name)
+	// Primary label: display name (with auto-derived fallback when the
+	// data doesn't carry one). Secondary: monospace enum ID caption
+	// underneath so authors who think in source can still recognize
+	// the row. Older builds inconsistently showed the raw MB_ATT_*
+	// when no display name was set, which produced a mixed grid.
+	displayName := w.Name
+	if displayName == "" || displayName == w.ID || strings.HasPrefix(displayName, "MB_ATT_") {
+		displayName = prettyAttributeName(w.ID)
+	}
+	w.label = widget.NewLabel(displayName)
 	w.label.TextStyle = fyne.TextStyle{Bold: true}
 
 	w.infoBtn = widget.NewButtonWithIcon("", theme.InfoIcon(), func() {
@@ -140,8 +182,17 @@ func (w *AttributeToggleWidget) createUI(onInfo func(string, string), iconRes fy
 	stripRect.SetMinSize(fyne.NewSize(3, 0))
 	strip := container.New(layout.NewGridWrapLayout(fyne.NewSize(3, 28)), stripRect)
 
-	// Layout: [Strip] [Info] [Icon] [Label] -- Spacer -- Buttons (Right)
-	leftContainer := container.NewHBox(strip, w.infoBtn, iconObj, w.label)
+	// Two-row label block: bold display name on top, monospace enum
+	// ID caption underneath in muted text. Lets authors who think in
+	// source still recognize the row without sacrificing the warmer
+	// display name as the primary affordance.
+	idCaption := canvas.NewText(w.ID, theme.PlaceHolderColor())
+	idCaption.TextSize = SizeSmall
+	idCaption.TextStyle = fyne.TextStyle{Monospace: true}
+	labelBlock := container.NewVBox(w.label, idCaption)
+
+	// Layout: [Strip] [Info] [Icon] [Label+ID] -- Spacer -- Buttons
+	leftContainer := container.NewHBox(strip, w.infoBtn, iconObj, labelBlock)
 
 	row := container.NewBorder(nil, nil,
 		leftContainer,

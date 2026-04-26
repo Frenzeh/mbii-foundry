@@ -194,6 +194,54 @@
     "description": "Slap"
   },
   {
+    "id": "EAS_HI_PETCONTROL",
+    "name": "Pet Control (Special)",
+    "overview": "Toggles control of the user's deployed pet.\n\n** Mechanics**\n* **Trigger:** Press Special Key.\n* **Effect:** Opens / dispatches pet command (follow / hold / attack-target).\n* **Requirement:** `MB_ATT_PETCONTROL`.",
+    "tips": [
+      "Bind to special1 or special2 — drain/cooldown lives in the attribute, not the binding."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": ["r22", "pet", "summon"],
+    "description": "Toggles pet control."
+  },
+  {
+    "id": "EAS_HI_PSHIELD",
+    "name": "Personal Shield (Special)",
+    "overview": "Toggles a personal energy shield around the user.\n\n** Mechanics**\n* **Trigger:** Press Special Key.\n* **Effect:** Drains a dedicated shield resource while up; absorbs incoming damage.\n* **Requirement:** `MB_ATT_PSHIELD`.",
+    "tips": [
+      "Drain rates and ability-while-shielded are configured by the attribute, not the EAS entry."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": ["r22", "defense", "shield"],
+    "description": "Personal energy shield toggle."
+  },
+  {
+    "id": "EAS_FP_DARKRAGE",
+    "name": "Dark Rage (Special)",
+    "overview": "Activates the Dark Rage force ability.\n\n** Mechanics**\n* **Trigger:** Press Special Key.\n* **Effect:** Dark-aligned Rage variant — damage/movement boost with harsher post-drain.\n* **Requirement:** matching dark-rage attribute on the class.",
+    "tips": [
+      "Distinct from generic Force Rage — may conflict with light-aligned passives."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": ["r22", "force", "dark"],
+    "description": "Dark Rage activation."
+  },
+  {
+    "id": "EAS_FP_STASIS",
+    "name": "Stasis (Special)",
+    "overview": "Freezes a target in place using the Force.\n\n** Mechanics**\n* **Trigger:** Press Special Key.\n* **Effect:** Locks target — no movement, attack, or abilities for the duration.\n* **Requirement:** matching stasis attribute on the class.",
+    "tips": [
+      "Pure CC — no built-in damage. Often configured to break early on damage taken."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": ["r22", "force", "cc"],
+    "description": "Force Stasis activation."
+  },
+  {
     "id": "FP_ABSORB",
     "name": "FP_ABSORB",
     "overview": "Force Absorb\nEAS_FP_ABSORB\n1:\n2:\n3:\nReturns Force to the user by <math display=\"inline\" alt=\"Square root of pi\">\\frac{F \\times R}{3}</math> where <var style=\"font-family: serif;\">F</var> is the enemy FP cost and <var style=\"font-family: serif;\">R</var> is the rank of Force Absorb.\nYes",

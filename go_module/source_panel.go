@@ -426,7 +426,16 @@ func (sp *SourcePanel) updateByteCount(src string) {
 // applyEdits writes the Entry's text to a temp file and reuses the
 // editor's LoadFile parser to push changes back to the form.
 func (sp *SourcePanel) applyEdits() {
-	if sp.editorRef == nil || !sp.userDirty {
+	if sp.editorRef == nil {
+		return
+	}
+	if !sp.userDirty {
+		// External tester reported "Apply doesn't work" — they were
+		// clicking Apply with no detectable changes. Silent no-op was
+		// the source of confusion. Surface it explicitly instead.
+		if sp.app != nil {
+			sp.app.updateStatus("Apply: no source changes to push back to the form")
+		}
 		return
 	}
 	ext := ".txt"

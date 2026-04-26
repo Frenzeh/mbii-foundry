@@ -1,5 +1,7 @@
 package main
 
+import "image/color"
+
 type WeaponDef struct {
 	ID          string `json:"id"`
 	Name        string `json:"name"`
@@ -50,4 +52,22 @@ var MBIIWeapons = []WeaponDef{
 	// Grenades
 	{ID: "WP_FIRE_NADE", Name: "Fire Grenade", Category: "Heavy", Description: "Creates a patch of fire."},
 	{ID: "WP_PULSE_NADE", Name: "Pulse Grenade", Category: "Heavy", Description: "EMP grenade, drains ammo and force."},
+}
+
+// AccentColor returns the per-category accent for tile chrome.
+// Used by the Inventory cards so the eye can scan rifles vs heavy at
+// a glance. Colors are tuned against the dark theme — avoid pure
+// saturated channels (they read as "warning" against the bg).
+func (w WeaponDef) AccentColor() color.Color {
+	switch w.Category {
+	case "Melee/Force":
+		return color.NRGBA{R: 180, G: 130, B: 220, A: 255} // violet
+	case "Sidearms":
+		return color.NRGBA{R: 110, G: 180, B: 220, A: 255} // teal-blue
+	case "Rifles":
+		return color.NRGBA{R: 110, G: 200, B: 130, A: 255} // green
+	case "Heavy":
+		return color.NRGBA{R: 220, G: 160, B: 90, A: 255} // amber
+	}
+	return color.NRGBA{R: 160, G: 160, B: 170, A: 255}
 }

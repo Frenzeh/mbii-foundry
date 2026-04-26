@@ -180,14 +180,6 @@ func (w *AttributeToggleWidget) createUI(onInfo func(string, string), iconRes fy
 		catColor = color.RGBA{128, 128, 128, 255} // Grey
 	}
 
-	// Left category strip — narrower (3px) + rounded so it reads as
-	// an accent rule rather than a chunky bar. Pairs with the tile bg
-	// + offset stroke below to echo the launcher's box treatment.
-	stripRect := canvas.NewRectangle(catColor)
-	stripRect.CornerRadius = 1.5
-	stripRect.SetMinSize(fyne.NewSize(3, 0))
-	strip := container.New(layout.NewGridWrapLayout(fyne.NewSize(3, 28)), stripRect)
-
 	// Two-row label block: bold display name on top, monospace enum
 	// ID caption underneath in muted text. Lets authors who think in
 	// source still recognize the row without sacrificing the warmer
@@ -196,6 +188,18 @@ func (w *AttributeToggleWidget) createUI(onInfo func(string, string), iconRes fy
 	idCaption.TextSize = SizeSmall
 	idCaption.TextStyle = fyne.TextStyle{Monospace: true}
 	labelBlock := container.NewVBox(w.label, idCaption)
+
+	// Slim left-edge accent strip — 2px wide, rounded. Re-introduced
+	// after the section TilePanel proved insufficient on its own as a
+	// per-row family cue: when 30+ attributes share the same section
+	// background, the per-category color (Force = blue, Saber = orange,
+	// Weapons = gold) needs a per-row marker too. The strip is much
+	// thinner than the original 3px chunky bar so it reads as a hairline
+	// hint rather than a card border.
+	stripRect := canvas.NewRectangle(catColor)
+	stripRect.CornerRadius = 1
+	stripRect.SetMinSize(fyne.NewSize(2, 0))
+	strip := container.New(layout.NewGridWrapLayout(fyne.NewSize(2, 36)), stripRect)
 
 	// Layout: [Strip] [Info] [Icon] [Label+ID] -- Spacer -- Buttons
 	leftContainer := container.NewHBox(strip, w.infoBtn, iconObj, labelBlock)
@@ -206,13 +210,17 @@ func (w *AttributeToggleWidget) createUI(onInfo func(string, string), iconRes fy
 		layout.NewSpacer(),
 	)
 
-	// Tile shell via the shared TilePanel primitive. Card-weight tint
-	// (14/60) is dialled lower than the info-panel hero (22/110) so
-	// rows don't compete with the panel-level chrome around them.
+	// Per-attribute fill: moderate alpha (12/55) gives each row visible
+	// family identity (Force is blueish, Saber is orange-red, etc.)
+	// without competing with the section TilePanel (~20/70) above. The
+	// previous near-flat 4/22 felt washed out — rows blurred together
+	// against the section bg, losing the per-row category cue. Tuned
+	// so that the section reads as the *area* and the row reads as a
+	// *colored chip inside the area*.
 	tile := NewTilePanel(row, TileOpts{
 		AccentColor: catColor,
-		FillAlpha:   14,
-		StrokeAlpha: 60,
+		FillAlpha:   12,
+		StrokeAlpha: 55,
 		Padded:      true,
 	})
 

@@ -62,3 +62,16 @@ var embedLogoMBII []byte
 //
 //go:embed assets/icons
 var embedIcons embed.FS
+
+// Boxicons-style outline SVG fallback set. Used when an attribute or
+// resource has no MBII / JKA HUD icon to draw — the keyword mapper in
+// icon_fallback.go picks the best-fit boxicon from this set so rows
+// always render *something* glyph-like instead of a missing-icon
+// placeholder.
+//
+// Style: 24×24 viewBox, single-color stroke at 1.7px, currentColor
+// (so it inherits Foundry's foreground color when rendered as a
+// fyne.Resource). License: original artwork for the project, MIT.
+//
+//go:embed assets/boxicons
+var embedBoxicons embed.FS

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"image/color"
 	"sort"
 	"strconv"
 	"strings"
@@ -10,6 +11,117 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 )
+
+// sectionAccent returns a deterministic, low-saturation accent color
+// for an attribute sub-group's section tile. Hand-mapped for the
+// well-known bucket names so the same family always reads the same
+// color across rebuilds; falls back to a hash-derived hue for
+// anything new (custom buckets added by future categorization).
+//
+// All colors are tuned for the dark theme — moderate value, lower
+// saturation than the per-category WeaponDef accents. The section
+// fill (alpha 20) renders as a tinted area background; the stroke
+// (alpha 70) gives the section a soft 1px outline so adjacent
+// sections stay distinct without screaming for attention.
+func sectionAccent(bucket string) color.Color {
+	switch bucket {
+	// Weapons sub-buckets
+	case "Pistols":
+		return color.NRGBA{R: 110, G: 180, B: 220, A: 255} // teal-blue
+	case "Rifles":
+		return color.NRGBA{R: 110, G: 200, B: 130, A: 255} // green
+	case "Heavy":
+		return color.NRGBA{R: 220, G: 160, B: 90, A: 255} // amber
+	case "Grenades":
+		return color.NRGBA{R: 200, G: 120, B: 90, A: 255} // burnt orange
+	case "Launchers":
+		return color.NRGBA{R: 230, G: 100, B: 80, A: 255} // red
+	case "Explosives":
+		return color.NRGBA{R: 240, G: 130, B: 60, A: 255} // hot orange
+	case "Melee":
+		return color.NRGBA{R: 180, G: 130, B: 220, A: 255} // violet
+	case "Specials":
+		return color.NRGBA{R: 220, G: 200, B: 100, A: 255} // gold
+	// Force sub-buckets
+	case "Core":
+		return color.NRGBA{R: 130, G: 170, B: 220, A: 255}
+	case "Defensive":
+		return color.NRGBA{R: 110, G: 200, B: 170, A: 255}
+	case "Offensive":
+		return color.NRGBA{R: 220, G: 110, B: 130, A: 255}
+	case "Saber-gating", "Saber-side":
+		return color.NRGBA{R: 200, G: 160, B: 230, A: 255}
+	case "Tuning":
+		return color.NRGBA{R: 160, G: 160, B: 170, A: 255}
+	// Saber sub-buckets
+	case "Damage", "Proficiency":
+		return color.NRGBA{R: 220, G: 140, B: 100, A: 255}
+	case "Combo":
+		return color.NRGBA{R: 200, G: 110, B: 140, A: 255}
+	case "Style unlocks":
+		return color.NRGBA{R: 180, G: 170, B: 230, A: 255}
+	// General sub-buckets
+	case "Essentials":
+		return color.NRGBA{R: 140, G: 200, B: 190, A: 255}
+	case "Defense":
+		return color.NRGBA{R: 130, G: 170, B: 220, A: 255}
+	case "Movement":
+		return color.NRGBA{R: 180, G: 220, B: 140, A: 255}
+	case "Jetpack & Fuel":
+		return color.NRGBA{R: 210, G: 180, B: 110, A: 255}
+	case "Stamina":
+		return color.NRGBA{R: 170, G: 200, B: 130, A: 255}
+	case "Supply & deployables":
+		return color.NRGBA{R: 200, G: 160, B: 110, A: 255}
+	case "Utility":
+		return color.NRGBA{R: 160, G: 180, B: 200, A: 255}
+	// Advanced sub-buckets
+	case "Movement tech":
+		return color.NRGBA{R: 150, G: 210, B: 170, A: 255}
+	case "Internals":
+		return color.NRGBA{R: 170, G: 170, B: 180, A: 255}
+	case "Niche force":
+		return color.NRGBA{R: 200, G: 170, B: 220, A: 255}
+	case "Melee tech":
+		return color.NRGBA{R: 200, G: 130, B: 200, A: 255}
+	case "Misc":
+		return color.NRGBA{R: 160, G: 160, B: 160, A: 255}
+	// Regen / Supply sub-buckets
+	case "Health regen":
+		return color.NRGBA{R: 220, G: 110, B: 130, A: 255}
+	case "Armour regen":
+		return color.NRGBA{R: 130, G: 170, B: 220, A: 255}
+	case "Block regen":
+		return color.NRGBA{R: 180, G: 170, B: 230, A: 255}
+	case "Resource regen":
+		return color.NRGBA{R: 220, G: 200, B: 100, A: 255}
+	case "Dispenser":
+		return color.NRGBA{R: 200, G: 160, B: 110, A: 255}
+	case "Drop":
+		return color.NRGBA{R: 220, G: 140, B: 100, A: 255}
+	case "Stim":
+		return color.NRGBA{R: 110, G: 200, B: 170, A: 255}
+	case "Other", "Other resources", "Other regen", "Other supply":
+		return color.NRGBA{R: 130, G: 130, B: 140, A: 255}
+	// Resources umbrella sub-buckets
+	case "Force pool":
+		return color.NRGBA{R: 130, G: 170, B: 230, A: 255}
+	case "Fuel":
+		return color.NRGBA{R: 220, G: 180, B: 100, A: 255}
+	case "Battery / Reserves":
+		return color.NRGBA{R: 220, G: 220, B: 100, A: 255}
+	}
+	// Hash-fallback for unrecognized buckets — keeps the color stable
+	// across rebuilds for any future sub-group name we haven't mapped.
+	var h uint32 = 5381
+	for _, r := range bucket {
+		h = ((h << 5) + h) + uint32(r)
+	}
+	r := uint8(120 + h%80)
+	g := uint8(120 + (h>>8)%80)
+	b := uint8(160 + (h>>16)%70)
+	return color.NRGBA{R: r, G: g, B: b, A: 255}
+}
 
 type AttributeGrid struct {
 	container   *fyne.Container
@@ -20,6 +132,13 @@ type AttributeGrid struct {
 	onUnhover   func()
 	resolveIcon func(string) fyne.Resource // New callback
 
+	// classScalarsBuilder, when set, returns the rendered "Class
+	// Scalars" form (static apMultiplier / bpMultiplier / etc. entry
+	// fields). Embedded into the Resources top-level category so
+	// authors see all pool/scalar tweakers in one place. Optional —
+	// the editor wires this; tests / standalone usage don't.
+	classScalarsBuilder func() fyne.CanvasObject
+
 	filter string
 	search *widget.Entry
 }
@@ -28,6 +147,15 @@ type AttributeGrid struct {
 // revert. Symmetric with WeaponGrid.SetOnUnhover — both feed the
 // info panel's sticky/hover model.
 func (ag *AttributeGrid) SetOnUnhover(f func()) { ag.onUnhover = f }
+
+// SetClassScalarsBuilder wires the Resources-section embedded form
+// for the static class scalar fields (apMult, bpMult, csMult, asMult,
+// forceRegen, speed). When set, the Resources category renders the
+// builder's content as the first sub-tile so scalars sit alongside
+// pool/regen attributes instead of floating in their own banner.
+func (ag *AttributeGrid) SetClassScalarsBuilder(f func() fyne.CanvasObject) {
+	ag.classScalarsBuilder = f
+}
 
 func NewAttributeGrid(initialStr string, onChange func(string), onHover func(string, string), resolveIcon func(string) fyne.Resource) *AttributeGrid {
 	InitDefinitions() // Ensure docs are loaded
@@ -56,27 +184,46 @@ func (ag *AttributeGrid) createUI() {
 		if !isAttributeProper(attr.ID) {
 			continue
 		}
+		// Resources umbrella: re-bucket anything that controls a pool
+		// or regen rate (force pool, fuel, stamina, battery, BP regen,
+		// health regen, armor regen) so authors find pool tweakers in
+		// one place. Original Category is preserved on the AttributeDef
+		// itself; this only changes which top-level section the row
+		// renders under.
+		if isResourceAttribute(attr) {
+			categories["Resources"] = append(categories["Resources"], attr)
+			continue
+		}
 		categories[attr.Category] = append(categories[attr.Category], attr)
+	}
+	// Synthesize a Resources bucket entry even if every concrete attr
+	// went elsewhere — the Class Scalars sub-tile alone is reason to
+	// render the section.
+	if ag.classScalarsBuilder != nil {
+		if _, ok := categories["Resources"]; !ok {
+			categories["Resources"] = nil
+		}
 	}
 
 	// Category display order — informs the accordion row order.
-	// Mirrors the buckets categorizeAttribute() assigns. Weapons /
-	// Force / Saber up top because those are where most edits happen.
-	// Advanced + General go last; Advanced holds engine-tuning attrs
-	// that are rarely touched. Multipliers sits near the end alongside
-	// Regen because those are "tweak the defaults" buckets, not "pick
-	// what the class does" buckets.
+	// Resources first (everything that tweaks pools/regen sits there,
+	// including the Class Scalars sub-tile). Weapons / Force / Saber
+	// next because those are where most edits happen. Advanced +
+	// General go last; Advanced holds engine-tuning attrs rarely
+	// touched.
 	catOrder := []string{
+		"Resources",
 		"Weapons",
 		"Force",
 		"Saber",
 		"Class Specific",
 		"Supply",
-		"Regen",
 		"Multipliers",
 		"General",
 		"Advanced",
 	}
+	// Note: "Regen" merged into Resources (regen rates are pool
+	// tweakers — they belong with the rest of the resource section).
 
 	// defaultOpen — categories that start expanded on first load.
 	// Only the most-used ones; everything else opens on click so the
@@ -84,6 +231,7 @@ func (ag *AttributeGrid) createUI() {
 	// they actually buy. Advanced especially stays closed — it's a
 	// rare-edit backwater, not a primary section.
 	defaultOpen := map[string]bool{
+		"Resources":      true,
 		"Weapons":        true,
 		"Force":          true,
 		"Saber":          true,
@@ -137,7 +285,14 @@ func (ag *AttributeGrid) createUI() {
 		}
 
 		if len(visibleAttrs) == 0 {
-			continue
+			// Resources is special: even if no MB_ATT_* attribute lives
+			// in this build, the Class Scalars sub-tile is reason
+			// enough to render the section. Skip the empty-skip *only*
+			// for non-Resources categories so we don't lose the
+			// scalars surface.
+			if catName != "Resources" || ag.classScalarsBuilder == nil {
+				continue
+			}
 		}
 
 		// Grid for this category — GridWrap so rows stack on narrow
@@ -150,8 +305,8 @@ func (ag *AttributeGrid) createUI() {
 		// own widget so existing handlers stay unchanged.
 		var catContent fyne.CanvasObject
 		switch catName {
-		case "Regen":
-			catContent = ag.buildRegenGroupedView(visibleAttrs)
+		case "Resources":
+			catContent = ag.buildResourcesView(visibleAttrs)
 		case "Supply":
 			catContent = ag.buildSupplyMatrixView(visibleAttrs)
 		case "Force":
@@ -250,12 +405,29 @@ func (ag *AttributeGrid) TriggerChange() {
 	}
 }
 
+// IsPointBuyMultiplier reports whether an attribute ID names a
+// point-buy multiplier primitive (MB_ATT_*_MULTIPLIER). These are
+// NOT loadout attributes — they're cost-side definitions that the
+// custom-build (point-buy) editor wires into individual slots so
+// authors can let a player buy custom multipliers. They belong in
+// the Point Buy tab, not the Attributes grid. The Attributes grid
+// filters them out via this helper.
+func IsPointBuyMultiplier(id string) bool {
+	return strings.HasPrefix(id, "MB_ATT_") && strings.HasSuffix(id, "_MULTIPLIER")
+}
+
 // isAttributeProper reports whether an ID is a real MB_ATT_* /
 // MB_RES_* attribute and not one of the inventory-shaped enums
 // (HI_*, EAS_*, bare FP_*) that sit alongside them in the data
 // file. The Attributes grid only renders the proper ones; the
 // others are picked from their own surfaces.
 func isAttributeProper(id string) bool {
+	if IsPointBuyMultiplier(id) {
+		// Multipliers are point-buy primitives — surfaced in the Point
+		// Buy tab (and the named-field Multipliers banner above the
+		// grid), not as loadout toggles in the Attributes grid.
+		return false
+	}
 	return strings.HasPrefix(id, "MB_ATT_") || strings.HasPrefix(id, "MB_RES_")
 }
 
@@ -282,6 +454,113 @@ func (ag *AttributeGrid) Refresh() {
 	if ag.container != nil {
 		ag.container.Refresh()
 	}
+}
+
+// isResourceAttribute reports whether an attribute belongs in the
+// "Resources" umbrella section (anything that tweaks a pool size or
+// regen rate — force pool, fuel, stamina, battery, BP regen, health
+// regen, armor regen, etc.). Pulled out of its source Category so
+// authors find pool tweakers in one place rather than hunting across
+// Regen / Class Specific / Force / General.
+func isResourceAttribute(a AttributeDef) bool {
+	if a.Category == "Regen" {
+		return true
+	}
+	id := a.ID
+	// Pool / energy / battery / stamina caps (not the abilities that
+	// consume them). FORCEFOCUS, FORCE_REGEN, etc.
+	tokens := []string{
+		"FUEL", "STAMINA", "BATTERY",
+		"FP_BATTERY", "FORCEPOOL", "FORCE_POOL", "FORCE_REGEN", "FORCEFOCUS",
+		"_REGEN_", "RESOURCE_REGEN", "BLOCK_REGEN",
+		"HEAT_DUMP", "HEATDUMP",
+	}
+	for _, t := range tokens {
+		if strings.Contains(id, t) {
+			return true
+		}
+	}
+	return false
+}
+
+// buildResourcesView renders the Resources umbrella category. Layout:
+//
+//   1. Class Scalars sub-tile (static apMult/bpMult/csMult/asMult/
+//      forceRegen/speed entry fields) — only when the editor has
+//      provided a builder. First because authors want the float
+//      scalars visible alongside pool/regen attributes.
+//   2. Sub-buckets for force pool / fuel / stamina / battery / BP /
+//      health regen / armor regen / resource regen, each as its own
+//      sectionTile via buildSectionTile.
+//
+// The result reads as a single "Resources" panel where every attribute
+// or scalar that influences a pool or regen rate sits together,
+// instead of being scattered across Regen / Force / Class Specific.
+func (ag *AttributeGrid) buildResourcesView(attrs []AttributeDef) fyne.CanvasObject {
+	box := container.NewVBox()
+	if ag.classScalarsBuilder != nil {
+		box.Add(ag.classScalarsBuilder())
+	}
+	// Sub-bucket classifier — keep the order aligned with how authors
+	// usually scan a build (defensive pools first, then offense pools,
+	// then niche reserves).
+	type bucketDef struct {
+		name    string
+		matches func(AttributeDef) bool
+	}
+	buckets := []bucketDef{
+		{"Health regen", func(a AttributeDef) bool { return strings.Contains(a.ID, "HEALTH_REGEN") }},
+		{"Armour regen", func(a AttributeDef) bool { return strings.Contains(a.ID, "ARMOUR_REGEN") || strings.Contains(a.ID, "ARMOR_REGEN") }},
+		{"Block regen", func(a AttributeDef) bool { return strings.Contains(a.ID, "BLOCK_REGEN") }},
+		{"Force pool", func(a AttributeDef) bool {
+			return strings.Contains(a.ID, "FORCEPOOL") || strings.Contains(a.ID, "FORCE_POOL") ||
+				strings.Contains(a.ID, "FORCE_REGEN") || strings.Contains(a.ID, "FORCEFOCUS") ||
+				a.ID == "MB_ATT_FP_BATTERY"
+		}},
+		{"Fuel", func(a AttributeDef) bool { return strings.Contains(a.ID, "FUEL") }},
+		{"Stamina", func(a AttributeDef) bool { return strings.Contains(a.ID, "STAMINA") }},
+		{"Battery / Reserves", func(a AttributeDef) bool {
+			return strings.Contains(a.ID, "BATTERY") || strings.Contains(a.ID, "HEAT_DUMP") ||
+				strings.Contains(a.ID, "HEATDUMP")
+		}},
+		{"Resource regen", func(a AttributeDef) bool { return strings.Contains(a.ID, "RESOURCE_REGEN") }},
+	}
+
+	used := map[string]bool{}
+	for _, bk := range buckets {
+		var members []AttributeDef
+		for _, a := range attrs {
+			if used[a.ID] {
+				continue
+			}
+			if bk.matches(a) {
+				members = append(members, a)
+				used[a.ID] = true
+			}
+		}
+		if len(members) == 0 {
+			continue
+		}
+		sort.SliceStable(members, func(i, j int) bool {
+			return attrDisplayName(members[i]) < attrDisplayName(members[j])
+		})
+		box.Add(ag.buildSectionTile(bk.name, members, false))
+	}
+	// Anything that's marked Resource but didn't fit a sub-bucket —
+	// keep it visible under "Other resources" rather than dropping.
+	var leftovers []AttributeDef
+	for _, a := range attrs {
+		if !used[a.ID] {
+			leftovers = append(leftovers, a)
+		}
+	}
+	if len(leftovers) > 0 {
+		sort.SliceStable(leftovers, func(i, j int) bool {
+			return attrDisplayName(leftovers[i]) < attrDisplayName(leftovers[j])
+		})
+		box.Add(ag.buildSectionTile("Other resources", leftovers, true))
+	}
+	return box
 }
 
 // buildRegenGroupedView arranges the Regen category as four base-
@@ -314,13 +593,7 @@ func (ag *AttributeGrid) buildRegenGroupedView(attrs []AttributeDef) fyne.Canvas
 		if len(members) == 0 {
 			continue
 		}
-		sub := widget.NewLabelWithStyle(g.title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-		grid := container.NewGridWrap(fyne.NewSize(480, 64))
-		for _, a := range members {
-			grid.Add(ag.createAttributeItem(a))
-		}
-		box.Add(sub)
-		box.Add(grid)
+		box.Add(ag.buildSectionTile(g.title, members, false))
 	}
 	// Catch any *_REGEN_* outside the canonical four bases.
 	var leftovers []AttributeDef
@@ -330,13 +603,7 @@ func (ag *AttributeGrid) buildRegenGroupedView(attrs []AttributeDef) fyne.Canvas
 		}
 	}
 	if len(leftovers) > 0 {
-		sub := widget.NewLabelWithStyle("Other regen", fyne.TextAlignLeading, fyne.TextStyle{Bold: true, Italic: true})
-		grid := container.NewGridWrap(fyne.NewSize(480, 64))
-		for _, a := range leftovers {
-			grid.Add(ag.createAttributeItem(a))
-		}
-		box.Add(sub)
-		box.Add(grid)
+		box.Add(ag.buildSectionTile("Other regen", leftovers, true))
 	}
 	return box
 }
@@ -368,13 +635,7 @@ func (ag *AttributeGrid) buildSupplyMatrixView(attrs []AttributeDef) fyne.Canvas
 		if len(members) == 0 {
 			continue
 		}
-		sub := widget.NewLabelWithStyle(g.title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-		grid := container.NewGridWrap(fyne.NewSize(480, 64))
-		for _, a := range members {
-			grid.Add(ag.createAttributeItem(a))
-		}
-		box.Add(sub)
-		box.Add(grid)
+		box.Add(ag.buildSectionTile(g.title, members, false))
 	}
 	var leftovers []AttributeDef
 	for _, a := range attrs {
@@ -383,13 +644,7 @@ func (ag *AttributeGrid) buildSupplyMatrixView(attrs []AttributeDef) fyne.Canvas
 		}
 	}
 	if len(leftovers) > 0 {
-		sub := widget.NewLabelWithStyle("Other supply", fyne.TextAlignLeading, fyne.TextStyle{Bold: true, Italic: true})
-		grid := container.NewGridWrap(fyne.NewSize(480, 64))
-		for _, a := range leftovers {
-			grid.Add(ag.createAttributeItem(a))
-		}
-		box.Add(sub)
-		box.Add(grid)
+		box.Add(ag.buildSectionTile("Other supply", leftovers, true))
 	}
 	return box
 }
@@ -426,6 +681,15 @@ func attrDisplayName(a AttributeDef) string {
 // Weapons / Class Specific sub-accordions. Buckets each attribute
 // via classify(); renders each non-empty bucket alphabetized under
 // a bold header; tails leftovers as "Other".
+//
+// Visual hierarchy is *section-first*: each bucket gets its own
+// TilePanel (visible fill + stroke) acting as the area background,
+// with the attribute rows inside rendered nearly flat — only a thin
+// hairline accent + barely-visible fill, so the eye reads "rows in a
+// section" rather than "individual cards." This is the inverse of
+// the older render where every attribute was a chunky card and the
+// section header was a bare text label, which made the screen feel
+// like a wall of identical tiles regardless of grouping.
 func (ag *AttributeGrid) buildSubGroupedView(attrs []AttributeDef, bucketOrder []string, classify func(AttributeDef) string) fyne.CanvasObject {
 	groups := map[string][]AttributeDef{}
 	used := map[string]bool{}
@@ -445,13 +709,7 @@ func (ag *AttributeGrid) buildSubGroupedView(attrs []AttributeDef, bucketOrder [
 		sort.SliceStable(members, func(i, j int) bool {
 			return attrDisplayName(members[i]) < attrDisplayName(members[j])
 		})
-		sub := widget.NewLabelWithStyle(name, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-		grid := container.NewGridWrap(fyne.NewSize(480, 64))
-		for _, a := range members {
-			grid.Add(ag.createAttributeItem(a))
-		}
-		box.Add(sub)
-		box.Add(grid)
+		box.Add(ag.buildSectionTile(name, members, false))
 	}
 	var leftovers []AttributeDef
 	for _, a := range attrs {
@@ -463,15 +721,36 @@ func (ag *AttributeGrid) buildSubGroupedView(attrs []AttributeDef, bucketOrder [
 		sort.SliceStable(leftovers, func(i, j int) bool {
 			return attrDisplayName(leftovers[i]) < attrDisplayName(leftovers[j])
 		})
-		sub := widget.NewLabelWithStyle("Other", fyne.TextAlignLeading, fyne.TextStyle{Bold: true, Italic: true})
-		grid := container.NewGridWrap(fyne.NewSize(480, 64))
-		for _, a := range leftovers {
-			grid.Add(ag.createAttributeItem(a))
-		}
-		box.Add(sub)
-		box.Add(grid)
+		box.Add(ag.buildSectionTile("Other", leftovers, true))
 	}
 	return box
+}
+
+// buildSectionTile wraps one sub-group (header + grid of rows) into a
+// section-level TilePanel. The section's fill/stroke is the *primary*
+// visual marker for the group; per-attribute rows inside use minimal
+// chrome so the section reads as an "area" rather than a row of
+// identical individual cards. Accent color is derived deterministically
+// from the bucket name so re-renders are visually stable.
+func (ag *AttributeGrid) buildSectionTile(name string, members []AttributeDef, isOther bool) fyne.CanvasObject {
+	headerStyle := fyne.TextStyle{Bold: true}
+	if isOther {
+		headerStyle = fyne.TextStyle{Bold: true, Italic: true}
+	}
+	header := widget.NewLabelWithStyle(
+		fmt.Sprintf("%s  ·  %d", name, len(members)),
+		fyne.TextAlignLeading, headerStyle)
+	grid := container.NewGridWrap(fyne.NewSize(480, 64))
+	for _, a := range members {
+		grid.Add(ag.createAttributeItem(a))
+	}
+	body := container.NewVBox(header, grid)
+	return NewTilePanel(body, TileOpts{
+		AccentColor: sectionAccent(name),
+		FillAlpha:   20,
+		StrokeAlpha: 70,
+		Padded:      true,
+	})
 }
 
 func (ag *AttributeGrid) buildForceGroupedView(attrs []AttributeDef) fyne.CanvasObject {

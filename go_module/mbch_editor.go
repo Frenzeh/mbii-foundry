@@ -17,6 +17,7 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
@@ -66,6 +67,11 @@ type MBCHEditor struct {
 	isDirty         bool
 	onDirtyChanged  func(bool)
 	onSourceChanged func()
+	// loading silences markDirty during programmatic SetText/SetSelected
+	// in updateUI (file load + revert + external sync). Without it, every
+	// widget reset fires its OnChanged → markDirty, so a freshly-loaded
+	// file is "dirty" the moment it opens.
+	loading bool
 
 	nameEntry   *ValidatedEntry
 	classPicker *ClassIconPicker // replaces the previous widget.Select
@@ -199,6 +205,9 @@ func (e *MBCHEditor) GenerateSource() string {
 func (e *MBCHEditor) SetOnSourceChanged(f func()) { e.onSourceChanged = f }
 
 func (e *MBCHEditor) markDirty() {
+	if e.loading {
+		return
+	}
 	if !e.isDirty {
 		e.isDirty = true
 		if e.onDirtyChanged != nil {
@@ -375,12 +384,23 @@ func (e *MBCHEditor) createUI() {
 	e.attributesEntry.SetPlaceHolder("MB_ATT_PUSH,3|MB_ATT_PULL,3")
 	e.forcePowersEntry.SetPlaceHolder("FP_PUSH,3|FP_PULL,3")
 
+	// Hover dispatcher — wraps e.onHover lazily so grids built here
+	// see the live callback set by SetOnHover later, not the no-op
+	// captured at construction time. Without this indirection, the
+	// grids snapshot the placeholder onHover and never see the real
+	// info-panel callback the App wires in afterwards.
+	hoverFn := func(k, c string) {
+		if e.onHover != nil {
+			e.onHover(k, c)
+		}
+	}
+
 	// Initialize Attribute Grid. Pair hover/unhover so attribute
 	// previews revert to the last-interacted field on mouse-out.
 	e.attrGrid = NewAttributeGrid("", func(s string) {
 		e.attributesEntry.SetText(s)
 		e.markDirty()
-	}, e.onHover, e.resolveIconResource)
+	}, hoverFn, e.resolveIconResource)
 	if e.app != nil {
 		e.attrGrid.SetOnUnhover(e.app.clearHoverContext)
 	}
@@ -392,10 +412,74 @@ func (e *MBCHEditor) createUI() {
 	e.weaponGrid = NewWeaponGrid("", func(s string) {
 		e.weaponsEntry.SetText(s)
 		e.markDirty()
-	}, e.onHover, e.resolveWeaponIconResource)
+	}, hoverFn, e.resolveWeaponIconResource)
 	if e.app != nil {
 		e.weaponGrid.SetOnUnhover(e.app.clearHoverContext)
 	}
+
+	// Cross-tab integration — the Inventory card uses these bridges
+	// to render level pills bound to the paired MB_ATT_* and to show
+	// flag-count + override-exists badges, so users see one weapon's
+	// full configuration in one place rather than hopping tabs.
+	e.weaponGrid.SetAttributeBridge(
+		func(attID string) int {
+			if e.attrGrid == nil {
+				return 0
+			}
+			return e.attrGrid.values[attID]
+		},
+		func(attID string, n int) {
+			if e.attrGrid == nil {
+				return
+			}
+			if n == 0 {
+				delete(e.attrGrid.values, attID)
+			} else {
+				e.attrGrid.values[attID] = n
+			}
+			e.attrGrid.TriggerChange()
+			e.attrGrid.Refresh()
+			e.markDirty()
+		},
+	)
+	e.weaponGrid.SetFlagsBridge(
+		func(wpID string) int {
+			// HELD_* flag fields live in ExtraFields keyed by
+			// "WP_NameFlags" — count pipe-separated entries.
+			if e.character == nil || e.character.ExtraFields == nil {
+				return 0
+			}
+			val := e.character.ExtraFields[wpID+"Flags"]
+			if val == "" {
+				return 0
+			}
+			return len(strings.Split(val, "|"))
+		},
+		func(wpID string) {
+			// Tab navigation handled by App via showFlagsTab — wired
+			// later if/when the App provides a hook. For now this is a
+			// silent no-op so the badge still gets a click handler and
+			// the user gets visual feedback that something would happen.
+			_ = wpID
+		},
+	)
+	e.weaponGrid.SetOverrideBridge(
+		func(wpID string) bool {
+			if e.character == nil {
+				return false
+			}
+			for _, wi := range e.character.WeaponOverrides {
+				if wi.WeaponToReplace == wpID {
+					return true
+				}
+			}
+			return false
+		},
+		func(wpID string) {
+			// Same TODO as the flags jump — needs an App-level hook.
+			_ = wpID
+		},
+	)
 
 	// Text -> Grid binding. OnChanged reflects active typing — treat
 	// the token the user just finished as a sticky interaction.
@@ -479,6 +563,7 @@ func (e *MBCHEditor) createUI() {
 		return nil
 	})
 	e.apMultEntry.SetText("1.0")
+	e.apMultEntry.OnChanged = func(s string) { e.markDirty() }
 	e.apMultEntry.OnFocus = func() { e.interact("MB_ATT_AP_MULTIPLIER", "") }
 
 	e.bpMultEntry = NewValidatedEntry(func(s string) error {
@@ -488,6 +573,7 @@ func (e *MBCHEditor) createUI() {
 		return nil
 	})
 	e.bpMultEntry.SetText("1.0")
+	e.bpMultEntry.OnChanged = func(s string) { e.markDirty() }
 	e.bpMultEntry.OnFocus = func() { e.interact("MB_ATT_BP_MULTIPLIER", "") }
 
 	e.csMultEntry = NewValidatedEntry(func(s string) error {
@@ -497,6 +583,7 @@ func (e *MBCHEditor) createUI() {
 		return nil
 	})
 	e.csMultEntry.SetText("1.0")
+	e.csMultEntry.OnChanged = func(s string) { e.markDirty() }
 	e.csMultEntry.OnFocus = func() { e.interact("MB_ATT_CS_MULTIPLIER", "") }
 
 	e.asMultEntry = NewValidatedEntry(func(s string) error {
@@ -506,6 +593,7 @@ func (e *MBCHEditor) createUI() {
 		return nil
 	})
 	e.asMultEntry.SetText("1.0")
+	e.asMultEntry.OnChanged = func(s string) { e.markDirty() }
 	e.asMultEntry.OnFocus = func() { e.interact("MB_ATT_AS_MULTIPLIER", "") }
 
 	e.saber1Entry = NewValidatedEntry(noOpVal)
@@ -645,11 +733,29 @@ func (e *MBCHEditor) createUI() {
 		widget.NewAccordionItem("Identity", profileForm),
 		widget.NewAccordionItem("Game Limits", limitsForm),
 		widget.NewAccordionItem("Custom Build", customBuildForm),
-		widget.NewAccordionItem("Description", e.descriptionEntry),
 	)
 	profileAccordion.MultiOpen = true
 	profileAccordion.Open(0)
-	profileTab := container.NewVBox(profileAccordion)
+
+	// Description gets its own pane below the form accordion with a
+	// draggable splitter rail between them. Long descriptions on
+	// custom-build classes (the in-game help text + tier walkthroughs)
+	// can be 30+ lines — keeping description in the accordion forced
+	// users to scroll the whole tab. The VSplit lets them drag the
+	// description up to take over the tab when they're focused on
+	// that field, then drag it back down to edit identity again.
+	descLabel := widget.NewLabelWithStyle("Description",
+		fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	descPane := container.NewBorder(descLabel, nil, nil, nil,
+		container.NewVScroll(e.descriptionEntry))
+	profileSplit := container.NewVSplit(
+		container.NewVScroll(profileAccordion),
+		descPane,
+	)
+	// Bias toward identity at first — description gets ~25% of height
+	// until the user drags the rail.
+	profileSplit.SetOffset(0.7)
+	profileTab := profileSplit
 
 	statsForm := widget.NewForm(widget.NewFormItem("Max Health", e.healthEntry), widget.NewFormItem("Max Armor", e.armorEntry), widget.NewFormItem("Force Pool", e.forcePoolEntry), widget.NewFormItem("Force Regen", e.forceRegenEntry), widget.NewFormItem("Speed", e.speedEntry))
 
@@ -727,6 +833,32 @@ func (e *MBCHEditor) createUI() {
 	// the info panel — applied here defensively across every tab
 	// because any future "add a wider widget" change would
 	// otherwise silently re-introduce the over-sized-window bug.
+	// Class Scalars form — the static apMultiplier / bpMultiplier /
+	// csMultiplier / asMultiplier / forceRegen / speed float fields
+	// from the ClassInfo block. Surfaced inside the attribute grid's
+	// new Resources section (NOT pinned above the grid) so they group
+	// with everything else that tweaks pools/regen instead of floating
+	// as a sticky banner. The grid pulls this builder via the bridge
+	// hook below.
+	classScalarsBuilder := func() fyne.CanvasObject {
+		header := widget.NewLabelWithStyle("Class Scalars",
+			fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+		sub := widget.NewLabelWithStyle(
+			"Static float fields on the ClassInfo block (1.0 = neutral). Distinct from the MB_ATT_*_MULTIPLIER point-buy primitives that live in the Point Buy tab.",
+			fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
+		grid := container.New(layout.NewGridLayoutWithColumns(3),
+			widget.NewForm(widget.NewFormItem("AP Mult", e.apMultEntry)),
+			widget.NewForm(widget.NewFormItem("BP Mult", e.bpMultEntry)),
+			widget.NewForm(widget.NewFormItem("CS Mult", e.csMultEntry)),
+			widget.NewForm(widget.NewFormItem("AS Mult", e.asMultEntry)),
+			widget.NewForm(widget.NewFormItem("Force Regen", e.forceRegenEntry)),
+			widget.NewForm(widget.NewFormItem("Speed", e.speedEntry)),
+		)
+		body := container.NewVBox(header, sub, grid)
+		return NewTilePanel(body, TileOpts{FillAlpha: 18, StrokeAlpha: 70, Padded: true})
+	}
+	e.attrGrid.SetClassScalarsBuilder(classScalarsBuilder)
+
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Profile", wrapForTab(profileTab)),
 		container.NewTabItem("Attributes", wrapForTab(e.attrGrid.GetContent())),
@@ -857,6 +989,11 @@ func (e *MBCHEditor) LoadFile(path string) error {
 	}
 
 	e.updateUI()
+	// updateUI silences markDirty via e.loading, but in case any later
+	// callback path slipped through (e.g. an attribute-grid rebuild
+	// that fires OnChanged outside the guard), reset to clean here so
+	// the file opens in a "no unsaved changes" state.
+	e.MarkClean()
 	if e.fileManager != nil && !fromVFS {
 		e.fileManager.AddRecentFile(path)
 	}
@@ -926,11 +1063,32 @@ func (e *MBCHEditor) ImportJSON(path string) error {
 func (e *MBCHEditor) Validate() []string {
 	e.updateCharacterFromUI()
 	v := NewValidator()
-	return v.ValidateCharacter(e.character)
+	issues := v.ValidateCharacter(e.character)
+	// Per-block byte-budget warnings — re-render the file once and
+	// scan the result for block sizes. Cheap (single allocation) and
+	// catches over-stuffed ClassInfo / WeaponInfoN / ForceInfoN before
+	// the engine truncates them silently at load time.
+	if rendered, err := parsers.GenerateMBCH(e.character); err == nil {
+		issues = append(issues, v.ValidateBlockSizes(rendered)...)
+	}
+	return issues
 }
 
 func (e *MBCHEditor) updateUI() {
 	LogInfo("Updating UI for Character: %s", e.character.Name)
+	// Silence dirty-tracking during programmatic SetText/SetSelected
+	// fan-out below — those fire OnChanged on every widget that gets
+	// touched and would otherwise mark the just-loaded file dirty.
+	e.loading = true
+	defer func() {
+		e.loading = false
+		// Re-render source for the source panel after UI sync, and
+		// ensure dirty stays clean post-load. SaveFile / explicit edits
+		// re-mark dirty as needed.
+		if e.onSourceChanged != nil {
+			e.onSourceChanged()
+		}
+	}()
 	// Standard updates
 	e.nameEntry.SetText(e.character.Name)
 	e.classPicker.SetSelected(e.character.MBClass)
@@ -1140,19 +1298,33 @@ func (e *MBCHEditor) resolveIconResource(id string) fyne.Resource {
 	} else if alias, ok := attributeIconAliases[id]; ok {
 		path = "gfx/menus/alpha/" + alias
 	}
-	if path == "" {
-		return nil
+	if path != "" {
+		// Embedded first — LoadGameIcon keys on basename and doesn't need
+		// the AssetBrowser / VFS to be initialized.
+		if img, ok := LoadGameIcon(nil, path); ok {
+			return staticPNGResource(filepath.Base(path)+".png", img)
+		}
+		// VFS fallback — only if the AssetBrowser is connected.
+		if e.assetBrowser != nil {
+			if res := e.assetBrowser.LoadIconResource(path); res != nil {
+				return res
+			}
+		}
 	}
-	// Embedded first — LoadGameIcon keys on basename and doesn't need
-	// the AssetBrowser / VFS to be initialized.
-	if img, ok := LoadGameIcon(nil, path); ok {
-		return staticPNGResource(filepath.Base(path)+".png", img)
+	// Boxicon fallback — when neither MBII HUD nor VFS has an icon
+	// for this attribute, pick one by keyword match against the
+	// attribute's ID + name. Better than rendering an empty 24px slot
+	// — the row gets a glyph that hints at the attribute's archetype
+	// (heart for health, shield for defense, etc.) so the eye can
+	// still scan the grid quickly.
+	displayName := ""
+	for _, a := range MBIIAttributes {
+		if a.ID == id {
+			displayName = a.Name
+			break
+		}
 	}
-	// VFS fallback — only if the AssetBrowser is connected.
-	if e.assetBrowser != nil {
-		return e.assetBrowser.LoadIconResource(path)
-	}
-	return nil
+	return FallbackIconForAttribute(id, displayName)
 }
 
 // resolveWeaponIconResource mirrors resolveIconResource but uses the
@@ -1164,12 +1336,29 @@ func (e *MBCHEditor) resolveIconResource(id string) fyne.Resource {
 // VFS index for the check-exists path). VFS is the fallback for any
 // weapon we haven't extracted yet.
 func (e *MBCHEditor) resolveWeaponIconResource(id string) fyne.Resource {
-	base := "gfx/hud/w_icon_" + strings.ToLower(strings.TrimPrefix(id, "WP_"))
-	if img, ok := LoadGameIcon(nil, base); ok {
-		// Re-encode to PNG bytes so Fyne accepts it as a resource. The
-		// LoadGameIcon cache means this decode+encode round-trip happens
-		// at most once per weapon per session.
-		return staticPNGResource(filepath.Base(base)+".png", img)
+	// Authoritative basename comes from weaponIconAliases — MBII's HUD
+	// icon filenames rarely match the WP_* suffix verbatim
+	// (WP_BRYAR_PISTOL → w_icon_blaster_pistol, WP_THROWER →
+	// w_icon_cr-24_flamerifle, etc.). The naive lowercase-suffix path
+	// previously skipped the alias lookup entirely, so embedded
+	// resolution failed for ~70% of weapons even though the PNGs ship
+	// in assets/icons/weapons/.
+	var basenames []string
+	if alias, ok := weaponIconAliases[id]; ok && alias != "" {
+		basenames = append(basenames, alias)
+	}
+	// Naive fallback for any new WP_* not in the alias table yet.
+	suffix := strings.ToLower(strings.TrimPrefix(id, "WP_"))
+	if suffix != "" {
+		basenames = append(basenames, "w_icon_"+suffix)
+	}
+	for _, b := range basenames {
+		base := "gfx/hud/" + b
+		if img, ok := LoadGameIcon(nil, base); ok {
+			// Re-encode to PNG bytes so Fyne accepts it as a resource.
+			// LoadGameIcon caches → at most one decode+encode per WP_*.
+			return staticPNGResource(filepath.Base(base)+".png", img)
+		}
 	}
 	if e.iconResolver == nil || e.assetBrowser == nil {
 		return nil

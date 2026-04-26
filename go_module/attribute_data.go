@@ -114,6 +114,7 @@ var MBIIClasses = []ClassDef{
 	{ID: "MB_CLASS_ARCTROOPER", Name: "ARC Trooper", Description: "Elite clone trooper."},
 	{ID: "MB_CLASS_ELITETROOPER", Name: "Elite Trooper", Description: "Heavy weapons specialist."},
 	{ID: "MB_CLASS_BATTLEDROID", Name: "Battle Droid", Description: "FA-only humanoid droid. Immune to poison/sonic/drowning/locational damage; takes 5x ion/pulse without Battery."},
+	{ID: "MB_CLASS_OBSERVER", Name: "Observer", Description: "Spectator-only class slot used in FA round-spawner / pit setups. No combat loadout — exists so FA authors can attach round-spawner / objective behavior to a non-playable team slot."},
 }
 
 var MBIIAttributes = []AttributeDef{
@@ -203,7 +204,7 @@ var MBIIAttributes = []AttributeDef{
 	{ID: "MB_ATT_DEKA_HULL", Name: "Deka Hull", MaxLevel: 3, Category: "Class Specific", Description: ""},
 	{ID: "MB_ATT_DEKA_DEPLOY", Name: "Deka Deploy", MaxLevel: 3, Category: "Class Specific", Description: ""},
 	{ID: "MB_ATT_DEKA_POWER", Name: "Deka Power", MaxLevel: 3, Category: "Class Specific", Description: ""},
-	{ID: "MB_ATT_TURN_RATE", Name: "Turn Rate", MaxLevel: 3, Category: "General", Description: ""},
+	{ID: "MB_ATT_TURN_RATE", Name: "Turn Rate", MaxLevel: 3, Category: "Class Specific", Description: "Droideka — increases roll-mode turn rate. Not a general movement stat."},
 	{ID: "MB_ATT_FIREPOWER", Name: "Firepower", MaxLevel: 3, Category: "General", Description: ""},
 	{ID: "MB_ATT_FIRERATE", Name: "Firerate", MaxLevel: 3, Category: "General", Description: ""},
 	{ID: "MB_ATT_QUICKTHROW", Name: "Quickthrow", MaxLevel: 3, Category: "General", Description: ""},

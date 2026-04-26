@@ -38,6 +38,10 @@ func NewTooltipButton(text string, icon fyne.Resource, action func(), tooltip st
 	return b
 }
 
+// SetTooltip swaps the hover-tooltip string. Used by toggle buttons
+// that want to reflect the on/off state in the tooltip text.
+func (b *TooltipButton) SetTooltip(s string) { b.tooltipText = s }
+
 func (b *TooltipButton) MouseIn(e *desktop.MouseEvent) {
 	if b.tooltipText == "" {
 		return

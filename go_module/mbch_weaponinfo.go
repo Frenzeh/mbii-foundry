@@ -87,15 +87,29 @@ func (ui *WeaponInfoUI) browseAsset(entry *widget.Entry, assetType AssetType) {
 }
 
 // weaponPickOptions builds the WP_* dropdown list for WeaponToReplace
-// and WeaponBasedOff. Sorted + filtered to live weapons only — no
-// sentinels, no #ifdef-guarded entries — so authors don't
-// accidentally override a weapon that doesn't ship.
+// and WeaponBasedOff. Sourced from MBIIWeapons (the canonical weapon
+// catalog) unioned with weaponIconAliases — earlier the list was
+// built only from weaponIconAliases (a subset), so weapons in
+// MBIIWeapons that lacked a custom HUD icon (e.g. WP_BLASTER_PISTOL)
+// were silently missing from the override target picker. Filtered to
+// live weapons only — no sentinels, no #ifdef-guarded entries — so
+// authors don't accidentally override a weapon that doesn't ship.
 func weaponPickOptions() []string {
-	out := make([]string, 0, len(weaponIconAliases))
-	for id := range weaponIconAliases {
-		if id == "WP_NONE" {
+	seen := map[string]bool{}
+	for _, w := range MBIIWeapons {
+		if w.ID == "" || w.ID == "WP_NONE" || w.Hidden {
 			continue
 		}
+		seen[w.ID] = true
+	}
+	for id := range weaponIconAliases {
+		if id == "" || id == "WP_NONE" {
+			continue
+		}
+		seen[id] = true
+	}
+	out := make([]string, 0, len(seen))
+	for id := range seen {
 		out = append(out, id)
 	}
 	sort.Strings(out)

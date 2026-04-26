@@ -60,19 +60,42 @@ var KnownHeldFlags = []HeldFlag{
 	{"HELD_SLOW", "−15% move", "User moves 15% slower while held"},
 	{"HELD_SLOWPROJ", "−75% velocity", "Projectile moves at 25% speed"},
 	{"HELD_TRACKING", "Tracks", "Hit targets are visible to the user for 45s"},
+	{"HELD_LIFT", "Lifts", "R22.0.00: knocks target into the air on hit"},
+	{"HELD_SLIPPERY", "Slippery", "R22.0.00: target slides/loses footing on hit"},
+	{"HELD_DISARM", "Disarms", "R22.0.00: target's currently held weapon is dropped"},
+	{"HELD_NODISARM", "Disarm-immune", "R22.0.00: weapon cannot be disarmed off the user"},
+	{"HELD_PULL", "Pulls", "R22.0.00: drags hit target toward the firer"},
+	{"HELD_CRIPPLE", "Cripples", "R22.0.00: brief slow-and-stagger debuff (movement + actions)"},
+	{"HELD_FORCEFOCUS", "Force focus", "R22.0.00: hits restore Force Pool to the firer"},
+	{"HELD_LIFESTEAL", "Lifesteal", "R22.0.00: portion of damage dealt heals the firer"},
+	{"HELD_FLASH", "Flashes", "R22.0.00: Flashbang-style blind on hit"},
+	{"HELD_BACTA", "Bacta heal", "R22.0.00: hit allies (or self) receive bacta-style heal-over-time"},
 }
 
 // WeaponFlagTargets is the list of WP_* IDs that accept flags in
 // practice — the live weapon enum minus sentinels + level objects.
-// Built at package init from weaponIconAliases so it stays in sync
-// with the icon-coverage set. The flags UI uses this for its "add
-// weapon" picker.
+// Sourced from MBIIWeapons (the canonical weapon catalog), unioned
+// with weaponIconAliases (catches any WP_* that has an icon mapping
+// but isn't yet in MBIIWeapons). Earlier this list was built only
+// from weaponIconAliases — a subset — so weapons present in MBIIWeapons
+// but lacking a custom HUD icon (e.g. WP_BLASTER_PISTOL) were silently
+// missing from the Flags and Weapon Mods pickers.
 var WeaponFlagTargets = func() []string {
-	out := make([]string, 0, len(weaponIconAliases))
-	for id := range weaponIconAliases {
-		if id == "WP_NONE" {
+	seen := map[string]bool{}
+	for _, w := range MBIIWeapons {
+		if w.ID == "" || w.ID == "WP_NONE" || w.Hidden {
 			continue
 		}
+		seen[w.ID] = true
+	}
+	for id := range weaponIconAliases {
+		if id == "" || id == "WP_NONE" {
+			continue
+		}
+		seen[id] = true
+	}
+	out := make([]string, 0, len(seen))
+	for id := range seen {
 		out = append(out, id)
 	}
 	sort.Strings(out)

@@ -66,6 +66,14 @@ type InfoPanel struct {
 	// from — lets us avoid re-rendering sticky when the panel is
 	// already showing sticky.
 	showingHover bool
+
+	// hoverEnabled gates whether mouse-over events repaint the panel.
+	// When false (the default), only explicit click/focus interactions
+	// update the panel — hover events from grids no-op. The constant
+	// repaint on every mousemove was distracting for users who'd
+	// rather opt-in to "peek the docs" deliberately. Toggleable from
+	// the panel header so power users can flip it back on.
+	hoverEnabled bool
 }
 
 // libraryGroup bundles the per-type state for a single Library
@@ -202,6 +210,32 @@ func isHiddenLibraryKey(key string) bool {
 	return false
 }
 
+// keysByDirPrefix lists Definitions entries that live under a specific
+// definitions/ subdirectory (e.g. "weapon_overrides/", "class_specials/").
+// Used by Library accordion sections that map 1:1 to a definitions
+// subfolder, so adding a new .md auto-shows in the section without
+// touching the section's source code. README files are skipped — they
+// document the *folder*, not a topic users would search for.
+func keysByDirPrefix(dirPrefix, filter string, match func(s, filter string) bool) []string {
+	var out []string
+	DefinitionsLock.RLock()
+	defer DefinitionsLock.RUnlock()
+	for k := range Definitions {
+		if !strings.HasPrefix(k, dirPrefix) {
+			continue
+		}
+		base := strings.TrimPrefix(k, dirPrefix)
+		// Only direct children — skip README, skip nested folders.
+		if base == "README" || strings.Contains(base, "/") {
+			continue
+		}
+		if match(base, filter) {
+			out = append(out, base)
+		}
+	}
+	return out
+}
+
 func NewInfoPanel() *InfoPanel {
 	ip := &InfoPanel{}
 	ip.createUI()
@@ -288,7 +322,25 @@ This panel provides real-time documentation and context for the field you're edi
 		}
 	}, "Pop out info panel into its own window (collapses sidebar)")
 	popOutBtn.Importance = widget.LowImportance
-	rightChip := container.NewHBox(ip.idChip, popOutBtn)
+
+	// Hover-swap toggle. Default-off so the panel doesn't repaint on
+	// every mousemove — users opt in when they want "peek the docs"
+	// behavior. Icon mirrors VisibilityIcon when enabled, OffIcon when
+	// disabled, so the state is glanceable from the header.
+	hoverToggleBtn := NewTooltipButton("", theme.VisibilityOffIcon(), nil,
+		"Hover swaps context: OFF — click a field to update the info panel")
+	hoverToggleBtn.Importance = widget.LowImportance
+	hoverToggleBtn.OnTapped = func() {
+		ip.SetHoverEnabled(!ip.HoverEnabled())
+		if ip.HoverEnabled() {
+			hoverToggleBtn.SetIcon(theme.VisibilityIcon())
+			hoverToggleBtn.SetTooltip("Hover swaps context: ON — mouse over rows to peek docs")
+		} else {
+			hoverToggleBtn.SetIcon(theme.VisibilityOffIcon())
+			hoverToggleBtn.SetTooltip("Hover swaps context: OFF — click a field to update the info panel")
+		}
+	}
+	rightChip := container.NewHBox(ip.idChip, hoverToggleBtn, popOutBtn)
 	heroRow := container.NewBorder(nil, nil,
 		ip.categoryChip,
 		rightChip,
@@ -434,6 +486,48 @@ func (ip *InfoPanel) buildLibraryGroups() {
 						out = append(out, s.Name)
 					}
 				}
+				sort.Strings(out)
+				return out
+			},
+		},
+		{
+			// Weapon "held" flags — HELD_* modifiers attached to
+			// individual weapons (HighDamage, Ignites, Pulls, etc.).
+			// Sourced from the static KnownHeldFlags table so this
+			// stays in sync with the editor's flag picker.
+			title: "Weapon Flags",
+			source: func(filter string) []string {
+				var out []string
+				for _, f := range KnownHeldFlags {
+					if match(f.ID, filter) || match(f.Name, filter) {
+						out = append(out, f.ID)
+					}
+				}
+				sort.Strings(out)
+				return out
+			},
+		},
+		{
+			// Class specials — EAS_* dispatch keys for special1/special2
+			// bindings. Surfaced from the Definitions map by relative
+			// path prefix so newly-added EAS_* docs show up without code
+			// changes.
+			title: "Class Specials",
+			source: func(filter string) []string {
+				out := keysByDirPrefix("class_specials/", filter, match)
+				sort.Strings(out)
+				return out
+			},
+		},
+		{
+			// Per-class WeaponInfo override fields — the field-level
+			// reference for `WeaponInfoN { ... }` blocks (Damage / Rate /
+			// Velocity mods, model + sound + effect overrides, anim
+			// overrides, FP multipliers). Same pattern as Class
+			// Specials — sourced by directory prefix.
+			title: "Weapon Overrides",
+			source: func(filter string) []string {
+				out := keysByDirPrefix("weapon_overrides/", filter, match)
 				sort.Strings(out)
 				return out
 			},
@@ -592,6 +686,13 @@ func (ip *InfoPanel) ShowHover(key, context string) {
 	if key == "" {
 		return
 	}
+	// Hover-swap mode is opt-in. When the toggle is off, the user has
+	// asked the panel to stay on whatever they last interacted with —
+	// no hover-driven repaints. Sticky/click interactions always work
+	// regardless of this flag.
+	if !ip.hoverEnabled {
+		return
+	}
 	// Don't clobber the sticky render if the hover is actually the
 	// same key — avoids a flicker when the user mouses off and back
 	// onto the same row.
@@ -601,6 +702,23 @@ func (ip *InfoPanel) ShowHover(key, context string) {
 	ip.showingHover = true
 	ip.ShowInfo(key, context)
 }
+
+// SetHoverEnabled lets the user (or restored preference) flip
+// hover-driven repaints on/off. The button in the panel header
+// drives this directly.
+func (ip *InfoPanel) SetHoverEnabled(enabled bool) {
+	ip.hoverEnabled = enabled
+	// Drop any in-flight hover state so the panel snaps back to its
+	// sticky view when the user toggles hover off mid-flight.
+	if !enabled && ip.showingHover {
+		ip.showingHover = false
+		if ip.stickyKey != "" {
+			ip.ShowInfo(ip.stickyKey, ip.stickyContext)
+		}
+	}
+}
+
+func (ip *InfoPanel) HoverEnabled() bool { return ip.hoverEnabled }
 
 // ClearHover reverts the panel to its last-interacted (sticky)
 // state. Called on mouse-out of hover targets. Noop when nothing

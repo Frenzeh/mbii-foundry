@@ -218,10 +218,28 @@ func (p *PointBuyUI) createUI() {
 		}
 	}
 
+	// Multiplier hint card — explains where MB_ATT_*_MULTIPLIER
+	// attributes belong. Authors used to look for them in the main
+	// Attributes grid; they're now filtered out (since they're
+	// point-buy primitives, not loadout toggles) and live in the slot
+	// picker dropdown below. The hint avoids a "where did the
+	// multipliers go?" hunt.
+	multHint := widget.NewLabelWithStyle(
+		"Custom multipliers (MB_ATT_AP_MULTIPLIER, MB_ATT_BP_MULTIPLIER, MB_ATT_DMG_GIVEN_MULTIPLIER, etc.) "+
+			"are point-buy primitives — pick them from any slot's skill dropdown below to let players buy "+
+			"into custom multiplier ranks. They're intentionally not in the Attributes grid because they "+
+			"are bought, not toggled.",
+		fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
+	multHint.Wrapping = fyne.TextWrapWord
+
 	p.container = container.NewVBox(
 		widget.NewCard("Point Buy Budget",
 			"Toggle Custom Build, set total mbPoints, and pick how many archetypes the class offers (1–3).",
 			container.NewPadded(headerForm),
+		),
+		widget.NewCard("Custom Multipliers",
+			"Point-buy multipliers — pick these from a slot's skill dropdown.",
+			container.NewPadded(multHint),
 		),
 		widget.NewCard("Build & Simulator",
 			"Edit skills here, then flip to Simulate to try the build.",

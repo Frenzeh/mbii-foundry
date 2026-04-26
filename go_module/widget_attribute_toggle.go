@@ -242,11 +242,21 @@ func (w *AttributeToggleWidget) createLevelButton(level int, text string, onInfo
 }
 
 func (w *AttributeToggleWidget) refreshButtons() {
+	// When the row is OFF, hide the 1/2/3 numeric buttons — they're
+	// only meaningful once the attribute has been turned on. Click
+	// the Off pill to reveal them; the click flow on a hidden button
+	// can't fire anyway since they're not laid out. Reduces the
+	// visual weight of every off-row to a single pill.
 	for i, btn := range w.buttons {
 		if i == w.CurrentVal {
 			btn.Importance = widget.HighImportance
 		} else {
 			btn.Importance = widget.MediumImportance
+		}
+		if i > 0 && w.CurrentVal == 0 {
+			btn.Hide()
+		} else {
+			btn.Show()
 		}
 		btn.Refresh()
 	}

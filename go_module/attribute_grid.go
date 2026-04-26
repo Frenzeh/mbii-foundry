@@ -42,10 +42,20 @@ func NewAttributeGrid(initialStr string, onChange func(string), onHover func(str
 }
 
 func (ag *AttributeGrid) createUI() {
-	// Group by Category
+	// Group by Category. Skip everything that isn't actually an
+	// attribute: EAS_* (class specials), HI_* (holdables), bare FP_*
+	// (force-power enums distinct from MB_ATT_FP_*). Those rode along
+	// in data/attributes.json historically because they share the
+	// picker shape, but they have their own UI surfaces — leaking
+	// them into the Attributes grid created the duplicate-row look
+	// the user flagged (e.g. "Forcefield" appearing twice as
+	// MB_ATT_FORCEFIELD and HI_SHIELD).
 	categories := make(map[string][]AttributeDef)
 	attributes := GetAttributes()
 	for _, attr := range attributes {
+		if !isAttributeProper(attr.ID) {
+			continue
+		}
 		categories[attr.Category] = append(categories[attr.Category], attr)
 	}
 
@@ -234,6 +244,15 @@ func (ag *AttributeGrid) TriggerChange() {
 	if ag.onChange != nil {
 		ag.onChange(result)
 	}
+}
+
+// isAttributeProper reports whether an ID is a real MB_ATT_* /
+// MB_RES_* attribute and not one of the inventory-shaped enums
+// (HI_*, EAS_*, bare FP_*) that sit alongside them in the data
+// file. The Attributes grid only renders the proper ones; the
+// others are picked from their own surfaces.
+func isAttributeProper(id string) bool {
+	return strings.HasPrefix(id, "MB_ATT_") || strings.HasPrefix(id, "MB_RES_")
 }
 
 func parseAttributesString(s string) map[string]int {

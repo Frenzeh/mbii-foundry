@@ -32,7 +32,7 @@ const (
 	// screen's "new version available" banner. Bump this before tagging
 	// a release — if they drift, testers get a stale banner or none at
 	// all.
-	AppVersion = "0.10.5-alpha"
+	AppVersion = "0.10.6-alpha"
 	AppName    = "MBII Foundry"
 )
 
@@ -890,7 +890,8 @@ func (a *App) popOutCurrentTab() {
 	delete(a.editors, tab)
 
 	win := a.fyneApp.NewWindow(title + " — MBII Foundry")
-	win.SetContent(ed.GetContent())
+	bar := reattachBar("Reattach tab", func() { win.Close() })
+	win.SetContent(container.NewBorder(bar, nil, nil, nil, ed.GetContent()))
 	win.Resize(fyne.NewSize(1100, 800))
 
 	// Reattach helper — used both on user-cancelled close and on
@@ -936,10 +937,23 @@ func (a *App) setSourceEditorForAll(ed Editor) {
 	}
 }
 
+// reattachBar builds the standard top-of-window strip every pop-out
+// uses for the "send back to main window" affordance. A single
+// LowImportance button labelled "Reattach" runs the supplied callback
+// then closes its own window. Keeps reattach UX consistent across
+// info-panel / source-panel / tab-tear-off pop-outs.
+func reattachBar(label string, action func()) fyne.CanvasObject {
+	btn := widget.NewButtonWithIcon(label, theme.NavigateBackIcon(), action)
+	btn.Importance = widget.LowImportance
+	return container.NewPadded(container.NewHBox(btn, layout.NewSpacer()))
+}
+
 // popOutSourcePanel opens the source panel in a fresh window. New
 // instance of SourcePanel registered as a mirror so the broadcast
 // pipeline keeps it in sync with whatever editor is active in the
-// main window. On close the mirror is unregistered.
+// main window. The window header carries a Reattach button that
+// removes the mirror + closes the window in one click; on plain
+// close (without Reattach) the mirror is also unregistered.
 func (a *App) popOutSourcePanel() {
 	if a.fyneApp == nil {
 		return
@@ -951,7 +965,8 @@ func (a *App) popOutSourcePanel() {
 	if a.sourcePanel != nil && a.sourcePanel.editorRef != nil {
 		mirror.SetActiveEditor(a.sourcePanel.editorRef)
 	}
-	win.SetContent(mirror.GetContent())
+	bar := reattachBar("Reattach to main window", func() { win.Close() })
+	win.SetContent(container.NewBorder(bar, nil, nil, nil, mirror.GetContent()))
 	win.Resize(fyne.NewSize(560, 720))
 	win.SetOnClosed(func() {
 		out := a.sourcePanelMirrors[:0]
@@ -991,7 +1006,8 @@ func (a *App) popOutInfoPanel() {
 		mirror.ShowSticky(a.infoPanel.stickyKey, a.infoPanel.stickyContext)
 	}
 
-	win.SetContent(mirror.GetContent())
+	bar := reattachBar("Reattach to main window", func() { win.Close() })
+	win.SetContent(container.NewBorder(bar, nil, nil, nil, mirror.GetContent()))
 	win.Resize(fyne.NewSize(420, 720))
 	win.SetOnClosed(func() {
 		out := a.infoPanelMirrors[:0]

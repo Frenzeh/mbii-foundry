@@ -45,9 +45,9 @@ type SourcePanel struct {
 	editor      *widget.Entry
 	viewHost    *fyne.Container // Stack swapping between highlighted & editor
 
-	editToggle *widget.Button // "Edit" / "View" toggle
-	applyBtn   *widget.Button
-	revertBtn  *widget.Button
+	editToggle *TooltipButton // "Edit" / "View" toggle
+	applyBtn   *TooltipButton
+	revertBtn  *TooltipButton
 
 	// Live-parse validation feedback — only visible in edit mode.
 	// Updates on every keystroke with either a success tick or the
@@ -152,42 +152,42 @@ func NewSourcePanel(a *App) *SourcePanel {
 	sp.viewHost = container.NewStack(highlightScroll, editorScroll)
 	sp.viewHost.Objects[1].Hide() // editor hidden initially
 
-	copyBtn := widget.NewButtonWithIcon("", theme.ContentCopyIcon(), func() {
+	copyBtn := NewTooltipButton("", theme.ContentCopyIcon(), func() {
 		text := sp.currentText()
 		if text == "" {
 			return
 		}
 		a.mainWindow.Clipboard().SetContent(text)
-	})
+	}, "Copy source to clipboard")
 	copyBtn.Importance = widget.LowImportance
 
-	sp.editToggle = widget.NewButtonWithIcon("Edit", theme.DocumentCreateIcon(), func() {
+	sp.editToggle = NewTooltipButton("Edit", theme.DocumentCreateIcon(), func() {
 		sp.toggleEditMode()
-	})
+	}, "Switch between read-only highlighted view and editable text")
 	sp.editToggle.Importance = widget.LowImportance
 
-	sp.applyBtn = widget.NewButtonWithIcon("Apply", theme.ConfirmIcon(), func() {
+	sp.applyBtn = NewTooltipButton("Apply", theme.ConfirmIcon(), func() {
 		sp.applyEdits()
-	})
+	}, "Parse the edited source and push it back to the form")
 	sp.applyBtn.Importance = widget.HighImportance
 	sp.applyBtn.Hide()
 
-	sp.revertBtn = widget.NewButtonWithIcon("Revert", theme.ContentUndoIcon(), func() {
+	sp.revertBtn = NewTooltipButton("Revert", theme.ContentUndoIcon(), func() {
 		sp.revertEdits()
-	})
+	}, "Discard in-progress edits; restore from form state")
 	sp.revertBtn.Importance = widget.LowImportance
 	sp.revertBtn.Hide()
 
-	collapseBtn := widget.NewButtonWithIcon("", PanelCollapseRightIcon(), func() {
+	collapseBtn := NewTooltipButton("", PanelCollapseRightIcon(), func() {
 		a.toggleSourcePanel()
-	})
+	}, "Collapse source panel")
 	collapseBtn.Importance = widget.LowImportance
 
-	popOutBtn := widget.NewButtonWithIcon("", theme.WindowMaximizeIcon(), func() {
+	popOutBtn := NewTooltipButton("", theme.WindowMaximizeIcon(), func() {
 		if sp.onPopOut != nil {
 			sp.onPopOut()
 		}
-	})
+	}, "Pop out source panel into its own window (collapses rail)")
 	popOutBtn.Importance = widget.LowImportance
 
 	rule := NewAccentRule()

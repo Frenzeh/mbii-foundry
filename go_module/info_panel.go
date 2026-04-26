@@ -282,11 +282,11 @@ This panel provides real-time documentation and context for the field you're edi
 	// inset by 3px via a Padded wrapper so the 1px accent border sits
 	// inside the bg rather than flush with its edge. That inset is the
 	// "offset stroke" look the MBII launcher boxes use.
-	popOutBtn := widget.NewButtonWithIcon("", theme.WindowMaximizeIcon(), func() {
+	popOutBtn := NewTooltipButton("", theme.WindowMaximizeIcon(), func() {
 		if ip.onPopOut != nil {
 			ip.onPopOut()
 		}
-	})
+	}, "Pop out info panel into its own window (collapses sidebar)")
 	popOutBtn.Importance = widget.LowImportance
 	rightChip := container.NewHBox(ip.idChip, popOutBtn)
 	heroRow := container.NewBorder(nil, nil,

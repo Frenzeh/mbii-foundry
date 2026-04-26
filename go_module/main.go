@@ -32,7 +32,7 @@ const (
 	// screen's "new version available" banner. Bump this before tagging
 	// a release — if they drift, testers get a stale banner or none at
 	// all.
-	AppVersion = "0.10.6-alpha"
+	AppVersion = "0.10.7-alpha"
 	AppName    = "MBII Foundry"
 )
 
@@ -941,9 +941,11 @@ func (a *App) setSourceEditorForAll(ed Editor) {
 // uses for the "send back to main window" affordance. A single
 // LowImportance button labelled "Reattach" runs the supplied callback
 // then closes its own window. Keeps reattach UX consistent across
-// info-panel / source-panel / tab-tear-off pop-outs.
+// info-panel / source-panel / tab-tear-off pop-outs. Tooltip clarifies
+// the closing-window behaviour so users know their work isn't lost.
 func reattachBar(label string, action func()) fyne.CanvasObject {
-	btn := widget.NewButtonWithIcon(label, theme.NavigateBackIcon(), action)
+	btn := NewTooltipButton(label, theme.NavigateBackIcon(), action,
+		"Close this window and return the panel to the main app (state preserved)")
 	btn.Importance = widget.LowImportance
 	return container.NewPadded(container.NewHBox(btn, layout.NewSpacer()))
 }
@@ -968,6 +970,18 @@ func (a *App) popOutSourcePanel() {
 	bar := reattachBar("Reattach to main window", func() { win.Close() })
 	win.SetContent(container.NewBorder(bar, nil, nil, nil, mirror.GetContent()))
 	win.Resize(fyne.NewSize(560, 720))
+
+	// Collapse the docked source rail in the main window — the panel
+	// is now living in its own window, so leaving the rail expanded
+	// just shows an empty stub. Snapshot the prior visible state so
+	// reattach restores it.
+	wasVisible := a.config.SourcePanelVisible
+	if wasVisible {
+		a.config.SourcePanelVisible = false
+		a.updateMainLayout()
+		a.mainWindow.Content().Refresh()
+	}
+
 	win.SetOnClosed(func() {
 		out := a.sourcePanelMirrors[:0]
 		for _, m := range a.sourcePanelMirrors {
@@ -976,6 +990,14 @@ func (a *App) popOutSourcePanel() {
 			}
 		}
 		a.sourcePanelMirrors = out
+		// Restore the rail iff it was visible at pop-out time. Don't
+		// re-show it if the user had it hidden before — that would be
+		// a state-change surprise.
+		if wasVisible && !a.config.SourcePanelVisible {
+			a.config.SourcePanelVisible = true
+			a.updateMainLayout()
+			a.mainWindow.Content().Refresh()
+		}
 	})
 	win.Show()
 }
@@ -1009,6 +1031,17 @@ func (a *App) popOutInfoPanel() {
 	bar := reattachBar("Reattach to main window", func() { win.Close() })
 	win.SetContent(container.NewBorder(bar, nil, nil, nil, mirror.GetContent()))
 	win.Resize(fyne.NewSize(420, 720))
+
+	// Collapse the docked sidebar — the info panel lives there and is
+	// now in its own window. Snapshot prior state for restore.
+	wasVisible := a.sidebarVisible
+	if wasVisible {
+		a.sidebarVisible = false
+		a.config.SidebarVisible = false
+		a.updateMainLayout()
+		a.mainWindow.Content().Refresh()
+	}
+
 	win.SetOnClosed(func() {
 		out := a.infoPanelMirrors[:0]
 		for _, m := range a.infoPanelMirrors {
@@ -1017,6 +1050,13 @@ func (a *App) popOutInfoPanel() {
 			}
 		}
 		a.infoPanelMirrors = out
+		// Restore the sidebar iff it was visible at pop-out time.
+		if wasVisible && !a.sidebarVisible {
+			a.sidebarVisible = true
+			a.config.SidebarVisible = true
+			a.updateMainLayout()
+			a.mainWindow.Content().Refresh()
+		}
 	})
 	win.Show()
 }

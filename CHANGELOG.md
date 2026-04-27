@@ -15,6 +15,22 @@ pre-release suffixes until the project stabilizes.
 - Self-contained parser round-trip tests
 - README install badges + "Where do I find .mbch files to edit?" section
 
+## [0.11.8-alpha] — 2026-04-26
+
+### Fixed
+- **Attributes that aren't yet on the loadout couldn't be turned on** — the
+  level-pill widget was hiding the 1/2/3 buttons whenever `CurrentVal == 0`,
+  leaving only the "Off" pill clickable. With nothing to click, new attributes
+  were unaddable. All pills now stay visible; the active level gets
+  HighImportance for emphasis.
+- **Save → AppData\Local\Temp\…\.txt** — `applyEdits` was capturing the
+  editor's "original path" *after* `LoadFile` had already mutated it to point
+  at the parser-roundtrip temp file. The "restore" no-op'd, the editor
+  stayed pointed at `…\Temp\foundry-apply-XXXX.txt`, and Save wrote back
+  there. Original path is now snapshotted *before* `LoadFile`. Belt-and-
+  suspenders: `saveFile` now treats any path under the OS temp dir as
+  unset and routes through Save As.
+
 ## [0.11.7-alpha] — 2026-04-26
 
 ### Fixed

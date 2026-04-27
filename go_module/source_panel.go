@@ -438,9 +438,18 @@ func (sp *SourcePanel) applyEdits() {
 		}
 		return
 	}
+	// Capture the original path BEFORE LoadFile — LoadFile mutates
+	// the editor's currentPath to the temp file we're about to feed
+	// it. Without this snapshot, the post-LoadFile "restore" reads
+	// the just-mutated temp path and the editor stays pointed at
+	// `…\Temp\foundry-apply-*.txt`. The user then hits Save and ends
+	// up writing back to the temp directory with a .txt extension.
+	// Tester report 2026-04-26: "auto saves as .txt … in
+	// C:\Users\$ME\AppData\Local\Temp."
+	originalPath := sp.editorRef.GetCurrentPath()
 	ext := ".txt"
-	if p := sp.editorRef.GetCurrentPath(); p != "" {
-		ext = filepath.Ext(p)
+	if originalPath != "" {
+		ext = filepath.Ext(originalPath)
 	}
 	tmp, err := os.CreateTemp("", "foundry-apply-*"+ext)
 	if err != nil {
@@ -460,9 +469,10 @@ func (sp *SourcePanel) applyEdits() {
 		dialog.ShowError(fmt.Errorf("source didn't parse: %w", err), sp.app.mainWindow)
 		return
 	}
-	if original := sp.app.currentEditorPath(); original != "" {
-		sp.editorRef.SetCurrentPath(original)
-	}
+	// Restore the user's original path (or clear it for an unsaved
+	// new file — clearing forces saveFile() to redirect to Save As
+	// instead of writing back to the temp file).
+	sp.editorRef.SetCurrentPath(originalPath)
 	sp.userDirty = false
 	sp.refreshFromProvider()
 	sp.app.updateStatus("Applied source edits to the form")

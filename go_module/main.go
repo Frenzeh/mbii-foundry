@@ -32,7 +32,7 @@ const (
 	// screen's "new version available" banner. Bump this before tagging
 	// a release — if they drift, testers get a stale banner or none at
 	// all.
-	AppVersion = "0.11.7-alpha"
+	AppVersion = "0.11.8-alpha"
 	AppName    = "MBII Foundry"
 )
 
@@ -1715,6 +1715,28 @@ func (a *App) openFile() {
 	})
 }
 
+// isTempPath reports whether p sits under the OS temp directory.
+// Used by saveFile to refuse writing back to a path that originated
+// from applyEdits' parser round-trip (the .txt-in-temp bug).
+func isTempPath(p string) bool {
+	if p == "" {
+		return false
+	}
+	abs, err := filepath.Abs(p)
+	if err != nil {
+		return false
+	}
+	tmp, err := filepath.Abs(os.TempDir())
+	if err != nil {
+		return false
+	}
+	// Normalize to lowercase on Windows where path-case differs but
+	// filesystem treats them as equivalent.
+	a := strings.ToLower(abs)
+	t := strings.ToLower(tmp)
+	return strings.HasPrefix(a, t)
+}
+
 func (a *App) saveFile() {
 	tab := a.docTabs.Selected()
 	if tab == nil {
@@ -1730,7 +1752,13 @@ func (a *App) saveFile() {
 	// per-type checks were redundant.
 	path := editor.GetCurrentPath()
 
-	if path == "" {
+	// Treat OS temp dir as "no path" — applyEdits used to leak temp
+	// file paths into the editor's currentPath, which made Save write
+	// back to AppData\Local\Temp. The applyEdits leak is fixed, but
+	// guard here too: if the editor is somehow pointed at a temp file,
+	// route through Save As so the user gets a real destination
+	// instead of clobbering an ephemeral file.
+	if path == "" || isTempPath(path) {
 		a.saveFileAs()
 		return
 	}

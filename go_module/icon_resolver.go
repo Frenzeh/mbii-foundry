@@ -337,23 +337,91 @@ func (ir *IconResolver) ResolveAttributeIcon(attID string) string {
 	return candidates[0]
 }
 
-// ResolveClassIcon finds the icon for a Character definition
+// ResolveClassIcon finds the icon for a Character definition.
+// Returns the FIRST candidate path; callers that want graceful
+// fallback should use ResolveClassIconCandidates instead.
 func (ir *IconResolver) ResolveClassIcon(model, skin, customShader string) string {
-	// 1. Explicit UI Shader
-	if customShader != "" && customShader != "default" {
-		return customShader
+	candidates := ir.ResolveClassIconCandidates(model, skin, customShader)
+	if len(candidates) == 0 {
+		return ""
+	}
+	return candidates[0]
+}
+
+// ResolveClassIconCandidates returns a *prioritized* list of paths to
+// probe when looking up a character portrait.
+//
+// MBII's asset layout (NOT stock JKA):
+//
+//   - MBAssets1..4.pk3      core gameplay + shaders (incl. shaders/<model>.shader)
+//   - FAMBModels.pk3        FA models with their portraits — most
+//                           `models/players/<model>/mb2_icon_<skin>.jpg`
+//                           textures live here
+//   - mb2_pb_assets*.pk3,   per-mode asset packs that may add models
+//     mb2_pbr_*, mb2_um_*,  + portraits the FA core doesn't ship
+//     mb2_cmp_*, map PK3s
+//   - TextAssets/           NO IMAGES — only `.mbch` / `.sab` / `.veh`
+//                           source. CI builds these into PK3s with
+//                           the same name scheme.
+//
+// Foundry's VFS unions all PK3s under `gamedata/MBII/` (and
+// gamedata/, gamedata/base/) plus the TextAssets directory, so a
+// portrait declared in FAMBModels can be found regardless of which
+// PK3 holds the texture vs the shader.
+//
+// MBII portrait naming convention is `mb2_icon_<skin>` where <skin>
+// is whatever the author put in the `skin` field (default / red /
+// blue / mus / sjg / mots / endor_kid / etc.). Some older content
+// uses bare `<skin>.jpg`; some custom shaders re-map `mb2_icon_<skin>`
+// to a different texture path inside `shaders/<model>.shader` —
+// that case is handled by `ShaderResolver`, called from
+// `LoadIconResource` before the extension probe.
+//
+// Resolution order:
+//
+//   1. Explicit `uishader` field — author's stated intent.
+//   2. `models/players/<model>/mb2_icon_<skin>` — the canonical pattern.
+//   3. `models/players/<model>/icon_<skin>`     — older content variant.
+//   4. `models/players/<model>/<skin>`          — bare-skin filename.
+//   5. `models/players/<model>/mb2_icon_default` — fall-through to default.
+//   6. `models/players/<model>/icon_default`    — older default fallback.
+//
+// All paths normalised to lowercase since the VFS index keys are
+// stored lowercased. If every candidate misses (the author shipped
+// no portrait for this skin variant) the caller surfaces a clear
+// "no image found" placeholder rather than a blank box.
+func (ir *IconResolver) ResolveClassIconCandidates(model, skin, customShader string) []string {
+	var out []string
+	seen := map[string]bool{}
+	add := func(p string) {
+		p = strings.ToLower(strings.TrimSpace(p))
+		if p == "" || seen[p] {
+			return
+		}
+		seen[p] = true
+		out = append(out, p)
 	}
 
-	// 2. Standard Model Icon Pattern
-	// models/players/{model}/mb2_icon_{skin}
+	// 1. Explicit override — author's intent wins.
+	if customShader != "" && customShader != "default" {
+		add(customShader)
+	}
+
+	// 2..6. Model-derived candidates.
 	if model == "" {
 		model = "kyle"
 	}
 	if skin == "" {
 		skin = "default"
 	}
-
-	return fmt.Sprintf("models/players/%s/mb2_icon_%s", model, skin)
+	add(fmt.Sprintf("models/players/%s/mb2_icon_%s", model, skin))
+	add(fmt.Sprintf("models/players/%s/icon_%s", model, skin))
+	add(fmt.Sprintf("models/players/%s/%s", model, skin))
+	if skin != "default" {
+		add(fmt.Sprintf("models/players/%s/mb2_icon_default", model))
+		add(fmt.Sprintf("models/players/%s/icon_default", model))
+	}
+	return out
 }
 
 func (ir *IconResolver) checkExists(basePath string) bool {

@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/layout"
@@ -48,6 +49,7 @@ type WeaponGrid struct {
 	overrideExists     func(wpID string) bool    // true if a WeaponInfoN targets wpID
 	onOverrideJump     func(wpID string)         // navigate to Weapon Mods + select
 	onFlagsJump        func(wpID string)         // navigate to Flags + select
+	onClickInfo        func(string, string)      // click on weapon icon → pin sidebar
 
 	filter string
 	search *widget.Entry
@@ -78,6 +80,14 @@ func NewWeaponGrid(initialStr string, onChange func(string), onHover func(string
 // last weapon the mouse passed over, even after the user has moved
 // on to a different field.
 func (wg *WeaponGrid) SetOnUnhover(f func()) { wg.onUnhover = f }
+
+// SetOnClickInfo wires the per-card click → sticky-context route.
+// Click on the weapon icon (or anywhere on the card) pins the
+// sidebar to that weapon's docs regardless of the hover toggle.
+// Symmetric with AttributeGrid.SetOnClickInfo.
+func (wg *WeaponGrid) SetOnClickInfo(f func(string, string)) {
+	wg.onClickInfo = f
+}
 
 // SetAttributeBridge wires the WP_X ↔ MB_ATT_X cross-tab integration.
 // Both getter and setter are required for the level pills to render —
@@ -213,31 +223,72 @@ func (wg *WeaponGrid) createUI() {
 	}
 }
 
-// buildCard renders the full-width card for one weapon. Layout (left
-// to right): icon · name + ID stack · level pills · badge column.
+// buildCard renders the icon-forward card for one weapon. The icon
+// (when resolved) is the primary affordance: a 64×64 extracted PNG
+// fills the left edge so authors recognize the weapon by its in-game
+// art instead of by reading WP_*. Name + paired-attribute monospace
+// caption sit beside it; level pills inline on the right; badges
+// stacked on the far right. Surface fills brighter as the level
+// climbs — Off → faint, 1 → moderate, 2/3 → saturated — so the
+// loadout's hot-pick weapons stand out at a glance.
 func (wg *WeaponGrid) buildCard(w WeaponDef) fyne.CanvasObject {
 	weaponID := w.ID
 	owned := wg.selected[weaponID]
 	pair := CanonicalAttributeFor(weaponID)
 
-	// Icon (48px, embedded HUD art).
+	// Active level for the paired attribute — used to scale the
+	// card's surface and pill emphasis. 0 when no bridge is wired.
+	var activeLevel int
+	if pair != "" && wg.attrLevelGetter != nil && owned {
+		activeLevel = wg.attrLevelGetter(pair)
+	} else if owned {
+		activeLevel = 1
+	}
+
+	// Icon (64×64, embedded HUD art when available). Wrapped in a
+	// clickableCell so clicking the icon pins this weapon's docs in
+	// the sidebar via the sticky-context path, regardless of the
+	// hover toggle. Hover on the icon also fires the transient
+	// onHover preview — same affordance the (i) button used to give.
 	var iconObj fyne.CanvasObject
 	if wg.resolveIcon != nil {
 		if res := wg.resolveIcon(weaponID); res != nil {
-			iconObj = NewRasterIconFromResource(res, 48, 48)
+			iconObj = NewRasterIconFromResource(res, 64, 64)
 		}
 	}
 	if iconObj == nil {
-		iconObj = container.NewGridWrap(fyne.NewSize(48, 48),
+		iconObj = container.NewGridWrap(fyne.NewSize(64, 64),
 			widget.NewIcon(theme.QuestionIcon()))
 	}
+	iconClickable := newClickableCell(iconObj, func() {
+		if wg.onClickInfo != nil {
+			wg.onClickInfo(weaponID, "")
+		}
+	})
+	if wg.onHover != nil {
+		iconClickable.onHover = func() { wg.onHover(weaponID, w.Description) }
+	}
+	if wg.onUnhover != nil {
+		iconClickable.onLeave = wg.onUnhover
+	}
+	iconObj = iconClickable
 
-	// Name + ID stack — display name bold above, monospace WP_* below.
+	// Compact title block: name (bold) + paired MB_ATT_ caption
+	// (small monospace). Dropped the duplicate WP_* line — the icon
+	// + name carry that already, and the paired attribute is the
+	// useful technical handle.
 	nameLbl := widget.NewLabelWithStyle(w.Name,
 		fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	idLbl := widget.NewLabelWithStyle(weaponID,
-		fyne.TextAlignLeading, fyne.TextStyle{Monospace: true})
-	titleStack := container.NewVBox(nameLbl, idLbl)
+	var subtitle string
+	if pair != "" {
+		subtitle = pair
+	} else {
+		subtitle = weaponID
+	}
+	subLbl := canvas.NewText(subtitle, theme.PlaceHolderColor())
+	subLbl.TextSize = SizeSmall
+	subLbl.TextStyle = fyne.TextStyle{Monospace: true}
+	titleStack := container.NewVBox(nameLbl, subLbl)
 
 	// Level pills — render only when there's a paired MB_ATT_* AND
 	// the bridge callbacks are wired. Without the bridge, the user
@@ -247,9 +298,6 @@ func (wg *WeaponGrid) buildCard(w WeaponDef) fyne.CanvasObject {
 	if pair != "" && wg.attrLevelGetter != nil && wg.attrLevelSetter != nil {
 		actionRow = wg.buildLevelPills(weaponID, pair, w)
 	} else {
-		// Plain checkbox fallback for unpaired weapons (WP_SABER,
-		// WP_MELEE, WP_NONE) and for legacy contexts that haven't
-		// wired the attribute bridge.
 		check := widget.NewCheck("Equip", func(on bool) {
 			wg.toggleWeapon(weaponID, on)
 		})
@@ -257,16 +305,12 @@ func (wg *WeaponGrid) buildCard(w WeaponDef) fyne.CanvasObject {
 		actionRow = check
 	}
 
-	// Badge column — flag count + override-exists. Both cross-tab
-	// jumps; if the bridge isn't wired, the badge is informational
-	// only (no click handler). Use NewTooltipButton so hover explains
-	// what the badge means without the user having to guess.
+	// Badge column — flag count + override-exists.
 	var badges []fyne.CanvasObject
 	if wg.flagsCountGetter != nil {
 		if n := wg.flagsCountGetter(weaponID); n > 0 {
-			label := fmt.Sprintf("Flags · %d", n)
-			tip := fmt.Sprintf("%d HELD_* flag(s) applied to this weapon — click to edit on the Flags tab", n)
-			badges = append(badges, NewTooltipButton(label, theme.GridIcon(),
+			tip := fmt.Sprintf("%d HELD_* flag(s) applied — click to edit on the Flags tab", n)
+			badges = append(badges, NewTooltipButton(fmt.Sprintf("F·%d", n), theme.GridIcon(),
 				func() {
 					if wg.onFlagsJump != nil {
 						wg.onFlagsJump(weaponID)
@@ -275,20 +319,18 @@ func (wg *WeaponGrid) buildCard(w WeaponDef) fyne.CanvasObject {
 		}
 	}
 	if wg.overrideExists != nil && wg.overrideExists(weaponID) {
-		badges = append(badges, NewTooltipButton("Override", theme.SettingsIcon(),
+		badges = append(badges, NewTooltipButton("M", theme.SettingsIcon(),
 			func() {
 				if wg.onOverrideJump != nil {
 					wg.onOverrideJump(weaponID)
 				}
-			}, "WeaponInfo override exists for this weapon — click to edit on the Weapon Mods tab"))
+			}, "WeaponInfo override exists — click to edit on Weapon Mods"))
 	}
 	var badgeCol fyne.CanvasObject
 	if len(badges) > 0 {
 		badgeCol = container.NewHBox(badges...)
 	}
 
-	// Card body: Border lays out icon|titleStack on the left, badges
-	// on the right edge, action pills in the center.
 	body := container.NewBorder(
 		nil, nil,
 		container.NewHBox(iconObj, container.NewPadded(titleStack)),
@@ -296,12 +338,17 @@ func (wg *WeaponGrid) buildCard(w WeaponDef) fyne.CanvasObject {
 		container.New(layout.NewCenterLayout(), actionRow),
 	)
 
-	// Card chrome — accent color for category so the eye can scan
-	// rifles vs heavy at a glance. owned=true bumps both alphas to
-	// signal "this weapon is on the loadout."
-	fillA, strokeA := uint8(10), uint8(50)
-	if owned {
-		fillA, strokeA = 28, 110
+	// Surface chrome scales with level: Off → faint, 1 → moderate,
+	// 2 → strong, 3 → saturated. Gives the loadout a heat-map feel
+	// where the most-leveled weapons pop visually.
+	fillA, strokeA := uint8(8), uint8(40)
+	switch {
+	case activeLevel >= 3:
+		fillA, strokeA = 50, 160
+	case activeLevel == 2:
+		fillA, strokeA = 36, 130
+	case activeLevel == 1:
+		fillA, strokeA = 22, 100
 	}
 	tile := NewTilePanel(body, TileOpts{
 		AccentColor: w.AccentColor(),
@@ -341,7 +388,12 @@ func (wg *WeaponGrid) buildLevelPills(weaponID, attID string, w WeaponDef) fyne.
 	}
 
 	pills := []fyne.CanvasObject{}
-	// Off pill — removes weapon + zeroes the attribute.
+	// Refresh runs inline — fyne.Do from main thread deadlocks on
+	// v2.7.1 (queue waits for main, main waits for queue). Inline
+	// rebuild during a button click handler is supposedly risky
+	// but Fyne handles widget tree replacement during event
+	// dispatch fine in practice; the previously-feared crash was
+	// theoretical, the deadlock is real and observed.
 	off := widget.NewButton("Off", func() {
 		wg.toggleWeapon(weaponID, false)
 		wg.attrLevelSetter(attID, 0)

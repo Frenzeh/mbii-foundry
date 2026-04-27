@@ -12,6 +12,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -115,6 +117,7 @@ type MBCHEditor struct {
 	app            *App
 	attrGrid       *AttributeGrid
 	weaponGrid     *WeaponGrid // New
+	holdableGrid   *HoldableGrid
 
 	// New MultiSelect Widgets
 	saberStyleSelect *MultiSelectWidget
@@ -122,21 +125,31 @@ type MBCHEditor struct {
 }
 
 func NewMBCHEditor(app *App) *MBCHEditor {
+	tCtor := time.Now()
 	e := &MBCHEditor{
 		character:    parsers.NewMBCHCharacter(),
 		fileManager:  app.fileManager, // Use shared manager
 		app:          app,
 		assetBrowser: app.assetBrowser,
 	}
+	tA := time.Now()
 	e.pointBuyUI = NewPointBuyUI(e)
+	LogInfo("NewMBCHEditor: NewPointBuyUI took %s", time.Since(tA))
+	tB := time.Now()
 	e.weaponInfoUI = NewWeaponInfoUI(e)
+	LogInfo("NewMBCHEditor: NewWeaponInfoUI took %s", time.Since(tB))
+	tC := time.Now()
 	e.forceInfoUI = NewForceInfoUI(e)
+	LogInfo("NewMBCHEditor: NewForceInfoUI took %s", time.Since(tC))
 	// Initialize onHover to a no-op so Select/Entry OnChanged handlers
 	// that fire during LoadFile → updateUI don't hit a nil-deref before
 	// the app has called SetOnHover. SetOnHover later replaces this
 	// with the real showHoverTooltip callback.
 	e.onHover = func(string, string) {}
+	tUI := time.Now()
 	e.createUI()
+	LogInfo("NewMBCHEditor: createUI took %s (total ctor %s)",
+		time.Since(tUI), time.Since(tCtor))
 	return e
 }
 
@@ -175,12 +188,26 @@ func (e *MBCHEditor) SetAssetBrowser(ab *AssetBrowser) {
 		vfs = ab.vfs
 	}
 	e.iconResolver = NewIconResolver(vfs)
+	// Run inline. Earlier wrapper used fyne.Do to "defer to next
+	// tick"; on Fyne v2.7.1 from the main thread that DEADLOCKS —
+	// fyne.Do waits for queue drain but main is the only thread
+	// that drains the queue. Sample showed every thread parked in
+	// pthread_cond_wait. Inline refresh is slow but won't hang.
+	t0 := time.Now()
 	if e.attrGrid != nil {
 		e.attrGrid.Refresh()
 	}
 	if e.weaponGrid != nil {
 		e.weaponGrid.Refresh()
 	}
+	if e.holdableGrid != nil {
+		e.holdableGrid.Refresh()
+	}
+	if e.iconPreview != nil {
+		e.updateIconPreview()
+	}
+	LogInfo("MBCHEditor.SetAssetBrowser: post-load refresh took %s",
+		time.Since(t0))
 }
 func (e *MBCHEditor) SetHolocronClient(client *HolocronClient) { e.holocronClient = client }
 func (e *MBCHEditor) SetOnDirtyChanged(f func(bool))           { e.onDirtyChanged = f }
@@ -419,6 +446,9 @@ func (e *MBCHEditor) createUI() {
 	}, hoverFn, e.resolveWeaponIconResource)
 	if e.app != nil {
 		e.weaponGrid.SetOnUnhover(e.app.clearHoverContext)
+		// Click on a weapon icon pins the sidebar via sticky context,
+		// matching the attribute grid's (i) → showStickyContext route.
+		e.weaponGrid.SetOnClickInfo(e.app.showStickyContext)
 	}
 
 	// Cross-tab integration — the Inventory card uses these bridges
@@ -484,6 +514,31 @@ func (e *MBCHEditor) createUI() {
 			_ = wpID
 		},
 	)
+
+	// Holdables grid — circle-badge picker for HI_* inventory items
+	// (medpac, cloak, binoculars, sentry, eweb, …). Stored in the
+	// same `attributes` pipe-string as MB_ATT_*; on change we splice
+	// the HI_* slice into the existing attribute string so the two
+	// grids don't trample each other's tokens.
+	e.holdableGrid = NewHoldableGrid("", func(holdablesStr string) {
+		// Strip existing HI_* from attributesEntry, append fresh slice.
+		var keep []string
+		for _, tok := range strings.Split(e.attributesEntry.Text, "|") {
+			tok = strings.TrimSpace(tok)
+			if tok == "" || strings.HasPrefix(tok, "HI_") {
+				continue
+			}
+			keep = append(keep, tok)
+		}
+		if holdablesStr != "" {
+			keep = append(keep, strings.Split(holdablesStr, "|")...)
+		}
+		e.attributesEntry.SetText(strings.Join(keep, "|"))
+		e.markDirty()
+	}, hoverFn)
+	if e.app != nil {
+		e.holdableGrid.SetOnUnhover(e.app.clearHoverContext)
+	}
 
 	// Text -> Grid binding. OnChanged reflects active typing — treat
 	// the token the user just finished as a sticky interaction.
@@ -863,10 +918,31 @@ func (e *MBCHEditor) createUI() {
 	}
 	e.attrGrid.SetClassScalarsBuilder(classScalarsBuilder)
 
+	// Inventory tab body — weapons + holdables in a SINGLE scroll
+	// (no sticky split). User feedback: the VSplit kept holdables
+	// pinned to the bottom of the viewport, which felt floaty and
+	// stole vertical space from the weapon grid. Now everything
+	// scrolls together: weapon family sections, then a separator,
+	// then the Holdables family sections at the bottom of the same
+	// scrollable column. WeaponGrid's existing scroll is replaced
+	// with a flat content stack so the outer VScroll wrapping
+	// inventoryBody handles all scrolling.
+	holdablesHeader := widget.NewLabelWithStyle("Holdables (Inventory items)",
+		fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	holdablesSub := widget.NewLabelWithStyle(
+		"HI_* items the class can spawn with. Click a circle to toggle on/off.",
+		fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
+	inventoryBody := container.NewVBox(
+		e.weaponGrid.GetContent(),
+		widget.NewSeparator(),
+		container.NewPadded(container.NewVBox(holdablesHeader, holdablesSub)),
+		e.holdableGrid.GetContent(),
+	)
+
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Profile", wrapForTab(profileTab)),
 		container.NewTabItem("Attributes", wrapForTab(e.attrGrid.GetContent())),
-		container.NewTabItem("Inventory", wrapForTab(e.weaponGrid.GetContent())),
+		container.NewTabItem("Inventory", wrapForTab(inventoryBody)),
 		container.NewTabItem("Flags", wrapForTab(e.weaponFlagsUI.GetContent())),
 		container.NewTabItem("Skins", wrapForTab(e.skinVariantsUI.GetContent())),
 		container.NewTabItem("Stats & Sabers", wrapForTab(loadoutTab)),
@@ -1124,6 +1200,17 @@ func (e *MBCHEditor) updateUI() {
 	e.mbPointsEntry.SetText(strconv.Itoa(e.character.MBPoints))
 	e.descriptionEntry.SetText(e.character.Description)
 
+	// Run inline. fyne.Do from the main thread deadlocks on Fyne
+	// v2.7.1 — the dispatch queue waits for main to drain but main
+	// IS the caller. Sample dump confirmed every thread parked in
+	// __psynch_cvwait. Heavy widget rebuild on the click stack is
+	// slow but won't hang.
+	e.attrGrid.values = parseAttributesString(e.character.Attributes)
+	e.weaponGrid.parseString(e.character.Weapons)
+	if e.holdableGrid != nil {
+		e.holdableGrid.values = parseHoldablesString(e.character.Attributes)
+	}
+	t0 := time.Now()
 	e.pointBuyUI.UpdateUI()
 	if e.weaponFlagsUI != nil {
 		e.weaponFlagsUI.Refresh()
@@ -1133,13 +1220,12 @@ func (e *MBCHEditor) updateUI() {
 	}
 	e.weaponInfoUI.UpdateUI()
 	e.forceInfoUI.UpdateUI()
-
-	// Update Grids
-	e.attrGrid.values = parseAttributesString(e.character.Attributes)
 	e.attrGrid.Refresh()
-
-	e.weaponGrid.parseString(e.character.Weapons)
 	e.weaponGrid.Refresh()
+	if e.holdableGrid != nil {
+		e.holdableGrid.Refresh()
+	}
+	LogInfo("MBCHEditor.updateUI: refresh took %s", time.Since(t0))
 }
 
 func (e *MBCHEditor) updateCharacterFromUI() {
@@ -1248,6 +1334,50 @@ func parseEntryFloat(entry *ValidatedEntry, min, max float64) float64 {
 	return val
 }
 
+// modelPortraitFallbackCache memoizes the result of the VFS index
+// scan for `models/players/<model>/mb2_icon_*`. The scan walks
+// every entry in the VFS index (tens of thousands of paths) so we
+// pay it at most once per model per session. Empty-string results
+// are cached too so we don't re-scan known-missing models.
+var (
+	modelPortraitFallbackCache   = map[string]string{}
+	modelPortraitFallbackCacheMu sync.RWMutex
+)
+
+// lookupModelPortraitFallback finds any `models/players/<model>/mb2_icon_*`
+// asset in the VFS, with caching. Returns "" when nothing matches.
+func lookupModelPortraitFallback(model string, vfs *VirtualFileSystem) string {
+	if model == "" || vfs == nil {
+		return ""
+	}
+	key := strings.ToLower(model)
+	modelPortraitFallbackCacheMu.RLock()
+	if v, ok := modelPortraitFallbackCache[key]; ok {
+		modelPortraitFallbackCacheMu.RUnlock()
+		return v
+	}
+	modelPortraitFallbackCacheMu.RUnlock()
+
+	dirPrefix := "models/players/" + key + "/mb2_icon_"
+	var found string
+	vfs.mu.RLock()
+	for k := range vfs.Index {
+		if strings.HasPrefix(k, dirPrefix) {
+			ext := filepath.Ext(k)
+			if ext == ".tga" || ext == ".png" || ext == ".jpg" || ext == ".jpeg" {
+				found = k
+				break
+			}
+		}
+	}
+	vfs.mu.RUnlock()
+
+	modelPortraitFallbackCacheMu.Lock()
+	modelPortraitFallbackCache[key] = found
+	modelPortraitFallbackCacheMu.Unlock()
+	return found
+}
+
 func (e *MBCHEditor) updateIconPreview() {
 	if e.iconPreview == nil {
 		return
@@ -1257,38 +1387,88 @@ func (e *MBCHEditor) updateIconPreview() {
 	skin := e.skinEntry.Text
 	uishader := e.uiShaderEntry.Text
 
-	// Derive the source label up front so we can set it regardless
-	// of whether the load actually succeeds — the label tells the
-	// author what the editor is *trying* to load, which is useful
-	// even if the VFS can't find it.
+	// Source label reflects the FILE's intent (override vs auto)
+	// independent of whether we can resolve a texture for it.
 	source := "auto"
 	if uishader != "" && uishader != "default" {
 		source = "override"
 	}
-	if e.portraitSource != nil {
-		e.portraitSource.SetText(source)
+
+	// setMissing renders the boxicon placeholder and clears the
+	// source label entirely. Earlier versions wrote diagnostic text
+	// like "override · no image found" — useful while debugging,
+	// noisy in normal use. The placeholder image speaks for itself.
+	setMissing := func(_ string) {
+		if e.portraitSource != nil {
+			e.portraitSource.SetText("")
+		}
+		if res := loadBoxiconResource("box"); res != nil {
+			e.iconPreview.Resource = res
+		} else {
+			e.iconPreview.Resource = theme.FileImageIcon()
+		}
+		e.iconPreview.Refresh()
 	}
 
-	// If we don't have an asset browser / resolver yet (editor is
-	// still being built, or running in a VFS-less test context),
-	// leave the placeholder in place. Nothing else to do.
 	if e.iconResolver == nil || e.assetBrowser == nil {
+		// Likely transient — SetAssetBrowser wires the resolvers a
+		// moment after the editor is constructed, and updateUI may
+		// fire between those two points during a Recent-file open.
+		// Render the placeholder so the user isn't staring at the
+		// generic file icon, and label the state honestly.
+		setMissing("loading…")
+		LogInfo("updateIconPreview: resolver not ready (model=%q skin=%q uishader=%q)",
+			model, skin, uishader)
 		return
 	}
 
-	path := e.iconResolver.ResolveClassIcon(model, skin, uishader)
-	if path != "" {
-		if res := e.assetBrowser.LoadIconResource(path); res != nil {
+	// Walk the candidate list — author's `uishader` first, then the
+	// `mb2_icon_<skin>` / `icon_<skin>` / bare-skin / `mb2_icon_default`
+	// fallbacks. Each goes through LoadIconResource which probes
+	// embedded HUD → shader-resolved texture → direct extension.
+	// First non-nil wins.
+	candidates := e.iconResolver.ResolveClassIconCandidates(model, skin, uishader)
+	for _, candidate := range candidates {
+		if res := e.assetBrowser.LoadIconResource(candidate); res != nil {
+			if e.portraitSource != nil {
+				e.portraitSource.SetText(source)
+			}
 			e.iconPreview.Resource = res
 			e.iconPreview.Refresh()
 			return
 		}
 	}
-	// Nothing resolved — fall back to a generic placeholder so the
-	// 64px slot still reads as "this is the portrait area" instead
-	// of going blank.
-	e.iconPreview.Resource = theme.FileImageIcon()
-	e.iconPreview.Refresh()
+
+	// LAST-RESORT: scan the VFS for any `models/players/<model>/mb2_icon_*`
+	// — the file may ship a skin-specific portrait under a name we
+	// can't predict (jedi_zf has mb2_icon_legends1.jpg, not
+	// mb2_icon_<skin> or mb2_icon_default).
+	//
+	// The scan iterates the entire VFS index (50k+ entries on a
+	// fully-loaded MBII install). It runs at most once per model
+	// per session — modelPortraitFallbackCache memoizes the result
+	// so subsequent updateIconPreview calls for the same model
+	// don't re-scan. updateIconPreview fires 3+ times during file
+	// load (one per OnChanged on model/skin/uishader entries); the
+	// cache is the difference between a 100-300ms hitch each time
+	// vs an instant lookup.
+	if model != "" && e.assetBrowser != nil && e.assetBrowser.vfs != nil {
+		fallbackPath := lookupModelPortraitFallback(model, e.assetBrowser.vfs)
+		if fallbackPath != "" {
+			if res := e.assetBrowser.LoadIconResource(fallbackPath); res != nil {
+				if e.portraitSource != nil {
+					e.portraitSource.SetText(source)
+				}
+				e.iconPreview.Resource = res
+				e.iconPreview.Refresh()
+				return
+			}
+		}
+	}
+
+	LogInfo("updateIconPreview: no candidate resolved (model=%q skin=%q uishader=%q tried=%d)",
+		model, skin, uishader, len(candidates))
+	setMissing("no image found")
 }
 
 func (e *MBCHEditor) resolveIconResource(id string) fyne.Resource {

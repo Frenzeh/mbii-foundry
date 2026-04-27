@@ -181,6 +181,9 @@ func (w *WelcomeScreen) buildRecentColumn() fyne.CanvasObject {
 		for _, rf := range recentFiles {
 			path := rf.Path
 			btn := widget.NewButtonWithIcon(filepath.Base(path), theme.FileIcon(), func() {
+				// openFileFromPath defers the heavy work to the next
+				// UI tick internally — the click handler returns
+				// immediately so macOS doesn't show a beach ball.
 				w.app.openFileFromPath(path)
 			})
 			btn.Importance = widget.LowImportance

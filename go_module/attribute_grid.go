@@ -678,7 +678,7 @@ func (ag *AttributeGrid) buildAlphaSortedGrid(attrs []AttributeDef) fyne.CanvasO
 	sort.SliceStable(sorted, func(i, j int) bool {
 		return attrDisplayName(sorted[i]) < attrDisplayName(sorted[j])
 	})
-	grid := container.NewGridWrap(fyne.NewSize(480, 64))
+	grid := container.NewGridWrap(fyne.NewSize(340, 60))
 	for _, a := range sorted {
 		grid.Add(ag.createAttributeItem(a))
 	}
@@ -759,7 +759,7 @@ func (ag *AttributeGrid) buildSectionTile(name string, members []AttributeDef, i
 	header := widget.NewLabelWithStyle(
 		fmt.Sprintf("%s  ·  %d", name, len(members)),
 		fyne.TextAlignLeading, headerStyle)
-	grid := container.NewGridWrap(fyne.NewSize(480, 64))
+	grid := container.NewGridWrap(fyne.NewSize(340, 60))
 	for _, a := range members {
 		grid.Add(ag.createAttributeItem(a))
 	}

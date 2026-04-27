@@ -15,6 +15,8 @@ package main
 // character's current weapon list.
 
 import (
+	"fmt"
+	"image/color"
 	"sort"
 	"strings"
 
@@ -23,6 +25,8 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+
+	"github.com/Frenzeh/mbii-foundry/parsers"
 )
 
 // HeldFlag describes one HELD_* option: its enum name + a compact
@@ -32,6 +36,8 @@ type HeldFlag struct {
 	ID      string // HELD_*
 	Name    string // Short label shown next to the checkbox
 	Tooltip string // What the flag does — shown on hover
+	Family  string // Grouping bucket: "Reload", "Damage", "Status",
+	// "CC", "Disarm", "Movement", "Utility", "R22"
 }
 
 // KnownHeldFlags lists every HELD_* the wiki documents. Kept in
@@ -39,37 +45,37 @@ type HeldFlag struct {
 // (reload/regen, damage mods, status effects, movement, etc.)
 // rather than alphabetical, which would split related flags apart.
 var KnownHeldFlags = []HeldFlag{
-	{"HELD_ALTRELOAD", "Mag reload", "Magazine-based reload like WESTAR-M5"},
-	{"HELD_AMMOREGEN", "Ammo regen", "Regenerates ammo while held"},
-	{"HELD_HIGHDAMAGE", "2× damage", "100% more damage; also applies to force drains"},
-	{"HELD_LOWDAMAGE", "½ damage", "50% less damage"},
-	{"HELD_EXPLOSIVE", "Explosive", "Hit effects become an AoE explosion"},
-	{"HELD_DISRUPTIFY", "Disintegrates", "Targets vaporize on death"},
-	{"HELD_FLAME", "Ignites", "Brief burn effect on hit"},
-	{"HELD_FREEZE", "Freezes", "Brief freeze on hit"},
-	{"HELD_POISON", "Poisons", "Poison dart effect on hit (doesn't stack)"},
-	{"HELD_PULSE", "Shocks", "Pulse grenade effect on hit (half drain)"},
-	{"HELD_SONIC", "Stuns", "Brief sonic stun on hit"},
-	{"HELD_STUN", "Staggers", "Gunbash-style stagger"},
-	{"HELD_KNOCKBACK", "Pushes", "Knockback like Force Push 1"},
-	{"HELD_KNOCKDOWN", "Trips", "Target knocked down on hit"},
-	{"HELD_KNOCKDOWNRESISTANCE", "KD resist", "User resists incoming knockdowns"},
-	{"HELD_IGNOREBLOCK", "No block", "Ignores Blaster Defense"},
-	{"HELD_HEAL", "Heal on hold", "User regenerates HP while active"},
-	{"HELD_SPEED", "+15% move", "User moves 15% faster while held"},
-	{"HELD_SLOW", "−15% move", "User moves 15% slower while held"},
-	{"HELD_SLOWPROJ", "−75% velocity", "Projectile moves at 25% speed"},
-	{"HELD_TRACKING", "Tracks", "Hit targets are visible to the user for 45s"},
-	{"HELD_LIFT", "Lifts", "R22.0.00: knocks target into the air on hit"},
-	{"HELD_SLIPPERY", "Slippery", "R22.0.00: target slides/loses footing on hit"},
-	{"HELD_DISARM", "Disarms", "R22.0.00: target's currently held weapon is dropped"},
-	{"HELD_NODISARM", "Disarm-immune", "R22.0.00: weapon cannot be disarmed off the user"},
-	{"HELD_PULL", "Pulls", "R22.0.00: drags hit target toward the firer"},
-	{"HELD_CRIPPLE", "Cripples", "R22.0.00: brief slow-and-stagger debuff (movement + actions)"},
-	{"HELD_FORCEFOCUS", "Force focus", "R22.0.00: hits restore Force Pool to the firer"},
-	{"HELD_LIFESTEAL", "Lifesteal", "R22.0.00: portion of damage dealt heals the firer"},
-	{"HELD_FLASH", "Flashes", "R22.0.00: Flashbang-style blind on hit"},
-	{"HELD_BACTA", "Bacta heal", "R22.0.00: hit allies (or self) receive bacta-style heal-over-time"},
+	{"HELD_ALTRELOAD", "Mag reload", "Magazine-based reload like WESTAR-M5", "Reload"},
+	{"HELD_AMMOREGEN", "Ammo regen", "Regenerates ammo while held", "Reload"},
+	{"HELD_HIGHDAMAGE", "2× damage", "100% more damage; also applies to force drains", "Damage"},
+	{"HELD_LOWDAMAGE", "½ damage", "50% less damage", "Damage"},
+	{"HELD_EXPLOSIVE", "Explosive", "Hit effects become an AoE explosion", "Damage"},
+	{"HELD_DISRUPTIFY", "Disintegrates", "Targets vaporize on death", "Damage"},
+	{"HELD_IGNOREBLOCK", "No block", "Ignores Blaster Defense", "Damage"},
+	{"HELD_FLAME", "Ignites", "Brief burn effect on hit", "Status"},
+	{"HELD_FREEZE", "Freezes", "Brief freeze on hit", "Status"},
+	{"HELD_POISON", "Poisons", "Poison dart effect on hit (doesn't stack)", "Status"},
+	{"HELD_PULSE", "Shocks", "Pulse grenade effect on hit (half drain)", "Status"},
+	{"HELD_SONIC", "Stuns", "Brief sonic stun on hit", "Status"},
+	{"HELD_STUN", "Staggers", "Gunbash-style stagger", "Status"},
+	{"HELD_KNOCKBACK", "Pushes", "Knockback like Force Push 1", "CC"},
+	{"HELD_KNOCKDOWN", "Trips", "Target knocked down on hit", "CC"},
+	{"HELD_KNOCKDOWNRESISTANCE", "KD resist", "User resists incoming knockdowns", "CC"},
+	{"HELD_HEAL", "Heal on hold", "User regenerates HP while active", "Utility"},
+	{"HELD_SPEED", "+15% move", "User moves 15% faster while held", "Movement"},
+	{"HELD_SLOW", "−15% move", "User moves 15% slower while held", "Movement"},
+	{"HELD_SLOWPROJ", "−75% velocity", "Projectile moves at 25% speed", "Movement"},
+	{"HELD_TRACKING", "Tracks", "Hit targets are visible to the user for 45s", "Utility"},
+	{"HELD_LIFT", "Lifts", "R22.0.00: knocks target into the air on hit", "CC"},
+	{"HELD_SLIPPERY", "Slippery", "R22.0.00: target slides/loses footing on hit", "CC"},
+	{"HELD_DISARM", "Disarms", "R22.0.00: target's currently held weapon is dropped", "Disarm"},
+	{"HELD_NODISARM", "Disarm-immune", "R22.0.00: weapon cannot be disarmed off the user", "Disarm"},
+	{"HELD_PULL", "Pulls", "R22.0.00: drags hit target toward the firer", "CC"},
+	{"HELD_CRIPPLE", "Cripples", "R22.0.00: brief slow-and-stagger debuff (movement + actions)", "CC"},
+	{"HELD_FORCEFOCUS", "Force focus", "R22.0.00: hits restore Force Pool to the firer", "Utility"},
+	{"HELD_LIFESTEAL", "Lifesteal", "R22.0.00: portion of damage dealt heals the firer", "Utility"},
+	{"HELD_FLASH", "Flashes", "R22.0.00: Flashbang-style blind on hit", "Status"},
+	{"HELD_BACTA", "Bacta heal", "R22.0.00: hit allies (or self) receive bacta-style heal-over-time", "Utility"},
 }
 
 // WeaponFlagTargets is the list of WP_* IDs that accept flags in
@@ -253,41 +259,165 @@ func (wfe *WeaponFlagsEditor) buildRow(flagsKey string) fyne.CanvasObject {
 	// Active-flag set for this weapon.
 	active := parseFlags(ch.ExtraFields[flagsKey])
 
-	// Checkbox grid — 3 columns keeps each row readable without
-	// making the editor a mile long. The visual weight of each
-	// checkbox + label line is about the same as one text-entry
-	// row, so 3 across fits nicely alongside the weapon grid.
-	grid := container.NewGridWithColumns(3)
+	// Group flags by family — Reload/Damage/Status/CC/Disarm/
+	// Movement/Utility — so authors can scan a section instead of a
+	// 31-checkbox wall. Title row of each flag now leads with the
+	// HELD_* enum (monospace) so the wiki ID is the primary
+	// identifier; the short Name + the longer Tooltip render
+	// underneath at smaller sizes.
+	familyOrder := []string{"Reload", "Damage", "Status", "CC", "Disarm", "Movement", "Utility"}
+	byFamily := map[string][]HeldFlag{}
 	for _, f := range KnownHeldFlags {
-		flag := f // capture
-		check := widget.NewCheck(flag.Name, func(on bool) {
-			set := parseFlags(ch.ExtraFields[flagsKey])
-			if on {
-				set[flag.ID] = true
-			} else {
-				delete(set, flag.ID)
-			}
-			ch.ExtraFields[flagsKey] = serializeFlags(set)
-			// If the user unchecked everything, drop the field
-			// entirely so round-trip save doesn't emit an empty
-			// WP_*Flags line.
-			if ch.ExtraFields[flagsKey] == "" {
-				delete(ch.ExtraFields, flagsKey)
-			}
-			wfe.editor.markDirty()
-		})
-		check.Checked = active[flag.ID]
-		// Tooltip-ish hint: append effect summary in a dim label
-		// next to the checkbox so users don't have to memorize the
-		// HELD_* enum's semantics.
-		hint := widget.NewLabel(flag.Tooltip)
-		hint.TextStyle = fyne.TextStyle{Italic: true}
-		row := container.NewBorder(nil, nil, check, nil, hint)
-		grid.Add(row)
+		fam := f.Family
+		if fam == "" {
+			fam = "Utility"
+		}
+		byFamily[fam] = append(byFamily[fam], f)
 	}
 
-	card := widget.NewCard("", "", container.NewVBox(header, grid))
+	body := container.NewVBox(header)
+	for _, fam := range familyOrder {
+		flags, ok := byFamily[fam]
+		if !ok || len(flags) == 0 {
+			continue
+		}
+		famHeader := widget.NewLabelWithStyle(
+			fmt.Sprintf("%s  ·  %d", fam, len(flags)),
+			fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+		grid := container.NewGridWithColumns(2)
+		for _, f := range flags {
+			flag := f // capture
+			grid.Add(buildHeldFlagCell(flag, active, ch, flagsKey, wfe))
+		}
+		body.Add(NewTilePanel(
+			container.NewVBox(famHeader, grid),
+			TileOpts{
+				AccentColor: heldFlagFamilyAccent(fam),
+				FillAlpha:   18,
+				StrokeAlpha: 60,
+				Padded:      true,
+			},
+		))
+	}
+
+	card := widget.NewCard("", "", body)
 	return card
+}
+
+// buildHeldFlagCell renders one flag row inside a family group:
+//   [✓] [glyph] HELD_ALTRELOAD       ← enum ID, monospace bold
+//               Mag reload             ← short label, italic
+//               Magazine-based …       ← description, dim
+// Glyph is a 28px boxicon picked from the family (Reload→refresh,
+// Damage→bolt, Status→flame, CC→wave, Disarm→swap, Movement→
+// footstep, Utility→star). Pure decoration but gives each row a
+// stronger visual identity than a wall of text + checkbox.
+// The card is wrapped in a TilePanel that lights up the family
+// color when the flag is active, so checked rows pop visually.
+func buildHeldFlagCell(flag HeldFlag, active map[string]bool,
+	ch *parsers.MBCHCharacter, flagsKey string, wfe *WeaponFlagsEditor) fyne.CanvasObject {
+	checked := active[flag.ID]
+
+	check := widget.NewCheck("", func(on bool) {
+		set := parseFlags(ch.ExtraFields[flagsKey])
+		if on {
+			set[flag.ID] = true
+		} else {
+			delete(set, flag.ID)
+		}
+		ch.ExtraFields[flagsKey] = serializeFlags(set)
+		// If the user unchecked everything, drop the field entirely
+		// so round-trip save doesn't emit an empty WP_*Flags line.
+		if ch.ExtraFields[flagsKey] == "" {
+			delete(ch.ExtraFields, flagsKey)
+		}
+		wfe.editor.markDirty()
+		// Inline refresh — fyne.Do from main thread deadlocked Fyne
+		// v2.7.1's dispatch queue. Tree rebuild during the OnChanged
+		// callback works in practice on this version.
+		wfe.Refresh()
+	})
+	check.Checked = checked
+
+	// Family glyph — 28px boxicon resource. None for "Other".
+	var glyph fyne.CanvasObject = container.NewGridWrap(fyne.NewSize(28, 28))
+	if name := heldFlagFamilyIcon(flag.Family); name != "" {
+		if res := loadBoxiconResource(name); res != nil {
+			glyph = NewRasterIconFromResource(res, 28, 28)
+		}
+	}
+
+	idLbl := widget.NewLabelWithStyle(flag.ID,
+		fyne.TextAlignLeading, fyne.TextStyle{Bold: true, Monospace: true})
+	nameLbl := widget.NewLabelWithStyle(flag.Name,
+		fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
+	descLbl := widget.NewLabel(flag.Tooltip)
+	descLbl.Wrapping = fyne.TextWrapWord
+	textStack := container.NewVBox(idLbl, nameLbl, descLbl)
+
+	body := container.NewBorder(nil, nil,
+		container.NewHBox(check, glyph),
+		nil, textStack,
+	)
+
+	// Active state lights the cell with the family color so the user
+	// can scan which flags are on in the wall of options. Inactive
+	// stays low-contrast.
+	fillA, strokeA := uint8(8), uint8(35)
+	if checked {
+		fillA, strokeA = 28, 110
+	}
+	return NewTilePanel(body, TileOpts{
+		AccentColor: heldFlagFamilyAccent(flag.Family),
+		FillAlpha:   fillA,
+		StrokeAlpha: strokeA,
+		Padded:      true,
+	})
+}
+
+// heldFlagFamilyIcon picks the boxicon basename that visually
+// represents the family. None for "Other".
+func heldFlagFamilyIcon(family string) string {
+	switch family {
+	case "Reload":
+		return "refresh"
+	case "Damage":
+		return "bolt"
+	case "Status":
+		return "flame"
+	case "CC":
+		return "wave"
+	case "Disarm":
+		return "swap"
+	case "Movement":
+		return "footstep"
+	case "Utility":
+		return "star"
+	}
+	return ""
+}
+
+// heldFlagFamilyAccent assigns a per-family accent color so each
+// section reads distinctly without the eye having to parse 30
+// checkbox labels uniformly. Tuned for the dark theme.
+func heldFlagFamilyAccent(family string) color.Color {
+	switch family {
+	case "Reload":
+		return color.NRGBA{R: 110, G: 200, B: 220, A: 255}
+	case "Damage":
+		return color.NRGBA{R: 220, G: 110, B: 110, A: 255}
+	case "Status":
+		return color.NRGBA{R: 220, G: 180, B: 100, A: 255}
+	case "CC":
+		return color.NRGBA{R: 200, G: 130, B: 200, A: 255}
+	case "Disarm":
+		return color.NRGBA{R: 230, G: 130, B: 90, A: 255}
+	case "Movement":
+		return color.NRGBA{R: 140, G: 200, B: 140, A: 255}
+	case "Utility":
+		return color.NRGBA{R: 160, G: 180, B: 220, A: 255}
+	}
+	return color.NRGBA{R: 160, G: 160, B: 170, A: 255}
 }
 
 // showAddDialog prompts the user to pick a weapon to add flags for.

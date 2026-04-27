@@ -32,7 +32,7 @@ const (
 	// screen's "new version available" banner. Bump this before tagging
 	// a release — if they drift, testers get a stale banner or none at
 	// all.
-	AppVersion = "0.11.9-alpha"
+	AppVersion = "0.12.1-alpha"
 	AppName    = "MBII Foundry"
 )
 
@@ -1227,6 +1227,7 @@ func (a *App) setupShortcuts() {
 	helpMenu := fyne.NewMenu("Help",
 		fyne.NewMenuItem("About MBII Foundry", func() { a.showAbout() }),
 		fyne.NewMenuItem("Debug Logs", func() { a.showLogs() }),
+		fyne.NewMenuItem("Icon Inventory…", func() { a.showIconInventory() }),
 		fyne.NewMenuItem("Check for Updates", func() { a.checkForUpdatesNow() }),
 	)
 	a.mainWindow.SetMainMenu(fyne.NewMainMenu(fileMenu, editMenu, viewMenu, helpMenu))
@@ -1273,11 +1274,17 @@ func (a *App) createNewFile(title string, editor interface{}) {
 	}
 
 	if ed, ok := editor.(Editor); ok {
+		t1 := time.Now()
 		ed.SetAssetBrowser(a.assetBrowser)
+		LogInfo("createNewFile[%s]: SetAssetBrowser took %s", title, time.Since(t1))
+		t2 := time.Now()
 		ed.SetOnHover(a.showHoverTooltip)
 		ed.SetHolocronClient(a.holocronClient)
+		LogInfo("createNewFile[%s]: SetOnHover+Holocron took %s", title, time.Since(t2))
 
+		t3 := time.Now()
 		tab := container.NewTabItem("Untitled "+title, ed.GetContent())
+		LogInfo("createNewFile[%s]: GetContent+TabItem took %s", title, time.Since(t3))
 		// Register the mapping BEFORE Append AND Select. Append can
 		// auto-select the new tab when it's the only one (e.g. right
 		// after the Home tab was removed), firing OnSelected before any
@@ -1307,6 +1314,14 @@ func (a *App) createNewFile(title string, editor interface{}) {
 }
 
 func (a *App) openFileFromPath(filePath string) {
+	// Earlier versions wrapped this body in fyne.Do to "defer onto
+	// the next event loop tick" hoping to avoid the spinny wheel.
+	// On Fyne v2.7.1 / macOS, fyne.Do called from the main thread
+	// blocks waiting for the dispatch queue to drain — but the queue
+	// can't drain because main IS waiting. Classic deadlock; sample
+	// dump showed every thread parked in __psynch_cvwait. The wheel
+	// is preferable to a hang. Run synchronously like the original.
+	a.updateStatus("Opening " + filepath.Base(filePath) + "…")
 	// Catch panics from editor init / LoadFile / updateUI so the app
 	// stays running instead of hard-crashing. Rare-path code in the
 	// editors (e.g. a new field, a missing enum) can nil-deref —
@@ -1330,6 +1345,8 @@ func (a *App) openFileFromPath(filePath string) {
 	var editor Editor
 	var title = filepath.Base(filePath)
 
+	tStart := time.Now()
+	tCtor := tStart
 	switch ext {
 	case ".mbch":
 		editor = NewMBCHEditor(a)
@@ -1343,9 +1360,12 @@ func (a *App) openFileFromPath(filePath string) {
 		dialog.ShowInformation("Unknown File Type", "Could not determine editor for this file.", a.mainWindow)
 		return
 	}
+	LogInfo("openFileFromPath[%s]: ctor took %s", title, time.Since(tCtor))
 
 	if editor != nil {
+		tLoad := time.Now()
 		err := editor.LoadFile(filePath)
+		LogInfo("openFileFromPath[%s]: LoadFile took %s", title, time.Since(tLoad))
 		if err != nil {
 			ShowError(fmt.Errorf("Failed to load file: %v", err), a.mainWindow)
 			return
@@ -1354,12 +1374,15 @@ func (a *App) openFileFromPath(filePath string) {
 		a.fileManager.AddRecentFile(filePath)
 
 		// Reuse logic
+		tCreate := time.Now()
 		a.createNewFile(title, editor)
 		tab := a.docTabs.Selected()
 		tab.Text = title
 		a.docTabs.Refresh()
+		LogInfo("openFileFromPath[%s]: createNewFile+tab took %s", title, time.Since(tCreate))
 
 		a.updateStatus(fmt.Sprintf("Opened %s", title))
+		LogInfo("openFileFromPath[%s]: TOTAL %s", title, time.Since(tStart))
 	}
 }
 
@@ -1582,6 +1605,13 @@ func (a *App) createToolbar() fyne.CanvasObject {
 		// a modal.
 		btn(theme.SettingsIcon(), func() { a.showPreferences() }, "Preferences"),
 		btn(theme.InfoIcon(), func() { a.showLogs() }, "Show Debug Logs"),
+		// Icon Inventory — surfaces every embedded HUD/boxicon asset
+		// in a debug window. Useful for confirming the asset pipeline
+		// renders end-to-end and for finding basenames to wire into
+		// the alias maps. macOS users can also reach this via the
+		// system menubar (Help → Icon Inventory…) but the toolbar
+		// button is the cross-platform discoverable surface.
+		btn(theme.GridIcon(), func() { a.showIconInventory() }, "Icon Inventory (debug — show every embedded icon)"),
 		btn(theme.ViewRefreshIcon(), func() { a.checkForUpdatesNow() }, "Check for updates"),
 		btn(theme.HelpIcon(), func() { a.showAbout() }, "About MBII Foundry"),
 	)

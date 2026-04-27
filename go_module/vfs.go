@@ -46,47 +46,49 @@ func NewVirtualFileSystem(gamedata, textAssets string) *VirtualFileSystem {
 
 // Refresh rescans all assets
 func (vfs *VirtualFileSystem) Refresh() error {
-	vfs.mu.Lock()
-	defer vfs.mu.Unlock()
+	// Build the new index OUTSIDE the lock — scanning 80+ PK3s
+	// takes seconds, and holding the write lock for that duration
+	// blocked every concurrent RLock (icon lookups, shader
+	// resolver, portrait fallback) → main thread froze for the
+	// entire scan. Now we operate on a local view, swap with a
+	// short-held write lock at the end.
+	staging := &VirtualFileSystem{
+		Index:        make(map[string]*AssetSource),
+		Directories:  make(map[string][]*AssetSource),
+		Sources:      []string{},
+		GamedataPath: vfs.GamedataPath,
+		TextAssets:   vfs.TextAssets,
+	}
 
-	vfs.Index = make(map[string]*AssetSource)
-	vfs.Directories = make(map[string][]*AssetSource)
-	vfs.Sources = []string{}
-
-	// 1. Scan Gamedata PK3s (Base)
-	if vfs.GamedataPath != "" {
-		pk3s := vfs.findPK3s(vfs.GamedataPath)
+	if staging.GamedataPath != "" {
+		pk3s := staging.findPK3s(staging.GamedataPath)
 		for _, pk3 := range pk3s {
-			vfs.indexPK3(pk3)
-			vfs.Sources = append(vfs.Sources, pk3)
+			staging.indexPK3(pk3)
+			staging.Sources = append(staging.Sources, pk3)
 		}
 	}
-
-	// 2. Scan TextAssets (Overrides)
-	if vfs.TextAssets != "" {
-		vfs.indexDirectory(vfs.TextAssets)
-		vfs.Sources = append(vfs.Sources, vfs.TextAssets)
+	if staging.TextAssets != "" {
+		staging.indexDirectory(staging.TextAssets)
+		staging.Sources = append(staging.Sources, staging.TextAssets)
 	}
 
-	// 3. Scan Loose Files in Gamedata (Higher Priority)
-	// (Typically handled by engine with fs_dirbeforepak, but simplified here)
-
-	// Rebuild directory structure from index
-	for path, source := range vfs.Index {
+	// Rebuild directory structure from staging index.
+	for path, source := range staging.Index {
 		dir := filepath.Dir(path)
 		if dir == "." {
 			dir = ""
 		}
-		// Windows fix
 		dir = strings.ReplaceAll(dir, "\\", "/")
-
-		vfs.Directories[dir] = append(vfs.Directories[dir], source)
-
-		// Ensure parent directories exist in the directory map
-		// (Even if they don't have an explicit entry in index)
-		vfs.ensureParentDirs(dir)
+		staging.Directories[dir] = append(staging.Directories[dir], source)
+		staging.ensureParentDirs(dir)
 	}
 
+	// Atomic swap. Lock held for microseconds — pointer reassignment.
+	vfs.mu.Lock()
+	vfs.Index = staging.Index
+	vfs.Directories = staging.Directories
+	vfs.Sources = staging.Sources
+	vfs.mu.Unlock()
 	return nil
 }
 

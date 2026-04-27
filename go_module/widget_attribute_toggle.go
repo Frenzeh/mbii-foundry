@@ -123,14 +123,11 @@ func (w *AttributeToggleWidget) createUI(onInfo func(string, string), iconRes fy
 	w.label = widget.NewLabel(displayName)
 	w.label.TextStyle = fyne.TextStyle{Bold: true}
 
-	// Info button click fires the sticky-context path — pins the
-	// sidebar on this attribute's docs regardless of hover-toggle
-	// state. Falls back to onInfo (hover dispatcher) only if the
-	// click handler isn't wired, but every grid call site wires it.
-	// External tester reported "the (i) info icon should really
-	// work" — that was this: clicks were routed through the hover
-	// path, which is gated behind the default-OFF hover toggle.
-	w.infoBtn = NewTooltipButton("", theme.InfoIcon(), func() {
+	// Info-affordance: when an icon resolves, the icon IS the click
+	// target (clicking it pins the sidebar). When no icon resolves,
+	// fall back to the (i) glyph. The previous layout rendered both
+	// — wasted horizontal space and made the (i) feel redundant.
+	infoClick := func() {
 		if w.OnInfoClick != nil {
 			w.OnInfoClick(w.ID, "")
 			return
@@ -138,18 +135,33 @@ func (w *AttributeToggleWidget) createUI(onInfo func(string, string), iconRes fy
 		if onInfo != nil {
 			onInfo(w.ID, "")
 		}
-	}, "View documentation for this attribute")
-	w.infoBtn.Importance = widget.LowImportance
+	}
 
-	// Icon — canvas.Image (via NewRasterIconFromResource) renders the
-	// full extracted PNG at 24×24. widget.Icon would downscale to the
-	// theme icon size (~20px) and leave the resource mostly unseen,
-	// which is what made attribute icons look "missing" earlier.
 	var iconObj fyne.CanvasObject
 	if iconRes != nil {
-		iconObj = NewRasterIconFromResource(iconRes, 24, 24)
+		// Real icon → wrap in a clickableCell so the whole 28×28 icon
+		// is the affordance. Hover on it also fires onInfo (the
+		// transient hover dispatcher) so the info panel can preview
+		// while the user scans rows.
+		raster := NewRasterIconFromResource(iconRes, 28, 28)
+		clickable := newClickableCell(raster, infoClick)
+		if onInfo != nil {
+			clickable.onHover = func() { onInfo(w.ID, "") }
+		}
+		// onLeave wired below via SetOnInfoLeave indirection.
+		iconObj = clickable
+		w.infoBtn = nil // signal: no separate (i) glyph needed
 	} else {
-		iconObj = layout.NewSpacer()
+		// No icon → fall back to the (i) tooltip button. This
+		// preserves the "I want the docs for this row" affordance
+		// when we don't have a graphic to click on.
+		w.infoBtn = NewTooltipButton("", theme.InfoIcon(), infoClick,
+			"View documentation for this attribute")
+		w.infoBtn.Importance = widget.LowImportance
+		// Fixed 24×24 spacer so the no-icon branch lines up
+		// vertically with the icon branch — Spacer would expand and
+		// re-introduce the empty-rectangle visual bug.
+		iconObj = container.NewGridWrap(fyne.NewSize(24, 24), w.infoBtn)
 	}
 
 	// Create toggle buttons
@@ -214,12 +226,23 @@ func (w *AttributeToggleWidget) createUI(onInfo func(string, string), iconRes fy
 	stripRect.SetMinSize(fyne.NewSize(2, 0))
 	strip := container.New(layout.NewGridWrapLayout(fyne.NewSize(2, 36)), stripRect)
 
-	// Layout: [Strip] [Info] [Icon] [Label+ID] -- Spacer -- Buttons
-	leftContainer := container.NewHBox(strip, w.infoBtn, iconObj, labelBlock)
+	// Layout: [Strip] [Icon-or-(i)] [Label+ID] -- Spacer -- Buttons
+	// iconObj already carries the click affordance — when an icon
+	// resolves it IS the info button; when none resolves the (i)
+	// tooltip button stands in. Each child is wrapped in NewCenter
+	// so the heights line up against the row's tallest element
+	// (label block is 2 lines ~30px, icon is 28px, buttons box is
+	// ~28px) — without center-wrap the icon was pinning to the top
+	// of the row instead of sitting on the label baseline.
+	leftContainer := container.NewHBox(
+		container.NewCenter(strip),
+		container.NewCenter(iconObj),
+		container.NewCenter(labelBlock),
+	)
 
 	row := container.NewBorder(nil, nil,
 		leftContainer,
-		btnBox,
+		container.NewCenter(btnBox),
 		layout.NewSpacer(),
 	)
 
@@ -267,10 +290,22 @@ func (w *AttributeToggleWidget) createLevelButton(level int, text string, onInfo
 	}
 
 	btn := NewHoverButton(text, func() {
-		w.CurrentVal = level
+		// Clicking Off when the row is already off cycles UP to
+		// level 1 — interpretation of "click Off to turn it on
+		// since it's currently off." Tester reported assuming Off
+		// toggled the attribute on, which it didn't (set 0 → 0
+		// was a no-op). Now Off acts as a unified on/off toggle:
+		//   - off + click Off  → level 1 (turn on)
+		//   - on  + click Off  → 0       (turn off)
+		// Clicking 1/2/3 directly always sets that exact level.
+		target := level
+		if level == 0 && w.CurrentVal == 0 {
+			target = 1
+		}
+		w.CurrentVal = target
 		w.refreshButtons()
 		if w.OnChange != nil {
-			w.OnChange(level)
+			w.OnChange(target)
 		}
 	}, hover, func() {
 		// MouseOut — tell the info panel to revert to sticky.

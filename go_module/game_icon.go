@@ -182,23 +182,95 @@ func NewGameIconCanvas(vfs *VirtualFileSystem, basePath string, width, height fl
 
 // NewRasterIconFromResource takes a PNG/JPEG fyne.Resource and returns
 // a sized CanvasObject that actually RENDERS it at the requested
-// size. Needed because widget.NewIcon was designed for monochrome
-// SVG theme icons — it respects the theme's icon size (~20px) so
-// a raster PNG placed in a larger container shows as a tiny dot.
-// canvas.Image with ImageFillContain fills the whole box, preserving
-// aspect ratio. Returns a placeholder file-image when resource is
-// nil so callers don't have to nil-check.
+// size.
+//
+// Render path: explicit png.Decode → canvas.NewImageFromImage,
+// SIZED ONLY by the parent GridWrap (no SetMinSize). Why:
+//
+//  1. canvas.NewImageFromResource → calls image.Decode internally.
+//     image.Decode iterates registered formats; Foundry imports
+//     github.com/ftrvxmtrx/tga which registers TGA with EMPTY magic
+//     bytes, so TGA decoder is tried first on every PNG. It fails
+//     ("tga: invalid format"), Fyne logs the error, the renderer
+//     repaints, repeats — UI thread starves under log spam (this
+//     exact pattern froze the app for the latest tester report).
+//
+//  2. canvas.NewImageFromImage skips image.Decode entirely. We
+//     png.Decode the bytes ourselves with explicit format choice,
+//     so TGA isn't even consulted.
+//
+//  3. SetMinSize on canvas.Image fired Fyne's "param mismatch" log
+//     in v2.7.1 — the renderer's size negotiation dislikes a
+//     min-size on an image resource of different bounds. Removing
+//     SetMinSize and letting the outer GridWrapLayout dictate cell
+//     dimensions resolves both: the image's natural bounds drive
+//     the renderer, the GridWrap forces the cell rectangle.
+//
+// Decoded image.Image instances are cached by resource Name() so
+// 200+ rows on a grid Refresh share one decode per unique icon.
 func NewRasterIconFromResource(res fyne.Resource, width, height float32) fyne.CanvasObject {
 	if res == nil {
 		fb := widget.NewIcon(theme.FileImageIcon())
 		return container.New(layout.NewGridWrapLayout(fyne.NewSize(width, height)), fb)
 	}
-	ci := canvas.NewImageFromResource(res)
-	ci.FillMode = canvas.ImageFillContain
-	ci.ScaleMode = canvas.ImageScaleSmooth
-	ci.SetMinSize(fyne.NewSize(width, height))
-	return container.New(layout.NewGridWrapLayout(fyne.NewSize(width, height)), ci)
+	if img := decodedImageFor(res); img != nil {
+		ci := canvas.NewImageFromImage(img)
+		ci.FillMode = canvas.ImageFillContain
+		ci.ScaleMode = canvas.ImageScaleSmooth
+		// SetMinSize IS needed — without it, canvas.Image renders at
+		// 1×1 inside GridWrap's cell. The "param mismatch" we saw
+		// earlier was specific to NewImageFromResource (which calls
+		// image.Decode → TGA-first → fail loop). NewImageFromImage
+		// has the bytes already so the size negotiation succeeds.
+		ci.SetMinSize(fyne.NewSize(width, height))
+		return container.New(layout.NewGridWrapLayout(fyne.NewSize(width, height)), ci)
+	}
+	// Non-PNG (or decode failed). Fall back to a theme placeholder
+	// rather than the resource path — that path triggers the TGA-
+	// first decode-spam bug above.
+	fb := widget.NewIcon(theme.FileImageIcon())
+	return container.New(layout.NewGridWrapLayout(fyne.NewSize(width, height)), fb)
 }
+
+// decodedImageFor decodes PNG bytes from a resource into an
+// image.Image, caching by resource Name(). Negative results (non-PNG
+// or decode failure) are stored as nil so we don't re-attempt every
+// paint. Bypasses image.Decode entirely → TGA's empty-magic
+// registration can't poison this path.
+var (
+	decodedImageCache   = map[string]image.Image{}
+	decodedImageCacheMu sync.RWMutex
+)
+
+func decodedImageFor(res fyne.Resource) image.Image {
+	if res == nil {
+		return nil
+	}
+	key := res.Name()
+	decodedImageCacheMu.RLock()
+	if cached, ok := decodedImageCache[key]; ok {
+		decodedImageCacheMu.RUnlock()
+		return cached
+	}
+	decodedImageCacheMu.RUnlock()
+
+	var img image.Image
+	if data := res.Content(); len(data) >= 8 && bytes.HasPrefix(data, pngMagic) {
+		if decoded, err := png.Decode(bytes.NewReader(data)); err == nil {
+			img = decoded
+		}
+	}
+	decodedImageCacheMu.Lock()
+	decodedImageCache[key] = img
+	decodedImageCacheMu.Unlock()
+	return img
+}
+
+
+// pngMagic is the 8-byte PNG file signature. Pulled out so the
+// HasPrefix check in NewRasterIconFromResource stays a slice-compare
+// instead of a string-allocation per icon.
+var pngMagic = []byte{0x89, 'P', 'N', 'G', '\r', '\n', 0x1a, '\n'}
 
 // stripLeadingNonWord strips any leading runes that aren't letters
 // or digits, plus the whitespace immediately following them. Used to

@@ -112,6 +112,12 @@ type AssetBrowser struct {
 	iconSize float32
 
 	vfs *VirtualFileSystem
+
+	// shaderResolver lazily parses .shader files in the VFS so a
+	// `uishader models/players/X/mb2_icon_Y` reference resolves to
+	// the texture path the engine would actually render. Invalidated
+	// on every VFS refresh.
+	shaderResolver *ShaderResolver
 }
 
 type ViewMode string
@@ -158,11 +164,23 @@ func NewAssetBrowser(gamedataPath, textAssetsPath string) *AssetBrowser {
 	// is cache-hit. Guarded behind a non-empty gamedata path so fresh
 	// installs (no gamedata configured yet) don't spawn a pointless
 	// goroutine.
+	// Assign the resolver BEFORE launching the indexing goroutine —
+	// the goroutine reads ab.shaderResolver after Refresh, and a
+	// post-goroutine assignment was a data race (and a possible nil
+	// deref if the goroutine somehow finished first on a fast disk).
+	ab.shaderResolver = NewShaderResolver(ab.vfs)
 	if gamedataPath != "" {
 		go func() {
 			if err := ab.vfs.Refresh(); err != nil {
 				LogInfo("Initial VFS index failed: %v", err)
 			}
+			// Reset clears any stale build state, then Prebuild
+			// scans .shader files in this same background goroutine
+			// so the cost is paid before the user opens their first
+			// MBCH (instead of synchronously on the UI thread when
+			// Resolve is first called — that was freezing the app).
+			ab.shaderResolver.Reset()
+			ab.shaderResolver.Prebuild()
 		}()
 	}
 	ab.createUI()
@@ -173,6 +191,11 @@ func (ab *AssetBrowser) SetPaths(gamedata, textAssets string) {
 	ab.gamedataPath = gamedata
 	ab.textAssetsPath = textAssets
 	ab.vfs = NewVirtualFileSystem(gamedata, textAssets)
+	// Resolver assigned before the goroutine reads it — same fix as
+	// NewAssetBrowser. Reset() is safe to call on a never-built
+	// resolver (early return when sr.built == false flips back to
+	// rebuild on the next Resolve).
+	ab.shaderResolver = NewShaderResolver(ab.vfs)
 	ab.scanPK3Files() // Re-scan if gamedata changed
 	ab.refreshSources()
 	// Re-index in the background so editors see the new content
@@ -182,6 +205,8 @@ func (ab *AssetBrowser) SetPaths(gamedata, textAssets string) {
 			if err := ab.vfs.Refresh(); err != nil {
 				LogInfo("VFS re-index after path change failed: %v", err)
 			}
+			ab.shaderResolver.Reset()
+			ab.shaderResolver.Prebuild()
 		}()
 	}
 }
@@ -1003,6 +1028,27 @@ func (ab *AssetBrowser) LoadIconResource(path string) fyne.Resource {
 			if _, ok := ab.vfs.Index[candidate]; ok {
 				path = path + ext
 				break
+			}
+		}
+		// If still extension-less, the path is likely a SHADER name
+		// (e.g. `models/players/t_yoda/mb2_icon_default`). Ask the
+		// shader resolver to map it to the texture path the engine
+		// would actually use, then probe extensions on THAT.
+		if filepath.Ext(path) == "" && ab.shaderResolver != nil {
+			if mapped := ab.shaderResolver.Resolve(path); mapped != "" {
+				probe := mapped
+				if filepath.Ext(probe) == "" {
+					for _, ext := range []string{".tga", ".png", ".jpg", ".jpeg"} {
+						candidate := strings.ToLower(probe + ext)
+						if _, ok := ab.vfs.Index[candidate]; ok {
+							probe = probe + ext
+							break
+						}
+					}
+				}
+				if filepath.Ext(probe) != "" {
+					path = probe
+				}
 			}
 		}
 	}

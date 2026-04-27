@@ -7,6 +7,53 @@ pre-release suffixes until the project stabilizes.
 
 ## [Unreleased]
 
+## [0.12.1-alpha] — 2026-04-27
+
+### Fixed
+- **App froze with beach-ball cursor when opening any MBCH from Recents.**
+  Sample dump showed every thread parked in `__psynch_cvwait`. Root cause:
+  `VFS.Refresh()` held the *write* lock for the entire 10–30 second scan
+  of all PK3s in gamedata. Every concurrent reader (icon resolution,
+  shader resolver, portrait fallback scan) blocked on `vfs.mu.RLock`,
+  starving the main thread for the duration of the scan. `Refresh` now
+  scans into a staging index without holding the lock and swaps
+  atomically — concurrent readers see either the old or the new index,
+  never block.
+- **Earlier round of `fyne.Do` defers from main thread caused a different
+  deadlock** (queue waited for main, main waited for queue). All those
+  wrappers stripped from `openFileFromPath`, `SetAssetBrowser`,
+  `updateUI`, and the click handlers in `WeaponGrid` / `HoldableGrid` /
+  `WeaponFlagsEditor`. Inline refresh is the right call; the legitimate
+  background-goroutine `fyne.Do` calls (HTTP fetches, source-panel
+  cross-thread sync, update banner) are untouched.
+
+### Changed
+- **Portrait "no image found" label cleaned up** — was rendering as
+  `"override · no image found"` next to the placeholder icon. Now blank
+  when nothing resolves; the placeholder image carries the meaning.
+- **Last-resort portrait fallback** added — when the explicit
+  `mb2_icon_<skin>` / `mb2_icon_default` candidates miss, the resolver
+  now scans the VFS for any `models/players/<model>/mb2_icon_*` and
+  uses the first match. Result is cached per model. Fixes characters
+  that ship under non-standard names (e.g. `jedi_zf` only has
+  `mb2_icon_legends1.jpg`).
+- **Shader resolver** parses `*.shader` files lazily on first lookup
+  to map shader names to texture paths, with graceful "not built yet"
+  return. Prebuilt off the main thread after VFS refresh completes.
+
+### Added
+- **Help → Icon Inventory…** debug window enumerating every embedded
+  HUD icon / boxicon at runtime — confirms the asset pipeline is
+  working end-to-end. Also reachable via the toolbar's grid icon.
+- **Boxicon SVG fallback set** (~22 outline glyphs) — when no MBII HUD
+  art exists for an attribute, a thematic boxicon stands in.
+- **Click an attribute / weapon icon → pin the sidebar** to that ID's
+  docs (sticky context). Hover still routes through the transient
+  hover dispatcher.
+- **Defer all my fyne.Do experiments**: we'll revisit perf via
+  proper background-thread parsing in a later release rather than
+  trying to defer-onto-the-main-loop.
+
 ### Added
 - CI workflow (build + vet + gofmt + test across Linux/macOS/Windows)
 - Release workflow (triggered on `v*` tags, builds + publishes binaries)

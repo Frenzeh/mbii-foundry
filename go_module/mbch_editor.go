@@ -403,6 +403,10 @@ func (e *MBCHEditor) createUI() {
 	}, hoverFn, e.resolveIconResource)
 	if e.app != nil {
 		e.attrGrid.SetOnUnhover(e.app.clearHoverContext)
+		// (i) button click → pin sidebar via showStickyContext. Click
+		// path is intentionally separate from hover so clicks always
+		// work even when the hover toggle is off (the default).
+		e.attrGrid.SetOnClickInfo(e.app.showStickyContext)
 	}
 
 	// Initialize Weapon Grid. onHover fires on row-enter (transient

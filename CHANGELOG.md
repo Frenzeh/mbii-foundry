@@ -15,6 +15,23 @@ pre-release suffixes until the project stabilizes.
 - Self-contained parser round-trip tests
 - README install badges + "Where do I find .mbch files to edit?" section
 
+## [0.11.9-alpha] — 2026-04-26
+
+### Fixed
+- **(i) info button on attribute rows now updates the Context sidebar.**
+  Was wired through the hover dispatcher, which the default-OFF hover toggle
+  silently swallowed. Click now routes through the sticky-context path, so
+  the sidebar pins the attribute's docs regardless of hover state.
+
+### Changed
+- **Expanded `attributeIconAliases` and `forceIconAliases`** so far more
+  attribute rows pick up the embedded MBII HUD PNGs we already ship —
+  health/armour/block regen rates, force-pool / battery, cloak, binoculars,
+  shield, seeker, sentry gun, eweb, bacta, PSD, repeater, flechette, micro
+  grenades, UGL/MGL variants, det pack / trip mines / sticky bombs,
+  flamethrower, beskar, plus FP_REPULSE / FP_PROJECTION / FP_BATTLEMED /
+  FP_DOMINATION / FP_ATTUNEMENT / FP_STASIS / FP_DARKRAGE.
+
 ## [0.11.8-alpha] — 2026-04-26
 
 ### Fixed

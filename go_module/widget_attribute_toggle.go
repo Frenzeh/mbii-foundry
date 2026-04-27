@@ -65,6 +65,14 @@ type AttributeToggleWidget struct {
 	// you happen to have passed over last.
 	OnInfoLeave func()
 
+	// OnInfoClick is called on (i) button click. Wired to the App's
+	// showStickyContext path (NOT showHoverContext) so a click pins
+	// the sidebar regardless of the hover-toggle state. Without this
+	// the (i) button silently no-ops whenever the hover toggle is
+	// OFF — which is the default — and users have no way to pull up
+	// docs for an attribute.
+	OnInfoClick func(string, string)
+
 	// UI Components
 	label     *widget.Label
 	buttons   []*HoverButton
@@ -115,13 +123,18 @@ func (w *AttributeToggleWidget) createUI(onInfo func(string, string), iconRes fy
 	w.label = widget.NewLabel(displayName)
 	w.label.TextStyle = fyne.TextStyle{Bold: true}
 
-	// Info button click fires the same hover signal — ShowHover ends
-	// up routed by App.showHoverContext / showHoverTooltip. The
-	// outer HoverContainer wraps the whole row so mousing over the
-	// label or icon area (not just the level buttons) also fires
-	// hover; without it, only the level buttons reported hover and
-	// the info panel rarely repainted.
+	// Info button click fires the sticky-context path — pins the
+	// sidebar on this attribute's docs regardless of hover-toggle
+	// state. Falls back to onInfo (hover dispatcher) only if the
+	// click handler isn't wired, but every grid call site wires it.
+	// External tester reported "the (i) info icon should really
+	// work" — that was this: clicks were routed through the hover
+	// path, which is gated behind the default-OFF hover toggle.
 	w.infoBtn = NewTooltipButton("", theme.InfoIcon(), func() {
+		if w.OnInfoClick != nil {
+			w.OnInfoClick(w.ID, "")
+			return
+		}
 		if onInfo != nil {
 			onInfo(w.ID, "")
 		}

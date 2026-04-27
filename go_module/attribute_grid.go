@@ -131,6 +131,11 @@ type AttributeGrid struct {
 	onHover     func(string, string)
 	onUnhover   func()
 	resolveIcon func(string) fyne.Resource // New callback
+	// onClickInfo wires the (i) button on each row to the App's
+	// showStickyContext path, so clicks pin the sidebar regardless
+	// of hover-toggle state. Without this, (i) clicks went through
+	// the hover dispatcher and were ignored when hover was OFF.
+	onClickInfo func(string, string)
 
 	// classScalarsBuilder, when set, returns the rendered "Class
 	// Scalars" form (static apMultiplier / bpMultiplier / etc. entry
@@ -147,6 +152,12 @@ type AttributeGrid struct {
 // revert. Symmetric with WeaponGrid.SetOnUnhover — both feed the
 // info panel's sticky/hover model.
 func (ag *AttributeGrid) SetOnUnhover(f func()) { ag.onUnhover = f }
+
+// SetOnClickInfo wires the per-row (i) button to a sticky-context
+// callback. The widget's OnInfoClick fires this on click — bypasses
+// the hover toggle so users can pin the sidebar by clicking even
+// when "hover swaps context" is OFF.
+func (ag *AttributeGrid) SetOnClickInfo(f func(string, string)) { ag.onClickInfo = f }
 
 // SetClassScalarsBuilder wires the Resources-section embedded form
 // for the static class scalar fields (apMult, bpMult, csMult, asMult,
@@ -372,6 +383,14 @@ func (ag *AttributeGrid) createAttributeItem(attr AttributeDef) fyne.CanvasObjec
 	// hovered attribute even after the mouse moves off.
 	if ag.onUnhover != nil {
 		w.SetOnInfoLeave(ag.onUnhover)
+	}
+
+	// Sticky-click route — the (i) button uses this so clicks pin
+	// the sidebar even with the hover toggle off (the default).
+	// Reuses ag.onClickInfo if wired by the editor; otherwise the
+	// widget falls back to the hover dispatcher.
+	if ag.onClickInfo != nil {
+		w.OnInfoClick = ag.onClickInfo
 	}
 
 	return w

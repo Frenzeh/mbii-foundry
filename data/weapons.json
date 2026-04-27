@@ -10,7 +10,7 @@
     "stats": {},
     "tags": [],
     "description": "EMP Grenade.",
-    "category": "Heavy"
+    "category": "Nades"
   },
   {
     "id": "WP_FRAG_NADE",
@@ -23,7 +23,7 @@
     "stats": {},
     "tags": [],
     "description": "Fragmentation Grenade.",
-    "category": "Heavy"
+    "category": "Nades"
   },
   {
     "id": "WP_T21",
@@ -43,7 +43,7 @@
     },
     "tags": [],
     "description": "Heavy Repeating Blaster.",
-    "category": "Heavy"
+    "category": "Rifles"
   },
   {
     "id": "WP_SONIC_NADE",
@@ -56,7 +56,7 @@
     "stats": {},
     "tags": [],
     "description": "Stun Grenade.",
-    "category": "Heavy"
+    "category": "Nades"
   },
   {
     "id": "WP_DET_PACK",
@@ -70,7 +70,7 @@
     "stats": {},
     "tags": [],
     "description": "Remote explosive charge.",
-    "category": "Heavy"
+    "category": "Nades"
   },
   {
     "id": "WP_DEMP2",
@@ -103,7 +103,7 @@
     "stats": {},
     "tags": [],
     "description": "The elegant weapon of a more civilized age.",
-    "category": "Melee/Force"
+    "category": "Melee"
   },
   {
     "id": "WP_CLONE_RIFLE",
@@ -143,7 +143,7 @@
     },
     "tags": [],
     "description": "Repeating Blaster Pistol.",
-    "category": "Heavy"
+    "category": "Rifles"
   },
   {
     "id": "WP_DISRUPTOR",
@@ -163,7 +163,7 @@
     },
     "tags": [],
     "description": "Illegal sniper rifle capable of disintegration.",
-    "category": "Heavy"
+    "category": "Snipers"
   },
   {
     "id": "WP_FLECHETTE",
@@ -256,7 +256,7 @@
     },
     "tags": [],
     "description": "Boba Fett's blaster.",
-    "category": "Heavy"
+    "category": "Rifles"
   },
   {
     "id": "WP_A280",
@@ -276,7 +276,7 @@
     },
     "tags": [],
     "description": "Rebel Heavy Blaster Rifle.",
-    "category": "Heavy"
+    "category": "Rifles"
   },
   {
     "id": "WP_SHOTGUN",
@@ -309,7 +309,7 @@
     "stats": {},
     "tags": [],
     "description": "Freezing Grenade.",
-    "category": "Heavy"
+    "category": "Nades"
   },
   {
     "id": "WP_BRYAR_PISTOL",
@@ -347,7 +347,7 @@
     },
     "tags": [],
     "description": "Canon-accurate Thermal Detonator (Nuke).",
-    "category": "Heavy"
+    "category": "Nades"
   },
   {
     "id": "WP_TRIP_MINE",
@@ -361,7 +361,7 @@
     "stats": {},
     "tags": [],
     "description": "Laser-actuated mine.",
-    "category": "Heavy"
+    "category": "Nades"
   },
   {
     "id": "WP_E_22",
@@ -380,7 +380,7 @@
     },
     "tags": [],
     "description": "Imperial Heavy Blaster.",
-    "category": "Heavy"
+    "category": "Rifles"
   },
   {
     "id": "WP_TRAD_BOWCASTER",
@@ -443,7 +443,7 @@
     },
     "tags": [],
     "description": "ARC Trooper Rifle.",
-    "category": "Heavy"
+    "category": "Rifles"
   },
   {
     "id": "WP_SBD",
@@ -483,7 +483,7 @@
     },
     "tags": [],
     "description": "Short range burst blaster.",
-    "category": "Heavy"
+    "category": "Snipers"
   },
   {
     "id": "WP_REPEATER",
@@ -520,7 +520,7 @@
     },
     "tags": [],
     "description": "Mandalorian Phase-Pulse Rifle.",
-    "category": "Heavy"
+    "category": "Snipers"
   },
   {
     "id": "WP_DLT20A",
@@ -540,7 +540,7 @@
     },
     "tags": [],
     "description": "Long range blaster rifle.",
-    "category": "Heavy"
+    "category": "Rifles"
   },
   {
     "id": "WP_THERMAL",
@@ -556,7 +556,7 @@
     },
     "tags": [],
     "description": "Standard Thermal Detonator grenade.",
-    "category": "Heavy"
+    "category": "Nades"
   },
   {
     "id": "WP_HEAVY_PISTOL",
@@ -605,7 +605,7 @@
     },
     "tags": [],
     "description": "A melee weapon that delivers an electric shock.",
-    "category": "Heavy"
+    "category": "Melee"
   },
   {
     "id": "WP_ROCKET_LAUNCHER",
@@ -640,25 +640,6 @@
     "category": "Sidearms"
   },
   {
-    "id": "WP_DLT19",
-    "name": "DLT-19",
-    "overview": "Heavy Repeating Blaster.",
-    "tips": [
-      "Paired with `MB_ATT_DLT19`."
-    ],
-    "levels": {},
-    "stats": {
-      "Damage": "**26** (Primary) / **35** (Secondary)",
-      "Velocity": "4500 (Primary) / 9500 (Secondary)",
-      "Ammo Cost": "4 (Primary) / 10 (Secondary)",
-      "Force Drain (Close/Far)": "**9/6** (Primary), **14/11** (Secondary)",
-      "Force Drain Blocking (Close/Far)": "**8/4** (Primary), **13/9** (Secondary)"
-    },
-    "tags": [],
-    "description": "Heavy Repeating Blaster.",
-    "category": "Heavy"
-  },
-  {
     "id": "WP_MINIGUN",
     "name": "Minigun",
     "overview": "Z-6 Rotary Blaster Cannon.",
@@ -691,7 +672,7 @@
     },
     "tags": [],
     "description": "Slugthrower Sniper Rifle.",
-    "category": "Heavy"
+    "category": "Snipers"
   },
   {
     "id": "WP_FIRE_NADE",
@@ -704,7 +685,7 @@
     "stats": {},
     "tags": [],
     "description": "Incendiary Grenade.",
-    "category": "Heavy"
+    "category": "Nades"
   },
   {
     "id": "WP_MELEE",
@@ -715,7 +696,7 @@
     "stats": {},
     "tags": [],
     "description": "Hand-to-hand combat.",
-    "category": "Heavy"
+    "category": "Melee"
   },
   {
     "id": "WP_DC_CARBINE",
@@ -724,9 +705,9 @@
     "tips": [],
     "levels": {},
     "stats": {},
-    "tags": [
-      "stub"
-    ]
+    "tags": [],
+    "description": "",
+    "category": "Rifles"
   },
   {
     "id": "WP_THROWER",
@@ -735,9 +716,9 @@
     "tips": [],
     "levels": {},
     "stats": {},
-    "tags": [
-      "stub"
-    ]
+    "tags": [],
+    "description": "",
+    "category": "Heavy"
   },
   {
     "id": "WP_PLX1",
@@ -746,9 +727,9 @@
     "tips": [],
     "levels": {},
     "stats": {},
-    "tags": [
-      "stub"
-    ]
+    "tags": [],
+    "description": "",
+    "category": "Heavy"
   },
   {
     "id": "WP_CONC_NADE",
@@ -757,9 +738,9 @@
     "tips": [],
     "levels": {},
     "stats": {},
-    "tags": [
-      "stub"
-    ]
+    "tags": [],
+    "description": "Concussion Grenade",
+    "category": "Nades"
   },
   {
     "id": "WP_BRYAR_OLD",
@@ -768,9 +749,9 @@
     "tips": [],
     "levels": {},
     "stats": {},
-    "tags": [
-      "stub"
-    ]
+    "tags": [],
+    "description": "",
+    "category": "Sidearms"
   },
   {
     "id": "WP_UGL",
@@ -779,9 +760,9 @@
     "tips": [],
     "levels": {},
     "stats": {},
-    "tags": [
-      "stub"
-    ]
+    "tags": [],
+    "description": "UGL",
+    "category": "Heavy"
   },
   {
     "id": "WP_MGL",
@@ -790,30 +771,8 @@
     "tips": [],
     "levels": {},
     "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "WP_EMPLACED_GUN",
-    "name": "WP_EMPLACED_GUN",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
-    "id": "WP_TURRET",
-    "name": "WP_TURRET",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
+    "tags": [],
+    "description": "MGL",
+    "category": "Heavy"
   }
 ]

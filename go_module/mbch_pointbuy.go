@@ -126,6 +126,12 @@ func (p *PointBuyUI) createUI() {
 		} else {
 			p.editor.character.IsCustomBuild = 0
 		}
+		// Mirror to the legacy Identity-accordion checkbox so updateCharacterFromUI's
+		// save-time read of e.isCustomCheck.Checked doesn't clobber this value.
+		// SetChecked does not re-fire OnChanged in Fyne, so this won't loop.
+		if p.editor.isCustomCheck != nil {
+			p.editor.isCustomCheck.SetChecked(on)
+		}
 		p.editor.markDirty()
 	})
 
@@ -137,6 +143,10 @@ func (p *PointBuyUI) createUI() {
 			return
 		}
 		p.editor.character.MBPoints = n
+		// Mirror to the legacy Identity-accordion entry — same reason as above.
+		if p.editor.mbPointsEntry != nil && p.editor.mbPointsEntry.Text != s {
+			p.editor.mbPointsEntry.SetText(s)
+		}
 		p.editor.markDirty()
 		p.refreshBudget()
 	}

@@ -230,6 +230,20 @@
           "description": "Max saber chain hits",
           "default": 0
         },
+        "saberSpecialDamage": {
+          "type": "number",
+          "description": "Saber special-attack damage multiplier",
+          "default": 1.0
+        },
+        "saberDamageStyle": {
+          "type": "string",
+          "description": "Per-style saber damage overrides (consumed by BG_TranslateSaberDamageStyles)"
+        },
+        "forceblocking": {
+          "type": "integer",
+          "description": "Force-blocking attribute (parsed in bg_saberLoad.c)",
+          "default": 0
+        },
         "_section_saber_variants": {
           "type": "null",
           "description": "=== SABER VARIANTS ==="
@@ -623,6 +637,10 @@
           "type": "string",
           "description": "Max saber chain per rank"
         },
+        "rankSaberSpecialDamage": {
+          "type": "string",
+          "description": "Saber special-attack damage multiplier per rank"
+        },
         "rankModelScale": {
           "type": "string",
           "description": "Model scale per rank"
@@ -731,6 +749,83 @@
           "type": "string",
           "description": "Saber stance animation"
         },
+        "runLeft": {
+          "type": "string",
+          "description": "Strafe-left run animation"
+        },
+        "runRight": {
+          "type": "string",
+          "description": "Strafe-right run animation"
+        },
+        "walkLeft": {
+          "type": "string",
+          "description": "Strafe-left walk animation"
+        },
+        "walkRight": {
+          "type": "string",
+          "description": "Strafe-right walk animation"
+        },
+        "jumpAnim": {
+          "type": "string",
+          "description": "Jump animation override"
+        },
+        "landAnim": {
+          "type": "string",
+          "description": "Land animation override"
+        },
+        "crouchAnim": {
+          "type": "string",
+          "description": "Crouch animation override"
+        },
+        "painAnim": {
+          "type": "string",
+          "description": "Pain reaction animation override"
+        },
+        "getupAnim": {
+          "type": "string",
+          "description": "Get-up animation override (generic)"
+        },
+        "getupAnimFront": {
+          "type": "string",
+          "description": "Get-up animation when face-down"
+        },
+        "getupAnimBack": {
+          "type": "string",
+          "description": "Get-up animation when on back"
+        },
+        "getupAnimCrouch": {
+          "type": "string",
+          "description": "Get-up animation from crouch"
+        },
+        "gunbashAnim": {
+          "type": "string",
+          "description": "Gun-bash melee animation override"
+        },
+        "blockAnim": {
+          "type": "string",
+          "description": "Block animation override"
+        },
+        "kickAnim": {
+          "type": "string",
+          "description": "Kick animation override"
+        },
+        "punchAnim": {
+          "type": "string",
+          "description": "Punch animation override"
+        },
+        "altFireAnim": {
+          "type": "string",
+          "description": "Alt-fire animation override"
+        },
+        "throwAnim": {
+          "type": "string",
+          "description": "Grenade throw animation override"
+        },
+        "throwAnimReleaseFrame": {
+          "type": "integer",
+          "description": "Frame at which the thrown projectile releases",
+          "default": 15
+        },
         "_section_sounds": {
           "type": "null",
           "description": "=== SOUND OVERRIDES ==="
@@ -763,6 +858,58 @@
           "type": "string",
           "description": "Special ability slot 4"
         },
+        "meleeSpecial1": {
+          "type": "string",
+          "description": "Melee variant of special slot 1"
+        },
+        "meleeSpecial2": {
+          "type": "string",
+          "description": "Melee variant of special slot 2"
+        },
+        "meleeSpecial3": {
+          "type": "string",
+          "description": "Melee variant of special slot 3"
+        },
+        "meleeSpecial4": {
+          "type": "string",
+          "description": "Melee variant of special slot 4"
+        },
+        "special1HUD": {
+          "type": "string",
+          "description": "HUD shader/tag for special slot 1"
+        },
+        "special2HUD": {
+          "type": "string",
+          "description": "HUD shader/tag for special slot 2"
+        },
+        "_section_ability_flags": {
+          "type": "null",
+          "description": "=== ABILITY FLAGS (HELDFLAG_* bitmasks) ==="
+        },
+        "AB_WLaserFlags": {
+          "type": "string",
+          "description": "Wrist-laser flag bitmask (e.g. 'HELD_ALTRELOAD')"
+        },
+        "AB_WBirdsFlags": {
+          "type": "string",
+          "description": "Whistling-birds flag bitmask"
+        },
+        "AB_RocketFlags": {
+          "type": "string",
+          "description": "Mandalorian rocket flag bitmask"
+        },
+        "AB_TDartFlags": {
+          "type": "string",
+          "description": "Tracking-dart flag bitmask"
+        },
+        "AB_PDartFlags": {
+          "type": "string",
+          "description": "Poison-dart flag bitmask"
+        },
+        "AB_FLightningFlags": {
+          "type": "string",
+          "description": "Force-lightning ability flag bitmask"
+        },
         "resource": {
           "type": "string",
           "description": "Resource type (resourceTable)"
@@ -790,6 +937,66 @@
           "type": "integer",
           "description": "Extra lives beyond default",
           "default": 0
+        },
+        "spawnerNPC": {
+          "type": "string",
+          "description": "NPC type spawned when MB_ATT_SPAWNER is invoked (empty = skill-based default)"
+        },
+        "roundNPC": {
+          "type": "string",
+          "description": "NPC type spawned at round start when MB_ATT_ROUNDSPAWNER is granted (empty = skill-based default)"
+        },
+        "_section_jetpack": {
+          "type": "null",
+          "description": "=== JETPACK OVERRIDES ==="
+        },
+        "jetpackThrustEffect": {
+          "type": "string",
+          "description": "Effect path played while thrusting"
+        },
+        "jetpackIdleEffect": {
+          "type": "string",
+          "description": "Effect path played while jetpack is idle/equipped"
+        },
+        "jetpackThrustSound": {
+          "type": "string",
+          "description": "Sound played while thrusting (loop)"
+        },
+        "jetpackIdleSound": {
+          "type": "string",
+          "description": "Sound played while jetpack is idle (loop)"
+        },
+        "jetpackStartSound": {
+          "type": "string",
+          "description": "One-shot played when thrust begins"
+        },
+        "jetpackFinishSound": {
+          "type": "string",
+          "description": "One-shot played when thrust ends"
+        },
+        "jetpackJetTag": {
+          "type": "string",
+          "description": "Model tag for primary jet (e.g. *jet1)"
+        },
+        "jetpackJet2Tag": {
+          "type": "string",
+          "description": "Model tag for secondary jet (e.g. *jet2)"
+        },
+        "jetpackJetOffset": {
+          "type": "string",
+          "description": "Primary jet position offset 'x, y, z'"
+        },
+        "jetpackJet2Offset": {
+          "type": "string",
+          "description": "Secondary jet position offset 'x, y, z'"
+        },
+        "jetpackJetAngles": {
+          "type": "string",
+          "description": "Primary jet rotation 'pitch, yaw, roll'"
+        },
+        "jetpackJet2Angles": {
+          "type": "string",
+          "description": "Secondary jet rotation 'pitch, yaw, roll'"
         },
         "_section_misc": {
           "type": "null",
@@ -1514,6 +1721,16 @@
           "description": "Fire rate multiplier",
           "default": 1.0
         },
+        "splashDamage": {
+          "type": "integer",
+          "description": "Splash damage override (-1 = use base weapon)",
+          "default": -1
+        },
+        "splashRadius": {
+          "type": "integer",
+          "description": "Splash radius override (-1 = use base weapon)",
+          "default": -1
+        },
         "_section_fp_block": {
           "type": "null",
           "description": "=== FORCE POINT BLOCKING ==="
@@ -1587,6 +1804,14 @@
           "type": "string",
           "description": "Ready zoom animation"
         },
+        "animReadyRun": {
+          "type": "string",
+          "description": "Ready run animation"
+        },
+        "animReadyZoomRun": {
+          "type": "string",
+          "description": "Ready zoom-run animation"
+        },
         "animAttack": {
           "type": "string",
           "description": "Attack animation"
@@ -1598,6 +1823,14 @@
         "animAttackZoom": {
           "type": "string",
           "description": "Attack zoom animation"
+        },
+        "animAttackRun": {
+          "type": "string",
+          "description": "Attack run animation"
+        },
+        "animAttackZoomRun": {
+          "type": "string",
+          "description": "Attack zoom-run animation"
         },
         "animStand": {
           "type": "string",
@@ -1722,6 +1955,11 @@
         "HitSound": {
           "type": "string",
           "description": "Impact/hit sound"
+        },
+        "gripDamage": {
+          "type": "integer",
+          "description": "Grip-style force damage override (-1000 = use base power)",
+          "default": -1000
         }
       },
       "required": [

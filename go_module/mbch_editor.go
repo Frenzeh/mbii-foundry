@@ -713,13 +713,7 @@ func (e *MBCHEditor) createUI() {
 	e.extraLivesEntry.SetText("0")
 	e.extraLivesEntry.OnFocus = func() { e.interact("extralives", "") }
 
-	e.isCustomCheck = widget.NewCheck("Enable Custom Build", func(b bool) {
-		if b {
-			e.character.IsCustomBuild = 1
-		} else {
-			e.character.IsCustomBuild = 0
-		}
-	})
+	e.isCustomCheck = widget.NewCheck("Enable Custom Build", nil)
 	e.mbPointsEntry = NewValidatedEntry(func(s string) error {
 		if _, err := strconv.Atoi(s); err != nil {
 			return fmt.Errorf("must be an integer")
@@ -734,7 +728,34 @@ func (e *MBCHEditor) createUI() {
 		} else {
 			e.character.IsCustomBuild = 0
 		}
+		// Mirror to the Point Buy tab's checkbox so its display stays in
+		// sync — otherwise the two views can disagree and confuse the
+		// tester (also why their data went missing on save previously).
+		if e.pointBuyUI != nil && e.pointBuyUI.customBuildCheck != nil {
+			e.pointBuyUI.customBuildCheck.SetChecked(b)
+		}
 		e.interact("isCustomBuild", "")
+		e.markDirty()
+	}
+	// Live OnChanged so typing here updates the model immediately (and
+	// mirrors the Point Buy entry). Without this the field was only read
+	// at save time, and any value entered in the Point Buy tab got
+	// overwritten by whatever stale text this entry still showed.
+	e.mbPointsEntry.Entry.OnChanged = func(s string) {
+		if err := e.mbPointsEntry.validator(s); err != nil {
+			e.mbPointsEntry.SetValidationError(err)
+			return
+		}
+		e.mbPointsEntry.SetValidationError(nil)
+		n, err := strconv.Atoi(s)
+		if err != nil {
+			return
+		}
+		e.character.MBPoints = n
+		if e.pointBuyUI != nil && e.pointBuyUI.mbPointsEntry != nil && e.pointBuyUI.mbPointsEntry.Text != s {
+			e.pointBuyUI.mbPointsEntry.SetText(s)
+		}
+		e.markDirty()
 	}
 
 	e.descriptionEntry = NewValidatedEntry(noOpVal)
@@ -1102,6 +1123,18 @@ func (e *MBCHEditor) SaveFile(path string) error {
 		e.fileManager.CreateBackup(path)
 	}
 
+	// Engine requires a non-empty `name` field — BG_SiegeParseClassFile
+	// hard-errors with "Siege class without name entry" when it's blank
+	// (bg_saga.c:2341). Files match the engine class by filename anyway,
+	// so derive name from the basename when the user left it empty.
+	if strings.TrimSpace(e.character.Name) == "" {
+		base := filepath.Base(path)
+		e.character.Name = strings.TrimSuffix(base, filepath.Ext(base))
+		if e.nameEntry != nil {
+			e.nameEntry.SetText(e.character.Name)
+		}
+	}
+
 	file, err := os.Create(path)
 	if err != nil {
 		e.lastError = fmt.Sprintf("Failed to create file: %v", err)
@@ -1250,16 +1283,19 @@ func (e *MBCHEditor) updateCharacterFromUI() {
 	e.character.SaberStyle = e.saberStyleSelect.GetSelected() // Get from MultiSelect
 	e.character.ClassFlags = e.classFlagsSelect.GetSelected() // Get from MultiSelect
 
-	// Numerical parsing with default/clamp for safety
-	e.character.MaxHealth = parseEntryInt(e.healthEntry, 1, 9999) // Limit to 9999
-	e.character.MaxArmor = parseEntryInt(e.armorEntry, 0, 999)    // Limit to 999
-	e.character.ForcePool = parseEntryInt(e.forcePoolEntry, 0, 999)
-	e.character.ForceRegen = parseEntryFloat(e.forceRegenEntry, 0.0, 10.0)
-	e.character.Speed = parseEntryFloat(e.speedEntry, 0.1, 10.0)
-	e.character.APMultiplier = parseEntryFloat(e.apMultEntry, 0.0, 10.0)
-	e.character.BPMultiplier = parseEntryFloat(e.bpMultEntry, 0.0, 10.0)
-	e.character.CSMultiplier = parseEntryFloat(e.csMultEntry, 0.0, 10.0)
-	e.character.ASMultiplier = parseEntryFloat(e.asMultEntry, 0.0, 10.0)
+	// Numerical parsing. Upper bounds are deliberately permissive — the
+	// engine stores these as plain int/float with no hard cap (bg_saga.c
+	// atoi/atof), so the old 999 / 10.0 ceilings were UI inventions that
+	// silently truncated values testers set higher.
+	e.character.MaxHealth = parseEntryInt(e.healthEntry, 0, 999999)
+	e.character.MaxArmor = parseEntryInt(e.armorEntry, 0, 999999)
+	e.character.ForcePool = parseEntryInt(e.forcePoolEntry, 0, 999999)
+	e.character.ForceRegen = parseEntryFloat(e.forceRegenEntry, 0.0, 1000.0)
+	e.character.Speed = parseEntryFloat(e.speedEntry, 0.0, 1000.0)
+	e.character.APMultiplier = parseEntryFloat(e.apMultEntry, 0.0, 1000.0)
+	e.character.BPMultiplier = parseEntryFloat(e.bpMultEntry, 0.0, 1000.0)
+	e.character.CSMultiplier = parseEntryFloat(e.csMultEntry, 0.0, 1000.0)
+	e.character.ASMultiplier = parseEntryFloat(e.asMultEntry, 0.0, 1000.0)
 
 	e.character.Saber1 = e.saber1Entry.Text
 	e.character.Saber2 = e.saber2Entry.Text

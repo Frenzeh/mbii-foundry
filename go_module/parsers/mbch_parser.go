@@ -33,6 +33,43 @@ func writeExtraFields(sb *strings.Builder, fields map[string]string) {
 	}
 }
 
+// drainVariants pulls every key from `fields` matching `<base>_N` (for any
+// integer N) in ascending N order, emits each adjacent to its base field
+// (so model_1 / skin_2 / uishader_3 don't get exiled to the bottom of the
+// block via writeExtraFields's alphabetical dump), and removes them from
+// the map. Returns nothing — side effects on `sb` and `fields`.
+func drainVariants(sb *strings.Builder, fields map[string]string, base string) {
+	if len(fields) == 0 {
+		return
+	}
+	prefix := base + "_"
+	type pair struct {
+		idx int
+		key string
+	}
+	var found []pair
+	for k := range fields {
+		if !strings.HasPrefix(k, prefix) {
+			continue
+		}
+		n, err := strconv.Atoi(strings.TrimPrefix(k, prefix))
+		if err != nil {
+			continue
+		}
+		found = append(found, pair{n, k})
+	}
+	sort.Slice(found, func(i, j int) bool { return found[i].idx < found[j].idx })
+	for _, p := range found {
+		v := fields[p.key]
+		if strings.Contains(v, " ") {
+			fmt.Fprintf(sb, "\t%s\t\t\"%s\"\n", p.key, v)
+		} else {
+			fmt.Fprintf(sb, "\t%s\t\t%s\n", p.key, v)
+		}
+		delete(fields, p.key)
+	}
+}
+
 // WeaponInfo represents a weapon override block in an MBCH file
 type WeaponInfo struct {
 	WeaponToReplace    string
@@ -490,6 +527,15 @@ func setField(char *MBCHCharacter, key, value string) {
 func GenerateMBCH(char *MBCHCharacter) (string, error) {
 	var sb strings.Builder
 
+	// Work on a shallow copy of ExtraFields so drainVariants doesn't
+	// mutate the caller's character — round-trip tests (and any caller
+	// that re-uses the struct after generating) depended on the input
+	// surviving unchanged.
+	extras := make(map[string]string, len(char.ExtraFields))
+	for k, v := range char.ExtraFields {
+		extras[k] = v
+	}
+
 	fmt.Fprintf(&sb, "// %s\n\nClassInfo\n{\n", char.Name)
 	fmt.Fprintf(&sb, "\tname\t\t\t\"%s\"\n", char.Name)
 	if char.MBClass != "" {
@@ -498,12 +544,19 @@ func GenerateMBCH(char *MBCHCharacter) (string, error) {
 	if char.Model != "" {
 		fmt.Fprintf(&sb, "\tmodel\t\t\t\"%s\"\n", char.Model)
 	}
+	drainVariants(&sb, extras, "model")
+	drainVariants(&sb, extras, "customred")
+	drainVariants(&sb, extras, "customgreen")
+	drainVariants(&sb, extras, "customblue")
+	drainVariants(&sb, extras, "userRGB")
 	if char.Skin != "" {
 		fmt.Fprintf(&sb, "\tskin\t\t\t\"%s\"\n", char.Skin)
 	}
+	drainVariants(&sb, extras, "skin")
 	if char.UIShader != "" {
 		fmt.Fprintf(&sb, "\tuishader\t\t\"%s\"\n", char.UIShader)
 	}
+	drainVariants(&sb, extras, "uishader")
 	if char.Soundset != "" {
 		fmt.Fprintf(&sb, "\tsoundset\t\t\"%s\"\n", char.Soundset)
 	}
@@ -550,15 +603,20 @@ func GenerateMBCH(char *MBCHCharacter) (string, error) {
 	if char.Saber1 != "" {
 		fmt.Fprintf(&sb, "\tsaber1\t\t\t%s\n", char.Saber1)
 	}
+	drainVariants(&sb, extras, "saber1")
 	if char.Saber2 != "" {
 		fmt.Fprintf(&sb, "\tsaber2\t\t\t%s\n", char.Saber2)
 	}
+	drainVariants(&sb, extras, "saber2")
 	if char.SaberColor != 0 {
 		fmt.Fprintf(&sb, "\tsabercolor\t\t%d\n", char.SaberColor)
 	}
+	drainVariants(&sb, extras, "sabercolor")
 	if char.Saber2Color != 0 {
 		fmt.Fprintf(&sb, "\tsaber2color\t\t%d\n", char.Saber2Color)
 	}
+	drainVariants(&sb, extras, "saber2color")
+	drainVariants(&sb, extras, "saberstyle")
 	if char.ClassNumberLimit != -1 {
 		fmt.Fprintf(&sb, "\tclassNumberLimit\t%d\n", char.ClassNumberLimit)
 	}
@@ -627,7 +685,7 @@ func GenerateMBCH(char *MBCHCharacter) (string, error) {
 		}
 	}
 
-	writeExtraFields(&sb, char.ExtraFields)
+	writeExtraFields(&sb, extras)
 	fmt.Fprintln(&sb, "}")
 
 	// Weapon Info

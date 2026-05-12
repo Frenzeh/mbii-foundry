@@ -291,6 +291,25 @@ func NewInputEntry() *widget.Entry {
 	return e
 }
 
+// NewSlotEntry is for Entries placed inside a parent ScrollContainer
+// (point-buy slots, rank-attribute rows, anything in a scrollable list).
+// It disables the Entry's internal horizontal scroll widget so wheel
+// events bubble up to the parent — without this, hovering over an
+// Entry eats the wheel event because widget.Entry embeds its own
+// *widget.Scroll for text overflow (which always wins hit-testing
+// against the outer container.NewVScroll).
+//
+// Trade-off: very long text past the visible width can't be scrolled
+// into view via the keyboard caret; for short structured values
+// (skill IDs, "0,4,10" cost strings, icon paths) this is invisible.
+func NewSlotEntry() *widget.Entry {
+	e := widget.NewEntry()
+	e.TextStyle = fyne.TextStyle{Monospace: true}
+	e.Wrapping = fyne.TextWrapOff
+	e.Scroll = container.ScrollNone
+	return e
+}
+
 func NewMultiLineInputEntry() *widget.Entry {
 	e := widget.NewMultiLineEntry()
 	e.TextStyle = fyne.TextStyle{Monospace: true}

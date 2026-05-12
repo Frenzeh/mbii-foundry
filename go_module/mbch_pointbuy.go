@@ -286,15 +286,15 @@ func (p *PointBuyUI) buildSlotRow(globalIdx int, attrOptions []string) *fyne.Con
 	iconW.SetMinSize(fyne.NewSize(24, 24))
 	p.slotIcons[globalIdx] = iconW
 
-	nameEntry := NewInputEntry()
+	nameEntry := NewSlotEntry()
 	nameEntry.SetPlaceHolder("Display name (e.g. \"Blaster Pistol:\")")
 	p.slotNames[globalIdx] = nameEntry
 
-	rankEntry := NewInputEntry()
+	rankEntry := NewSlotEntry()
 	rankEntry.SetPlaceHolder("0,4,10")
 	p.slotRanks[globalIdx] = rankEntry
 
-	descEntry := NewInputEntry()
+	descEntry := NewSlotEntry()
 	descEntry.SetPlaceHolder("Optional description (c_att_descs)")
 	p.slotDescs[globalIdx] = descEntry
 
@@ -475,7 +475,7 @@ func (p *PointBuyUI) buildSpecPane(spec, totalSpecs int) fyne.CanvasObject {
 	content := container.NewVBox()
 
 	if totalSpecs > 1 {
-		nameEntry := NewInputEntry()
+		nameEntry := NewSlotEntry()
 		nameEntry.SetPlaceHolder(fmt.Sprintf("Spec %d name (shown as tab title)", spec+1))
 		nameEntry.SetText(p.editor.character.CustomSpecNames[spec])
 		nameEntry.OnChanged = func(s string) {
@@ -489,7 +489,7 @@ func (p *PointBuyUI) buildSpecPane(spec, totalSpecs int) fyne.CanvasObject {
 		}
 		p.specNameEntries[spec] = nameEntry
 
-		iconEntry := NewInputEntry()
+		iconEntry := NewSlotEntry()
 		iconEntry.SetPlaceHolder("Icon path (e.g. gfx/menus/alpha/icon_weap_accuracy)")
 		iconEntry.SetText(p.editor.character.CustomSpecIcons[spec])
 		iconEntry.OnChanged = func(s string) {
@@ -728,7 +728,7 @@ func (p *PointBuyUI) refreshRankAttributes() {
 			k := key
 			val := p.editor.character.RankAttributes[k]
 
-			entry := NewInputEntry()
+			entry := NewSlotEntry()
 			entry.SetText(val)
 			entry.OnChanged = func(s string) {
 				p.editor.character.RankAttributes[k] = s

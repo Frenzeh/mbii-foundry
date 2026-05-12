@@ -237,12 +237,14 @@
         },
         "saberDamageStyle": {
           "type": "string",
-          "description": "Per-style saber damage overrides (consumed by BG_TranslateSaberDamageStyles)"
+          "description": "Per-style saber damage overrides (consumed by BG_TranslateSaberDamageStyles)",
+          "dev": true
         },
         "forceblocking": {
           "type": "integer",
           "description": "Force-blocking attribute (parsed in bg_saberLoad.c)",
-          "default": 0
+          "default": 0,
+          "dev": true
         },
         "_section_saber_variants": {
           "type": "null",
@@ -888,27 +890,33 @@
         },
         "AB_WLaserFlags": {
           "type": "string",
-          "description": "Wrist-laser flag bitmask (e.g. 'HELD_ALTRELOAD')"
+          "description": "Wrist-laser flag bitmask (e.g. 'HELD_ALTRELOAD')",
+          "dev": true
         },
         "AB_WBirdsFlags": {
           "type": "string",
-          "description": "Whistling-birds flag bitmask"
+          "description": "Whistling-birds flag bitmask",
+          "dev": true
         },
         "AB_RocketFlags": {
           "type": "string",
-          "description": "Mandalorian rocket flag bitmask"
+          "description": "Mandalorian rocket flag bitmask",
+          "dev": true
         },
         "AB_TDartFlags": {
           "type": "string",
-          "description": "Tracking-dart flag bitmask"
+          "description": "Tracking-dart flag bitmask",
+          "dev": true
         },
         "AB_PDartFlags": {
           "type": "string",
-          "description": "Poison-dart flag bitmask"
+          "description": "Poison-dart flag bitmask",
+          "dev": true
         },
         "AB_FLightningFlags": {
           "type": "string",
-          "description": "Force-lightning ability flag bitmask"
+          "description": "Force-lightning ability flag bitmask",
+          "dev": true
         },
         "resource": {
           "type": "string",
@@ -976,27 +984,33 @@
         },
         "jetpackJetTag": {
           "type": "string",
-          "description": "Model tag for primary jet (e.g. *jet1)"
+          "description": "Model tag for primary jet (e.g. *jet1)",
+          "dev": true
         },
         "jetpackJet2Tag": {
           "type": "string",
-          "description": "Model tag for secondary jet (e.g. *jet2)"
+          "description": "Model tag for secondary jet (e.g. *jet2)",
+          "dev": true
         },
         "jetpackJetOffset": {
           "type": "string",
-          "description": "Primary jet position offset 'x, y, z'"
+          "description": "Primary jet position offset 'x, y, z'",
+          "dev": true
         },
         "jetpackJet2Offset": {
           "type": "string",
-          "description": "Secondary jet position offset 'x, y, z'"
+          "description": "Secondary jet position offset 'x, y, z'",
+          "dev": true
         },
         "jetpackJetAngles": {
           "type": "string",
-          "description": "Primary jet rotation 'pitch, yaw, roll'"
+          "description": "Primary jet rotation 'pitch, yaw, roll'",
+          "dev": true
         },
         "jetpackJet2Angles": {
           "type": "string",
-          "description": "Secondary jet rotation 'pitch, yaw, roll'"
+          "description": "Secondary jet rotation 'pitch, yaw, roll'",
+          "dev": true
         },
         "_section_misc": {
           "type": "null",

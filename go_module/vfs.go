@@ -312,6 +312,52 @@ func (vfs *VirtualFileSystem) Search(pattern string) []*AssetSource {
 	return results
 }
 
+// Suggest returns up to `max` indexed paths whose lowercase form contains
+// the query AND passes the optional accept() filter. Used by the inline
+// path-autocomplete on model/skin/uishader/etc. entries — the result is
+// PK3-aware because the index already merges loose files and PK3
+// contents (see indexPK3 / indexDirectory).
+//
+// `accept` may be nil to disable type filtering. When non-nil, returning
+// false on a path skips it (e.g. caller wants only `.skin` files, or
+// only paths under `models/players/`).
+//
+// Results are deduplicated by path: if the same logical asset exists in
+// both a loose file and a PK3, the loose version wins (alphabetic
+// tiebreak via sort).
+func (vfs *VirtualFileSystem) Suggest(query string, accept func(string) bool, max int) []string {
+	vfs.mu.RLock()
+	defer vfs.mu.RUnlock()
+
+	if max <= 0 {
+		max = 50
+	}
+
+	q := strings.ToLower(strings.TrimSpace(query))
+	seen := make(map[string]bool)
+	matches := make([]string, 0, max)
+
+	for path := range vfs.Index {
+		if seen[path] {
+			continue
+		}
+		if q != "" && !strings.Contains(strings.ToLower(path), q) {
+			continue
+		}
+		if accept != nil && !accept(path) {
+			continue
+		}
+		seen[path] = true
+		matches = append(matches, path)
+	}
+
+	sort.Strings(matches)
+	if len(matches) > max {
+		matches = matches[:max]
+	}
+	return matches
+}
+
 type pk3ReadCloser struct {
 	rc io.ReadCloser
 	zr *zip.ReadCloser

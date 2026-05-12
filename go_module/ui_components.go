@@ -310,6 +310,97 @@ func NewSlotEntry() *widget.Entry {
 	return e
 }
 
+// AttachPathSuggest wires PK3-aware inline autocomplete onto an existing
+// Entry. As the user types, indexed paths matching the substring are
+// shown as a SelectEntry-style dropdown of up to 50 suggestions.
+// `accept` is an optional filter — return true to include a path
+// (typically used to constrain to a suffix like ".skin" or a prefix
+// like "models/players/"). Pass nil to suggest from every indexed path.
+//
+// This lives on the existing *widget.Entry so callers don't have to
+// swap widget types (the Entry remains a regular Entry — keeps the
+// surrounding ValidatedEntry/InputEntry plumbing intact). The trade-
+// off vs converting to *widget.SelectEntry is that the dropdown only
+// surfaces while focused and on text change, not via a click-arrow.
+func AttachPathSuggest(entry *widget.Entry, vfs *VirtualFileSystem, accept func(string) bool) {
+	if entry == nil || vfs == nil {
+		return
+	}
+	prevOnChanged := entry.OnChanged
+	var popup *widget.PopUpMenu
+
+	hidePopup := func() {
+		if popup != nil {
+			popup.Hide()
+			popup = nil
+		}
+	}
+
+	showSuggestions := func(text string) {
+		matches := vfs.Suggest(text, accept, 25)
+		if len(matches) == 0 {
+			hidePopup()
+			return
+		}
+		canvas := fyne.CurrentApp().Driver().CanvasForObject(entry)
+		if canvas == nil {
+			return
+		}
+		items := make([]*fyne.MenuItem, len(matches))
+		for i, m := range matches {
+			path := m // capture
+			items[i] = fyne.NewMenuItem(path, func() {
+				// Setting text fires OnChanged. Suppress the popup
+				// during that re-entry so the click-to-select doesn't
+				// immediately spawn a new popup from the new text.
+				prev := entry.OnChanged
+				entry.OnChanged = nil
+				entry.SetText(path)
+				entry.OnChanged = prev
+				hidePopup()
+			})
+		}
+		hidePopup()
+		popup = widget.NewPopUpMenu(fyne.NewMenu("", items...), canvas)
+		// Position below the entry. Add the entry's height so the popup
+		// doesn't overlap the field the user is typing into.
+		pos := fyne.CurrentApp().Driver().AbsolutePositionForObject(entry)
+		pos.Y += entry.Size().Height
+		popup.ShowAtPosition(pos)
+	}
+
+	entry.OnChanged = func(s string) {
+		if prevOnChanged != nil {
+			prevOnChanged(s)
+		}
+		if strings.TrimSpace(s) == "" {
+			hidePopup()
+			return
+		}
+		showSuggestions(s)
+	}
+}
+
+// HasSuffixAny is a small helper for AttachPathSuggest's accept func —
+// returns a closure that matches any of the listed suffixes
+// case-insensitively. Lets callers write
+// AttachPathSuggest(e, vfs, HasSuffixAny(".skin", ".jpg", ".png")).
+func HasSuffixAny(suffixes ...string) func(string) bool {
+	lower := make([]string, len(suffixes))
+	for i, s := range suffixes {
+		lower[i] = strings.ToLower(s)
+	}
+	return func(path string) bool {
+		lp := strings.ToLower(path)
+		for _, s := range lower {
+			if strings.HasSuffix(lp, s) {
+				return true
+			}
+		}
+		return false
+	}
+}
+
 func NewMultiLineInputEntry() *widget.Entry {
 	e := widget.NewMultiLineEntry()
 	e.TextStyle = fyne.TextStyle{Monospace: true}

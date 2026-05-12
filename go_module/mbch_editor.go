@@ -111,6 +111,15 @@ type MBCHEditor struct {
 	forceInfoUI     *ForceInfoUI
 	weaponFlagsUI   *WeaponFlagsEditor  // WP_*Flags HELD_* grid (separate from WeaponInfoUI overrides)
 	skinVariantsUI  *SkinVariantsEditor // model_N / skin_N / uishader_N tuples + RGB overrides
+
+	// devSurfaces lists every UI element that's been opted into the
+	// "Show Developer Fields" toggle (View menu). Subsystems that
+	// render schema fields marked "dev": true should append their
+	// widget (or enclosing container) here at build time;
+	// applyDeveloperVisibility iterates and Show/Hide()s them.
+	// Empty by default — the toggle is a no-op until subsystems
+	// register surfaces.
+	devSurfaces []fyne.CanvasObject
 	assetBrowser   *AssetBrowser
 	iconResolver   *IconResolver
 	holocronClient *HolocronClient
@@ -211,6 +220,34 @@ func (e *MBCHEditor) SetAssetBrowser(ab *AssetBrowser) {
 }
 func (e *MBCHEditor) SetHolocronClient(client *HolocronClient) { e.holocronClient = client }
 func (e *MBCHEditor) SetOnDirtyChanged(f func(bool))           { e.onDirtyChanged = f }
+
+// applyDeveloperVisibility shows or hides every UI element that's been
+// registered as a "dev field" surface. Called by App.toggleDeveloperFields
+// whenever the user flips View → Show Developer Fields, and during
+// editor construction so freshly-opened files respect the current
+// preference.
+//
+// Implementation: each subsystem (jetpack panel, ability-flags grid,
+// saberDamageStyle entry, etc.) appends itself to devSurfaces when it
+// builds its widgets. Toggling iterates the slice and calls Show()/
+// Hide() with a Refresh on the enclosing container. Nothing magic —
+// just a registry so we don't have to grep for every dev-flagged
+// widget every time the preference changes.
+func (e *MBCHEditor) applyDeveloperVisibility(show bool) {
+	for _, obj := range e.devSurfaces {
+		if obj == nil {
+			continue
+		}
+		if show {
+			obj.Show()
+		} else {
+			obj.Hide()
+		}
+	}
+	if e.container != nil {
+		e.container.Refresh()
+	}
+}
 func (e *MBCHEditor) IsDirty() bool                            { return e.isDirty }
 func (e *MBCHEditor) MarkClean() {
 	e.isDirty = false
@@ -363,6 +400,25 @@ func (e *MBCHEditor) createUI() {
 	e.soundsetEntry = NewValidatedEntry(noOpVal)
 	e.soundsetEntry.OnChanged = func(s string) { e.markDirty() }
 	e.soundsetEntry.OnFocus = func() { e.interact("soundset", "") }
+
+	// PK3-aware inline autocomplete on path fields. The VFS index already
+	// merges loose files and PK3 contents (vfs.indexPK3), so suggestions
+	// surface assets from either source. Type filters are deliberately
+	// loose — model entries are just directory names under
+	// models/players/, so we suggest any path containing that prefix
+	// rather than gating on a file extension.
+	if e.app != nil && e.app.assetBrowser != nil && e.app.assetBrowser.vfs != nil {
+		vfs := e.app.assetBrowser.vfs
+		AttachPathSuggest(&e.modelEntry.Entry, vfs, func(p string) bool {
+			return strings.Contains(strings.ToLower(p), "models/players/")
+		})
+		AttachPathSuggest(&e.skinEntry.Entry, vfs, HasSuffixAny(".skin"))
+		AttachPathSuggest(&e.uiShaderEntry.Entry, vfs, func(p string) bool {
+			lp := strings.ToLower(p)
+			return strings.Contains(lp, "/mb2_icon_") || strings.Contains(lp, "gfx/menus/")
+		})
+		AttachPathSuggest(&e.soundsetEntry.Entry, vfs, HasSuffixAny(".wav", ".mp3", ".ogg"))
+	}
 
 	browseIconBtn := NewTooltipButton("", theme.FolderOpenIcon(), func() {
 		if e.app != nil {

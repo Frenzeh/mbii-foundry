@@ -23,6 +23,8 @@ import (
 	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+
+	"github.com/Frenzeh/mbii-foundry/parsers"
 )
 
 const (
@@ -32,7 +34,7 @@ const (
 	// screen's "new version available" banner. Bump this before tagging
 	// a release — if they drift, testers get a stale banner or none at
 	// all.
-	AppVersion = "0.12.3-alpha"
+	AppVersion = "0.13.0-alpha"
 	AppName    = "MBII Foundry"
 )
 
@@ -119,6 +121,14 @@ type AppConfig struct {
 	// Hover tooltips for enum values. Default is on; users who find
 	// them distracting can flip this off in Preferences.
 	HoverTooltipsDisabled bool `json:"hover_tooltips_disabled"`
+
+	// Developer-fields visibility. When true, the editor surfaces
+	// schema fields marked `"dev": true` (engine-internal bitmasks,
+	// jetpack offsets/angles, saberDamageStyle, etc.) instead of
+	// hiding them. Default false — keeps the loadout-editor surface
+	// uncluttered for the common case while letting power users
+	// flip everything on from View → Show Developer Fields.
+	ShowDeveloperFields bool `json:"show_developer_fields"`
 
 	// Density scales the theme's internal padding so the UI reads
 	// tighter or airier per taste. "comfortable" = 1.0× (default),
@@ -807,6 +817,23 @@ func (a *App) toggleSidebar() {
 	a.mainWindow.Content().Refresh() // Force refresh of main window content
 }
 
+// toggleDeveloperFields flips ShowDeveloperFields and notifies every
+// open MBCH editor so it can show/hide dev-flagged UI sections.
+// Persists across sessions via the standard saveConfig.
+//
+// The fan-out walks `editors` rather than holding a single active-
+// editor reference because multiple MBCH files can be open
+// simultaneously in tabs; flipping the toggle should update them all.
+func (a *App) toggleDeveloperFields() {
+	a.config.ShowDeveloperFields = !a.config.ShowDeveloperFields
+	a.saveConfig()
+	for _, ed := range a.editors {
+		if me, ok := ed.(*MBCHEditor); ok {
+			me.applyDeveloperVisibility(a.config.ShowDeveloperFields)
+		}
+	}
+}
+
 // showStickyContext is called when the user INTERACTS with a field —
 // clicks/focuses an entry, picks a class card, selects a weapon, etc.
 // The info panel saves this key as its "sticky" view: transient
@@ -1206,6 +1233,7 @@ func (a *App) setupShortcuts() {
 		fyne.NewMenuItem("Save As…", func() { a.saveFileAs() }),
 		fyne.NewMenuItemSeparator(),
 		fyne.NewMenuItem("Validate", func() { a.validateFile() }),
+		fyne.NewMenuItem("Validate Folder…", func() { a.validateFolder() }),
 		fyne.NewMenuItemSeparator(),
 		fyne.NewMenuItem("Close Tab", func() {
 			if t := a.docTabs.Selected(); t != nil {
@@ -1216,9 +1244,15 @@ func (a *App) setupShortcuts() {
 	editMenu := fyne.NewMenu("Edit",
 		fyne.NewMenuItem("Preferences…", func() { a.showPreferences() }),
 	)
+	devFieldsItem := fyne.NewMenuItem("Show Developer Fields", func() {
+		a.toggleDeveloperFields()
+	})
+	devFieldsItem.Checked = a.config.ShowDeveloperFields
 	viewMenu := fyne.NewMenu("View",
 		fyne.NewMenuItem("Toggle Sidebar", func() { a.toggleSidebar() }),
 		fyne.NewMenuItem("Toggle Source Panel", func() { a.toggleSourcePanel() }),
+		fyne.NewMenuItemSeparator(),
+		devFieldsItem,
 		fyne.NewMenuItemSeparator(),
 		fyne.NewMenuItem("Pop Out Current Tab", func() { a.popOutCurrentTab() }),
 		fyne.NewMenuItem("Pop Out Info Panel", func() { a.popOutInfoPanel() }),
@@ -1659,6 +1693,73 @@ func (a *App) validateFile() {
 		}
 		dialog.ShowInformation("Validation Results", msg, a.mainWindow)
 	}
+}
+
+// validateFolder runs the MBCH parser against every .mbch file under a
+// directory the user picks and reports per-file results. Useful for
+// catching schema drift after an MBII patch: point it at the patched
+// TextAssets character/ folder and any newly-introduced field that
+// the parser can't handle (or any file whose required fields went
+// missing) shows up immediately.
+//
+// Hidden / dotfile-leading entries are skipped. Walks recursively so
+// the user can pick the parent of subfoldered class dirs (h*, e*, etc.).
+func (a *App) validateFolder() {
+	dialog.ShowFolderOpen(func(uri fyne.ListableURI, err error) {
+		if err != nil || uri == nil {
+			return
+		}
+		root := uri.Path()
+		var (
+			scanned int
+			ok      int
+			fails   []string
+		)
+		walkErr := filepath.Walk(root, func(path string, info os.FileInfo, walkErr error) error {
+			if walkErr != nil {
+				return nil // keep walking; report at end
+			}
+			if info.IsDir() {
+				if strings.HasPrefix(info.Name(), ".") && path != root {
+					return filepath.SkipDir
+				}
+				return nil
+			}
+			if !strings.EqualFold(filepath.Ext(info.Name()), ".mbch") {
+				return nil
+			}
+			scanned++
+			data, readErr := os.ReadFile(path)
+			if readErr != nil {
+				fails = append(fails, fmt.Sprintf("%s — read error: %v", info.Name(), readErr))
+				return nil
+			}
+			char, parseErr := parsers.ParseMBCH(string(data))
+			if parseErr != nil {
+				fails = append(fails, fmt.Sprintf("%s — parse error: %v", info.Name(), parseErr))
+				return nil
+			}
+			// Light validation that mirrors the engine's hard
+			// requirements (BG_SiegeParseClassFile). Don't run the
+			// editor's full Validate() — that's UI-state-dependent.
+			if strings.TrimSpace(char.Name) == "" {
+				fails = append(fails, fmt.Sprintf("%s — missing required `name`", info.Name()))
+				return nil
+			}
+			ok++
+			return nil
+		})
+
+		summary := fmt.Sprintf("Scanned %d .mbch file(s) under %s\n  ✓ %d ok\n  ✗ %d failed",
+			scanned, root, ok, len(fails))
+		if walkErr != nil {
+			summary += fmt.Sprintf("\n\nWalk warning: %v", walkErr)
+		}
+		if len(fails) > 0 {
+			summary += "\n\nFailures:\n  • " + strings.Join(fails, "\n  • ")
+		}
+		dialog.ShowInformation("Validate Folder Results", summary, a.mainWindow)
+	}, a.mainWindow)
 }
 
 func (a *App) showLogs() {

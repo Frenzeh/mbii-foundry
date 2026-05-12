@@ -7,6 +7,109 @@ pre-release suffixes until the project stabilizes.
 
 ## [Unreleased]
 
+## [0.13.0-alpha] — 2026-05-12
+
+### Added
+- **PK3-aware inline autocomplete** on path fields (model, skin, UI shader,
+  soundset). Typing surfaces a popup of indexed paths that mixes loose
+  files and PK3 contents — the VFS index already merged both sources;
+  this just exposes them inline instead of requiring the browse-dialog
+  detour. `VFS.Suggest(query, accept, max)` is the underlying helper;
+  `AttachPathSuggest(entry, vfs, accept)` chains it non-destructively
+  onto any existing `*widget.Entry` (preserves the user's prior
+  OnChanged hooks).
+- **File → Validate Folder…** walks a directory recursively, parses
+  every `.mbch` it finds, and reports per-file results — parse errors
+  plus engine-required-field failures (currently: empty `name`, which
+  mirrors `BG_SiegeParseClassFile`'s `ERR_DROP` at `bg_saga.c:2341`).
+  Useful for catching schema drift after an MBII patch.
+- **View → Show Developer Fields** menu toggle plus `AppConfig`
+  persistence. Schema fields can now opt out of the default loadout-
+  editor surface with `"dev": true`; the toggle reveals them on demand.
+  Initial dev-tagged set: `AB_*Flags` (six ability bitmask fields),
+  jetpack tag / offset / angle triplets (six), `saberDamageStyle`,
+  `forceblocking`. `MBCHEditor` exposes a `devSurfaces` registry so
+  future UI subsystems append their enclosing container at build time
+  and get visibility-flipped for free.
+
+### Removed
+- **Orphan `/parsers/` (Python) directory.** 3,295 lines across
+  `mbch_parser.py` / `sab_parser.py` / `veh_parser.py` / `file_manager.py`
+  / `__init__.py` — zero callers (Go, Python, docs, CI). The Go module
+  has its own `go_module/parsers/` which is unrelated and still in use.
+  Net diff for this release: **+322 / −3,309 lines**.
+
+### Testing
+- `TestDrainVariantsOrdering` (parsers): pins the v0.12.2 bug-#4 fix —
+  `model_N` / `skin_N` / `uishader_N` / `saber_N` / `customred_N` emit
+  adjacent to their base field in numeric order, and `GenerateMBCH` no
+  longer mutates the input character.
+- `TestVFSSuggestPK3Reach` (main): integration backbone for Phase 2 —
+  builds a real gamedata + textassets layout with one loose file and
+  one in-PK3 file, asserts `Suggest()` surfaces both, and exercises
+  the `accept` filter + `max` cap.
+
+## [0.12.3-alpha] — 2026-05-12
+
+### Fixed
+- **Mouse-wheel scroll was swallowed when the cursor was over a
+  point-buy slot field** (tester bug #1 from Cinder, 4/28/26). Root
+  cause: `widget.Entry` in Fyne 2.7.1 embeds its own `*widget.Scroll`
+  for horizontal text-overflow (`entry.go:87,187-196`); Fyne's hit-
+  testing returns the deepest matching `Scrollable` under the cursor,
+  so wheel events landed on the inner Scroll and never reached the
+  outer `container.NewVScroll`. Fix: new `NewSlotEntry()` helper that
+  sets `Wrapping=TextWrapOff` + `Scroll=ScrollNone` together, which
+  removes the inner Scroll from the render tree entirely (entry.go:189).
+  Applied to all PointBuyUI entries inside scrollable regions; modal-
+  dialog entries left as `NewInputEntry` since they're not in a scroll
+  container.
+
+## [0.12.2-alpha] — 2026-05-11
+
+### Added
+- **49 engine fields backfilled into the schema** (`mbch_schema.json`).
+  Cross-referenced against `bg_saga.c`'s exhaustive `SGPV(cI, …)` /
+  `G_SetHeldFlag` / `BG_SiegeGetPairedValue` sweeps; **zero engine
+  class-level or WeaponInfo gaps remain**. Breakdown:
+    - 19 class-level animation overrides (jump / land / getup variants,
+      kick / punch / throw, L+R strafes, `throwAnimReleaseFrame`)
+    - 12 jetpack fields (effects, sounds, jet tags, offsets, angles)
+    - 6 class specials (`special[12]HUD`, `meleeSpecial1-4`)
+    - 6 ability flags (`AB_WLaser/WBirds/Rocket/TDart/PDart/FLightning`)
+    - 2 NPC slots (`spawnerNPC`, `roundNPC`)
+    - 3 saber (`saberSpecialDamage`, `saberDamageStyle`, `forceblocking`)
+    - 1 rank (`rankSaberSpecialDamage`)
+    - WeaponInfo: `animReadyRun/ZoomRun`, `animAttackRun/ZoomRun`,
+      `splashDamage`, `splashRadius`
+    - ForceInfo: `gripDamage`
+
+### Fixed
+Tester bug round from Cinder (4/28/26):
+
+- **#2 — Point-buy data wasn't saving.** Two duplicate widgets (one
+  in the Identity accordion, one in the Point Buy tab) wrote to the
+  same `IsCustomBuild` / `MBPoints` fields. The main-tab `mbPointsEntry`
+  had no `OnChanged`, so typing into it never updated the character
+  until save time, when `updateCharacterFromUI` re-read its (still
+  `"0"`) text and clobbered any live value set by the Point Buy tab.
+  Fix: bidirectional mirror between the two views, plus a live
+  `OnChanged` on the main-tab entry.
+- **#3 — Empty `name` produced files that fail to load.** Engine
+  hard-errors with `Com_Error: Siege class without name entry`
+  (`bg_saga.c:2341`) if the field is blank. `SaveFile` now falls back
+  to the filename basename when `char.Name` is empty.
+- **#4 — `model_1` / `skin_1` / `uishader_1` and other `_N` variants
+  got exiled to the bottom of the ClassInfo block** via the
+  `ExtraFields` alphabetic dump. New `drainVariants` writer helper
+  pulls `_N` keys adjacent to their base field in numeric order.
+  Operates on a copy of `ExtraFields` so callers' data is not
+  mutated (the legends round-trip tests depend on this).
+- **#5 / #6 — `forceregen` / `maxarmor` / `forcepool` / multipliers
+  silently clamped at `10` / `999` / `999` / `10.0`** in
+  `updateCharacterFromUI`. Engine has no such caps — they were UI
+  inventions. Raised to `1e6` (ints) and `1000.0` (floats).
+
 ## [0.12.1-alpha] — 2026-04-27
 
 ### Fixed

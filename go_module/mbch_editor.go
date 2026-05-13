@@ -117,9 +117,19 @@ type MBCHEditor struct {
 	// render schema fields marked "dev": true should append their
 	// widget (or enclosing container) here at build time;
 	// applyDeveloperVisibility iterates and Show/Hide()s them.
-	// Empty by default — the toggle is a no-op until subsystems
-	// register surfaces.
 	devSurfaces []fyne.CanvasObject
+
+	// devFieldsCard hosts the Advanced (Developer) Fields panel — a
+	// schema-driven form of every dev-flagged key (saberDamageStyle,
+	// AB_*Flags, jetpack rig tags/offsets, forceblocking). The card
+	// itself is also pushed into devSurfaces so the View toggle
+	// flips it.
+	devFieldsCard *widget.Card
+
+	// devFieldEntries maps each dev-flagged key to its Entry widget
+	// so updateUI / populateDevFieldsFromCharacter can populate them
+	// on file load + revert.
+	devFieldEntries map[string]*widget.Entry
 	assetBrowser   *AssetBrowser
 	iconResolver   *IconResolver
 	holocronClient *HolocronClient
@@ -136,10 +146,11 @@ type MBCHEditor struct {
 func NewMBCHEditor(app *App) *MBCHEditor {
 	tCtor := time.Now()
 	e := &MBCHEditor{
-		character:    parsers.NewMBCHCharacter(),
-		fileManager:  app.fileManager, // Use shared manager
-		app:          app,
-		assetBrowser: app.assetBrowser,
+		character:       parsers.NewMBCHCharacter(),
+		fileManager:     app.fileManager, // Use shared manager
+		app:             app,
+		assetBrowser:    app.assetBrowser,
+		devFieldEntries: make(map[string]*widget.Entry, len(devFieldsRegistry)),
 	}
 	tA := time.Now()
 	e.pointBuyUI = NewPointBuyUI(e)
@@ -928,7 +939,15 @@ func (e *MBCHEditor) createUI() {
 	statsAccordion.MultiOpen = true
 	statsAccordion.Open(0) // Vital Statistics open by default
 
-	loadoutTab := container.NewVBox(statsAccordion)
+	// Schema-driven dev-fields panel. Hidden unless View → Show
+	// Developer Fields is on; registered with devSurfaces so
+	// applyDeveloperVisibility flips it. Built last so devFieldEntries
+	// is populated before the first updateUI() call.
+	e.devFieldsCard = e.buildDevFieldsCard()
+	e.devFieldsCard.Hide()
+	e.devSurfaces = append(e.devSurfaces, e.devFieldsCard)
+
+	loadoutTab := container.NewVBox(statsAccordion, e.devFieldsCard)
 
 	weaponTab := e.weaponInfoUI.GetContent()
 	forceTab := e.forceInfoUI.GetContent()
@@ -1263,6 +1282,14 @@ func (e *MBCHEditor) updateUI() {
 	e.classPicker.SetSelected(e.character.MBClass)
 	e.modelEntry.SetText(e.character.Model)
 	e.skinEntry.SetText(e.character.Skin)
+
+	// Schema-driven dev fields — populate from ExtraFields. The loading
+	// guard above suppresses markDirty so loading a file with dev keys
+	// set doesn't open it "modified".
+	e.populateDevFieldsFromCharacter()
+	if e.app != nil {
+		e.applyDeveloperVisibility(e.app.config.ShowDeveloperFields)
+	}
 	e.uiShaderEntry.SetText(e.character.UIShader)
 	e.soundsetEntry.SetText(e.character.Soundset)
 	e.weaponsEntry.SetText(e.character.Weapons)

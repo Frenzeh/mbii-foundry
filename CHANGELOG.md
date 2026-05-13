@@ -7,6 +7,47 @@ pre-release suffixes until the project stabilizes.
 
 ## [Unreleased]
 
+## [0.14.0-alpha] — 2026-05-13
+
+### Added
+- **Advanced (Developer) Fields card** — schema-driven panel rendering
+  every ClassInfo key marked `"dev": true` (six `AB_*Flags` bitmasks,
+  six jetpack tag/offset/angle entries, `saberDamageStyle`,
+  `forceblocking`). Hidden by default; appears at the bottom of the
+  Loadout tab when **View → Show Developer Fields** is on. Round-trips
+  through the parser's `ExtraFields` map so dev values save without
+  needing dedicated struct fields. This is the first concrete
+  registration in the `devSurfaces` slice introduced in v0.13.0 — the
+  visibility toggle was previously a no-op.
+- **`IsOnlyOneSpec`, `DefaultSpec`, `CustomSpecDescs` promoted to
+  first-class fields** on `MBCHCharacter`. Previously
+  `customSpecDesc_N` was silently dropped on save (engine reads it at
+  `bg_saga.c:2375`); `isOnlyOneSpec` / `defaultSpec` round-tripped via
+  the alphabetical `ExtraFields` tail and landed nowhere near the
+  rest of the custom-build block in saved files. The writer now emits
+  all three adjacent to `isCustomBuild` / `mbPoints` / `hasCustomSpec`,
+  and the Point Buy tab gained a "Spec Desc" entry per archetype.
+
+### Fixed
+- **`customSpecName_3` / `customSpecIcon_3` / `customSpecDesc_3` were
+  silently dropped on the third spec.** Pre-existing parser bounds
+  check `idx < 3` excluded the literal `_3` suffix (1-based file
+  indexing); third-spec values fell through to the catch-all
+  `ExtraFields` map and re-emitted on save without their dedicated
+  struct slot. Fixed to `idx <= 3` with the existing decrement-if-
+  positive normalization. Three-archetype classes (h10_Obi, h3_CloneCom,
+  etc.) now round-trip all three spec slots cleanly.
+
+### Testing
+- `TestDevFieldDriftAgainstSchema` (main): asserts the runtime
+  `devFieldsRegistry` matches the schema's `"dev": true` ClassInfo
+  entries. Drift in either direction fails the build — no silent
+  divergence between docs-of-record and the Go-side mirror.
+- `TestCustomSpecExtendedRoundTrip` (parsers): pins the three
+  custom-build promotions + the `idx <= 3` fix. Generates with all
+  three spec slots filled (name/icon/desc) and asserts none of them
+  leak to `ExtraFields`.
+
 ## [0.13.0-alpha] — 2026-05-12
 
 ### Added

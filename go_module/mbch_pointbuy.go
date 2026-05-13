@@ -99,9 +99,12 @@ type PointBuyUI struct {
 	slotForms     []*widget.Form        // one form per slot — rebuilt items drive mode-based visibility
 	slotFormItems [][]*widget.FormItem  // [slot][0..3] = Skill / Name / Costs / Description items
 
-	// Per-archetype spec header (name + icon) widgets.
+	// Per-archetype spec header (name + icon + description) widgets.
+	// Description was previously dropped — engine parses customSpecDesc_N
+	// (bg_saga.c:2375) but Foundry's older write path skipped it.
 	specNameEntries [maxArchetypes]*widget.Entry
 	specIconEntries [maxArchetypes]*widget.Entry
+	specDescEntries [maxArchetypes]*widget.Entry
 
 	// Rank modifiers (applies across archetypes).
 	rankAttrContainer *fyne.Container
@@ -498,9 +501,19 @@ func (p *PointBuyUI) buildSpecPane(spec, totalSpecs int) fyne.CanvasObject {
 		}
 		p.specIconEntries[spec] = iconEntry
 
+		descEntry := NewSlotEntry()
+		descEntry.SetPlaceHolder("Description (shown in-menu under the spec name)")
+		descEntry.SetText(p.editor.character.CustomSpecDescs[spec])
+		descEntry.OnChanged = func(s string) {
+			p.editor.character.CustomSpecDescs[spec] = s
+			p.editor.markDirty()
+		}
+		p.specDescEntries[spec] = descEntry
+
 		header := widget.NewForm(
 			widget.NewFormItem("Spec Name", nameEntry),
 			widget.NewFormItem("Spec Icon", iconEntry),
+			widget.NewFormItem("Spec Desc", descEntry),
 		)
 		content.Add(header)
 		content.Add(widget.NewSeparator())

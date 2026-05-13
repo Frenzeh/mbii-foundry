@@ -157,13 +157,21 @@ type MBCHCharacter struct {
 
 	// Archetype ("customSpec") system. hasCustomSpec declares how
 	// many archetypes the character offers (1-3); per-archetype
-	// name + icon describe the in-game tab. When HasCustomSpec > 1
-	// each archetype gets its own 15-slot window in CustomSkills.
+	// name + icon + desc describe the in-game tab. When HasCustomSpec
+	// > 1 each archetype gets its own 15-slot window in CustomSkills.
 	// HasCustomSpec == 0 or 1 means "single spec" — treat CustomSkills
 	// as one 15-slot build.
+	//
+	// IsOnlyOneSpec / DefaultSpec are first-class so the writer can
+	// emit them adjacent to isCustomBuild + mbPoints + hasCustomSpec
+	// (otherwise they leak into the alphabetical ExtraFields tail
+	// and read oddly in the generated file).
 	HasCustomSpec   int
+	IsOnlyOneSpec   int       // bg_saga.c:2367 — point investment cannot span specs
+	DefaultSpec     int       // bg_saga.c:2370 — initial visible spec tab (1-3)
 	CustomSpecNames [3]string
 	CustomSpecIcons [3]string
+	CustomSpecDescs [3]string // bg_saga.c:2375 — tooltip-style spec description
 
 	WeaponOverrides []WeaponInfo
 	ForceOverrides  []ForceInfo
@@ -424,11 +432,27 @@ func setField(char *MBCHCharacter, key, value string) {
 		}
 		return
 	}
+	if strings.EqualFold(key, "isOnlyOneSpec") {
+		if n, err := strconv.Atoi(value); err == nil {
+			char.IsOnlyOneSpec = n
+		}
+		return
+	}
+	if strings.EqualFold(key, "defaultSpec") {
+		if n, err := strconv.Atoi(value); err == nil {
+			char.DefaultSpec = n
+		}
+		return
+	}
 	if strings.HasPrefix(key, "customSpecName_") {
-		if idx, err := strconv.Atoi(strings.TrimPrefix(key, "customSpecName_")); err == nil && idx >= 0 && idx < 3 {
+		if idx, err := strconv.Atoi(strings.TrimPrefix(key, "customSpecName_")); err == nil && idx >= 0 && idx <= 3 {
 			// Wiki uses 1-based indexing (customSpecName_1 is spec 1).
 			// Normalize to 0-based internally by decrementing, but
 			// guard against customSpecName_0 in case any file uses 0.
+			// Upper bound is <= 3 so customSpecName_3 (the third spec
+			// of a 3-archetype class) maps to CustomSpecNames[2]. The
+			// older `< 3` bound silently dropped that third spec into
+			// the ExtraFields tail.
 			if idx > 0 {
 				idx--
 			}
@@ -437,11 +461,20 @@ func setField(char *MBCHCharacter, key, value string) {
 		}
 	}
 	if strings.HasPrefix(key, "customSpecIcon_") {
-		if idx, err := strconv.Atoi(strings.TrimPrefix(key, "customSpecIcon_")); err == nil && idx >= 0 && idx < 3 {
+		if idx, err := strconv.Atoi(strings.TrimPrefix(key, "customSpecIcon_")); err == nil && idx >= 0 && idx <= 3 {
 			if idx > 0 {
 				idx--
 			}
 			char.CustomSpecIcons[idx] = value
+			return
+		}
+	}
+	if strings.HasPrefix(key, "customSpecDesc_") {
+		if idx, err := strconv.Atoi(strings.TrimPrefix(key, "customSpecDesc_")); err == nil && idx >= 0 && idx <= 3 {
+			if idx > 0 {
+				idx--
+			}
+			char.CustomSpecDescs[idx] = value
 			return
 		}
 	}
@@ -630,12 +663,23 @@ func GenerateMBCH(char *MBCHCharacter) (string, error) {
 	if char.IsCustomBuild == 1 {
 		fmt.Fprintf(&sb, "\tisCustomBuild\t\t1\n")
 		fmt.Fprintf(&sb, "\tmbPoints\t\t%d\n", char.MBPoints)
+		// Emit isOnlyOneSpec / defaultSpec adjacent to the custom-build
+		// header — both are engine-parsed (bg_saga.c:2367,2370) and were
+		// previously round-tripping through the alphabetical ExtraFields
+		// tail, which scattered them away from the rest of the custom-
+		// build block in the saved file.
+		if char.IsOnlyOneSpec != 0 {
+			fmt.Fprintf(&sb, "\tisOnlyOneSpec\t\t%d\n", char.IsOnlyOneSpec)
+		}
+		if char.DefaultSpec != 0 {
+			fmt.Fprintf(&sb, "\tdefaultSpec\t\t%d\n", char.DefaultSpec)
+		}
 
 		// Archetype ("customSpec") header. hasCustomSpec = number of
 		// archetypes (1-3). When > 1, customSpecName_N/customSpecIcon_N
-		// define each archetype's in-menu tab. Wiki uses 1-based
-		// indexing (customSpecName_1 is the first spec) so we emit
-		// with +1 offset and skip empty slots.
+		// /customSpecDesc_N define each archetype's in-menu tab.
+		// Wiki uses 1-based indexing (customSpecName_1 is the first
+		// spec) so we emit with +1 offset and skip empty slots.
 		if char.HasCustomSpec > 1 {
 			fmt.Fprintf(&sb, "\thasCustomSpec\t\t%d\n", char.HasCustomSpec)
 			for i := 0; i < char.HasCustomSpec && i < 3; i++ {
@@ -644,6 +688,9 @@ func GenerateMBCH(char *MBCHCharacter) (string, error) {
 				}
 				if icon := char.CustomSpecIcons[i]; icon != "" {
 					fmt.Fprintf(&sb, "\tcustomSpecIcon_%d\t\"%s\"\n", i+1, icon)
+				}
+				if desc := char.CustomSpecDescs[i]; desc != "" {
+					fmt.Fprintf(&sb, "\tcustomSpecDesc_%d\t\"%s\"\n", i+1, desc)
 				}
 			}
 		}

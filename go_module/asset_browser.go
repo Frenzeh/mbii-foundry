@@ -118,6 +118,9 @@ type AssetBrowser struct {
 	// the texture path the engine would actually render. Invalidated
 	// on every VFS refresh.
 	shaderResolver *ShaderResolver
+
+	// OnVFSReady is invoked when background PK3 scanning and shader prebuilding finish.
+	OnVFSReady func()
 }
 
 type ViewMode string
@@ -181,6 +184,9 @@ func NewAssetBrowser(gamedataPath, textAssetsPath string) *AssetBrowser {
 			// Resolve is first called — that was freezing the app).
 			ab.shaderResolver.Reset()
 			ab.shaderResolver.Prebuild()
+			if ab.OnVFSReady != nil {
+				ab.OnVFSReady()
+			}
 		}()
 	}
 	ab.createUI()
@@ -207,6 +213,9 @@ func (ab *AssetBrowser) SetPaths(gamedata, textAssets string) {
 			}
 			ab.shaderResolver.Reset()
 			ab.shaderResolver.Prebuild()
+			if ab.OnVFSReady != nil {
+				ab.OnVFSReady()
+			}
 		}()
 	}
 }

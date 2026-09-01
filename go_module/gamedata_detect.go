@@ -28,8 +28,8 @@ func DetectGamedataPath() string {
 }
 
 // ValidateGamedataPath returns nil if the path looks like a usable
-// JKA GameData folder (has both base/ and MBII/), otherwise a
-// descriptive error explaining what's missing.
+// JKA GameData folder. Standard users have base/ and MBII/. Devs and beta
+// testers may have MBIITest/ or MBIIRelease/.
 func ValidateGamedataPath(path string) error {
 	if path == "" {
 		return &pathErr{"path is empty"}
@@ -41,11 +41,35 @@ func ValidateGamedataPath(path string) error {
 	if !info.IsDir() {
 		return &pathErr{"not a directory: " + path}
 	}
-	if _, err := os.Stat(filepath.Join(path, "base")); err != nil {
-		return &pathErr{"no 'base' subfolder — this doesn't look like a Jedi Academy install"}
+	hasBase := false
+	if _, err := os.Stat(filepath.Join(path, "base")); err == nil {
+		hasBase = true
 	}
-	if _, err := os.Stat(filepath.Join(path, "MBII")); err != nil {
-		return &pathErr{"no 'MBII' subfolder — JKA is installed here, but Movie Battles II isn't"}
+	hasMBII := false
+	if _, err := os.Stat(filepath.Join(path, "MBII")); err == nil {
+		hasMBII = true
+	}
+	// Dev and beta tester fallback (MBIITest / MBIIRelease)
+	if !hasMBII {
+		for _, mbiiName := range []string{"MBIITest", "MBIIRelease"} {
+			if _, err := os.Stat(filepath.Join(path, mbiiName)); err == nil {
+				hasMBII = true
+				break
+			}
+		}
+	}
+	if !hasBase && !hasMBII {
+		entries, _ := os.ReadDir(path)
+		hasPK3 := false
+		for _, e := range entries {
+			if !e.IsDir() && strings.HasSuffix(strings.ToLower(e.Name()), ".pk3") {
+				hasPK3 = true
+				break
+			}
+		}
+		if !hasPK3 {
+			return &pathErr{"no 'base' or 'MBII' subfolder found"}
+		}
 	}
 	return nil
 }
@@ -108,8 +132,12 @@ func gamedataCandidates() []string {
 	case "darwin":
 		// macOS: JKA doesn't have a native mac build. Users run it
 		// through Wine/CrossOver, or via OpenJK which installs to
-		// Application Support.
+		// Application Support, or keep game assets in Synology Drive.
 		return []string{
+			filepath.Join(home, "Library", "CloudStorage", "SynologyDrive-mcp5", "MBII_GameData"),
+			filepath.Join(home, "Library", "CloudStorage", "SynologyDrive", "MBII_GameData"),
+			filepath.Join(home, "SynologyDrive", "mcp5", "MBII_GameData"),
+			filepath.Join(home, "SynologyDrive", "MBII_GameData"),
 			filepath.Join(home, "Library", "Application Support", "OpenJK"),
 			filepath.Join(home, "Library", "Application Support", "Steam", "steamapps", "common", "Jedi Academy", "GameData"),
 			"/Applications/Jedi Academy.app/Contents/Resources/GameData",

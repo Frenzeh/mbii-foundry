@@ -178,20 +178,39 @@ func (hg *HoldableGrid) buildBadge(h HoldableDef) fyne.CanvasObject {
 		r, g, b, a := famAccent.RGBA()
 		na = color.NRGBA{R: uint8(r >> 8), G: uint8(g >> 8), B: uint8(b >> 8), A: uint8(a >> 8)}
 	}
-	var fill color.Color = color.NRGBA{R: 50, G: 50, B: 60, A: 220}
-	var border = color.NRGBA{R: 90, G: 90, B: 100, A: 255}
+	var fill color.Color = color.NRGBA{R: 35, G: 38, B: 46, A: 220}
+	var border = color.NRGBA{R: 70, G: 75, B: 85, A: 255}
 	var textCol color.Color = color.NRGBA{R: 180, G: 180, B: 190, A: 255}
 	if owned {
-		fill = color.NRGBA{R: na.R, G: na.G, B: na.B, A: 230}
+		fill = color.NRGBA{R: na.R / 3, G: na.G / 3, B: na.B / 3, A: 240}
 		border = color.NRGBA{R: na.R, G: na.G, B: na.B, A: 255}
-		// Slight contrast bump on the label when selected.
-		textCol = color.NRGBA{R: 230, G: 230, B: 235, A: 255}
+		textCol = color.NRGBA{R: 240, G: 240, B: 250, A: 255}
 	}
 
-	circle := canvas.NewCircle(fill)
-	circle.StrokeColor = border
-	circle.StrokeWidth = 2
-	badge := container.NewGridWrap(fyne.NewSize(22, 22), circle)
+	bgRect := canvas.NewRectangle(fill)
+	bgRect.StrokeColor = border
+	bgRect.StrokeWidth = 2
+	bgRect.CornerRadius = 6
+
+	var iconObj fyne.CanvasObject
+	if img, ok := LoadGameIcon(nil, "gfx/hud/"+h.Icon); ok {
+		ci := canvas.NewImageFromImage(img)
+		ci.FillMode = canvas.ImageFillContain
+		ci.ScaleMode = canvas.ImageScaleSmooth
+		ci.SetMinSize(fyne.NewSize(26, 26))
+		iconObj = ci
+	} else if res := FallbackIconForAttribute(h.ID, h.Name); res != nil {
+		iconObj = NewRasterIconFromResource(res, 22, 22)
+	} else {
+		circle := canvas.NewCircle(border)
+		circle.StrokeWidth = 1
+		iconObj = circle
+	}
+
+	badge := container.NewStack(
+		container.NewGridWrap(fyne.NewSize(38, 38), bgRect),
+		container.NewCenter(iconObj),
+	)
 
 	label := canvas.NewText(h.Name, textCol)
 	label.Alignment = fyne.TextAlignCenter

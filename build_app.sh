@@ -26,10 +26,10 @@ echo "Building for current platform..."
 go build -o "$BIN_NAME"
 echo "  ✓ Built: $BIN_NAME"
 
-# Create macOS .app bundle
+# Create macOS .app bundle directly in /Applications
 echo ""
-echo "Creating macOS app bundle..."
-APP_BUNDLE="$ROOT_DIR/$APP_NAME.app"
+echo "Creating macOS app bundle in /Applications..."
+APP_BUNDLE="/Applications/$APP_NAME.app"
 
 # Create fresh bundle structure
 rm -rf "$APP_BUNDLE"

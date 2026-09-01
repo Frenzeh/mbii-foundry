@@ -1,0 +1,1166 @@
+[
+  {
+    "source": "EAS_FP_ABSORB",
+    "target": "MB_ATT_FP_ABSORB",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_FP_BLIND",
+    "target": "MB_ATT_FP_BLIND",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_FP_DARKRAGE",
+    "target": "MB_ATT_FP_DARKRAGE",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_FP_DEADLYSIGHT",
+    "target": "MB_ATT_FP_DEADLYSIGHT",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_FP_DESTRUCTION",
+    "target": "MB_ATT_FP_DESTRUCTION",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_FP_DRAIN",
+    "target": "MB_ATT_FP_DRAIN",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_FP_GRIP",
+    "target": "MB_ATT_FP_GRIP",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_FP_HEAL",
+    "target": "MB_ATT_FP_HEAL",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_FP_LIGHTNING",
+    "target": "MB_ATT_FP_LIGHTNING",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_FP_PROTECT",
+    "target": "MB_ATT_FP_PROTECT",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_FP_PULL",
+    "target": "MB_ATT_FP_PULL",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_FP_PUSH",
+    "target": "MB_ATT_FP_PUSH",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_FP_RAGE",
+    "target": "MB_ATT_FP_RAGE",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_FP_REPULSE",
+    "target": "MB_ATT_FP_REPULSE",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_FP_SABERTHROW",
+    "target": "MB_ATT_FP_SABERTHROW",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_FP_SEE",
+    "target": "MB_ATT_FP_SEE",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_FP_SPEED",
+    "target": "MB_ATT_FP_SPEED",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_FP_STASIS",
+    "target": "MB_ATT_FP_STASIS",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_FP_TEAM_FORCE",
+    "target": "MB_ATT_FP_TEAM_FORCE",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_FP_TEAM_HEAL",
+    "target": "MB_ATT_FP_TEAM_HEAL",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_FP_TELEPATHY",
+    "target": "MB_ATT_FP_TELEPATHY",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_BARGE",
+    "target": "MB_ATT_BARGE",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_BASESEEKER",
+    "target": "MB_ATT_BASESEEKER",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_BINOCULARS",
+    "target": "MB_ATT_BINOCULARS",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_CLOAK",
+    "target": "MB_ATT_CLOAK",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_DASH",
+    "target": "MB_ATT_DASH",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_DEX",
+    "target": "MB_ATT_DEXTERITY",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_DODGE",
+    "target": "MB_ATT_DODGE",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_ENEMYSCANNER",
+    "target": "MB_ATT_ENEMYSCANNER",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_EWEB",
+    "target": "MB_ATT_EWEB",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_FLAME",
+    "target": "MB_ATT_FLAMETHROWER",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_FURY",
+    "target": "MB_ATT_WOOKIEE_FURY",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_GRAPPLEHOOK",
+    "target": "MB_ATT_GRAPPLE_HOOK",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_ICE",
+    "target": "MB_ATT_THROWER_ICE",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_KICK",
+    "target": "MB_ATT_FLIPKICK",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_MEDPAC",
+    "target": "MB_ATT_BACTA",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_PETCONTROL",
+    "target": "MB_ATT_PETCONTROL",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_PLASMA",
+    "target": "MB_ATT_THROWER_PLASMA",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_POISON",
+    "target": "MB_ATT_POISON_DART",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_POISONTHROWER",
+    "target": "MB_ATT_THROWER_POISON",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_PSHIELD",
+    "target": "MB_ATT_PSHIELD",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_QUICKTHROW",
+    "target": "MB_ATT_QUICKTHROW",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_QUICKTOSS",
+    "target": "MB_ATT_QUICKTOSS",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_RECHARGE",
+    "target": "MB_ATT_RECHARGE",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_ROCKET",
+    "target": "MB_ATT_ROCKET",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_SBD_ZOOM",
+    "target": "MB_ATT_ZOOM",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_SEEKER",
+    "target": "MB_ATT_DRONE",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_SELFEXPLODE",
+    "target": "MB_ATT_SELFEXPLODE",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_SENTRY_GUN",
+    "target": "MB_ATT_SENTRY",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_SHIELD",
+    "target": "MB_ATT_FORCEFIELD",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_SHOCKFIELD",
+    "target": "MB_ATT_SHOCKFIELD",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_SHOCKWAVE",
+    "target": "MB_ATT_SHOCKWAVE",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_SPAWNER",
+    "target": "MB_ATT_SPAWNER",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_SPRINT",
+    "target": "MB_ATT_SPRINT",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_STIMPACK",
+    "target": "MB_ATT_STIMPACK",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_SUPPLYDROP",
+    "target": "MB_ATT_SUPPLYDROP",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_TRACKER",
+    "target": "MB_ATT_TRACKING_DART",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_WHISTLING_BIRDS",
+    "target": "MB_ATT_WHISTLINGBIRD",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_WRIST",
+    "target": "MB_ATT_WRISTLASER",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "HUD_CONCBLOB",
+    "target": "MB_ATT_STRONGBLOBS",
+    "type": "hud_counts",
+    "note": ""
+  },
+  {
+    "source": "HUD_CONCNADE",
+    "target": "WP_CONC_NADE",
+    "type": "hud_counts",
+    "note": ""
+  },
+  {
+    "source": "HUD_DEMP2BLAST",
+    "target": "MB_ATT_DEMP2_BLASTS",
+    "type": "hud_counts",
+    "note": ""
+  },
+  {
+    "source": "HUD_FIRENADE",
+    "target": "WP_FIRE_NADE",
+    "type": "hud_counts",
+    "note": ""
+  },
+  {
+    "source": "HUD_FLECHETTENADE",
+    "target": "MB_ATT_FLECHETTE_NADES",
+    "type": "hud_counts",
+    "note": ""
+  },
+  {
+    "source": "HUD_FRAGNADE",
+    "target": "WP_FRAG_NADE",
+    "type": "hud_counts",
+    "note": ""
+  },
+  {
+    "source": "HUD_IONBLOB",
+    "target": "MB_ATT_CLONEBLOBS",
+    "type": "hud_counts",
+    "note": ""
+  },
+  {
+    "source": "HUD_PLX1ROCKETS",
+    "target": "WP_PLX1",
+    "type": "hud_counts",
+    "note": ""
+  },
+  {
+    "source": "HUD_POISONDART",
+    "target": "MB_ATT_POISON_DART",
+    "type": "hud_counts",
+    "note": ""
+  },
+  {
+    "source": "HUD_PULSENADE",
+    "target": "WP_PULSE_NADE",
+    "type": "hud_counts",
+    "note": ""
+  },
+  {
+    "source": "HUD_REPEATERNADE",
+    "target": "MB_ATT_REPEATER_NADES",
+    "type": "hud_counts",
+    "note": ""
+  },
+  {
+    "source": "HUD_ROCKET",
+    "target": "MB_ATT_ROCKET",
+    "type": "hud_counts",
+    "note": ""
+  },
+  {
+    "source": "HUD_SBD_ZOOM",
+    "target": "MB_ATT_ZOOM",
+    "type": "hud_counts",
+    "note": ""
+  },
+  {
+    "source": "HUD_SONICNADE",
+    "target": "WP_SONIC_NADE",
+    "type": "hud_counts",
+    "note": ""
+  },
+  {
+    "source": "HUD_TRACKINGDART",
+    "target": "MB_ATT_TRACKING_DART",
+    "type": "hud_counts",
+    "note": ""
+  },
+  {
+    "source": "HUD_WHISTLINGBIRDS",
+    "target": "MB_ATT_WHISTLINGBIRD",
+    "type": "hud_counts",
+    "note": ""
+  },
+  {
+    "source": "HUD_WRISTLASER",
+    "target": "MB_ATT_WRISTLASER",
+    "type": "hud_counts",
+    "note": ""
+  },
+  {
+    "source": "WP_A280",
+    "target": "MB_ATT_A280",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_AMBAN",
+    "target": "MB_ATT_AMBAN",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_BLASTER",
+    "target": "MB_ATT_BLASTER",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_BLASTER_PISTOL",
+    "target": "MB_ATT_PISTOL",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_BOWCASTER",
+    "target": "MB_ATT_BOWCASTER",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_BRYAR_OLD",
+    "target": "MB_ATT_BRYAR_OLD",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_CLONE_PISTOL",
+    "target": "MB_ATT_CLONE_PISTOL",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_CLONE_RIFLE",
+    "target": "MB_ATT_CLONERIFLE",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_CONCUSSION",
+    "target": "MB_ATT_CONCUSSION",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_CONC_NADE",
+    "target": "MB_ATT_CONC",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_CR2",
+    "target": "MB_ATT_CR2",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_CRYO_NADE",
+    "target": "MB_ATT_CRYOBAN_GRENADES",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_DC_CARBINE",
+    "target": "MB_ATT_DC_CARBINE",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_DEMP2",
+    "target": "MB_ATT_DEMP2",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_DET_PACK",
+    "target": "MB_ATT_DET_PACK",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_DISRUPTOR",
+    "target": "MB_ATT_DISRUPTOR",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_DLT20A",
+    "target": "MB_ATT_DLT20A",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_EE3",
+    "target": "MB_ATT_EE3",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_EE4",
+    "target": "MB_ATT_EE4",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_E_22",
+    "target": "MB_ATT_E_22",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_FIRE_NADE",
+    "target": "MB_ATT_FIRE_GRENADES",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_FLECHETTE",
+    "target": "MB_ATT_FLECHETTE",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_FRAG_NADE",
+    "target": "MB_ATT_FRAGS",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_M5",
+    "target": "MB_ATT_WESTARM5",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_MANDO_PISTOL",
+    "target": "MB_ATT_MANDO_PISTOL",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_MGL",
+    "target": "MB_ATT_MGL",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_MINIGUN",
+    "target": "MB_ATT_MINIGUN",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_PLX1",
+    "target": "MB_ATT_PLX1",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_PROJ",
+    "target": "MB_ATT_PROJECTILE_RIFLE",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_PULSE_NADE",
+    "target": "MB_ATT_PULSE_GRENADES",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_REAL_TD",
+    "target": "MB_ATT_THERMALS",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_REPEATER",
+    "target": "MB_ATT_REPEATER",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_ROCKET_LAUNCHER",
+    "target": "MB_ATT_ROCKET_LAUNCHER",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_SABER",
+    "target": "MB_ATT_SABER",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_SBD",
+    "target": "MB_ATT_SBD_CANNON",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_SHOTGUN",
+    "target": "MB_ATT_SHOTGUN",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_SONIC_NADE",
+    "target": "MB_ATT_SONIC_DETONATOR",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_STUN_BATON",
+    "target": "MB_ATT_STUN_BATON",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_T21",
+    "target": "MB_ATT_T21",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_THERMAL",
+    "target": "MB_ATT_BASE_TD",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_THROWER",
+    "target": "MB_ATT_THROWER",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_TRAD_BOWCASTER",
+    "target": "MB_ATT_TRAD_BOWCASTER",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_TRIP_MINE",
+    "target": "MB_ATT_TRIP_MINES",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "WP_UGL",
+    "target": "MB_ATT_UGL",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "MB_ATT_ARC_RIFLE_SCOPE",
+    "target": "MB_ATT_WESTARM5",
+    "type": "requires",
+    "note": ""
+  },
+  {
+    "source": "MB_ATT_ARC_RIFLE_GRENADELAUNCHER",
+    "target": "MB_ATT_WESTARM5",
+    "type": "requires",
+    "note": ""
+  },
+  {
+    "source": "MB_ATT_ARC_RIFLE_GRENADELAUNCHER",
+    "target": "MB_ATT_ARC_RIFLE_SCOPE",
+    "type": "mutually_exclusive",
+    "note": ""
+  },
+  {
+    "source": "FP_DEADLYSIGHT",
+    "target": "MB_ATT_FP_DEADLYSIGHT",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "MB_ATT_REPEATER_NADES",
+    "target": "MB_ATT_REPEATER",
+    "type": "requires",
+    "note": ""
+  },
+  {
+    "source": "MB_ATT_FLECHETTE_ALT_NUM",
+    "target": "MB_ATT_FLECHETTE_NADES",
+    "type": "requires",
+    "note": ""
+  },
+  {
+    "source": "MB_ATT_FLECHETTE_NADES",
+    "target": "MB_ATT_FLECHETTE",
+    "type": "requires",
+    "note": ""
+  },
+  {
+    "source": "MB_ATT_STRONGBLOBS",
+    "target": "MB_ATT_CLONERIFLE",
+    "type": "requires",
+    "note": ""
+  },
+  {
+    "source": "MB_ATT_CLONEBLOBS",
+    "target": "MB_ATT_CLONERIFLE",
+    "type": "requires",
+    "note": ""
+  },
+  {
+    "source": "MB_ATT_DEMP2_BLASTS",
+    "target": "MB_ATT_DEMP2",
+    "type": "requires",
+    "note": ""
+  },
+  {
+    "source": "FP_ABSORB",
+    "target": "MB_ATT_FP_ABSORB",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "FP_BLIND",
+    "target": "MB_ATT_FP_BLIND",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "FP_DESTRUCTION",
+    "target": "MB_ATT_FP_DESTRUCTION",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "FP_DRAIN",
+    "target": "MB_ATT_FP_DRAIN",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "FP_GRIP",
+    "target": "MB_ATT_FP_GRIP",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "FP_HEAL",
+    "target": "MB_ATT_FP_HEAL",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "FP_LIGHTNING",
+    "target": "MB_ATT_FP_LIGHTNING",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "FP_PROTECT",
+    "target": "MB_ATT_FP_PROTECT",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "FP_PULL",
+    "target": "MB_ATT_FP_PULL",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "FP_PUSH",
+    "target": "MB_ATT_FP_PUSH",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "FP_LEVITATION",
+    "target": "MB_ATT_FP_LEVITATION",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "FP_RAGE",
+    "target": "MB_ATT_FP_RAGE",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "FP_SABERTHROW",
+    "target": "MB_ATT_FP_SABERTHROW",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "FP_SEE",
+    "target": "MB_ATT_FP_SEE",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "FP_SPEED",
+    "target": "MB_ATT_FP_SPEED",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "FP_STASIS",
+    "target": "MB_ATT_FP_STASIS",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "FP_TEAM_FORCE",
+    "target": "MB_ATT_FP_TEAM_FORCE",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "FP_TEAM_HEAL",
+    "target": "MB_ATT_FP_TEAM_HEAL",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "FP_TELEPATHY",
+    "target": "MB_ATT_FP_TELEPATHY",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "FP_SABER_OFFENSE",
+    "target": "MB_ATT_FP_SABER_OFFENSE",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "FP_SABER_DEFENSE",
+    "target": "MB_ATT_FP_SABER_DEFENSE",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_MEDPAC_BIG",
+    "target": "MB_ATT_BACTA_BIG",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "MB_ATT_SS_BLUESTYLE",
+    "target": "MB_ATT_SABER_FAST",
+    "type": "requires",
+    "note": ""
+  },
+  {
+    "source": "MB_ATT_SS_YELLOWSTYLE",
+    "target": "MB_ATT_SABER_MEDIUM",
+    "type": "requires",
+    "note": ""
+  },
+  {
+    "source": "MB_ATT_SS_REDSTYLE",
+    "target": "MB_ATT_SABER_STRONG",
+    "type": "requires",
+    "note": ""
+  },
+  {
+    "source": "MB_ATT_SS_CYANSTYLE",
+    "target": "MB_ATT_SABER_FAST",
+    "type": "requires",
+    "note": ""
+  },
+  {
+    "source": "MB_ATT_SS_PURPLESTYLE",
+    "target": "MB_ATT_SABER_STRONG",
+    "type": "requires",
+    "note": ""
+  },
+  {
+    "source": "MB_ATT_SS_DUALSTYLE",
+    "target": "MB_ATT_SABER_MEDIUM",
+    "type": "requires",
+    "note": ""
+  },
+  {
+    "source": "MB_ATT_SS_STAFFSTYLE",
+    "target": "MB_ATT_SABER_MEDIUM",
+    "type": "requires",
+    "note": ""
+  },
+  {
+    "source": "RESOURCE_BATTERY",
+    "target": "MB_CLASS_SBD",
+    "type": "implicit",
+    "note": ""
+  },
+  {
+    "source": "AB_PDART",
+    "target": "MB_ATT_POISON_DART",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "AB_WBIRDS",
+    "target": "MB_ATT_WHISTLINGBIRD",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "AB_WLASER",
+    "target": "MB_ATT_WRISTLASER",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "AB_ROCKET",
+    "target": "MB_ATT_ROCKET",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "AB_GHOOK",
+    "target": "MB_ATT_GRAPPLE_HOOK",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "RESOURCE_FUEL",
+    "target": "MB_CLASS_MANDALORIAN",
+    "type": "implicit",
+    "note": ""
+  },
+  {
+    "source": "RESOURCE_RAGE",
+    "target": "MB_CLASS_WOOKIE",
+    "type": "implicit",
+    "note": ""
+  },
+  {
+    "source": "RESOURCE_STAMINA",
+    "target": "MB_CLASS_CLONETROOPER",
+    "type": "implicit",
+    "note": ""
+  },
+  {
+    "source": "RESOURCE_STAMINA",
+    "target": "MB_CLASS_ARCTROOPER",
+    "type": "implicit",
+    "note": ""
+  },
+  {
+    "source": "RESOURCE_FORCE",
+    "target": "MB_CLASS_JEDI",
+    "type": "implicit",
+    "note": ""
+  },
+  {
+    "source": "RESOURCE_FORCE",
+    "target": "MB_CLASS_SITH",
+    "type": "implicit",
+    "note": ""
+  },
+  {
+    "source": "MB_ATT_ASSEMBLE",
+    "target": "MB_ATT_REINFORCEMENTS",
+    "type": "requires",
+    "note": ""
+  },
+  {
+    "source": "MB_ATT_GUN_DEFENSE",
+    "target": "MB_ATT_FP_SABER_DEFENSE",
+    "type": "requires",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_HEALTHDISP",
+    "target": "MB_ATT_DISP_HEALTH",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_ARMORDISP",
+    "target": "MB_ATT_DISP_ARMOR",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_AMMODISP",
+    "target": "MB_ATT_DISP_AMMO",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "EAS_MELEE",
+    "target": "WP_MELEE",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "MB_ATT_MGL_BURST",
+    "target": "MB_ATT_MGL",
+    "type": "requires",
+    "note": ""
+  },
+  {
+    "source": "MB_ATT_MGL_IMPACT",
+    "target": "MB_ATT_MGL",
+    "type": "requires",
+    "note": ""
+  },
+  {
+    "source": "EAS_HI_FORCEDISP",
+    "target": "MB_ATT_DISP_FORCE",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "MB_ATT_STICKY_BOMBS",
+    "target": "MB_ATT_MGL",
+    "type": "requires",
+    "note": ""
+  },
+  {
+    "source": "EAS_FP_DARKRAGE",
+    "target": "MB_ATT_DARKRAGE",
+    "type": "eas_skill",
+    "note": ""
+  },
+  {
+    "source": "FP_DARKRAGE",
+    "target": "MB_ATT_DARKRAGE",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "MB_ATT_MICRO_GRENADES",
+    "target": "MB_ATT_CONC",
+    "type": "requires",
+    "note": ""
+  },
+  {
+    "source": "MB_ATT_ARC_RIFLE_SCOPE",
+    "target": "MB_ATT_ARC_RIFLE_GRENADELAUNCHER",
+    "type": "mutually_exclusive",
+    "note": ""
+  },
+  {
+    "source": "CFL_ACIDBLOOD",
+    "target": "MB_ATT_ACIDBLOOD",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "CFL_FUEL_REGENERATION",
+    "target": "MB_ATT_FUELREGEN",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "MB_ATT_GRAPPLE_HOP",
+    "target": "MB_ATT_GRAPPLE_HOOK",
+    "type": "requires",
+    "note": ""
+  },
+  {
+    "source": "AB_TDART",
+    "target": "MB_ATT_TRACKING_DART",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "AB_FLIGHTNING",
+    "target": "FP_LIGHTNING",
+    "type": "wield_skill",
+    "note": ""
+  },
+  {
+    "source": "MB_ATT_DEFLECT",
+    "target": "MB_ATT_FP_SABER_DEFENSE",
+    "type": "requires",
+    "note": ""
+  },
+  {
+    "source": "MB_ATT_FP_REPULSE",
+    "target": "MB_ATT_FP_PULL",
+    "type": "requires",
+    "note": ""
+  },
+  {
+    "source": "MB_ATT_FP_REPULSE",
+    "target": "MB_ATT_FP_PUSH",
+    "type": "requires",
+    "note": ""
+  },
+  {
+    "source": "WP_EQUALIZER",
+    "target": "MB_ATT_EQUALIZER",
+    "type": "wield_skill",
+    "note": ""
+  }
+]

@@ -157,21 +157,30 @@ func (sve *SkinVariantsEditor) buildRow(idx int) fyne.CanvasObject {
 			preview.Refresh()
 			return
 		}
-		path := sve.editor.iconResolver.ResolveClassIcon(
-			ch.ExtraFields[modelKey],
-			ch.ExtraFields[skinKey],
-			ch.ExtraFields[shaderKey],
-		)
-		if path == "" {
-			preview.Resource = theme.FileImageIcon()
-			preview.Refresh()
-			return
+		model := ch.ExtraFields[modelKey]
+		skin := ch.ExtraFields[skinKey]
+		shader := ch.ExtraFields[shaderKey]
+
+		candidates := sve.editor.iconResolver.ResolveClassIconCandidates(model, skin, shader)
+		for _, candidate := range candidates {
+			if res := sve.editor.assetBrowser.LoadIconResource(candidate); res != nil {
+				preview.Resource = res
+				preview.Refresh()
+				return
+			}
 		}
-		if res := sve.editor.assetBrowser.LoadIconResource(path); res != nil {
-			preview.Resource = res
-			preview.Refresh()
-			return
+
+		// Fallback scan for any portrait matching the model
+		if model != "" && sve.editor.assetBrowser.vfs != nil {
+			if fallback := lookupModelPortraitFallback(model, sve.editor.assetBrowser.vfs); fallback != "" {
+				if res := sve.editor.assetBrowser.LoadIconResource(fallback); res != nil {
+					preview.Resource = res
+					preview.Refresh()
+					return
+				}
+			}
 		}
+
 		preview.Resource = theme.FileImageIcon()
 		preview.Refresh()
 	}
@@ -224,16 +233,35 @@ func (sve *SkinVariantsEditor) buildRow(idx int) fyne.CanvasObject {
 		widget.NewFormItem("Green", greenEntry).Widget,
 		widget.NewFormItem("Blue", blueEntry).Widget,
 	)
+
+	presetBar := NewRGBPresetBar(func(r, g, b float64) {
+		rStr := FormatRGBFloat(r)
+		gStr := FormatRGBFloat(g)
+		bStr := FormatRGBFloat(b)
+		redEntry.SetText(rStr)
+		greenEntry.SetText(gStr)
+		blueEntry.SetText(bStr)
+		ch.ExtraFields[redKey] = rStr
+		ch.ExtraFields[greenKey] = gStr
+		ch.ExtraFields[blueKey] = bStr
+		sve.editor.markDirty()
+	})
+
+	rgbContainer := container.NewVBox(
+		rgbRow,
+		presetBar,
+	)
+
 	if !rgbCheck.Checked {
-		rgbRow.Hide()
+		rgbContainer.Hide()
 	}
 	rgbCheck.OnChanged = func(on bool) {
 		if on {
 			ch.ExtraFields[rgbKey] = "1"
-			rgbRow.Show()
+			rgbContainer.Show()
 		} else {
 			delete(ch.ExtraFields, rgbKey)
-			rgbRow.Hide()
+			rgbContainer.Hide()
 		}
 		sve.editor.markDirty()
 	}
@@ -274,7 +302,7 @@ func (sve *SkinVariantsEditor) buildRow(idx int) fyne.CanvasObject {
 		widget.NewFormItem("UI Shader", shaderEntry),
 	)
 
-	body := container.NewVBox(header, form, rgbCheck, rgbRow)
+	body := container.NewVBox(header, form, rgbCheck, rgbContainer)
 	return widget.NewCard("", "", body)
 }
 

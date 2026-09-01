@@ -29,54 +29,55 @@ func NewIconResolver(vfs *VirtualFileSystem) *IconResolver {
 // lookup (which keys on basename) still works.
 var weaponIconAliases = map[string]string{
 	// Default picks from bg_misc.c's weapon_* item defs.
-	"WP_NONE":          "w_icon_melee",
-	"WP_STUN_BATON":    "w_icon_stunbaton",
-	"WP_MELEE":         "w_icon_melee",
-	"WP_SABER":         "w_icon_lightsaber",
-	"WP_BRYAR_PISTOL":  "w_icon_blaster_pistol",
-	"WP_CLONE_PISTOL":  "w_icon_clonepistol",
-	"WP_MANDO_PISTOL":  "w_icon_westar",
-	"WP_BLASTER":       "w_icon_e11",
-	"WP_DC_CARBINE":    "w_icon_dc-15s",
-	"WP_CR2":           "w_icon_cr2pistol",
-	"WP_E_22":          "w_icon_e_22",
-	"WP_HEAVY_PISTOL":  "w_icon_imp_pistol",
-	"WP_DLT19":         "w_icon_dlt19scoped",
-	"WP_TRAD_BOWCASTER": "w_icon_wbowcaster1",
-	"WP_DISRUPTOR":     "w_icon_disruptor",
-	"WP_BOWCASTER":     "w_icon_bowcaster",
-	"WP_REPEATER":      "w_icon_repeater",
-	"WP_CLONE_RIFLE":   "w_icon_clonerifle",
-	"WP_THROWER":       "w_icon_cr-24_flamerifle",
-	"WP_MINIGUN":       "w_icon_rotary_cannon",
-	"WP_DEMP2":         "w_icon_demp2",
-	"WP_SHOTGUN":       "w_icon_cp-50_repeater",
-	"WP_FLECHETTE":     "w_icon_flechette",
-	"WP_A280":          "w_icon_a280",
-	"WP_DLT20A":        "w_icon_dlt20a",
-	"WP_M5":            "w_icon_cw-w5",
-	"WP_T21":           "w_icon_t-21",
+	"WP_NONE":            "w_icon_melee",
+	"WP_STUN_BATON":      "w_icon_stunbaton",
+	"WP_MELEE":           "w_icon_melee",
+	"WP_SABER":           "w_icon_lightsaber",
+	"WP_BRYAR_PISTOL":    "w_icon_blaster_pistol",
+	"WP_CLONE_PISTOL":    "w_icon_clonepistol",
+	"WP_MANDO_PISTOL":    "w_icon_westar",
+	"WP_BLASTER":         "w_icon_e11",
+	"WP_DC_CARBINE":      "w_icon_dc-15s",
+	"WP_CR2":             "w_icon_cr2pistol",
+	"WP_E_22":            "w_icon_e_22",
+	"WP_HEAVY_PISTOL":    "w_icon_imp_pistol",
+	"WP_DLT19":           "w_icon_dlt19scoped",
+	"WP_TRAD_BOWCASTER":  "w_icon_wbowcaster1",
+	"WP_DISRUPTOR":       "w_icon_disruptor",
+	"WP_BOWCASTER":       "w_icon_bowcaster",
+	"WP_REPEATER":        "w_icon_repeater",
+	"WP_CLONE_RIFLE":     "w_icon_clonerifle",
+	"WP_THROWER":         "w_icon_cr-24_flamerifle",
+	"WP_MINIGUN":         "w_icon_rotary_cannon",
+	"WP_DEMP2":           "w_icon_demp2",
+	"WP_SHOTGUN":         "w_icon_cp-50_repeater",
+	"WP_FLECHETTE":       "w_icon_flechette",
+	"WP_A280":            "w_icon_a280",
+	"WP_DLT20A":          "w_icon_dlt20a",
+	"WP_M5":              "w_icon_cw-w5",
+	"WP_T21":             "w_icon_t-21",
 	"WP_ROCKET_LAUNCHER": "w_icon_merrsonn",
-	"WP_PLX1":          "w_icon_plx-1",
-	"WP_THERMAL":       "w_icon_thermal",
-	"WP_FRAG_NADE":     "w_icon_fraggrenade",
-	"WP_REAL_TD":       "w_icon_realtd",
-	"WP_TRIP_MINE":     "w_icon_tripmine",
-	"WP_PULSE_NADE":    "w_icon_rpgren",
-	"WP_FIRE_NADE":     "w_icon_plasma",
-	"WP_SONIC_NADE":    "w_icon_sonic_det",
-	"WP_CRYO_NADE":     "w_icon_cryobangrenade",
-	"WP_CONC_NADE":     "w_icon_v-59_conc",
-	"WP_DET_PACK":      "w_icon_detpack",
-	"WP_CONCUSSION":    "w_icon_c_rifle",
-	"WP_SBD":           "w_icon_sbdarm",
-	"WP_BRYAR_OLD":     "w_icon_briar",
-	"WP_EE3":           "w_icon_ee-3",
-	"WP_EE4":           "w_icon_ee-4",
-	"WP_AMBAN":         "w_icon_mandorifle",
-	"WP_PROJ":          "w_icon_proj_rifle",
-	"WP_UGL":           "w_icon_relby_v10",
-	"WP_MGL":           "w_icon_upl",
+	"WP_PLX1":            "w_icon_plx-1",
+	"WP_THERMAL":         "w_icon_thermal",
+	"WP_FRAG_NADE":       "w_icon_fraggrenade",
+	"WP_REAL_TD":         "w_icon_realtd",
+	"WP_TRIP_MINE":       "w_icon_tripmine",
+	"WP_PULSE_NADE":      "w_icon_rpgren",
+	"WP_FIRE_NADE":       "w_icon_plasma",
+	"WP_SONIC_NADE":      "w_icon_sonic_det",
+	"WP_CRYO_NADE":       "w_icon_cryobangrenade",
+	"WP_CONC_NADE":       "w_icon_v-59_conc",
+	"WP_DET_PACK":        "w_icon_detpack",
+	"WP_CONCUSSION":      "w_icon_c_rifle",
+	"WP_SBD":             "w_icon_sbdarm",
+	"WP_BRYAR_OLD":       "w_icon_briar",
+	"WP_EE3":             "w_icon_ee-3",
+	"WP_EE4":             "w_icon_ee-4",
+	"WP_AMBAN":           "w_icon_mandorifle",
+	"WP_PROJ":            "w_icon_proj_rifle",
+	"WP_UGL":             "w_icon_upl",
+	"WP_MGL":             "w_icon_relby_v10",
+	"WP_EQUALIZER":       "w_icon_minimag",
 }
 
 // ResolveWeaponIcon finds the HUD icon path for a WP_ ID. Looks up
@@ -207,13 +208,29 @@ var attributeIconAliases = map[string]string{
 	"MB_ATT_SENTRY_GUN":        "i_icon_sentrygun",
 	"MB_ATT_EWEB":              "i_icon_eweb",
 	"MB_ATT_BACTA":             "i_icon_bacta",
+	"MB_ATT_BACTA_BIG":         "i_icon_big_bacta",
+	"MB_ATT_BIG_BACTA":         "i_icon_big_bacta",
 	"MB_ATT_BACTA_BOMB":        "i_icon_bacta",
 	"MB_ATT_PSD":               "i_icon_psd",
 	"MB_ATT_PERSONAL_DEFENSE_SHIELD": "i_icon_psd",
-	"MB_ATT_BIG_BACTA":         "i_icon_big_bacta",
 	"MB_ATT_GOODIE_KEY":        "i_icon_goodie_key",
 	"MB_ATT_SECURITY_KEY":      "i_icon_security_key",
 	"MB_ATT_SECURITY_INTERFACE": "i_icon_security_key",
+
+	// HI_* holdables direct icon aliases
+	"HI_MEDPAC":        "i_icon_bacta",
+	"HI_MEDPAC_BIG":    "i_icon_big_bacta",
+	"HI_BINOCULARS":    "i_icon_binoculars",
+	"HI_SENTRY_GUN":    "i_icon_sentrygun",
+	"HI_SEEKER":        "i_icon_seeker",
+	"HI_SHIELD":        "i_icon_shieldwall",
+	"HI_CLOAK":         "i_icon_cloak",
+	"HI_EWEB":          "i_icon_eweb",
+	"HI_HEALTHDISP":    "i_icon_healthdisp",
+	"HI_AMMODISP":      "i_icon_ammodisp",
+	"HI_STIMPACK":      "i_icon_bacta",
+	"EAS_HI_MEDPAC_BIG": "i_icon_big_bacta",
+	"EAS_HI_MEDPAC":     "i_icon_bacta",
 
 	// More weapon-attribute mappings the original table missed.
 	"MB_ATT_REPEATER":         "icon_stats_concblob",
@@ -228,8 +245,14 @@ var attributeIconAliases = map[string]string{
 	"MB_ATT_E_22":             "icon_stats_e11",
 	"MB_ATT_DC_CARBINE":       "icon_stats_clonerifle",
 	"MB_ATT_TRAD_BOWCASTER":   "icon_stats_bowcaster",
-	"MB_ATT_THROWER":          "icon_stats_fire",
-	"MB_ATT_MINIGUN":          "icon_stats_e11",
+	"MB_ATT_THROWER":           "icon_stats_fire",
+	"MB_ATT_THROWER_FLAME":     "icon_stats_fire",
+	"MB_ATT_THROWER_ICE":       "icon_stats_fire",
+	"MB_ATT_THROWER_LIGHTNING": "icon_stats_fire",
+	"MB_ATT_THROWER_PLASMA":    "icon_stats_fire",
+	"MB_ATT_THROWER_POISON":    "icon_stats_fire",
+	"MB_ATT_WPFLAMETHROWER":    "icon_stats_fire",
+	"MB_ATT_MINIGUN":           "icon_stats_e11",
 	"MB_ATT_SHOTGUN":          "icon_stats_e11",
 	"MB_ATT_UGL":              "icon_stats_concblob",
 	"MB_ATT_MGL":              "icon_stats_concblob",
@@ -388,8 +411,12 @@ func (ir *IconResolver) ResolveClassIcon(model, skin, customShader string) strin
 //
 // All paths normalised to lowercase since the VFS index keys are
 // stored lowercased. If every candidate misses (the author shipped
-// no portrait for this skin variant) the caller surfaces a clear
-// "no image found" placeholder rather than a blank box.
+// ResolveClassIconCandidates walks the canonical per-skin lookup order for a player model:
+//  1. Explicit custom shader (uishader) if specified
+//  2. mb2_icon_<skin> (canonical MBII format)
+//  3. icon_<skin> (standard JKA format)
+//  4. <skin> (bare name)
+//  5. mb2_icon_default / icon_default (fallback when non-default skin lacks an icon)
 func (ir *IconResolver) ResolveClassIconCandidates(model, skin, customShader string) []string {
 	var out []string
 	seen := map[string]bool{}
@@ -407,7 +434,7 @@ func (ir *IconResolver) ResolveClassIconCandidates(model, skin, customShader str
 		add(customShader)
 	}
 
-	// 2..6. Model-derived candidates.
+	// 2..4. Canonical per-skin candidates.
 	if model == "" {
 		model = "kyle"
 	}
@@ -417,10 +444,13 @@ func (ir *IconResolver) ResolveClassIconCandidates(model, skin, customShader str
 	add(fmt.Sprintf("models/players/%s/mb2_icon_%s", model, skin))
 	add(fmt.Sprintf("models/players/%s/icon_%s", model, skin))
 	add(fmt.Sprintf("models/players/%s/%s", model, skin))
+
+	// 5. Fallback to model's default icon when a custom skin has no icon of its own
 	if skin != "default" {
 		add(fmt.Sprintf("models/players/%s/mb2_icon_default", model))
 		add(fmt.Sprintf("models/players/%s/icon_default", model))
 	}
+
 	return out
 }
 

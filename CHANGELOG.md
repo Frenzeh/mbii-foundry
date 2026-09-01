@@ -7,6 +7,19 @@ pre-release suffixes until the project stabilizes.
 
 ## [Unreleased]
 
+## [0.15.0-alpha] — 2026-08-31
+
+### Added
+- **1:1 Accurate `uishader` & Dynamic Portrait Previews**:
+  - Integrated `OnVFSReady` lifecycle event on `AssetBrowser` to resolve background PK3 scanning race conditions on initial file load.
+  - Skin Picker and Model Gallery modals now automatically bind exact canonical `uishader` paths (`models/players/<model>/mb2_icon_<skin>`).
+  - Strict 1:1 icon resolution preventing cross-skin fallback bleed and cleanly defaulting to avatar silhouette placeholder when missing.
+- **Enhanced Character Authoring & Modpack Tooling**:
+  - Added Custom Skills Editor, MBTC Composer, Stats Damage Reduction Calculator, and Character Diffing utilities.
+  - Revamped Attribute Grid and Card layouts with dynamic theme synchronization and mono enum labels with zero text overlap.
+- **Weapon & Force Power Editor Overhaul**:
+  - Modernized Weapon Flags, Holdables, and Force Info property binding with full schema validation.
+
 ## [0.14.0-alpha] — 2026-05-13
 
 ### Added

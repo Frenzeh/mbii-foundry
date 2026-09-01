@@ -34,7 +34,7 @@ const (
 	// screen's "new version available" banner. Bump this before tagging
 	// a release — if they drift, testers get a stale banner or none at
 	// all.
-	AppVersion = "0.14.0-alpha"
+	AppVersion = "0.15.0-alpha"
 	AppName    = "MBII Foundry"
 )
 
@@ -62,6 +62,7 @@ type App struct {
 	modpackManager *ModpackManager
 
 	statusLabel    *widget.Label
+	bufferGauge    *BufferGaugeWidget
 	split          *container.Split   // Reference to split layout
 	sideTabs       *container.AppTabs // Reference to sidebar
 	sidebarVisible bool
@@ -431,7 +432,9 @@ func (a *App) applyThemeColor(colorName string) {
 	default:
 		CurrentThemeColor = color.RGBA{R: 0, G: 128, B: 255, A: 255} // Default Blue
 	}
-	a.fyneApp.Settings().SetTheme(&FoundryTheme{}) // Refresh theme
+	if a.fyneApp != nil {
+		a.fyneApp.Settings().SetTheme(&FoundryTheme{}) // Refresh theme
+	}
 }
 
 // applyDensity wires AppConfig.Density through to the theme-size
@@ -507,6 +510,11 @@ func main() {
 		updateChecker:  NewUpdateChecker(appConfigDir),
 	}
 
+	application.fyneApp = app.NewWithID("com.frenzeh.mbii-foundry")
+	application.fyneApp.Settings().SetTheme(&FoundryTheme{})
+
+	application.loadConfig()
+
 	// Kick off the version check in the background. CheckAsync uses the
 	// 6h cache first and only hits the network when the cache is stale,
 	// so relaunches within the same session are free. When the result
@@ -537,8 +545,6 @@ func main() {
 		go application.monitorHolocronStatus()
 	}
 
-	application.fyneApp = app.NewWithID("com.frenzeh.mbii-foundry")
-	application.fyneApp.Settings().SetTheme(&FoundryTheme{})
 	application.mainWindow = application.fyneApp.NewWindow(fmt.Sprintf("%s - MBII Content Editor", AppName))
 	// Restore last-session window size if persisted; else default
 	// 1400x900. Sub-1200x600 is treated as corrupt config (Fyne
@@ -548,8 +554,6 @@ func main() {
 		w, h = 1400, 900
 	}
 	application.mainWindow.Resize(fyne.NewSize(w, h))
-
-	application.loadConfig()
 
 	application.setupUI()
 	application.setupShortcuts()
@@ -614,6 +618,24 @@ func (a *App) setupUI() {
 	a.sidebarVisible = a.config.SidebarVisible
 
 	a.assetBrowser = NewAssetBrowser(a.config.GamedataPath, a.config.TextAssetsPath)
+	a.assetBrowser.OnVFSReady = func() {
+		fyne.Do(func() {
+			for _, ed := range a.editors {
+				if mbchEd, ok := ed.(*MBCHEditor); ok {
+					mbchEd.updateIconPreview()
+					if mbchEd.attrGrid != nil {
+						mbchEd.attrGrid.Refresh()
+					}
+					if mbchEd.weaponGrid != nil {
+						mbchEd.weaponGrid.Refresh()
+					}
+					if mbchEd.holdableGrid != nil {
+						mbchEd.holdableGrid.Refresh()
+					}
+				}
+			}
+		})
+	}
 	a.infoPanel = NewInfoPanel()
 	a.infoPanel.SetHolocronClient(a.holocronClient)
 	a.infoPanel.SetOnPopOut(a.popOutInfoPanel)
@@ -643,6 +665,7 @@ func (a *App) setupUI() {
 	// bar when the label is empty so the chrome disappears with it.
 	a.statusLabel = widget.NewLabel("")
 	a.statusLabel.TextStyle = fyne.TextStyle{Italic: true}
+	a.bufferGauge = NewBufferGaugeWidget()
 
 	// Dev-mode status icon. Only displayed when MBII_FOUNDRY_DEV is set;
 	// updateMainLayout hides the whole label/icon pair for regular users.
@@ -733,11 +756,14 @@ func (a *App) updateMainLayout() {
 	// space sits at the bottom of the window. Holocron indicator only
 	// surfaces in dev mode.
 	var statusBar fyne.CanvasObject
-	hasStatus := a.statusLabel.Text != "" || a.holocronClient != nil
+	hasStatus := a.statusLabel.Text != "" || a.holocronClient != nil || a.bufferGauge != nil
 	if hasStatus {
 		statusBarItems := []fyne.CanvasObject{
 			a.statusLabel,
 			layout.NewSpacer(),
+		}
+		if a.bufferGauge != nil {
+			statusBarItems = append(statusBarItems, a.bufferGauge.GetContent())
 		}
 		if a.holocronClient != nil {
 			statusBarItems = append(statusBarItems,
@@ -1258,13 +1284,38 @@ func (a *App) setupShortcuts() {
 		fyne.NewMenuItem("Pop Out Info Panel", func() { a.popOutInfoPanel() }),
 		fyne.NewMenuItem("Pop Out Source Panel", func() { a.popOutSourcePanel() }),
 	)
+	toolsMenu := fyne.NewMenu("Tools",
+		fyne.NewMenuItem("Team Composer (.mbtc)…", func() { OpenMBTCComposer(a) }),
+		fyne.NewMenuItem("Compare Characters (.mbch)…", func() {
+			if tab := a.docTabs.Selected(); tab != nil {
+				if ed, ok := a.editors[tab]; ok {
+					if mbchEd, ok := ed.(*MBCHEditor); ok {
+						ShowCharacterDiffDialog(a.mainWindow, mbchEd.character, "Current Character")
+					}
+				}
+			}
+		}),
+		fyne.NewMenuItemSeparator(),
+		fyne.NewMenuItem("Test in MBII (Live Hot-Test)", func() {
+			if tab := a.docTabs.Selected(); tab != nil {
+				if ed, ok := a.editors[tab]; ok {
+					if mbchEd, ok := ed.(*MBCHEditor); ok {
+						LaunchInGameTest(a.mainWindow, mbchEd.character, a.config.GamedataPath)
+					}
+				}
+			}
+		}),
+		fyne.NewMenuItemSeparator(),
+		fyne.NewMenuItem("Validate Character", func() { a.validateFile() }),
+		fyne.NewMenuItem("Validate Folder…", func() { a.validateFolder() }),
+	)
 	helpMenu := fyne.NewMenu("Help",
 		fyne.NewMenuItem("About MBII Foundry", func() { a.showAbout() }),
 		fyne.NewMenuItem("Debug Logs", func() { a.showLogs() }),
 		fyne.NewMenuItem("Icon Inventory…", func() { a.showIconInventory() }),
 		fyne.NewMenuItem("Check for Updates", func() { a.checkForUpdatesNow() }),
 	)
-	a.mainWindow.SetMainMenu(fyne.NewMainMenu(fileMenu, editMenu, viewMenu, helpMenu))
+	a.mainWindow.SetMainMenu(fyne.NewMainMenu(fileMenu, editMenu, viewMenu, toolsMenu, helpMenu))
 }
 
 // persistWindowSize captures the main window's final dimensions and
@@ -1639,13 +1690,6 @@ func (a *App) createToolbar() fyne.CanvasObject {
 		// a modal.
 		btn(theme.SettingsIcon(), func() { a.showPreferences() }, "Preferences"),
 		btn(theme.InfoIcon(), func() { a.showLogs() }, "Show Debug Logs"),
-		// Icon Inventory — surfaces every embedded HUD/boxicon asset
-		// in a debug window. Useful for confirming the asset pipeline
-		// renders end-to-end and for finding basenames to wire into
-		// the alias maps. macOS users can also reach this via the
-		// system menubar (Help → Icon Inventory…) but the toolbar
-		// button is the cross-platform discoverable surface.
-		btn(theme.GridIcon(), func() { a.showIconInventory() }, "Icon Inventory (debug — show every embedded icon)"),
 		btn(theme.ViewRefreshIcon(), func() { a.checkForUpdatesNow() }, "Check for updates"),
 		btn(theme.HelpIcon(), func() { a.showAbout() }, "About MBII Foundry"),
 	)
@@ -1973,6 +2017,45 @@ func (a *App) loadConfig() {
 	data, err := os.ReadFile(a.configPath)
 	if err == nil {
 		json.Unmarshal(data, &a.config)
+	}
+
+	// Auto-heal / Auto-migrate invalid or obsolete gamedata / text assets paths:
+	if a.config.GamedataPath != "" {
+		if err := ValidateGamedataPath(a.config.GamedataPath); err != nil {
+			if detected := DetectGamedataPath(); detected != "" {
+				LogInfo("loadConfig: migrating stale gamedata_path %q -> %q", a.config.GamedataPath, detected)
+				a.config.GamedataPath = detected
+			}
+		}
+	} else {
+		if detected := DetectGamedataPath(); detected != "" {
+			a.config.GamedataPath = detected
+		}
+	}
+	if a.config.TextAssetsPath != "" {
+		if _, err := os.Stat(a.config.TextAssetsPath); err != nil && a.config.GamedataPath != "" {
+			candidates := []string{
+				filepath.Join(filepath.Dir(a.config.GamedataPath), "mbii", "TextAssets"),
+				filepath.Join(filepath.Dir(a.config.GamedataPath), "TextAssets"),
+			}
+			for _, c := range candidates {
+				if _, err := os.Stat(c); err == nil {
+					a.config.TextAssetsPath = c
+					break
+				}
+			}
+		}
+	} else if a.config.GamedataPath != "" {
+		candidates := []string{
+			filepath.Join(filepath.Dir(a.config.GamedataPath), "mbii", "TextAssets"),
+			filepath.Join(filepath.Dir(a.config.GamedataPath), "TextAssets"),
+		}
+		for _, c := range candidates {
+			if _, err := os.Stat(c); err == nil {
+				a.config.TextAssetsPath = c
+				break
+			}
+		}
 	}
 
 	// Set default sidebar offset if not configured. New activity-bar

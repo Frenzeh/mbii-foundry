@@ -755,24 +755,30 @@
   },
   {
     "id": "WP_UGL",
-    "name": "WP_UGL",
-    "overview": "",
+    "name": "Universal Grenade Launcher",
+    "overview": "Universal grenade launcher firing high-explosive impact, timed, or burst rounds.",
     "tips": [],
     "levels": {},
     "stats": {},
-    "tags": [],
-    "description": "UGL",
+    "tags": [
+      "launcher",
+      "explosive"
+    ],
+    "description": "Universal Grenade Launcher (UGL)",
     "category": "Heavy"
   },
   {
     "id": "WP_MGL",
-    "name": "WP_MGL",
-    "overview": "",
+    "name": "Micro Grenade Launcher",
+    "overview": "Micro grenade launcher firing sticky bombs for area denial and explosive breaching.",
     "tips": [],
     "levels": {},
     "stats": {},
-    "tags": [],
-    "description": "MGL",
+    "tags": [
+      "launcher",
+      "explosive"
+    ],
+    "description": "Micro Grenade Launcher (MGL)",
     "category": "Heavy"
   }
 ]

@@ -52,9 +52,25 @@ type TileOpts struct {
 	Padded bool
 }
 
-// NewTilePanel returns a Stack of (bg, inset frame, content). Use
-// the result anywhere you want the launcher-style surface identity.
-func NewTilePanel(content fyne.CanvasObject, opts TileOpts) *fyne.Container {
+// TilePanelWidget is a dynamic tile container that supports runtime restyling.
+type TilePanelWidget struct {
+	*fyne.Container
+	Bg    *canvas.Rectangle
+	Frame *canvas.Rectangle
+}
+
+func (tp *TilePanelWidget) SetAccent(accent color.Color, fillAlpha, strokeAlpha uint8) {
+	if accent == nil {
+		accent = CurrentThemeColor
+	}
+	tp.Bg.FillColor = tintWithAlpha(accent, fillAlpha)
+	tp.Frame.StrokeColor = tintWithAlpha(accent, strokeAlpha)
+	tp.Bg.Refresh()
+	tp.Frame.Refresh()
+}
+
+// NewDynamicTilePanel returns a TilePanelWidget that can update its stroke and fill colors dynamically.
+func NewDynamicTilePanel(content fyne.CanvasObject, opts TileOpts) *TilePanelWidget {
 	accent := opts.AccentColor
 	if accent == nil {
 		accent = CurrentThemeColor
@@ -81,5 +97,17 @@ func NewTilePanel(content fyne.CanvasObject, opts TileOpts) *fyne.Container {
 	if opts.Padded {
 		body = container.NewPadded(content)
 	}
-	return container.NewStack(bg, framePadded, body)
+
+	stack := container.NewStack(bg, framePadded, body)
+	return &TilePanelWidget{
+		Container: stack,
+		Bg:        bg,
+		Frame:     frame,
+	}
+}
+
+// NewTilePanel returns a Stack of (bg, inset frame, content). Use
+// the result anywhere you want the launcher-style surface identity.
+func NewTilePanel(content fyne.CanvasObject, opts TileOpts) *fyne.Container {
+	return NewDynamicTilePanel(content, opts).Container
 }

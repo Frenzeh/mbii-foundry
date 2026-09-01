@@ -68,21 +68,24 @@ func (a *App) showIconInventory() {
 		totalEmbedded += len(names)
 
 		grid := container.NewGridWrap(fyne.NewSize(150, 130))
-		for _, basename := range names {
-			grid.Add(buildIconInventoryTile(basename, cat.dir))
-		}
 		header := widget.NewLabelWithStyle(
 			fmt.Sprintf("%s — %d files", cat.title, len(names)),
 			fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 		body := container.NewBorder(header, nil, nil, nil,
 			container.NewVScroll(grid))
 		tabs.Append(container.NewTabItem(fmt.Sprintf("%s (%d)", cat.dir, len(names)), body))
+
+		// Populate tiles
+		go func(g *fyne.Container, nList []string, d string) {
+			for _, basename := range nList {
+				tile := buildIconInventoryTile(basename, d)
+				g.Add(tile)
+			}
+			g.Refresh()
+		}(grid, names, cat.dir)
 	}
 
-	// Boxicons tab — the SVG fallback set used when no MBII HUD
-	// art exists for an attribute. Different render path (SVG via
-	// fyne.NewStaticResource, no LoadGameIcon involved) so showing
-	// these confirms the boxicon fallback works independently.
+	// Boxicons tab — the SVG fallback set
 	{
 		entries, _ := embedBoxicons.ReadDir("assets/boxicons")
 		var names []string
@@ -93,15 +96,20 @@ func (a *App) showIconInventory() {
 		}
 		sort.Strings(names)
 		grid := container.NewGridWrap(fyne.NewSize(150, 130))
-		for _, basename := range names {
-			grid.Add(buildBoxiconInventoryTile(basename))
-		}
 		header := widget.NewLabelWithStyle(
 			fmt.Sprintf("Boxicons — %d files", len(names)),
 			fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 		body := container.NewBorder(header, nil, nil, nil,
 			container.NewVScroll(grid))
 		tabs.Append(container.NewTabItem(fmt.Sprintf("boxicons (%d)", len(names)), body))
+
+		go func(g *fyne.Container, nList []string) {
+			for _, basename := range nList {
+				tile := buildBoxiconInventoryTile(basename)
+				g.Add(tile)
+			}
+			g.Refresh()
+		}(grid, names)
 	}
 
 	intro := widget.NewLabelWithStyle(

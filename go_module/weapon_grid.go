@@ -35,6 +35,7 @@ import (
 
 type WeaponGrid struct {
 	container   *fyne.Container
+	content     *fyne.Container
 	selected    map[string]bool
 	onChange    func(string)
 	onHover     func(string, string)
@@ -134,24 +135,13 @@ func (wg *WeaponGrid) createUI() {
 	catOrder := []string{"Melee/Force", "Sidearms", "Rifles", "Heavy"}
 
 	var content *fyne.Container
-	var mainLayout *fyne.Container
 
 	if wg.container != nil {
-		mainLayout = wg.container
-		// Border container's Objects slice doesn't have a guaranteed
-		// order between center and edges. Scan for the Scroll rather
-		// than indexing blindly.
-		for _, obj := range mainLayout.Objects {
-			if scroll, ok := obj.(*container.Scroll); ok {
-				if c, ok := scroll.Content.(*fyne.Container); ok {
-					content = c
-					content.Objects = nil
-				}
-				break
-			}
-		}
+		content = wg.content
+		content.Objects = nil
 	} else {
 		content = container.NewVBox()
+		wg.content = content
 
 		wg.search = NewInputEntry()
 		wg.search.SetPlaceHolder("Filter weapons (name or WP_ ID)…")
@@ -165,9 +155,7 @@ func (wg *WeaponGrid) createUI() {
 			"Click a level pill to set the paired attribute. Off = weapon not on the class.",
 			fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
 		header := container.NewVBox(wg.search, legend)
-		scroll := container.NewVScroll(content)
-		mainLayout = container.NewBorder(header, nil, nil, nil, scroll)
-		wg.container = mainLayout
+		wg.container = container.NewVBox(header, content)
 	}
 
 	filterLower := strings.ToLower(wg.filter)

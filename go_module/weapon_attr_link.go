@@ -1,26 +1,6 @@
 package main
 
-// weaponAttributeLink encodes the canonical WP_* ↔ MB_ATT_* pairing
-// MBII's own wiki + real Legends content use. Most weapons have an
-// attribute that controls their level (0 = off, 1–3 = rank / ammo /
-// variant); the name doesn't always match the weapon's enum (e.g.
-// WP_BLASTER_PISTOL ↔ MB_ATT_PISTOL, WP_FRAG_NADE ↔ MB_ATT_FRAGS).
-//
-// Foundry uses this to:
-//   1. Show the paired attribute as a subtitle under each weapon
-//      row, teaching the user which attribute controls which weapon
-//      without them having to know the enum by heart.
-//   2. Future: auto-suggest adding the paired MB_ATT at rank 1 when
-//      the user checks a weapon. Task #38 left that out of the
-//      first pass to avoid surprising edits.
-//
-// A handful of weapons (WP_MELEE, WP_SABER, WP_NONE) genuinely have
-// no paired attribute — their "level" is controlled elsewhere
-// (saber styles, force powers, etc.). Those map to "" and the UI
-// shows no subtitle for them.
-//
-// Source: game/bg_misc.c weapon_* item defs + mbii wiki page
-// "MBCH Guide" + legends .mbch corpus survey (task #37 report).
+// weaponAttributeLink encodes the canonical WP_* ↔ MB_ATT_* pairing.
 var weaponAttributeLink = map[string]string{
 	"WP_STUN_BATON":     "MB_ATT_STUN_BATON",
 	"WP_BRYAR_PISTOL":   "MB_ATT_PISTOL",
@@ -67,18 +47,60 @@ var weaponAttributeLink = map[string]string{
 	"WP_PROJ":           "MB_ATT_PROJECTILE_RIFLE",
 	"WP_UGL":            "MB_ATT_UGL",
 	"WP_MGL":            "MB_ATT_MGL",
-
-	// Weapons with no paired attribute — the empty mapping signals
-	// "no subtitle, not a config-by-rank weapon".
-	"WP_MELEE": "",
-	"WP_SABER": "",
-	"WP_NONE":  "",
+	"WP_EQUALIZER":      "MB_ATT_EQUALIZER",
+	"WP_MELEE":          "",
+	"WP_SABER":          "",
+	"WP_NONE":           "",
 }
 
-// CanonicalAttributeFor returns the paired MB_ATT_* for a weapon ID,
-// or "" if the weapon has no linked attribute (WP_MELEE, WP_SABER,
-// or an ID not in the table yet). Stable public function so future
-// features (linked-card editor, auto-suggest) can rely on it.
+// secondaryWeaponAttributes maps weapons to secondary attributes (blobs, alt-fire nades, etc.).
+var secondaryWeaponAttributes = map[string][]string{
+	"WP_CLONE_RIFLE": {"MB_ATT_CLONEBLOBS", "MB_ATT_STRONGBLOBS"},
+	"WP_M5":          {"MB_ATT_ARC_RIFLE_SCOPE", "MB_ATT_ARC_RIFLE_GRENADELAUNCHER"},
+	"WP_REPEATER":    {"MB_ATT_REPEATER_NADES"},
+	"WP_FLECHETTE":   {"MB_ATT_FLECHETTE_NADES", "MB_ATT_FLECHETTE_ALT_NUM"},
+	"WP_DEMP2":       {"MB_ATT_DEMP2_BLASTS"},
+	"WP_UGL":         {"MB_ATT_UGL_BURST", "MB_ATT_UGL_IMPACT"},
+	"WP_MGL":         {"MB_ATT_MGL_BURST", "MB_ATT_MGL_IMPACT", "MB_ATT_STICKY_BOMBS"},
+	"WP_THROWER":     {"MB_ATT_THROWER_FLAME", "MB_ATT_THROWER_ICE", "MB_ATT_THROWER_LIGHTNING", "MB_ATT_THROWER_PLASMA", "MB_ATT_THROWER_POISON"},
+}
+
+// easSkillMap links EAS ability items to their required engine attributes.
+var easSkillMap = map[string]string{
+	"EAS_HI_GRAPPLEHOOK": "MB_ATT_GRAPPLE_HOOK",
+	"EAS_HI_MEDPAC":      "MB_ATT_BACTA",
+	"EAS_HI_MEDPAC_BIG":  "MB_ATT_BACTA_BIG",
+	"EAS_HI_SEEKER":      "MB_ATT_BASESEEKER",
+	"EAS_HI_SHIELD":      "MB_ATT_PSHIELD",
+	"EAS_HI_CLOAK":       "MB_ATT_CLOAK",
+	"EAS_HI_EWEB":        "MB_ATT_EWEB",
+	"EAS_HI_SENTRY":      "MB_ATT_SENTRY",
+	"EAS_HI_DRONE":       "MB_ATT_DRONE",
+}
+
+// CanonicalAttributeFor returns the primary paired MB_ATT_* for a weapon.
 func CanonicalAttributeFor(wpID string) string {
 	return weaponAttributeLink[wpID]
+}
+
+// RelatedAttributesForWeapon returns all companion attributes for a weapon (primary + secondaries).
+func RelatedAttributesForWeapon(wpID string) []string {
+	var results []string
+	if primary := weaponAttributeLink[wpID]; primary != "" {
+		results = append(results, primary)
+	}
+	if secondaries, ok := secondaryWeaponAttributes[wpID]; ok {
+		results = append(results, secondaries...)
+	}
+	return results
+}
+
+// RequiredAttributeForEAS returns the attribute required by an EAS action skill.
+func RequiredAttributeForEAS(easID string) string {
+	return easSkillMap[easID]
+}
+
+// WeaponFlagKeyForWeapon returns the ExtraFields key for custom weapon flags (e.g. WP_M5Flags).
+func WeaponFlagKeyForWeapon(wpID string) string {
+	return wpID + "Flags"
 }

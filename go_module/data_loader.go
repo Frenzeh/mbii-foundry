@@ -287,8 +287,19 @@ func LoadExternalData(dataPath string) error {
 	for i := range LoadedWeapons {
 		LoadedWeapons[i].Name = stripLeadingNonWord(LoadedWeapons[i].Name)
 	}
+	fallbackMap := make(map[string]AttributeDef, len(MBIIAttributes))
+	for _, a := range MBIIAttributes {
+		fallbackMap[a.ID] = a
+	}
 	for i := range LoadedAttributes {
 		LoadedAttributes[i].Name = stripLeadingNonWord(LoadedAttributes[i].Name)
+		if LoadedAttributes[i].MaxLevel <= 0 {
+			if fb, ok := fallbackMap[LoadedAttributes[i].ID]; ok && fb.MaxLevel > 0 {
+				LoadedAttributes[i].MaxLevel = fb.MaxLevel
+			} else {
+				LoadedAttributes[i].MaxLevel = 3
+			}
+		}
 	}
 
 	return nil

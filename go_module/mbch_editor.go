@@ -104,6 +104,7 @@ type MBCHEditor struct {
 	isCustomCheck    *widget.Check
 	mbPointsEntry    *ValidatedEntry
 	descriptionEntry *ValidatedEntry
+	updateDescPreview func()
 	sourceView       *widget.RichText // Correct type
 
 	pointBuyUI      *PointBuyUI
@@ -141,17 +142,32 @@ type MBCHEditor struct {
 	// New MultiSelect Widgets
 	saberStyleSelect *MultiSelectWidget
 	classFlagsSelect *MultiSelectWidget
+
+	// Defensive Matrix, Asset Health, and Custom Skills
+	defensiveMatrixContainer *fyne.Container
+	modelHealthBadge         *fyne.Container
+	skinHealthBadge          *fyne.Container
+	customSkillsUI           *CustomSkillsEditor
 }
 
 func NewMBCHEditor(app *App) *MBCHEditor {
 	tCtor := time.Now()
 	e := &MBCHEditor{
 		character:       parsers.NewMBCHCharacter(),
-		fileManager:     app.fileManager, // Use shared manager
 		app:             app,
-		assetBrowser:    app.assetBrowser,
 		devFieldEntries: make(map[string]*widget.Entry, len(devFieldsRegistry)),
 	}
+	if app != nil {
+		e.fileManager = app.fileManager
+		e.assetBrowser = app.assetBrowser
+	}
+
+	var vfs *VirtualFileSystem
+	if app != nil && app.assetBrowser != nil {
+		vfs = app.assetBrowser.vfs
+	}
+	e.iconResolver = NewIconResolver(vfs)
+
 	tA := time.Now()
 	e.pointBuyUI = NewPointBuyUI(e)
 	LogInfo("NewMBCHEditor: NewPointBuyUI took %s", time.Since(tA))
@@ -161,6 +177,9 @@ func NewMBCHEditor(app *App) *MBCHEditor {
 	tC := time.Now()
 	e.forceInfoUI = NewForceInfoUI(e)
 	LogInfo("NewMBCHEditor: NewForceInfoUI took %s", time.Since(tC))
+	e.customSkillsUI = NewCustomSkillsEditor(e.character, func() {
+		e.markDirty()
+	})
 	// Initialize onHover to a no-op so Select/Entry OnChanged handlers
 	// that fire during LoadFile → updateUI don't hit a nil-deref before
 	// the app has called SetOnHover. SetOnHover later replaces this
@@ -289,8 +308,39 @@ func (e *MBCHEditor) markDirty() {
 			e.onDirtyChanged(true)
 		}
 	}
+	e.updateDefensiveMatrix()
+	e.updateAssetHealthBadges()
 	if e.onSourceChanged != nil {
 		e.onSourceChanged()
+	}
+	if e.app != nil && e.app.bufferGauge != nil {
+		e.app.bufferGauge.Update(e.character)
+	}
+}
+
+func (e *MBCHEditor) updateDefensiveMatrix() {
+	if e.defensiveMatrixContainer == nil || e.character == nil {
+		return
+	}
+	dm := CalculateDefensiveMatrix(e.character)
+	e.defensiveMatrixContainer.Objects = []fyne.CanvasObject{BuildDefensiveMatrixWidget(dm)}
+	e.defensiveMatrixContainer.Refresh()
+}
+
+func (e *MBCHEditor) updateAssetHealthBadges() {
+	if e.app == nil || e.app.assetBrowser == nil || e.app.assetBrowser.vfs == nil {
+		return
+	}
+	vfs := e.app.assetBrowser.vfs
+	if e.modelHealthBadge != nil {
+		res := CheckModelAssetHealth(e.modelEntry.Text, e.skinEntry.Text, vfs)
+		e.modelHealthBadge.Objects = []fyne.CanvasObject{BuildAssetHealthBadge(res)}
+		e.modelHealthBadge.Refresh()
+	}
+	if e.skinHealthBadge != nil {
+		res := CheckModelAssetHealth(e.modelEntry.Text, e.skinEntry.Text, vfs)
+		e.skinHealthBadge.Objects = []fyne.CanvasObject{BuildAssetHealthBadge(res)}
+		e.skinHealthBadge.Refresh()
 	}
 }
 
@@ -399,6 +449,28 @@ func (e *MBCHEditor) createUI() {
 			e.app.showFilePickerForEntry(&e.modelEntry.Entry, "Select Model", AssetTypeModel)
 		}
 	}, "Browse for Model")
+	galleryModelBtn := NewTooltipButton("", theme.AccountIcon(), func() {
+		if e.app != nil && e.app.assetBrowser != nil {
+			ShowModelGalleryModal(e.app.mainWindow, e.app.assetBrowser.vfs, e.app.assetBrowser, func(model, skin string) {
+				e.modelEntry.SetText(model)
+				e.skinEntry.SetText(skin)
+				shaderPath := fmt.Sprintf("models/players/%s/mb2_icon_%s", model, skin)
+				if res := e.app.assetBrowser.LoadIconResource(shaderPath); res == nil {
+					altPath := fmt.Sprintf("models/players/%s/icon_%s", model, skin)
+					if altRes := e.app.assetBrowser.LoadIconResource(altPath); altRes != nil {
+						shaderPath = altPath
+					}
+				}
+				e.uiShaderEntry.SetText(shaderPath)
+				e.markDirty()
+				e.updateIconPreview()
+			})
+		}
+	}, "Visual Model & Skin Gallery")
+
+	e.modelHealthBadge = container.NewMax()
+	e.skinHealthBadge = container.NewMax()
+	e.defensiveMatrixContainer = container.NewMax()
 
 	e.skinEntry = NewValidatedEntry(noOpVal)
 	e.skinEntry.OnChanged = func(s string) { e.markDirty(); e.updateIconPreview() }
@@ -845,21 +917,62 @@ func (e *MBCHEditor) createUI() {
 		e.onHover(opt, "")
 	})
 
-	// Profile form. Class picker gets its own row because it's a
-	// visual strip, not a single inline input. Icon preview (64px)
-	// is a peer to the Name field on the right so the current
-	// character's portrait is visible while editing.
+	openSkinPicker := func() {
+		if e.app != nil && e.app.assetBrowser != nil && e.app.assetBrowser.vfs != nil {
+			model := e.modelEntry.Text
+			if model == "" {
+				model = "kyle"
+			}
+			skin := e.skinEntry.Text
+			if skin == "" {
+				skin = "default"
+			}
+			ShowSkinPickerModal(e.app.mainWindow, model, skin, e.app.assetBrowser.vfs, e.app.assetBrowser, e.iconResolver, func(newModel, newSkin string) {
+				if newModel != "" && newModel != e.modelEntry.Text {
+					e.modelEntry.SetText(newModel)
+				}
+				if newSkin != "" {
+					e.skinEntry.SetText(newSkin)
+				}
+				targetModel := newModel
+				if targetModel == "" {
+					targetModel = e.modelEntry.Text
+				}
+				shaderPath := fmt.Sprintf("models/players/%s/mb2_icon_%s", targetModel, newSkin)
+				if res := e.app.assetBrowser.LoadIconResource(shaderPath); res == nil {
+					altPath := fmt.Sprintf("models/players/%s/icon_%s", targetModel, newSkin)
+					if altRes := e.app.assetBrowser.LoadIconResource(altPath); altRes != nil {
+						shaderPath = altPath
+					}
+				}
+				e.uiShaderEntry.SetText(shaderPath)
+				e.markDirty()
+				e.updateIconPreview()
+			})
+		}
+	}
+
+	portraitClickable := newClickableCell(
+		container.NewGridWrap(fyne.NewSize(64, 64), e.iconPreview),
+		openSkinPicker,
+	)
+	changeSkinBtn := NewTooltipButton("Change Skin", theme.AccountIcon(), openSkinPicker, "Click to choose skin / portrait")
+	changeSkinBtn.Importance = widget.LowImportance
+
 	profileForm := widget.NewForm(
 		widget.NewFormItem("Name", e.nameEntry),
 		widget.NewFormItem("MB Class", e.classPicker),
 		widget.NewFormItem("Portrait",
 			container.NewHBox(
-				container.NewGridWrap(fyne.NewSize(64, 64), e.iconPreview),
-				e.portraitSource,
+				portraitClickable,
+				container.NewVBox(
+					e.portraitSource,
+					changeSkinBtn,
+				),
 			),
 		),
-		widget.NewFormItem("Model", container.NewBorder(nil, nil, nil, container.NewHBox(browseModelBtn, previewBtn), e.modelEntry)),
-		widget.NewFormItem("Skin", e.skinEntry),
+		widget.NewFormItem("Model", container.NewBorder(nil, nil, nil, container.NewHBox(galleryModelBtn, browseModelBtn, previewBtn, e.modelHealthBadge), e.modelEntry)),
+		widget.NewFormItem("Skin", container.NewBorder(nil, nil, nil, e.skinHealthBadge, e.skinEntry)),
 		widget.NewFormItem("UI Shader", container.NewBorder(nil, nil, nil, browseIconBtn, e.uiShaderEntry)),
 		widget.NewFormItem("Sound Set", e.soundsetEntry),
 	)
@@ -891,17 +1004,51 @@ func (e *MBCHEditor) createUI() {
 	// users to scroll the whole tab. The VSplit lets them drag the
 	// description up to take over the tab when they're focused on
 	// that field, then drag it back down to edit identity again.
-	descLabel := widget.NewLabelWithStyle("Description",
-		fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	descPane := container.NewBorder(descLabel, nil, nil, nil,
-		container.NewVScroll(e.descriptionEntry))
+	descPreviewBox := container.NewMax(RenderQ3ColoredPreview(e.descriptionEntry.Text))
+	updateDescPreview := func() {
+		descPreviewBox.Objects = []fyne.CanvasObject{RenderQ3ColoredPreview(e.descriptionEntry.Text)}
+		descPreviewBox.Refresh()
+	}
+	e.updateDescPreview = updateDescPreview
+
+	origDescChanged := e.descriptionEntry.OnChanged
+	e.descriptionEntry.OnChanged = func(s string) {
+		if origDescChanged != nil {
+			origDescChanged(s)
+		}
+		updateDescPreview()
+	}
+
+	descToolbar := NewQ3ColorToolbar(e.descriptionEntry, func() {
+		generated := GenerateStandardDescription(e.character)
+		if generated != "" {
+			e.descriptionEntry.SetText(generated)
+			e.character.Description = generated
+			e.markDirty()
+			updateDescPreview()
+		}
+	})
+
+	descHeader := container.NewVBox(
+		container.NewHBox(
+			widget.NewLabelWithStyle("Description", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+			widget.NewLabelWithStyle("(Left: Source Edit | Right: In-Game Live Colors)", fyne.TextAlignLeading, fyne.TextStyle{Italic: true}),
+		),
+		descToolbar,
+	)
+
+	descBodySplit := container.NewHSplit(
+		container.NewVScroll(e.descriptionEntry),
+		descPreviewBox,
+	)
+	descBodySplit.SetOffset(0.5)
+
+	descPane := container.NewBorder(descHeader, nil, nil, nil, descBodySplit)
 	profileSplit := container.NewVSplit(
 		container.NewVScroll(profileAccordion),
 		descPane,
 	)
-	// Bias toward identity at first — description gets ~25% of height
-	// until the user drags the rail.
-	profileSplit.SetOffset(0.7)
+	profileSplit.SetOffset(0.65)
 	profileTab := profileSplit
 
 	statsForm := widget.NewForm(widget.NewFormItem("Max Health", e.healthEntry), widget.NewFormItem("Max Armor", e.armorEntry), widget.NewFormItem("Force Pool", e.forcePoolEntry), widget.NewFormItem("Force Regen", e.forceRegenEntry), widget.NewFormItem("Speed", e.speedEntry))
@@ -947,7 +1094,11 @@ func (e *MBCHEditor) createUI() {
 	e.devFieldsCard.Hide()
 	e.devSurfaces = append(e.devSurfaces, e.devFieldsCard)
 
-	loadoutTab := container.NewVBox(statsAccordion, e.devFieldsCard)
+	loadoutTab := container.NewVBox(
+		e.defensiveMatrixContainer,
+		statsAccordion,
+		e.devFieldsCard,
+	)
 
 	weaponTab := e.weaponInfoUI.GetContent()
 	forceTab := e.forceInfoUI.GetContent()
@@ -1042,6 +1193,7 @@ func (e *MBCHEditor) createUI() {
 		container.NewTabItem("Flags", wrapForTab(e.weaponFlagsUI.GetContent())),
 		container.NewTabItem("Skins", wrapForTab(e.skinVariantsUI.GetContent())),
 		container.NewTabItem("Stats & Sabers", wrapForTab(loadoutTab)),
+		container.NewTabItem("Custom Skills", wrapForTab(e.customSkillsUI.BuildUI())),
 		container.NewTabItem("Weapon Mods", wrapForTab(weaponTab)),
 		container.NewTabItem("Force Mods", wrapForTab(forceTab)),
 		container.NewTabItem("Point Buy", wrapForTab(pointBuyTab)),
@@ -1057,13 +1209,12 @@ func (e *MBCHEditor) createUI() {
 	e.container = container.NewMax(tabs)
 }
 
-// wrapForTab wraps a tab's content in a bi-directional Scroll with
-// a sensible minimum so the MBCH editor can never demand a window
-// wider/taller than the user's screen. Unlike VScroll (which
-// inherits content's MinSize.Width), container.NewScroll caps at
-// the scroll's explicit MinSize in both dimensions.
+// wrapForTab wraps a tab's content in a vertical Scroll with
+// a sensible minimum size. Using VScroll ensures the child content
+// receives the exact viewport width, allowing GridWrap layouts to
+// reflow columns cleanly without being cropped when sidebars are dragged.
 func wrapForTab(content fyne.CanvasObject) fyne.CanvasObject {
-	s := container.NewScroll(content)
+	s := container.NewVScroll(content)
 	s.SetMinSize(fyne.NewSize(320, 280))
 	return s
 }
@@ -1341,6 +1492,15 @@ func (e *MBCHEditor) updateUI() {
 	if e.holdableGrid != nil {
 		e.holdableGrid.Refresh()
 	}
+	if e.customSkillsUI != nil {
+		e.customSkillsUI.LoadFromCharacter(e.character)
+	}
+	e.updateDefensiveMatrix()
+	e.updateAssetHealthBadges()
+	e.updateIconPreview()
+	if e.updateDescPreview != nil {
+		e.updateDescPreview()
+	}
 	LogInfo("MBCHEditor.updateUI: refresh took %s", time.Since(t0))
 }
 
@@ -1477,19 +1637,36 @@ func lookupModelPortraitFallback(model string, vfs *VirtualFileSystem) string {
 	}
 	modelPortraitFallbackCacheMu.RUnlock()
 
-	dirPrefix := "models/players/" + key + "/mb2_icon_"
+	dirPrefixMB2 := "models/players/" + key + "/mb2_icon_"
+	dirPrefixIcon := "models/players/" + key + "/icon_"
+	dirPrefixAny := "models/players/" + key + "/"
 	var found string
+	var fallbackFound string
 	vfs.mu.RLock()
 	for k := range vfs.Index {
-		if strings.HasPrefix(k, dirPrefix) {
+		if strings.HasPrefix(k, dirPrefixMB2) {
 			ext := filepath.Ext(k)
 			if ext == ".tga" || ext == ".png" || ext == ".jpg" || ext == ".jpeg" {
 				found = k
 				break
 			}
+		} else if strings.HasPrefix(k, dirPrefixIcon) && found == "" {
+			ext := filepath.Ext(k)
+			if ext == ".tga" || ext == ".png" || ext == ".jpg" || ext == ".jpeg" {
+				found = k
+			}
+		} else if strings.HasPrefix(k, dirPrefixAny) && fallbackFound == "" {
+			ext := filepath.Ext(k)
+			if ext == ".tga" || ext == ".png" || ext == ".jpg" || ext == ".jpeg" {
+				fallbackFound = k
+			}
 		}
 	}
 	vfs.mu.RUnlock()
+
+	if found == "" {
+		found = fallbackFound
+	}
 
 	modelPortraitFallbackCacheMu.Lock()
 	modelPortraitFallbackCache[key] = found
@@ -1515,37 +1692,25 @@ func (e *MBCHEditor) updateIconPreview() {
 
 	// setMissing renders the boxicon placeholder and clears the
 	// source label entirely. Earlier versions wrote diagnostic text
-	// like "override · no image found" — useful while debugging,
-	// noisy in normal use. The placeholder image speaks for itself.
 	setMissing := func(_ string) {
 		if e.portraitSource != nil {
-			e.portraitSource.SetText("")
+			e.portraitSource.SetText("none")
 		}
-		if res := loadBoxiconResource("box"); res != nil {
-			e.iconPreview.Resource = res
-		} else {
-			e.iconPreview.Resource = theme.FileImageIcon()
-		}
+		e.iconPreview.Resource = theme.AccountIcon()
 		e.iconPreview.Refresh()
 	}
 
 	if e.iconResolver == nil || e.assetBrowser == nil {
-		// Likely transient — SetAssetBrowser wires the resolvers a
-		// moment after the editor is constructed, and updateUI may
-		// fire between those two points during a Recent-file open.
-		// Render the placeholder so the user isn't staring at the
-		// generic file icon, and label the state honestly.
 		setMissing("loading…")
 		LogInfo("updateIconPreview: resolver not ready (model=%q skin=%q uishader=%q)",
 			model, skin, uishader)
 		return
 	}
 
-	// Walk the candidate list — author's `uishader` first, then the
-	// `mb2_icon_<skin>` / `icon_<skin>` / bare-skin / `mb2_icon_default`
-	// fallbacks. Each goes through LoadIconResource which probes
-	// embedded HUD → shader-resolved texture → direct extension.
-	// First non-nil wins.
+	// Walk the candidate list:
+	// 1. Author's explicit `uishader`
+	// 2. `mb2_icon_<skin>` / `icon_<skin>` / bare-skin
+	// 3. `mb2_icon_default` / `icon_default`
 	candidates := e.iconResolver.ResolveClassIconCandidates(model, skin, uishader)
 	for _, candidate := range candidates {
 		if res := e.assetBrowser.LoadIconResource(candidate); res != nil {
@@ -1555,33 +1720,6 @@ func (e *MBCHEditor) updateIconPreview() {
 			e.iconPreview.Resource = res
 			e.iconPreview.Refresh()
 			return
-		}
-	}
-
-	// LAST-RESORT: scan the VFS for any `models/players/<model>/mb2_icon_*`
-	// — the file may ship a skin-specific portrait under a name we
-	// can't predict (jedi_zf has mb2_icon_legends1.jpg, not
-	// mb2_icon_<skin> or mb2_icon_default).
-	//
-	// The scan iterates the entire VFS index (50k+ entries on a
-	// fully-loaded MBII install). It runs at most once per model
-	// per session — modelPortraitFallbackCache memoizes the result
-	// so subsequent updateIconPreview calls for the same model
-	// don't re-scan. updateIconPreview fires 3+ times during file
-	// load (one per OnChanged on model/skin/uishader entries); the
-	// cache is the difference between a 100-300ms hitch each time
-	// vs an instant lookup.
-	if model != "" && e.assetBrowser != nil && e.assetBrowser.vfs != nil {
-		fallbackPath := lookupModelPortraitFallback(model, e.assetBrowser.vfs)
-		if fallbackPath != "" {
-			if res := e.assetBrowser.LoadIconResource(fallbackPath); res != nil {
-				if e.portraitSource != nil {
-					e.portraitSource.SetText(source)
-				}
-				e.iconPreview.Resource = res
-				e.iconPreview.Refresh()
-				return
-			}
 		}
 	}
 

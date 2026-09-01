@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
@@ -183,12 +184,19 @@ func NewWeaponFlagsEditor(editor *MBCHEditor) *WeaponFlagsEditor {
 func (wfe *WeaponFlagsEditor) createUI() {
 	wfe.listBox = container.NewVBox()
 
-	addBtn := widget.NewButtonWithIcon("Add weapon flags", theme.ContentAddIcon(), func() {
+	addBtn := widget.NewButtonWithIcon("Add Weapon Flags...", theme.ContentAddIcon(), func() {
 		wfe.showAddDialog()
 	})
 
+	classFlagsTile := wfe.buildClassFlagsSection()
+
+	weaponFlagsHeader := widget.NewLabelWithStyle("Weapon Held Flags (WP_*Flags)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	weaponFlagsSub := widget.NewLabelWithStyle("Per-weapon combat modifiers (HELD_*) applied when holding the specific weapon.", fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
+
 	wfe.container = container.NewVBox(
-		container.NewPadded(addBtn),
+		classFlagsTile,
+		widget.NewSeparator(),
+		container.NewBorder(nil, nil, container.NewVBox(weaponFlagsHeader, weaponFlagsSub), addBtn),
 		wfe.listBox,
 	)
 }
@@ -198,19 +206,18 @@ func (wfe *WeaponFlagsEditor) GetContent() fyne.CanvasObject {
 	return wfe.container
 }
 
-// Refresh rebuilds the row list from the character's ExtraFields.
-// Called on file load and after add/remove mutations.
+// Refresh rebuilds the row list from the character's ExtraFields and ClassFlags.
 func (wfe *WeaponFlagsEditor) Refresh() {
-	wfe.listBox.Objects = nil
+	if wfe.container == nil {
+		wfe.createUI()
+	}
+	wfe.createUI()
 
 	ch := wfe.editor.character
 	if ch.ExtraFields == nil {
 		ch.ExtraFields = map[string]string{}
 	}
 
-	// Collect every key that looks like a WP_*Flags field. Sorted
-	// so the list is stable across refreshes (Go map iteration is
-	// random otherwise).
 	keys := make([]string, 0, len(ch.ExtraFields))
 	for k := range ch.ExtraFields {
 		if isWeaponFlagsField(k) {
@@ -222,7 +229,117 @@ func (wfe *WeaponFlagsEditor) Refresh() {
 	for _, k := range keys {
 		wfe.listBox.Add(wfe.buildRow(k))
 	}
-	wfe.listBox.Refresh()
+	if wfe.container != nil {
+		wfe.container.Refresh()
+	}
+}
+
+func buildCheckmarkPip(checked bool, accent color.Color) fyne.CanvasObject {
+	if checked {
+		circle := canvas.NewCircle(accent)
+		icon := widget.NewIcon(theme.ConfirmIcon())
+		return container.NewStack(
+			container.NewGridWrap(fyne.NewSize(22, 22), circle),
+			container.NewGridWrap(fyne.NewSize(18, 18), icon),
+		)
+	}
+	ring := canvas.NewCircle(color.NRGBA{R: 70, G: 75, B: 85, A: 255})
+	inner := canvas.NewCircle(color.NRGBA{R: 28, G: 30, B: 36, A: 255})
+	return container.NewStack(
+		container.NewGridWrap(fyne.NewSize(22, 22), ring),
+		container.NewGridWrap(fyne.NewSize(16, 16), inner),
+	)
+}
+
+func (wfe *WeaponFlagsEditor) buildClassFlagsSection() fyne.CanvasObject {
+	ch := wfe.editor.character
+	activeFlags := map[string]bool{}
+	if ch.ClassFlags != "" {
+		for _, f := range strings.Split(ch.ClassFlags, "|") {
+			activeFlags[strings.TrimSpace(f)] = true
+		}
+	}
+
+	header := widget.NewLabelWithStyle("Class Flags (CFL_*)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	sub := widget.NewLabelWithStyle("Inherent character traits, physical attributes, and passive immunities.", fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
+
+	grid := container.NewGridWrap(fyne.NewSize(275, 54))
+	for _, flag := range GetClassFlags() {
+		f := flag
+		checked := activeFlags[f.ID]
+		accent := color.NRGBA{R: 100, G: 190, B: 240, A: 255}
+
+		toggle := func() {
+			current := map[string]bool{}
+			if ch.ClassFlags != "" {
+				for _, cf := range strings.Split(ch.ClassFlags, "|") {
+					current[strings.TrimSpace(cf)] = true
+				}
+			}
+			if checked {
+				delete(current, f.ID)
+			} else {
+				current[f.ID] = true
+			}
+			var list []string
+			for k, on := range current {
+				if on {
+					list = append(list, k)
+				}
+			}
+			sort.Strings(list)
+			ch.ClassFlags = strings.Join(list, "|")
+			if wfe.editor.classFlagsSelect != nil {
+				wfe.editor.classFlagsSelect.SetSelected(ch.ClassFlags)
+			}
+			wfe.editor.markDirty()
+			wfe.Refresh()
+		}
+
+		pip := buildCheckmarkPip(checked, accent)
+
+		idLbl := widget.NewLabelWithStyle(f.ID,
+			fyne.TextAlignLeading, fyne.TextStyle{Bold: true, Monospace: true})
+		nameLbl := widget.NewLabelWithStyle(f.Name,
+			fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
+		descLbl := widget.NewLabel(f.Description)
+		descLbl.Wrapping = fyne.TextWrapWord
+
+		textStack := container.NewVBox(
+			container.NewHBox(idLbl, nameLbl),
+			descLbl,
+		)
+
+		rowContent := container.NewBorder(nil, nil,
+			container.NewCenter(pip),
+			nil,
+			textStack,
+		)
+
+		fillA, strokeA := uint8(8), uint8(35)
+		if checked {
+			fillA, strokeA = 26, 100
+		}
+
+		tile := NewTilePanel(rowContent, TileOpts{
+			AccentColor: accent,
+			FillAlpha:   fillA,
+			StrokeAlpha: strokeA,
+			Padded:      true,
+		})
+
+		grid.Add(newClickableCell(tile, toggle))
+	}
+
+	return NewTilePanel(
+		container.NewVBox(header, sub, grid),
+		TileOpts{
+			AccentColor: color.NRGBA{R: 100, G: 190, B: 240, A: 255},
+			FillAlpha:   14,
+			StrokeAlpha: 50,
+			Padded:      true,
+		},
+	)
 }
 
 // buildRow renders one weapon-flags row.
@@ -256,15 +373,8 @@ func (wfe *WeaponFlagsEditor) buildRow(flagsKey string) fyne.CanvasObject {
 		nil,
 	)
 
-	// Active-flag set for this weapon.
 	active := parseFlags(ch.ExtraFields[flagsKey])
 
-	// Group flags by family — Reload/Damage/Status/CC/Disarm/
-	// Movement/Utility — so authors can scan a section instead of a
-	// 31-checkbox wall. Title row of each flag now leads with the
-	// HELD_* enum (monospace) so the wiki ID is the primary
-	// identifier; the short Name + the longer Tooltip render
-	// underneath at smaller sizes.
 	familyOrder := []string{"Reload", "Damage", "Status", "CC", "Disarm", "Movement", "Utility"}
 	byFamily := map[string][]HeldFlag{}
 	for _, f := range KnownHeldFlags {
@@ -284,9 +394,9 @@ func (wfe *WeaponFlagsEditor) buildRow(flagsKey string) fyne.CanvasObject {
 		famHeader := widget.NewLabelWithStyle(
 			fmt.Sprintf("%s  ·  %d", fam, len(flags)),
 			fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-		grid := container.NewGridWithColumns(2)
+		grid := container.NewGridWrap(fyne.NewSize(275, 56))
 		for _, f := range flags {
-			flag := f // capture
+			flag := f
 			grid.Add(buildHeldFlagCell(flag, active, ch, flagsKey, wfe))
 		}
 		body.Add(NewTilePanel(
@@ -304,46 +414,33 @@ func (wfe *WeaponFlagsEditor) buildRow(flagsKey string) fyne.CanvasObject {
 	return card
 }
 
-// buildHeldFlagCell renders one flag row inside a family group:
-//   [✓] [glyph] HELD_ALTRELOAD       ← enum ID, monospace bold
-//               Mag reload             ← short label, italic
-//               Magazine-based …       ← description, dim
-// Glyph is a 28px boxicon picked from the family (Reload→refresh,
-// Damage→bolt, Status→flame, CC→wave, Disarm→swap, Movement→
-// footstep, Utility→star). Pure decoration but gives each row a
-// stronger visual identity than a wall of text + checkbox.
-// The card is wrapped in a TilePanel that lights up the family
-// color when the flag is active, so checked rows pop visually.
+// buildHeldFlagCell renders one flag row inside a family group.
 func buildHeldFlagCell(flag HeldFlag, active map[string]bool,
 	ch *parsers.MBCHCharacter, flagsKey string, wfe *WeaponFlagsEditor) fyne.CanvasObject {
 	checked := active[flag.ID]
+	accent := heldFlagFamilyAccent(flag.Family)
 
-	check := widget.NewCheck("", func(on bool) {
+	toggle := func() {
 		set := parseFlags(ch.ExtraFields[flagsKey])
-		if on {
-			set[flag.ID] = true
-		} else {
+		if checked {
 			delete(set, flag.ID)
+		} else {
+			set[flag.ID] = true
 		}
 		ch.ExtraFields[flagsKey] = serializeFlags(set)
-		// If the user unchecked everything, drop the field entirely
-		// so round-trip save doesn't emit an empty WP_*Flags line.
 		if ch.ExtraFields[flagsKey] == "" {
 			delete(ch.ExtraFields, flagsKey)
 		}
 		wfe.editor.markDirty()
-		// Inline refresh — fyne.Do from main thread deadlocked Fyne
-		// v2.7.1's dispatch queue. Tree rebuild during the OnChanged
-		// callback works in practice on this version.
 		wfe.Refresh()
-	})
-	check.Checked = checked
+	}
 
-	// Family glyph — 28px boxicon resource. None for "Other".
-	var glyph fyne.CanvasObject = container.NewGridWrap(fyne.NewSize(28, 28))
+	pip := buildCheckmarkPip(checked, accent)
+
+	var glyph fyne.CanvasObject = container.NewGridWrap(fyne.NewSize(24, 24))
 	if name := heldFlagFamilyIcon(flag.Family); name != "" {
 		if res := loadBoxiconResource(name); res != nil {
-			glyph = NewRasterIconFromResource(res, 28, 28)
+			glyph = NewRasterIconFromResource(res, 24, 24)
 		}
 	}
 
@@ -353,26 +450,28 @@ func buildHeldFlagCell(flag HeldFlag, active map[string]bool,
 		fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
 	descLbl := widget.NewLabel(flag.Tooltip)
 	descLbl.Wrapping = fyne.TextWrapWord
-	textStack := container.NewVBox(idLbl, nameLbl, descLbl)
+	textStack := container.NewVBox(
+		container.NewHBox(idLbl, nameLbl),
+		descLbl,
+	)
 
 	body := container.NewBorder(nil, nil,
-		container.NewHBox(check, glyph),
+		container.NewHBox(container.NewCenter(pip), container.NewCenter(glyph)),
 		nil, textStack,
 	)
 
-	// Active state lights the cell with the family color so the user
-	// can scan which flags are on in the wall of options. Inactive
-	// stays low-contrast.
 	fillA, strokeA := uint8(8), uint8(35)
 	if checked {
 		fillA, strokeA = 28, 110
 	}
-	return NewTilePanel(body, TileOpts{
-		AccentColor: heldFlagFamilyAccent(flag.Family),
+	tile := NewTilePanel(body, TileOpts{
+		AccentColor: accent,
 		FillAlpha:   fillA,
 		StrokeAlpha: strokeA,
 		Padded:      true,
 	})
+
+	return newClickableCell(tile, toggle)
 }
 
 // heldFlagFamilyIcon picks the boxicon basename that visually
@@ -444,28 +543,101 @@ func (wfe *WeaponFlagsEditor) showAddDialog() {
 		return
 	}
 
-	sel := widget.NewSelect(options, nil)
-	sel.PlaceHolder = "WP_..."
-	dialog.ShowCustomConfirm("Add weapon flags", "Add", "Cancel",
-		container.NewVBox(widget.NewLabel("Which weapon?"), sel),
-		func(ok bool) {
-			if !ok || sel.Selected == "" {
-				return
+	wpNames := map[string]string{}
+	for _, w := range MBIIWeapons {
+		wpNames[w.ID] = w.Name
+	}
+
+	var d dialog.Dialog
+	grid := container.NewGridWrap(fyne.NewSize(140, 75))
+
+	populateGrid := func(filter string) {
+		grid.Objects = nil
+		filter = strings.ToLower(strings.TrimSpace(filter))
+		for _, wp := range options {
+			name := wpNames[wp]
+			if name == "" {
+				name = strings.TrimPrefix(wp, "WP_")
 			}
-			key := wpFlagsFieldName(sel.Selected)
-			if wfe.editor.character.ExtraFields == nil {
-				wfe.editor.character.ExtraFields = map[string]string{}
+			if filter != "" && !strings.Contains(strings.ToLower(wp), filter) && !strings.Contains(strings.ToLower(name), filter) {
+				continue
 			}
-			// Empty flag set by default — the row appears so the
-			// user can start checking boxes. Delete-empty logic
-			// above strips the field on save if no flags get
-			// picked, so this doesn't pollute the MBCH.
-			wfe.editor.character.ExtraFields[key] = ""
-			wfe.editor.markDirty()
-			wfe.Refresh()
-		},
-		wfe.editor.app.mainWindow,
+
+			var iconObj fyne.CanvasObject
+			if alias, ok := weaponIconAliases[wp]; ok && alias != "" {
+				if img, ok2 := LoadGameIcon(nil, "gfx/hud/"+alias); ok2 {
+					iconObj = NewRasterIconFromResource(
+						staticPNGResource(alias+".png", img), 28, 28,
+					)
+				}
+			}
+			if iconObj == nil {
+				iconObj = widget.NewIcon(theme.FileImageIcon())
+			}
+
+			lblTitle := canvas.NewText(name, color.NRGBA{R: 240, G: 240, B: 245, A: 255})
+			lblTitle.TextSize = 11
+			lblTitle.TextStyle = fyne.TextStyle{Bold: true}
+			lblTitle.Alignment = fyne.TextAlignCenter
+
+			lblID := canvas.NewText(wp, color.NRGBA{R: 140, G: 140, B: 150, A: 255})
+			lblID.TextSize = 9
+			lblID.TextStyle = fyne.TextStyle{Monospace: true}
+			lblID.Alignment = fyne.TextAlignCenter
+
+			cardBg := canvas.NewRectangle(color.NRGBA{R: 35, G: 40, B: 48, A: 240})
+			cardBg.StrokeColor = color.NRGBA{R: 70, G: 80, B: 95, A: 255}
+			cardBg.StrokeWidth = 1
+			cardBg.CornerRadius = 6
+
+			cardContent := container.NewVBox(
+				container.NewCenter(iconObj),
+				lblTitle,
+				lblID,
+			)
+
+			targetWP := wp
+			clickable := newClickableCell(container.NewStack(cardBg, container.NewPadded(cardContent)), func() {
+				key := wpFlagsFieldName(targetWP)
+				if wfe.editor.character.ExtraFields == nil {
+					wfe.editor.character.ExtraFields = map[string]string{}
+				}
+				wfe.editor.character.ExtraFields[key] = ""
+				wfe.editor.markDirty()
+				wfe.Refresh()
+				if d != nil {
+					d.Hide()
+				}
+			})
+
+			grid.Add(clickable)
+		}
+		grid.Refresh()
+	}
+
+	searchEntry := NewInputEntry()
+	searchEntry.SetPlaceHolder("Filter weapons…")
+	searchEntry.OnChanged = func(s string) {
+		populateGrid(s)
+	}
+
+	populateGrid("")
+
+	scroll := container.NewVScroll(grid)
+	scroll.SetMinSize(fyne.NewSize(460, 320))
+
+	dlgContent := container.NewBorder(
+		container.NewVBox(
+			widget.NewLabelWithStyle("Select a weapon to customize weapon flags:", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+			searchEntry,
+		),
+		nil, nil, nil,
+		scroll,
 	)
+
+	d = dialog.NewCustom("Add Weapon Flags", "Cancel", dlgContent, wfe.editor.app.mainWindow)
+	d.Resize(fyne.NewSize(480, 380))
+	d.Show()
 }
 
 // isWeaponFlagsField recognizes any ExtraFields key that's a

@@ -8,7 +8,6 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
@@ -74,9 +73,12 @@ type AttributeToggleWidget struct {
 	OnInfoClick func(string, string)
 
 	// UI Components
-	label     *widget.Label
+	titleText *canvas.Text
+	idText    *canvas.Text
 	buttons   []*HoverButton
 	infoBtn   *TooltipButton
+	tile      *TilePanelWidget
+	catColor  color.Color
 	container fyne.CanvasObject
 }
 
@@ -111,22 +113,27 @@ func (w *AttributeToggleWidget) SetOnInfoLeave(f func()) {
 }
 
 func (w *AttributeToggleWidget) createUI(onInfo func(string, string), iconRes fyne.Resource) {
+	if w.MaxLevel <= 0 {
+		w.MaxLevel = 3
+	}
+
 	// Primary label: display name (with auto-derived fallback when the
 	// data doesn't carry one). Secondary: monospace enum ID caption
 	// underneath so authors who think in source can still recognize
-	// the row. Older builds inconsistently showed the raw MB_ATT_*
-	// when no display name was set, which produced a mixed grid.
+	// the row.
 	displayName := w.Name
 	if displayName == "" || displayName == w.ID || strings.HasPrefix(displayName, "MB_ATT_") {
 		displayName = prettyAttributeName(w.ID)
 	}
-	w.label = widget.NewLabel(displayName)
-	w.label.TextStyle = fyne.TextStyle{Bold: true}
 
-	// Info-affordance: when an icon resolves, the icon IS the click
-	// target (clicking it pins the sidebar). When no icon resolves,
-	// fall back to the (i) glyph. The previous layout rendered both
-	// — wasted horizontal space and made the (i) feel redundant.
+	w.titleText = canvas.NewText(displayName, color.NRGBA{R: 242, G: 245, B: 250, A: 255})
+	w.titleText.TextSize = 10.5
+	w.titleText.TextStyle = fyne.TextStyle{Bold: true}
+
+	w.idText = canvas.NewText(w.ID, color.NRGBA{R: 130, G: 142, B: 158, A: 215})
+	w.idText.TextSize = 8.0
+	w.idText.TextStyle = fyne.TextStyle{Monospace: true}
+
 	infoClick := func() {
 		if w.OnInfoClick != nil {
 			w.OnInfoClick(w.ID, "")
@@ -139,28 +146,17 @@ func (w *AttributeToggleWidget) createUI(onInfo func(string, string), iconRes fy
 
 	var iconObj fyne.CanvasObject
 	if iconRes != nil {
-		// Real icon → wrap in a clickableCell so the whole 28×28 icon
-		// is the affordance. Hover on it also fires onInfo (the
-		// transient hover dispatcher) so the info panel can preview
-		// while the user scans rows.
 		raster := NewRasterIconFromResource(iconRes, 28, 28)
 		clickable := newClickableCell(raster, infoClick)
 		if onInfo != nil {
 			clickable.onHover = func() { onInfo(w.ID, "") }
 		}
-		// onLeave wired below via SetOnInfoLeave indirection.
 		iconObj = clickable
-		w.infoBtn = nil // signal: no separate (i) glyph needed
+		w.infoBtn = nil
 	} else {
-		// No icon → fall back to the (i) tooltip button. This
-		// preserves the "I want the docs for this row" affordance
-		// when we don't have a graphic to click on.
 		w.infoBtn = NewTooltipButton("", theme.InfoIcon(), infoClick,
 			"View documentation for this attribute")
 		w.infoBtn.Importance = widget.LowImportance
-		// Fixed 24×24 spacer so the no-icon branch lines up
-		// vertically with the icon branch — Spacer would expand and
-		// re-introduce the empty-rectangle visual bug.
 		iconObj = container.NewGridWrap(fyne.NewSize(24, 24), w.infoBtn)
 	}
 
@@ -180,92 +176,31 @@ func (w *AttributeToggleWidget) createUI(onInfo func(string, string), iconRes fy
 		btnBox.Add(btn)
 	}
 
-	// Category color — drives the left strip and the tile's accent
-	// border. Re-uses the same palette as the info-panel's category
-	// chip so the same row identity reads consistently across surfaces.
-	var catColor color.Color
-	switch w.Category {
-	case "Force":
-		catColor = color.RGBA{0, 191, 255, 255} // Deep Sky Blue
-	case "Saber":
-		catColor = color.RGBA{255, 69, 0, 255} // Orange Red
-	case "Weapons":
-		catColor = color.RGBA{255, 215, 0, 255} // Gold
-	case "Class Specific":
-		catColor = color.RGBA{50, 205, 50, 255} // Lime Green
-	case "Supply":
-		catColor = color.RGBA{195, 130, 80, 255} // Bronze
-	case "Regen":
-		catColor = color.RGBA{120, 200, 140, 255} // Mint
-	case "Multipliers":
-		catColor = color.RGBA{180, 140, 220, 255} // Lavender
-	case "Advanced":
-		catColor = color.RGBA{100, 100, 110, 255} // Slate
-	default:
-		catColor = color.RGBA{128, 128, 128, 255} // Grey
-	}
+	w.catColor = attributeColor(w.ID, w.Category)
 
-	// Two-row label block: bold display name on top, monospace enum
-	// ID caption underneath in muted text. Lets authors who think in
-	// source still recognize the row without sacrificing the warmer
-	// display name as the primary affordance.
-	idCaption := canvas.NewText(w.ID, theme.PlaceHolderColor())
-	idCaption.TextSize = SizeSmall
-	idCaption.TextStyle = fyne.TextStyle{Monospace: true}
-	labelBlock := container.NewVBox(w.label, idCaption)
+	labelBlock := container.NewVBox(w.titleText, w.idText)
 
-	// Slim left-edge accent strip — 2px wide, rounded. Re-introduced
-	// after the section TilePanel proved insufficient on its own as a
-	// per-row family cue: when 30+ attributes share the same section
-	// background, the per-category color (Force = blue, Saber = orange,
-	// Weapons = gold) needs a per-row marker too. The strip is much
-	// thinner than the original 3px chunky bar so it reads as a hairline
-	// hint rather than a card border.
-	stripRect := canvas.NewRectangle(catColor)
-	stripRect.CornerRadius = 1
-	stripRect.SetMinSize(fyne.NewSize(2, 0))
-	strip := container.New(layout.NewGridWrapLayout(fyne.NewSize(2, 36)), stripRect)
-
-	// Layout: [Strip] [Icon-or-(i)] [Label+ID] -- Spacer -- Buttons
-	// iconObj already carries the click affordance — when an icon
-	// resolves it IS the info button; when none resolves the (i)
-	// tooltip button stands in. Each child is wrapped in NewCenter
-	// so the heights line up against the row's tallest element
-	// (label block is 2 lines ~30px, icon is 28px, buttons box is
-	// ~28px) — without center-wrap the icon was pinning to the top
-	// of the row instead of sitting on the label baseline.
-	leftContainer := container.NewHBox(
-		container.NewCenter(strip),
+	row := container.NewBorder(nil, nil,
 		container.NewCenter(iconObj),
+		container.NewCenter(btnBox),
 		container.NewCenter(labelBlock),
 	)
 
-	row := container.NewBorder(nil, nil,
-		leftContainer,
-		container.NewCenter(btnBox),
-		layout.NewSpacer(),
-	)
+	fillAlpha := uint8(5)
+	strokeAlpha := uint8(24)
+	if w.CurrentVal > 0 {
+		fillAlpha = 26
+		strokeAlpha = 95
+	}
 
-	// Per-attribute fill: moderate alpha (12/55) gives each row visible
-	// family identity (Force is blueish, Saber is orange-red, etc.)
-	// without competing with the section TilePanel (~20/70) above. The
-	// previous near-flat 4/22 felt washed out — rows blurred together
-	// against the section bg, losing the per-row category cue. Tuned
-	// so that the section reads as the *area* and the row reads as a
-	// *colored chip inside the area*.
-	tile := NewTilePanel(row, TileOpts{
-		AccentColor: catColor,
-		FillAlpha:   12,
-		StrokeAlpha: 55,
-		Padded:      true,
+	w.tile = NewDynamicTilePanel(row, TileOpts{
+		AccentColor: w.catColor,
+		FillAlpha:   fillAlpha,
+		StrokeAlpha: strokeAlpha,
+		Padded:      false,
 	})
 
-	// Wrap the whole tile in a HoverContainer so mousing over the
-	// label/icon/strip area fires the info-panel hover the same way
-	// hovering a level button does. Previously only level buttons
-	// reported hover, so the info panel rarely repainted unless the
-	// user's mouse landed precisely on a numeric pill.
-	hover := NewHoverContainer(tile, func() {
+	hover := NewHoverContainer(w.tile, func() {
 		if onInfo != nil {
 			onInfo(w.ID, "")
 		}
@@ -290,14 +225,6 @@ func (w *AttributeToggleWidget) createLevelButton(level int, text string, onInfo
 	}
 
 	btn := NewHoverButton(text, func() {
-		// Clicking Off when the row is already off cycles UP to
-		// level 1 — interpretation of "click Off to turn it on
-		// since it's currently off." Tester reported assuming Off
-		// toggled the attribute on, which it didn't (set 0 → 0
-		// was a no-op). Now Off acts as a unified on/off toggle:
-		//   - off + click Off  → level 1 (turn on)
-		//   - on  + click Off  → 0       (turn off)
-		// Clicking 1/2/3 directly always sets that exact level.
 		target := level
 		if level == 0 && w.CurrentVal == 0 {
 			target = 1
@@ -308,9 +235,6 @@ func (w *AttributeToggleWidget) createLevelButton(level int, text string, onInfo
 			w.OnChange(target)
 		}
 	}, hover, func() {
-		// MouseOut — tell the info panel to revert to sticky.
-		// Closure captures the widget; OnInfoLeave may be set later
-		// via SetOnInfoLeave so read it lazily each time.
 		if w.OnInfoLeave != nil {
 			w.OnInfoLeave()
 		}
@@ -319,13 +243,6 @@ func (w *AttributeToggleWidget) createLevelButton(level int, text string, onInfo
 }
 
 func (w *AttributeToggleWidget) refreshButtons() {
-	// All pills always visible — hiding the 1/2/3 buttons when the row
-	// is OFF made it impossible to *turn on* an attribute (only the Off
-	// pill rendered, so there was nothing to click). The active level's
-	// pill gets HighImportance for visual emphasis; the rest stay
-	// MediumImportance. External tester reported "nothing in the
-	// Attributes tab did anything except those already written level
-	// could be changed" — that was this bug.
 	for i, btn := range w.buttons {
 		if i == w.CurrentVal {
 			btn.Importance = widget.HighImportance
@@ -335,6 +252,107 @@ func (w *AttributeToggleWidget) refreshButtons() {
 		btn.Show()
 		btn.Refresh()
 	}
+
+	if w.tile != nil {
+		if w.CurrentVal > 0 {
+			w.tile.SetAccent(w.catColor, 26, 95)
+		} else {
+			w.tile.SetAccent(w.catColor, 5, 24)
+		}
+	}
+}
+
+// attributeColor assigns a harmonious, low-cognitive-load accent color per archetype
+func attributeColor(id, category string) color.Color {
+	idUpper := strings.ToUpper(id)
+	switch {
+	// Weapons - Pistols & Blasters
+	case strings.Contains(idUpper, "PISTOL"), strings.Contains(idUpper, "BLASTER"),
+		idUpper == "MB_ATT_A280", idUpper == "MB_ATT_DLT20A", idUpper == "MB_ATT_DLT19",
+		idUpper == "MB_ATT_EE3", idUpper == "MB_ATT_EE4", idUpper == "MB_ATT_T21",
+		idUpper == "MB_ATT_QUICKDRAW", idUpper == "MB_ATT_PROJECTILE_RIFLE":
+		return color.NRGBA{R: 56, G: 189, B: 248, A: 255} // Sky Cyan
+
+	// Weapons - Heavy & Special
+	case strings.Contains(idUpper, "CLONERIFLE"), strings.Contains(idUpper, "WESTARM5"),
+		strings.Contains(idUpper, "AMBAN"), strings.Contains(idUpper, "DISRUPTOR"),
+		strings.Contains(idUpper, "BOWCASTER"), strings.Contains(idUpper, "REPEATER"),
+		strings.Contains(idUpper, "FLECHETTE"), strings.Contains(idUpper, "DEMP2"),
+		strings.Contains(idUpper, "MINIGUN"), strings.Contains(idUpper, "SHOTGUN"),
+		strings.Contains(idUpper, "CONCUSSION"), strings.Contains(idUpper, "THROWER"),
+		strings.Contains(idUpper, "FLAMETHROWER"):
+		return color.NRGBA{R: 52, G: 211, B: 153, A: 255} // Emerald Green
+
+	// Weapons - Launchers & Ordnance
+	case strings.Contains(idUpper, "UGL"), strings.Contains(idUpper, "MGL"),
+		strings.Contains(idUpper, "ROCKET"), strings.Contains(idUpper, "PLX1"),
+		strings.Contains(idUpper, "BLOB"), strings.Contains(idUpper, "NADES"):
+		return color.NRGBA{R: 251, G: 146, B: 60, A: 255} // Warm Orange
+
+	// Weapons - Grenades & Mines
+	case strings.Contains(idUpper, "FRAG"), strings.Contains(idUpper, "THERMAL"),
+		strings.Contains(idUpper, "GRENADE"), strings.Contains(idUpper, "DET_PACK"),
+		strings.Contains(idUpper, "TRIP_MINE"), strings.Contains(idUpper, "SONIC"),
+		strings.Contains(idUpper, "CRYOBAN"), strings.Contains(idUpper, "STICKY"):
+		return color.NRGBA{R: 248, G: 113, B: 113, A: 255} // Coral Red
+
+	// Lightsaber
+	case strings.Contains(idUpper, "SABER"), strings.Contains(idUpper, "STYLE"),
+		strings.Contains(idUpper, "BP_"), strings.Contains(idUpper, "AP_"),
+		strings.Contains(idUpper, "DEFLECT"):
+		return color.NRGBA{R: 244, G: 63, B: 94, A: 255} // Rose / Ruby
+
+	// Force Powers
+	case strings.Contains(idUpper, "FORCE"), strings.Contains(idUpper, "FP_"), category == "Force":
+		if strings.Contains(idUpper, "LIGHTNING") || strings.Contains(idUpper, "GRIP") ||
+			strings.Contains(idUpper, "DRAIN") || strings.Contains(idUpper, "DESTRUCTION") {
+			return color.NRGBA{R: 239, G: 68, B: 68, A: 255} // Dark Side Crimson
+		}
+		if strings.Contains(idUpper, "HEAL") || strings.Contains(idUpper, "PROTECT") ||
+			strings.Contains(idUpper, "ABSORB") {
+			return color.NRGBA{R: 74, G: 222, B: 128, A: 255} // Light Side Jade
+		}
+		return color.NRGBA{R: 168, G: 85, B: 247, A: 255} // Force Purple
+
+	// Physicals & Mobility
+	case strings.Contains(idUpper, "STAMINA"), strings.Contains(idUpper, "DEXTERITY"),
+		strings.Contains(idUpper, "SPEED"), strings.Contains(idUpper, "DODGE"),
+		strings.Contains(idUpper, "DASH"), strings.Contains(idUpper, "BUNNY_HOP"),
+		strings.Contains(idUpper, "JETPACK"), strings.Contains(idUpper, "FUEL"):
+		return color.NRGBA{R: 45, G: 212, B: 191, A: 255} // Teal / Mint
+
+	// Defenses & Armor
+	case strings.Contains(idUpper, "ARMOUR"), strings.Contains(idUpper, "ARMOR"),
+		strings.Contains(idUpper, "SHIELD"), strings.Contains(idUpper, "CORTOSIS"),
+		strings.Contains(idUpper, "BLAST"), strings.Contains(idUpper, "MAGNETIC"),
+		strings.Contains(idUpper, "HEALING"), strings.Contains(idUpper, "RECHARGE"),
+		strings.Contains(idUpper, "HEALTH"):
+		return color.NRGBA{R: 96, G: 165, B: 250, A: 255} // Steel Blue
+
+	// Class Tech
+	case strings.Contains(idUpper, "SBD"):
+		return color.NRGBA{R: 148, G: 163, B: 184, A: 255} // SBD Gunmetal
+	case strings.Contains(idUpper, "DEKA"):
+		return color.NRGBA{R: 217, G: 119, B: 6, A: 255} // Droideka Bronze
+	case strings.Contains(idUpper, "CLONE"), strings.Contains(idUpper, "ARC_"):
+		return color.NRGBA{R: 37, G: 99, B: 235, A: 255} // Clone Cobalt
+	case strings.Contains(idUpper, "MANDO"), strings.Contains(idUpper, "BESKAR"),
+		strings.Contains(idUpper, "WRIST"):
+		return color.NRGBA{R: 234, G: 179, B: 8, A: 255} // Mando Gold
+	case strings.Contains(idUpper, "WOOKIE"):
+		return color.NRGBA{R: 161, G: 98, B: 7, A: 255} // Wookiee Warm Wood
+	case strings.Contains(idUpper, "RALLY"), strings.Contains(idUpper, "ASSEMBLE"),
+		strings.Contains(idUpper, "HERO"):
+		return color.NRGBA{R: 132, G: 204, B: 22, A: 255} // Hero Lime
+
+	// Supplies & Medical
+	case strings.Contains(idUpper, "BACTA"), strings.Contains(idUpper, "DISP_"),
+		strings.Contains(idUpper, "MEDI_"), strings.Contains(idUpper, "AMMO_PACK"),
+		strings.Contains(idUpper, "STIMPACK"), strings.Contains(idUpper, "SUPPLY"):
+		return color.NRGBA{R: 20, G: 184, B: 166, A: 255} // Medical Aqua
+	}
+
+	return color.NRGBA{R: 120, G: 130, B: 145, A: 255} // Calm Slate Default
 }
 
 func (w *AttributeToggleWidget) CreateRenderer() fyne.WidgetRenderer {

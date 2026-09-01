@@ -334,29 +334,64 @@ func (ui *WeaponInfoUI) createUI() {
 }
 
 // resolveRowIcon pulls an icon for the list row. Uses the override's
-// own Icon field first (which is an explicit game-asset path the
-// author chose), falls back to the WeaponBasedOff's canonical icon,
-// then finally to the theme glyph.
+// own Icon field first, falls back to WeaponBasedOff, then to WeaponToReplace,
+// and finally to the theme glyph.
 func (ui *WeaponInfoUI) resolveRowIcon(wi parsers.WeaponInfo) fyne.Resource {
-	if ui.editor.assetBrowser != nil && wi.Icon != "" {
-		if res := ui.editor.assetBrowser.LoadIconResource(wi.Icon); res != nil {
-			return res
-		}
-	}
-	if ui.editor.iconResolver != nil && wi.WeaponBasedOff != "" {
-		path := ui.editor.iconResolver.ResolveWeaponIcon(wi.WeaponBasedOff)
+	// 1. Explicit Icon field
+	if wi.Icon != "" {
 		if ui.editor.assetBrowser != nil {
-			if res := ui.editor.assetBrowser.LoadIconResource(path); res != nil {
+			if res := ui.editor.assetBrowser.LoadIconResource(wi.Icon); res != nil {
 				return res
 			}
 		}
+		if img, ok := LoadGameIcon(nil, wi.Icon); ok {
+			return staticPNGResource("wi_icon.png", img)
+		}
+		if img, ok := LoadGameIcon(nil, "gfx/hud/"+wi.Icon); ok {
+			return staticPNGResource("wi_icon.png", img)
+		}
 	}
+
+	// 2. WeaponBasedOff
+	if wi.WeaponBasedOff != "" {
+		if ui.editor.iconResolver != nil {
+			path := ui.editor.iconResolver.ResolveWeaponIcon(wi.WeaponBasedOff)
+			if ui.editor.assetBrowser != nil {
+				if res := ui.editor.assetBrowser.LoadIconResource(path); res != nil {
+					return res
+				}
+			}
+			if img, ok := LoadGameIcon(nil, path); ok {
+				return staticPNGResource("wp_based.png", img)
+			}
+		}
+		if res := ui.editor.resolveWeaponIconResource(wi.WeaponBasedOff); res != nil && res != theme.FileImageIcon() {
+			return res
+		}
+	}
+
+	// 3. WeaponToReplace
+	if wi.WeaponToReplace != "" {
+		if ui.editor.iconResolver != nil {
+			path := ui.editor.iconResolver.ResolveWeaponIcon(wi.WeaponToReplace)
+			if ui.editor.assetBrowser != nil {
+				if res := ui.editor.assetBrowser.LoadIconResource(path); res != nil {
+					return res
+				}
+			}
+			if img, ok := LoadGameIcon(nil, path); ok {
+				return staticPNGResource("wp_replace.png", img)
+			}
+		}
+		if res := ui.editor.resolveWeaponIconResource(wi.WeaponToReplace); res != nil && res != theme.FileImageIcon() {
+			return res
+		}
+	}
+
 	return theme.FileImageIcon()
 }
 
 // showDetailPane swaps the right pane from empty-state to the form.
-// Called on row selection. When the list goes empty (remove last
-// override), hideDetailPane brings the empty state back.
 func (ui *WeaponInfoUI) showDetailPane() {
 	if ui.detailPane == nil || len(ui.detailPane.Objects) != 2 {
 		return
@@ -377,15 +412,33 @@ func (ui *WeaponInfoUI) hideDetailPane() {
 
 // refreshIconPreview updates the preview image next to the Icon
 // entry. Swapped out live as the user types, so they see the moment
-// the path resolves against the VFS.
+// the path resolves.
 func (ui *WeaponInfoUI) refreshIconPreview(path string) {
-	if ui.editor.assetBrowser != nil && path != "" {
-		if res := ui.editor.assetBrowser.LoadIconResource(path); res != nil {
-			ui.iconPreview.Resource = res
+	if path != "" {
+		if ui.editor.assetBrowser != nil {
+			if res := ui.editor.assetBrowser.LoadIconResource(path); res != nil {
+				ui.iconPreview.Resource = res
+				ui.iconPreview.Refresh()
+				return
+			}
+		}
+		if img, ok := LoadGameIcon(nil, path); ok {
+			ui.iconPreview.Resource = staticPNGResource("wi_prev.png", img)
 			ui.iconPreview.Refresh()
 			return
 		}
+		if img, ok := LoadGameIcon(nil, "gfx/hud/"+path); ok {
+			ui.iconPreview.Resource = staticPNGResource("wi_prev.png", img)
+			ui.iconPreview.Refresh()
+			return
+		}
+	} else if ui.currentWeaponIndex >= 0 && ui.currentWeaponIndex < len(ui.editor.character.WeaponOverrides) {
+		wi := ui.editor.character.WeaponOverrides[ui.currentWeaponIndex]
+		ui.iconPreview.Resource = ui.resolveRowIcon(wi)
+		ui.iconPreview.Refresh()
+		return
 	}
+
 	ui.iconPreview.Resource = theme.FileImageIcon()
 	ui.iconPreview.Refresh()
 }

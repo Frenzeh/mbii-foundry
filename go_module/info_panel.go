@@ -29,6 +29,7 @@ type InfoPanel struct {
 	categoryChip    *canvas.Text      // small caps, tinted
 	idChip          *canvas.Text      // monospace, muted
 	title           *widget.Label     // large, bold
+	headerIcon      *canvas.Image     // 44x44 icon preview in header hero
 	// Accent marker + rule below the header — the small square + thin
 	// line is the sci-fi note. Both use accent color.
 	headerMarker *canvas.Rectangle
@@ -157,11 +158,7 @@ func categoryTagFor(kind, bucket string) string {
 	return kind + " · " + bucket
 }
 
-// updateHeaderChips sets the hero band's ID chip + category chip.
-// Called from ShowInfo after the def is resolved; welcome / not-found
-// paths pass category="REFERENCE" and id="" so the band reads as a
-// minimal title-only block rather than showing a blank "ATTRIBUTE · "
-// chip above the welcome copy.
+// updateHeaderChips sets the hero band's ID chip + category chip and resolves headerIcon.
 func (ip *InfoPanel) updateHeaderChips(id, category string) {
 	if ip.idChip != nil {
 		ip.idChip.Text = id
@@ -170,13 +167,47 @@ func (ip *InfoPanel) updateHeaderChips(id, category string) {
 	if ip.categoryChip != nil {
 		up := strings.ToUpper(category)
 		if up == "REFERENCE" {
-			// Welcome/not-found — drop the chip entirely so the title
-			// reads cleanly without a label that contradicts itself.
 			up = ""
 		}
 		ip.categoryChip.Text = up
 		ip.categoryChip.Refresh()
 	}
+	if ip.headerIcon != nil {
+		if res := resolveInfoPanelIcon(id); res != nil {
+			ip.headerIcon.Resource = res
+			ip.headerIcon.Show()
+		} else {
+			ip.headerIcon.Hide()
+		}
+		ip.headerIcon.Refresh()
+	}
+}
+
+func resolveInfoPanelIcon(id string) fyne.Resource {
+	if id == "" {
+		return nil
+	}
+	if img, ok := LoadGameIcon(nil, id); ok {
+		return staticPNGResource(id+".png", img)
+	}
+	if alias, ok := attributeIconAliases[id]; ok {
+		if img, ok := LoadGameIcon(nil, alias); ok {
+			return staticPNGResource(alias+".png", img)
+		}
+	}
+	if alias, ok := weaponIconAliases[id]; ok {
+		if img, ok := LoadGameIcon(nil, alias); ok {
+			return staticPNGResource(alias+".png", img)
+		}
+	}
+	clean := strings.ToLower(strings.TrimPrefix(id, "WP_"))
+	clean = strings.TrimPrefix(clean, "MB_ATT_")
+	clean = strings.TrimPrefix(clean, "FP_")
+	clean = strings.TrimPrefix(clean, "HI_")
+	if img, ok := LoadGameIcon(nil, clean); ok {
+		return staticPNGResource(clean+".png", img)
+	}
+	return nil
 }
 
 // isHiddenLibraryKey reports whether a Definitions-map key names an
@@ -346,10 +377,23 @@ This panel provides real-time documentation and context for the field you're edi
 		rightChip,
 		nil,
 	)
+
+	ip.headerIcon = canvas.NewImageFromResource(nil)
+	ip.headerIcon.FillMode = canvas.ImageFillContain
+	ip.headerIcon.ScaleMode = canvas.ImageScaleSmooth
+	ip.headerIcon.SetMinSize(fyne.NewSize(44, 44))
+	ip.headerIcon.Hide()
+
 	// Hero body — the inner double-pad is intentional: the outer
 	// Padded comes from TilePanel itself; the inner one reserves
 	// breathing room around the title block specifically.
-	heroBody := container.NewPadded(container.NewVBox(heroRow, ip.title))
+	heroTitleBlock := container.NewVBox(heroRow, ip.title)
+	heroContent := container.NewBorder(nil, nil,
+		container.NewGridWrap(fyne.NewSize(44, 44), ip.headerIcon),
+		nil,
+		heroTitleBlock,
+	)
+	heroBody := container.NewPadded(heroContent)
 	hero := NewTilePanel(heroBody, TileOpts{Padded: true})
 
 	// Double-offset rule — two parallel accent lines of different
@@ -799,18 +843,18 @@ func (ip *InfoPanel) ShowInfo(key, context string) {
 			sb.WriteString(desc + "\n\n")
 		}
 
-		// New: Stats section
+		// Enhanced Stats section
 		if len(stats) > 0 {
-			sb.WriteString("### Stats\n")
+			sb.WriteString("### 📊 Specifications\n\n")
 			for k, v := range stats {
-				sb.WriteString(fmt.Sprintf("* **%s:** %s\n", k, v))
+				sb.WriteString(fmt.Sprintf("* **%s:** `%s`\n", k, v))
 			}
 			sb.WriteString("\n")
 		}
 
-		// Show all levels if no specific one selected, or just summary?
+		// Enhanced Levels section
 		if !strings.HasPrefix(context, "Level ") && len(levels) > 0 {
-			sb.WriteString("### Levels\n")
+			sb.WriteString("### 🎯 Level Upgrades\n\n")
 			var lvls []int
 			for k := range levels {
 				if v, err := strconv.Atoi(k); err == nil {
@@ -821,9 +865,13 @@ func (ip *InfoPanel) ShowInfo(key, context string) {
 			for _, l := range lvls {
 				lStr := strconv.Itoa(l)
 				info := levels[lStr]
-				sb.WriteString(fmt.Sprintf("* **%s**: %s", info.Name, info.Effect))
+				tierName := info.Name
+				if tierName == "" {
+					tierName = fmt.Sprintf("Level %d", l)
+				}
+				sb.WriteString(fmt.Sprintf("* 🔹 **Level %d (%s)**: %s", l, tierName, info.Effect))
 				if info.FPCost > 0 {
-					sb.WriteString(fmt.Sprintf(" (**FP Cost:** %d)", info.FPCost))
+					sb.WriteString(fmt.Sprintf(" *(FP Cost: %d)*", info.FPCost))
 				}
 				sb.WriteString("\n")
 			}
@@ -831,10 +879,11 @@ func (ip *InfoPanel) ShowInfo(key, context string) {
 		}
 
 		if len(tips) > 0 {
-			sb.WriteString("### Tips\n")
+			sb.WriteString("### 💡 Tactical Guidance\n\n")
 			for _, t := range tips {
-				sb.WriteString("* " + t + "\n")
+				sb.WriteString(fmt.Sprintf("> *%s*\n>\n", t))
 			}
+			sb.WriteString("\n")
 		}
 
 		if len(tags) > 0 {

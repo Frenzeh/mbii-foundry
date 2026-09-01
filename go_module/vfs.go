@@ -15,6 +15,7 @@ import (
 // AssetSource represents where an asset comes from
 type AssetSource struct {
 	Path        string // Logical path (e.g. "models/players/kyle/model.glm")
+	EntryName   string // Exact entry name inside PK3 archive (e.g. "Models/Players/Kyle/model.glm")
 	FullPath    string // Absolute path on disk (for loose files)
 	PK3Path     string // Path to PK3 file (empty if loose file)
 	Size        int64
@@ -94,16 +95,38 @@ func (vfs *VirtualFileSystem) Refresh() error {
 
 func (vfs *VirtualFileSystem) findPK3s(root string) []string {
 	var pk3s []string
+	seen := make(map[string]bool)
 
-	// Check subfolders that game typically loads
-	searchPaths := []string{
-		root,
+	// In Quake 3 / OpenJK, load order determines asset precedence:
+	// 1. base/ (JKA stock base assets)
+	// 2. MBII/ (Public official release for standard players)
+	// 3. MBIITest/ (Beta tester / QA builds)
+	// 4. MBIIRelease/ (Dev release staging)
+	// 5. Dev sandboxes & custom profile folders (e.g. ProfileFrenzy, Profile*)
+	priorityDirs := []string{
+		filepath.Join(root, "base"),
 		filepath.Join(root, "MBII"),
 		filepath.Join(root, "MBIITest"),
-		filepath.Join(root, "base"),
+		filepath.Join(root, "MBIIRelease"),
+		root,
 	}
 
-	seen := make(map[string]bool)
+	searchPaths := make([]string, 0, len(priorityDirs)+10)
+	for _, p := range priorityDirs {
+		searchPaths = append(searchPaths, p)
+	}
+
+	// Discover any dev/profile subdirectories (e.g. ProfileFrenzy, custom mods)
+	if entries, err := os.ReadDir(root); err == nil {
+		for _, e := range entries {
+			if e.IsDir() {
+				name := e.Name()
+				if name != "base" && name != "MBII" && name != "MBIITest" && name != "MBIIRelease" {
+					searchPaths = append(searchPaths, filepath.Join(root, name))
+				}
+			}
+		}
+	}
 
 	for _, dir := range searchPaths {
 		entries, err := os.ReadDir(dir)
@@ -121,7 +144,7 @@ func (vfs *VirtualFileSystem) findPK3s(root string) []string {
 				}
 			}
 		}
-		// Sort alphabetically (engine load order)
+		// Sort alphabetically within each folder (engine load order)
 		sort.Strings(dirPK3s)
 		pk3s = append(pk3s, dirPK3s...)
 	}
@@ -132,7 +155,6 @@ func (vfs *VirtualFileSystem) findPK3s(root string) []string {
 func (vfs *VirtualFileSystem) indexPK3(path string) {
 	r, err := zip.OpenReader(path)
 	if err != nil {
-		LogError("Failed to open PK3 %s: %v", path, err)
 		return
 	}
 	defer r.Close()
@@ -143,9 +165,11 @@ func (vfs *VirtualFileSystem) indexPK3(path string) {
 		} // Skip dir entries
 
 		logicalPath := strings.ReplaceAll(f.Name, "\\", "/")
+		normalizedKey := strings.ToLower(logicalPath)
 
-		vfs.Index[logicalPath] = &AssetSource{
+		vfs.Index[normalizedKey] = &AssetSource{
 			Path:        logicalPath,
+			EntryName:   f.Name,
 			PK3Path:     path,
 			Size:        int64(f.UncompressedSize64),
 			ModTime:     f.Modified,
@@ -199,10 +223,11 @@ func (vfs *VirtualFileSystem) walkAndIndex(root string) {
 		}
 
 		logicalPath := strings.ReplaceAll(path, "\\", "/")
+		normalizedKey := strings.ToLower(logicalPath)
 		info, _ := d.Info()
 
 		// If duplicate, overwrite (TextAssets overrides PK3s)
-		vfs.Index[logicalPath] = &AssetSource{
+		vfs.Index[normalizedKey] = &AssetSource{
 			Path:        logicalPath,
 			FullPath:    filepath.Join(root, path),
 			Size:        info.Size(),
@@ -218,45 +243,37 @@ func (vfs *VirtualFileSystem) ensureParentDirs(dir string) {
 		return
 	}
 
-	if _, exists := vfs.Directories[dir]; !exists {
-		vfs.Directories[dir] = []*AssetSource{}
-	}
-
 	parent := filepath.Dir(dir)
 	if parent == "." {
 		parent = ""
 	}
 	parent = strings.ReplaceAll(parent, "\\", "/")
 
-	if parent != dir {
-		// Add this dir as a child of parent
-		// Check if already exists
-		exists := false
-		if children, ok := vfs.Directories[parent]; ok {
-			for _, child := range children {
-				if child.Path == dir {
-					exists = true
-					break
-				}
-			}
+	// Check if parent already knows about this dir
+	exists := false
+	for _, child := range vfs.Directories[parent] {
+		if child.Path == dir {
+			exists = true
+			break
 		}
-
-		if !exists {
-			dirEntry := &AssetSource{
-				Path:        dir,
-				IsDirectory: true,
-			}
-			vfs.Directories[parent] = append(vfs.Directories[parent], dirEntry)
-		}
-
-		vfs.ensureParentDirs(parent)
 	}
+
+	if !exists {
+		dirEntry := &AssetSource{
+			Path:        dir,
+			IsDirectory: true,
+		}
+		vfs.Directories[parent] = append(vfs.Directories[parent], dirEntry)
+	}
+
+	vfs.ensureParentDirs(parent)
 }
 
 // ReadFile opens a file from the VFS (PK3 or local)
 func (vfs *VirtualFileSystem) ReadFile(path string) (io.ReadCloser, error) {
+	norm := strings.ToLower(strings.ReplaceAll(path, "\\", "/"))
 	vfs.mu.RLock()
-	source, ok := vfs.Index[path]
+	source, ok := vfs.Index[norm]
 	vfs.mu.RUnlock()
 
 	if !ok {
@@ -272,7 +289,7 @@ func (vfs *VirtualFileSystem) ReadFile(path string) (io.ReadCloser, error) {
 
 		// Find file
 		for _, f := range r.File {
-			if strings.ReplaceAll(f.Name, "\\", "/") == path {
+			if f.Name == source.EntryName || strings.EqualFold(strings.ReplaceAll(f.Name, "\\", "/"), norm) {
 				rc, err := f.Open()
 				if err != nil {
 					r.Close()

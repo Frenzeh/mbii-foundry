@@ -111,6 +111,19 @@ func loadEmbeddedIcon(basePath string) image.Image {
 		}
 		return img
 	}
+
+	// Fallback: if big_bacta is not present, fall back to standard bacta
+	if strings.Contains(wanted, "big_bacta") {
+		fallbackWanted := strings.ReplaceAll(wanted, "big_bacta", "bacta")
+		for _, dir := range []string{"weapons", "attributes", "classes", "force"} {
+			path := "assets/icons/" + dir + "/" + fallbackWanted
+			if data, err := embedIcons.ReadFile(path); err == nil {
+				if img, err := png.Decode(bytes.NewReader(data)); err == nil {
+					return img
+				}
+			}
+		}
+	}
 	return nil
 }
 
@@ -134,6 +147,24 @@ func decodeGameIcon(vfs *VirtualFileSystem, basePath string) image.Image {
 		img := decodeByExt(ext, data)
 		if img != nil {
 			return img
+		}
+	}
+
+	// Fallback for big_bacta -> bacta in VFS
+	if strings.Contains(basePath, "big_bacta") {
+		fallbackBase := strings.ReplaceAll(basePath, "big_bacta", "bacta")
+		for _, ext := range []string{".tga", ".png", ".jpg", ".jpeg"} {
+			full := fallbackBase + ext
+			if _, ok := vfs.Index[full]; !ok {
+				continue
+			}
+			if rc, err := vfs.ReadFile(full); err == nil {
+				data, _ := io.ReadAll(rc)
+				rc.Close()
+				if img := decodeByExt(ext, data); img != nil {
+					return img
+				}
+			}
 		}
 	}
 	return nil
@@ -213,21 +244,21 @@ func NewRasterIconFromResource(res fyne.Resource, width, height float32) fyne.Ca
 		fb := widget.NewIcon(theme.FileImageIcon())
 		return container.New(layout.NewGridWrapLayout(fyne.NewSize(width, height)), fb)
 	}
+	if strings.HasSuffix(strings.ToLower(res.Name()), ".svg") || (len(res.Content()) > 0 && bytes.Contains(res.Content(), []byte("<svg"))) {
+		ci := canvas.NewImageFromResource(res)
+		ci.FillMode = canvas.ImageFillContain
+		ci.ScaleMode = canvas.ImageScaleSmooth
+		ci.SetMinSize(fyne.NewSize(width, height))
+		return container.New(layout.NewGridWrapLayout(fyne.NewSize(width, height)), ci)
+	}
 	if img := decodedImageFor(res); img != nil {
 		ci := canvas.NewImageFromImage(img)
 		ci.FillMode = canvas.ImageFillContain
 		ci.ScaleMode = canvas.ImageScaleSmooth
-		// SetMinSize IS needed — without it, canvas.Image renders at
-		// 1×1 inside GridWrap's cell. The "param mismatch" we saw
-		// earlier was specific to NewImageFromResource (which calls
-		// image.Decode → TGA-first → fail loop). NewImageFromImage
-		// has the bytes already so the size negotiation succeeds.
 		ci.SetMinSize(fyne.NewSize(width, height))
 		return container.New(layout.NewGridWrapLayout(fyne.NewSize(width, height)), ci)
 	}
-	// Non-PNG (or decode failed). Fall back to a theme placeholder
-	// rather than the resource path — that path triggers the TGA-
-	// first decode-spam bug above.
+	// Non-PNG/SVG. Fall back to a theme placeholder
 	fb := widget.NewIcon(theme.FileImageIcon())
 	return container.New(layout.NewGridWrapLayout(fyne.NewSize(width, height)), fb)
 }

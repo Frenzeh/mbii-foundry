@@ -4631,79 +4631,93 @@
   },
   {
     "id": "MB_ATT_UGL",
-    "name": "MB_ATT_UGL",
-    "overview": "",
+    "name": "Universal Grenade Launcher",
+    "max_level": 3,
+    "overview": "Grants the Universal Grenade Launcher (UGL) firing contact/timed grenades.",
     "tips": [],
     "levels": {},
     "stats": {},
     "tags": [
-      "stub"
+      "weapon",
+      "launcher"
     ]
   },
   {
     "id": "MB_ATT_UGL_BURST",
-    "name": "MB_ATT_UGL_BURST",
-    "overview": "",
+    "name": "UGL Burst",
+    "max_level": 3,
+    "overview": "Modifies UGL to fire a multi-grenade burst volley for area saturation.",
     "tips": [],
     "levels": {},
     "stats": {},
     "tags": [
-      "stub"
+      "weapon",
+      "launcher"
     ]
   },
   {
     "id": "MB_ATT_UGL_IMPACT",
-    "name": "MB_ATT_UGL_IMPACT",
-    "overview": "",
+    "name": "UGL Impact",
+    "max_level": 3,
+    "overview": "Modifies UGL grenades to detonate on contact with surfaces or players.",
     "tips": [],
     "levels": {},
     "stats": {},
     "tags": [
-      "stub"
+      "weapon",
+      "launcher"
     ]
   },
   {
     "id": "MB_ATT_UGL_BURST_MIXED",
-    "name": "MB_ATT_UGL_BURST_MIXED",
-    "overview": "",
+    "name": "UGL Mixed Burst",
+    "max_level": 3,
+    "overview": "Modifies UGL to fire a mixed timed and impact grenade burst volley.",
     "tips": [],
     "levels": {},
     "stats": {},
     "tags": [
-      "stub"
+      "weapon",
+      "launcher"
     ]
   },
   {
     "id": "MB_ATT_MGL",
-    "name": "MB_ATT_MGL",
-    "overview": "",
+    "name": "Micro Grenade Launcher",
+    "max_level": 3,
+    "overview": "Grants the Micro Grenade Launcher (MGL) firing deployable sticky bombs.",
     "tips": [],
     "levels": {},
     "stats": {},
     "tags": [
-      "stub"
+      "weapon",
+      "launcher"
     ]
   },
   {
     "id": "MB_ATT_MGL_IMPACT",
-    "name": "MB_ATT_MGL_IMPACT",
-    "overview": "",
+    "name": "MGL Impact",
+    "max_level": 3,
+    "overview": "Modifies MGL sticky bombs to detonate on contact rather than waiting.",
     "tips": [],
     "levels": {},
     "stats": {},
     "tags": [
-      "stub"
+      "weapon",
+      "launcher"
     ]
   },
   {
     "id": "MB_ATT_MGL_BURST",
-    "name": "MB_ATT_MGL_BURST",
-    "overview": "",
+    "name": "MGL Burst",
+    "max_level": 3,
+    "overview": "Modifies MGL to fire a spread volley of sticky bombs for rapid chokepoint coverage.",
     "tips": [],
     "levels": {},
     "stats": {},
     "tags": [
-      "stub"
+      "weapon",
+      "launcher"
     ]
   },
   {
@@ -5137,57 +5151,67 @@
   },
   {
     "id": "MB_ATT_THROWER_LIGHTNING",
-    "name": "MB_ATT_THROWER_LIGHTNING",
-    "overview": "",
+    "name": "Thrower Lightning",
+    "max_level": 3,
+    "overview": "Thrower lightning electrical discharge stream.",
     "tips": [],
     "levels": {},
     "stats": {},
     "tags": [
-      "stub"
+      "weapon",
+      "thrower"
     ]
   },
   {
     "id": "MB_ATT_THROWER_ICE",
-    "name": "MB_ATT_THROWER_ICE",
-    "overview": "",
+    "name": "Thrower Ice",
+    "max_level": 3,
+    "overview": "Thrower cryogenic freezing stream.",
     "tips": [],
     "levels": {},
     "stats": {},
     "tags": [
-      "stub"
+      "weapon",
+      "thrower"
     ]
   },
   {
     "id": "MB_ATT_THROWER_POISON",
-    "name": "MB_ATT_THROWER_POISON",
-    "overview": "",
+    "name": "Thrower Poison",
+    "max_level": 3,
+    "overview": "Thrower toxic poison gas stream.",
     "tips": [],
     "levels": {},
     "stats": {},
     "tags": [
-      "stub"
+      "weapon",
+      "thrower"
     ]
   },
   {
     "id": "MB_ATT_THROWER_PLASMA",
-    "name": "MB_ATT_THROWER_PLASMA",
-    "overview": "",
+    "name": "Thrower Plasma",
+    "max_level": 3,
+    "overview": "Thrower high-heat plasma stream.",
     "tips": [],
     "levels": {},
     "stats": {},
     "tags": [
-      "stub"
+      "weapon",
+      "thrower"
     ]
   },
   {
     "id": "MB_ATT_THROWER_FLAME",
-    "name": "MB_ATT_THROWER_FLAME",
-    "overview": "",
+    "name": "Thrower Flame",
+    "max_level": 3,
+    "overview": "Thrower incendiary liquid flame stream.",
     "tips": [],
     "levels": {},
     "stats": {},
     "tags": [
-      "stub"
+      "weapon",
+      "thrower"
     ]
   },
   {

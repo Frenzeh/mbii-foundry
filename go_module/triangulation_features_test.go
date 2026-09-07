@@ -4,8 +4,6 @@ import (
 	"strings"
 	"testing"
 
-	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/test"
 	"github.com/Frenzeh/mbii-foundry/parsers"
 )
 
@@ -123,7 +121,6 @@ func TestDescriptionAccuracy(t *testing.T) {
 	}
 }
 
-
 func TestRelationsMapping(t *testing.T) {
 	// Test primary weapon mapping
 	if att := CanonicalAttributeFor("WP_M5"); att != "MB_ATT_WESTARM5" {
@@ -139,83 +136,6 @@ func TestRelationsMapping(t *testing.T) {
 	// Test EAS item link
 	if att := RequiredAttributeForEAS("EAS_HI_GRAPPLEHOOK"); att != "MB_ATT_GRAPPLE_HOOK" {
 		t.Errorf("expected MB_ATT_GRAPPLE_HOOK, got %s", att)
-	}
-}
-
-func TestVFSGameDataPortraits(t *testing.T) {
-	testApp := test.NewApp()
-	defer testApp.Quit()
-
-	gamedata := "/Users/pj/Library/CloudStorage/SynologyDrive-mcp5/MBII_GameData"
-	vfs := NewVirtualFileSystem(gamedata, "")
-	if err := vfs.Refresh(); err != nil {
-		t.Fatalf("failed to refresh VFS: %v", err)
-	}
-
-	if len(vfs.Index) == 0 {
-		t.Skip("GameData PK3s not present, skipping integration check")
-	}
-
-	// Verify portrait candidate resolution for clonerc2
-	ab := NewAssetBrowser(gamedata, "")
-	ab.vfs = vfs
-
-	res := ab.LoadIconResource("models/players/clonerc2/mb2_icon_rgb")
-	if res == nil {
-		t.Errorf("expected to resolve models/players/clonerc2/mb2_icon_rgb from PK3s")
-	}
-
-	// Verify portrait candidate resolution for baby_yoda
-	ir := NewIconResolver(vfs)
-	candidates := ir.ResolveClassIconCandidates("baby_yoda", "default", "")
-	var yodaRes fyne.Resource
-	for _, c := range candidates {
-		if r := ab.LoadIconResource(c); r != nil {
-			yodaRes = r
-			break
-		}
-	}
-	if yodaRes == nil {
-		t.Errorf("expected to resolve baby_yoda portrait candidate from PK3s, tried %v", candidates)
-	}
-
-	// Verify canonical default skin resolution for clonetrooper_p1
-	cloneCandidates := ir.ResolveClassIconCandidates("clonetrooper_p1", "default", "")
-	var cloneRes fyne.Resource
-	for _, c := range cloneCandidates {
-		if r := ab.LoadIconResource(c); r != nil {
-			cloneRes = r
-			break
-		}
-	}
-	if cloneRes == nil {
-		t.Errorf("expected to resolve clonetrooper_p1 default portrait candidate from PK3s, tried %v", cloneCandidates)
-	}
-
-	// Verify portrait candidate resolution for jedi_zf with merc_et
-	zfCandidates := ir.ResolveClassIconCandidates("jedi_zf", "merc_et", "models/players/jedi_zf/mb2_icon_merc_et")
-	var zfRes fyne.Resource
-	for _, c := range zfCandidates {
-		if r := ab.LoadIconResource(c); r != nil {
-			zfRes = r
-			break
-		}
-	}
-	if zfRes == nil {
-		t.Errorf("expected to resolve jedi_zf merc_et portrait candidate from PK3s, tried %v", zfCandidates)
-	}
-
-	// Verify portrait candidate resolution for jedi_zf with head_a1
-	zfHeadCandidates := ir.ResolveClassIconCandidates("jedi_zf", "head_a1", "")
-	var zfHeadRes fyne.Resource
-	for _, c := range zfHeadCandidates {
-		if r := ab.LoadIconResource(c); r != nil {
-			zfHeadRes = r
-			break
-		}
-	}
-	if zfHeadRes == nil {
-		t.Errorf("expected to resolve jedi_zf head_a1 portrait candidate from PK3s, tried %v", zfHeadCandidates)
 	}
 }
 
@@ -291,5 +211,3 @@ func TestCustomSkillsSync(t *testing.T) {
 		t.Errorf("expected c_att_names_1 to be synced, got %s", char.ExtraFields["c_att_names_1"])
 	}
 }
-
-

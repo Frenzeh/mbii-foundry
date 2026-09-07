@@ -119,8 +119,8 @@ type AssetBrowser struct {
 	// on every VFS refresh.
 	shaderResolver *ShaderResolver
 
-	// OnVFSReady is invoked when background PK3 scanning and shader prebuilding finish.
-	OnVFSReady func()
+	// Registered before indexing starts; invoked on the Fyne thread.
+	onVFSReady func()
 }
 
 type ViewMode string
@@ -140,7 +140,7 @@ const (
 	SortType     SortMode = "Type"
 )
 
-func NewAssetBrowser(gamedataPath, textAssetsPath string) *AssetBrowser {
+func NewAssetBrowser(gamedataPath, textAssetsPath string, onReady func()) *AssetBrowser {
 	ab := &AssetBrowser{
 		gamedataPath:   gamedataPath,
 		textAssetsPath: textAssetsPath,
@@ -151,6 +151,7 @@ func NewAssetBrowser(gamedataPath, textAssetsPath string) *AssetBrowser {
 		sortMode:       SortNameAsc,
 		iconSize:       100.0,
 		vfs:            NewVirtualFileSystem(gamedataPath, textAssetsPath),
+		onVFSReady:     onReady,
 	}
 
 	ab.favoritesFile = filepath.Join(AppConfigDir(), "favorites.json")
@@ -158,37 +159,8 @@ func NewAssetBrowser(gamedataPath, textAssetsPath string) *AssetBrowser {
 
 	ab.loadConfig()
 	ab.scanPK3Files()
-	// Kick an initial VFS refresh in the background so icon resolvers
-	// (portrait preview, weapon rows, attribute grid) have a populated
-	// index the moment the app opens. Historically the VFS only got
-	// indexed when the user browsed through the Files sidebar, which
-	// meant the character portrait showed a placeholder until then.
-	// The refresh walks PK3s + TextAssets once; after that everything
-	// is cache-hit. Guarded behind a non-empty gamedata path so fresh
-	// installs (no gamedata configured yet) don't spawn a pointless
-	// goroutine.
-	// Assign the resolver BEFORE launching the indexing goroutine —
-	// the goroutine reads ab.shaderResolver after Refresh, and a
-	// post-goroutine assignment was a data race (and a possible nil
-	// deref if the goroutine somehow finished first on a fast disk).
 	ab.shaderResolver = NewShaderResolver(ab.vfs)
-	if gamedataPath != "" {
-		go func() {
-			if err := ab.vfs.Refresh(); err != nil {
-				LogInfo("Initial VFS index failed: %v", err)
-			}
-			// Reset clears any stale build state, then Prebuild
-			// scans .shader files in this same background goroutine
-			// so the cost is paid before the user opens their first
-			// MBCH (instead of synchronously on the UI thread when
-			// Resolve is first called — that was freezing the app).
-			ab.shaderResolver.Reset()
-			ab.shaderResolver.Prebuild()
-			if ab.OnVFSReady != nil {
-				ab.OnVFSReady()
-			}
-		}()
-	}
+	ab.refreshVFS()
 	ab.createUI()
 	return ab
 }
@@ -197,27 +169,29 @@ func (ab *AssetBrowser) SetPaths(gamedata, textAssets string) {
 	ab.gamedataPath = gamedata
 	ab.textAssetsPath = textAssets
 	ab.vfs = NewVirtualFileSystem(gamedata, textAssets)
-	// Resolver assigned before the goroutine reads it — same fix as
-	// NewAssetBrowser. Reset() is safe to call on a never-built
-	// resolver (early return when sr.built == false flips back to
-	// rebuild on the next Resolve).
+	// Each scan owns this source pair, even if paths change again before it finishes.
 	ab.shaderResolver = NewShaderResolver(ab.vfs)
 	ab.scanPK3Files() // Re-scan if gamedata changed
 	ab.refreshSources()
-	// Re-index in the background so editors see the new content
-	// without the user having to navigate to the Files sidebar.
-	if gamedata != "" {
-		go func() {
-			if err := ab.vfs.Refresh(); err != nil {
-				LogInfo("VFS re-index after path change failed: %v", err)
-			}
-			ab.shaderResolver.Reset()
-			ab.shaderResolver.Prebuild()
-			if ab.OnVFSReady != nil {
-				ab.OnVFSReady()
-			}
-		}()
-	}
+	ab.refreshVFS()
+}
+
+func (ab *AssetBrowser) refreshVFS() {
+	vfs, resolver := ab.vfs, ab.shaderResolver
+	go func() {
+		if err := vfs.Refresh(); err != nil {
+			LogInfo("VFS index failed: %v", err)
+			return
+		}
+		resolver.Prebuild()
+		if ab.onVFSReady != nil {
+			fyne.Do(func() {
+				if ab.vfs == vfs {
+					ab.onVFSReady()
+				}
+			})
+		}
+	}()
 }
 
 func (ab *AssetBrowser) loadFavorites() {
@@ -1034,7 +1008,7 @@ func (ab *AssetBrowser) LoadIconResource(path string) fyne.Resource {
 	if filepath.Ext(path) == "" && ab.vfs != nil {
 		for _, ext := range []string{".tga", ".png", ".jpg", ".jpeg"} {
 			candidate := strings.ToLower(path + ext)
-			if _, ok := ab.vfs.Index[candidate]; ok {
+			if ab.vfs.Lookup(candidate) != nil {
 				path = path + ext
 				break
 			}
@@ -1049,7 +1023,7 @@ func (ab *AssetBrowser) LoadIconResource(path string) fyne.Resource {
 				if filepath.Ext(probe) == "" {
 					for _, ext := range []string{".tga", ".png", ".jpg", ".jpeg"} {
 						candidate := strings.ToLower(probe + ext)
-						if _, ok := ab.vfs.Index[candidate]; ok {
+						if ab.vfs.Lookup(candidate) != nil {
 							probe = probe + ext
 							break
 						}
@@ -1062,19 +1036,25 @@ func (ab *AssetBrowser) LoadIconResource(path string) fyne.Resource {
 		}
 	}
 
-	// 2. On-disk PNG cache (from a previous VFS decode).
-	hash := md5.Sum([]byte(path))
+	if ab.vfs == nil || filepath.Ext(path) == "" {
+		return nil
+	}
+	source := ab.vfs.Lookup(path)
+	if source == nil {
+		return nil
+	}
+	// Namespace both caches by the winning asset, not its basename or
+	// logical path alone. Source switches and re-indexed replacements
+	// must not reuse another model/installation's pixels.
+	identity := fmt.Sprintf("%s\x00%s\x00%s\x00%d\x00%d\x00%d",
+		source.FullPath, source.PK3Path, source.EntryName,
+		source.Size, source.ModTime.UnixNano(), source.CRC32)
+	hash := md5.Sum([]byte(identity))
 	hashStr := hex.EncodeToString(hash[:])
 	cachePath := filepath.Join(ab.ensureCacheDir(), hashStr+".png")
 
 	if data, err := os.ReadFile(cachePath); err == nil {
-		return fyne.NewStaticResource(filepath.Base(path), data)
-	}
-
-	if ab.vfs == nil || filepath.Ext(path) == "" {
-		// No VFS and nothing embedded — no asset exists. Return nil
-		// so callers can fall back to a theme icon.
-		return nil
+		return fyne.NewStaticResource(hashStr+".png", data)
 	}
 
 	// 2. Load from VFS
@@ -1116,7 +1096,7 @@ func (ab *AssetBrowser) LoadIconResource(path string) fyne.Resource {
 	data := buf.Bytes()
 	os.WriteFile(cachePath, data, 0644)
 
-	return fyne.NewStaticResource(filepath.Base(path)+".png", data)
+	return fyne.NewStaticResource(hashStr+".png", data)
 }
 
 func (ab *AssetBrowser) isImageAsset(asset *AssetEntry) bool {

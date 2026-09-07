@@ -367,14 +367,9 @@ func updateGalleryPreview(m *ModelInfo, skin string, containerObj *fyne.Containe
 		return
 	}
 
-	// Try candidate skin paths
-	candidates := []string{
-		"models/players/" + m.Name + "/mb2_icon_" + skin,
-		"models/players/" + m.Name + "/icon_" + skin,
-		"models/players/" + m.Name + "/" + skin,
-		m.PortraitKey,
-	}
-
+	// Use the same documented default fallback as the character editor,
+	// never an arbitrary portrait for another skin from map iteration.
+	candidates := NewIconResolver(ab.vfs).ResolveClassIconCandidates(m.Name, skin, "")
 	var res fyne.Resource
 	for _, c := range candidates {
 		if c != "" {

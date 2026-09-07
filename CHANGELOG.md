@@ -7,6 +7,18 @@ pre-release suffixes until the project stabilizes.
 
 ## [Unreleased]
 
+### Fixed
+- Character portraits now use explicit PNG decoding in Profile and Skins,
+  avoiding the generic image decoder's TGA misclassification.
+- Portrait cache identities include the winning asset source and version:
+  models sharing `mb2_icon_default` no longer show one another's image, and
+  changing asset roots or reindexing a changed file no longer reuses stale pixels.
+- Register asset-readiness callbacks before scanning and refresh both base
+  portraits and skin variants when indexing finishes, including TextAssets-only
+  configurations. Superseded scans cannot refresh editors against old roots.
+- Missing skin previews no longer select an arbitrary model texture or another
+  skin's portrait. The documented default-portrait fallback remains available.
+
 ## [0.15.0-alpha] — 2026-08-31
 
 ### Added

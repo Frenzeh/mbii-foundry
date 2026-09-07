@@ -48,13 +48,13 @@ type App struct {
 	docTabs *container.DocTabs
 	editors map[*container.TabItem]Editor
 
-	assetBrowser *AssetBrowser
-	infoPanel        *InfoPanel
-	infoPanelMirrors []*InfoPanel // pop-out windows hosting fresh InfoPanel instances
+	assetBrowser       *AssetBrowser
+	infoPanel          *InfoPanel
+	infoPanelMirrors   []*InfoPanel // pop-out windows hosting fresh InfoPanel instances
 	sourcePanel        *SourcePanel
-	sourcePanelMirrors []*SourcePanel // pop-out windows tracking the same active editor
-	activityBar  *SidebarHeader  // top-of-sidebar horizontal activity switcher (legacy field name)
-	sidebarHost  *fyne.Container // swap target for the active activity's content
+	sourcePanelMirrors []*SourcePanel  // pop-out windows tracking the same active editor
+	activityBar        *SidebarHeader  // top-of-sidebar horizontal activity switcher (legacy field name)
+	sidebarHost        *fyne.Container // swap target for the active activity's content
 
 	fileManager   *FileManager
 	githubManager *GitHubManager
@@ -104,8 +104,8 @@ type AppConfig struct {
 	WindowHeight    float32      `json:"window_height"`
 	RecentFiles     []RecentFile `json:"recent_files"`
 	Theme           string       `json:"theme"`
-	PrimaryColor    string       `json:"primary_color"`  // Accent color: blue/red/gold/green/orange/purple
-	ColorVariant    string       `json:"color_variant"`  // "dark" | "light" — foundry defaults to dark if unset
+	PrimaryColor    string       `json:"primary_color"` // Accent color: blue/red/gold/green/orange/purple
+	ColorVariant    string       `json:"color_variant"` // "dark" | "light" — foundry defaults to dark if unset
 	KnownModpacks   []*Modpack   `json:"known_modpacks"`
 	SidebarOffset   float32      `json:"sidebar_offset"`
 	SidebarVisible  bool         `json:"sidebar_visible"`
@@ -385,6 +385,7 @@ func MonoFontResource() fyne.Resource {
 func (h FoundryTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
 	return theme.DefaultTheme().Icon(name)
 }
+
 // densityScale returns the multiplier the user's density preference
 // applies to padding/inner-padding theme sizes. Text size isn't
 // touched — only spacing — so the app breathes wider without
@@ -617,25 +618,13 @@ func (a *App) monitorHolocronStatus() {
 func (a *App) setupUI() {
 	a.sidebarVisible = a.config.SidebarVisible
 
-	a.assetBrowser = NewAssetBrowser(a.config.GamedataPath, a.config.TextAssetsPath)
-	a.assetBrowser.OnVFSReady = func() {
-		fyne.Do(func() {
-			for _, ed := range a.editors {
-				if mbchEd, ok := ed.(*MBCHEditor); ok {
-					mbchEd.updateIconPreview()
-					if mbchEd.attrGrid != nil {
-						mbchEd.attrGrid.Refresh()
-					}
-					if mbchEd.weaponGrid != nil {
-						mbchEd.weaponGrid.Refresh()
-					}
-					if mbchEd.holdableGrid != nil {
-						mbchEd.holdableGrid.Refresh()
-					}
-				}
+	a.assetBrowser = NewAssetBrowser(a.config.GamedataPath, a.config.TextAssetsPath, func() {
+		for _, ed := range a.editors {
+			if mbchEd, ok := ed.(*MBCHEditor); ok {
+				mbchEd.SetAssetBrowser(a.assetBrowser)
 			}
-		})
-	}
+		}
+	})
 	a.infoPanel = NewInfoPanel()
 	a.infoPanel.SetHolocronClient(a.holocronClient)
 	a.infoPanel.SetOnPopOut(a.popOutInfoPanel)
@@ -1875,7 +1864,7 @@ func (a *App) openFile() {
 	filePickerWindow := a.fyneApp.NewWindow("Open File")
 	filePickerWindow.Resize(fyne.NewSize(1200, 780))
 
-	pickerBrowser := NewAssetBrowser(a.config.GamedataPath, a.config.TextAssetsPath)
+	pickerBrowser := NewAssetBrowser(a.config.GamedataPath, a.config.TextAssetsPath, nil)
 	cfp := NewCustomFilePicker(filePickerWindow, pickerBrowser)
 
 	// Route every picker selection through openFileFromAsset. That
@@ -2683,7 +2672,7 @@ func (a *App) showFilePickerForEntry(entry *widget.Entry, title string, filter A
 	filePickerWindow := a.fyneApp.NewWindow(title)
 	filePickerWindow.Resize(fyne.NewSize(1200, 780))
 
-	pickerBrowser := NewAssetBrowser(a.config.GamedataPath, a.config.TextAssetsPath)
+	pickerBrowser := NewAssetBrowser(a.config.GamedataPath, a.config.TextAssetsPath, nil)
 
 	// Set initial path based on filter type
 	initialPath := ""

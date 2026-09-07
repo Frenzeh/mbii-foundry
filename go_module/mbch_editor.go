@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -75,43 +74,43 @@ type MBCHEditor struct {
 	// file is "dirty" the moment it opens.
 	loading bool
 
-	nameEntry   *ValidatedEntry
-	classPicker *ClassIconPicker // replaces the previous widget.Select
-	modelEntry  *ValidatedEntry
-	skinEntry        *ValidatedEntry
-	uiShaderEntry    *ValidatedEntry
-	soundsetEntry    *ValidatedEntry
-	iconPreview      *canvas.Image // Portrait of the current model+skin (or explicit UI shader); raster-friendly, fills its container
-	portraitSource   *widget.Label // Shows whether the portrait is "auto" or an "override" so authors can tell quickly
-	weaponsEntry     *widget.Entry
-	attributesEntry  *widget.Entry
-	forcePowersEntry *widget.Entry
-	healthEntry      *ValidatedEntry
-	armorEntry       *ValidatedEntry
-	forcePoolEntry   *ValidatedEntry
-	forceRegenEntry  *ValidatedEntry
-	speedEntry       *ValidatedEntry
-	apMultEntry      *ValidatedEntry
-	bpMultEntry      *ValidatedEntry
-	csMultEntry      *ValidatedEntry
-	asMultEntry      *ValidatedEntry
-	saber1Entry      *ValidatedEntry
-	saber2Entry      *ValidatedEntry
-	saberColorSelect *widget.Select
-	classLimitEntry  *ValidatedEntry
-	respawnTimeEntry *ValidatedEntry
-	extraLivesEntry  *ValidatedEntry
-	isCustomCheck    *widget.Check
-	mbPointsEntry    *ValidatedEntry
-	descriptionEntry *ValidatedEntry
+	nameEntry         *ValidatedEntry
+	classPicker       *ClassIconPicker // replaces the previous widget.Select
+	modelEntry        *ValidatedEntry
+	skinEntry         *ValidatedEntry
+	uiShaderEntry     *ValidatedEntry
+	soundsetEntry     *ValidatedEntry
+	iconPreview       *canvas.Image // Portrait of the current model+skin (or explicit UI shader); raster-friendly, fills its container
+	portraitSource    *widget.Label // Shows whether the portrait is "auto" or an "override" so authors can tell quickly
+	weaponsEntry      *widget.Entry
+	attributesEntry   *widget.Entry
+	forcePowersEntry  *widget.Entry
+	healthEntry       *ValidatedEntry
+	armorEntry        *ValidatedEntry
+	forcePoolEntry    *ValidatedEntry
+	forceRegenEntry   *ValidatedEntry
+	speedEntry        *ValidatedEntry
+	apMultEntry       *ValidatedEntry
+	bpMultEntry       *ValidatedEntry
+	csMultEntry       *ValidatedEntry
+	asMultEntry       *ValidatedEntry
+	saber1Entry       *ValidatedEntry
+	saber2Entry       *ValidatedEntry
+	saberColorSelect  *widget.Select
+	classLimitEntry   *ValidatedEntry
+	respawnTimeEntry  *ValidatedEntry
+	extraLivesEntry   *ValidatedEntry
+	isCustomCheck     *widget.Check
+	mbPointsEntry     *ValidatedEntry
+	descriptionEntry  *ValidatedEntry
 	updateDescPreview func()
-	sourceView       *widget.RichText // Correct type
+	sourceView        *widget.RichText // Correct type
 
-	pointBuyUI      *PointBuyUI
-	weaponInfoUI    *WeaponInfoUI
-	forceInfoUI     *ForceInfoUI
-	weaponFlagsUI   *WeaponFlagsEditor  // WP_*Flags HELD_* grid (separate from WeaponInfoUI overrides)
-	skinVariantsUI  *SkinVariantsEditor // model_N / skin_N / uishader_N tuples + RGB overrides
+	pointBuyUI     *PointBuyUI
+	weaponInfoUI   *WeaponInfoUI
+	forceInfoUI    *ForceInfoUI
+	weaponFlagsUI  *WeaponFlagsEditor  // WP_*Flags HELD_* grid (separate from WeaponInfoUI overrides)
+	skinVariantsUI *SkinVariantsEditor // model_N / skin_N / uishader_N tuples + RGB overrides
 
 	// devSurfaces lists every UI element that's been opted into the
 	// "Show Developer Fields" toggle (View menu). Subsystems that
@@ -131,13 +130,13 @@ type MBCHEditor struct {
 	// so updateUI / populateDevFieldsFromCharacter can populate them
 	// on file load + revert.
 	devFieldEntries map[string]*widget.Entry
-	assetBrowser   *AssetBrowser
-	iconResolver   *IconResolver
-	holocronClient *HolocronClient
-	app            *App
-	attrGrid       *AttributeGrid
-	weaponGrid     *WeaponGrid // New
-	holdableGrid   *HoldableGrid
+	assetBrowser    *AssetBrowser
+	iconResolver    *IconResolver
+	holocronClient  *HolocronClient
+	app             *App
+	attrGrid        *AttributeGrid
+	weaponGrid      *WeaponGrid // New
+	holdableGrid    *HoldableGrid
 
 	// New MultiSelect Widgets
 	saberStyleSelect *MultiSelectWidget
@@ -245,6 +244,9 @@ func (e *MBCHEditor) SetAssetBrowser(ab *AssetBrowser) {
 	if e.iconPreview != nil {
 		e.updateIconPreview()
 	}
+	if e.skinVariantsUI != nil {
+		e.skinVariantsUI.Refresh()
+	}
 	LogInfo("MBCHEditor.SetAssetBrowser: post-load refresh took %s",
 		time.Since(t0))
 }
@@ -278,7 +280,7 @@ func (e *MBCHEditor) applyDeveloperVisibility(show bool) {
 		e.container.Refresh()
 	}
 }
-func (e *MBCHEditor) IsDirty() bool                            { return e.isDirty }
+func (e *MBCHEditor) IsDirty() bool { return e.isDirty }
 func (e *MBCHEditor) MarkClean() {
 	e.isDirty = false
 	if e.onDirtyChanged != nil {
@@ -1613,67 +1615,6 @@ func parseEntryFloat(entry *ValidatedEntry, min, max float64) float64 {
 	return val
 }
 
-// modelPortraitFallbackCache memoizes the result of the VFS index
-// scan for `models/players/<model>/mb2_icon_*`. The scan walks
-// every entry in the VFS index (tens of thousands of paths) so we
-// pay it at most once per model per session. Empty-string results
-// are cached too so we don't re-scan known-missing models.
-var (
-	modelPortraitFallbackCache   = map[string]string{}
-	modelPortraitFallbackCacheMu sync.RWMutex
-)
-
-// lookupModelPortraitFallback finds any `models/players/<model>/mb2_icon_*`
-// asset in the VFS, with caching. Returns "" when nothing matches.
-func lookupModelPortraitFallback(model string, vfs *VirtualFileSystem) string {
-	if model == "" || vfs == nil {
-		return ""
-	}
-	key := strings.ToLower(model)
-	modelPortraitFallbackCacheMu.RLock()
-	if v, ok := modelPortraitFallbackCache[key]; ok {
-		modelPortraitFallbackCacheMu.RUnlock()
-		return v
-	}
-	modelPortraitFallbackCacheMu.RUnlock()
-
-	dirPrefixMB2 := "models/players/" + key + "/mb2_icon_"
-	dirPrefixIcon := "models/players/" + key + "/icon_"
-	dirPrefixAny := "models/players/" + key + "/"
-	var found string
-	var fallbackFound string
-	vfs.mu.RLock()
-	for k := range vfs.Index {
-		if strings.HasPrefix(k, dirPrefixMB2) {
-			ext := filepath.Ext(k)
-			if ext == ".tga" || ext == ".png" || ext == ".jpg" || ext == ".jpeg" {
-				found = k
-				break
-			}
-		} else if strings.HasPrefix(k, dirPrefixIcon) && found == "" {
-			ext := filepath.Ext(k)
-			if ext == ".tga" || ext == ".png" || ext == ".jpg" || ext == ".jpeg" {
-				found = k
-			}
-		} else if strings.HasPrefix(k, dirPrefixAny) && fallbackFound == "" {
-			ext := filepath.Ext(k)
-			if ext == ".tga" || ext == ".png" || ext == ".jpg" || ext == ".jpeg" {
-				fallbackFound = k
-			}
-		}
-	}
-	vfs.mu.RUnlock()
-
-	if found == "" {
-		found = fallbackFound
-	}
-
-	modelPortraitFallbackCacheMu.Lock()
-	modelPortraitFallbackCache[key] = found
-	modelPortraitFallbackCacheMu.Unlock()
-	return found
-}
-
 func (e *MBCHEditor) updateIconPreview() {
 	if e.iconPreview == nil {
 		return
@@ -1696,8 +1637,7 @@ func (e *MBCHEditor) updateIconPreview() {
 		if e.portraitSource != nil {
 			e.portraitSource.SetText("none")
 		}
-		e.iconPreview.Resource = theme.AccountIcon()
-		e.iconPreview.Refresh()
+		setRasterPreview(e.iconPreview, nil)
 	}
 
 	if e.iconResolver == nil || e.assetBrowser == nil {
@@ -1717,8 +1657,7 @@ func (e *MBCHEditor) updateIconPreview() {
 			if e.portraitSource != nil {
 				e.portraitSource.SetText(source)
 			}
-			e.iconPreview.Resource = res
-			e.iconPreview.Refresh()
+			setRasterPreview(e.iconPreview, res)
 			return
 		}
 	}

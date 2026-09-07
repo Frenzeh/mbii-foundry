@@ -14,6 +14,22 @@
 *   **Search:** Type in the search bar to filter assets (e.g., "stormtrooper").
 *   **Usage:** Double-clicking an asset (like a model `.glm` or icon image) will automatically fill the currently focused text field in the editor.
 
+### Character Portraits and Skins
+* Configure **GameData** to the local runtime containing the game PK3s. A
+  **TextAssets** source checkout alone does not include most portrait images.
+* The **Profile** portrait and **Skins** variant previews refresh when background
+  asset indexing finishes. **Change Skin** shows the current model's skin cards;
+  **Browse All Models** opens the model gallery.
+* Foundry tries the explicit `UI Shader`, then the selected model/skin's portrait
+  names. Profile, variant rows, and the gallery detail preview can fall back to
+  the model's default portrait when a non-default skin lacks its own image.
+  Individual skin-picker cards stay missing when that skin has no portrait.
+* A silhouette means no portrait could be resolved; unrelated body textures are
+  not used to disguise a missing image. The Profile label indicates `auto`,
+  `override` (the file's intent), or `none`.
+* These are **2D portrait previews**, not a rendered preview of the model's 3D
+  mesh, materials, animations, or RGB tint.
+
 ### Bulk Editor
 *   Allows you to modify multiple files at once.
 *   **Use Case:** "I want to change the `ClassNumberLimit` to 1 for ALL my Jedi characters."

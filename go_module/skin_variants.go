@@ -153,8 +153,7 @@ func (sve *SkinVariantsEditor) buildRow(idx int) fyne.CanvasObject {
 	preview.SetMinSize(fyne.NewSize(64, 64))
 	refreshPreview := func() {
 		if sve.editor.iconResolver == nil || sve.editor.assetBrowser == nil {
-			preview.Resource = theme.FileImageIcon()
-			preview.Refresh()
+			setRasterPreview(preview, nil)
 			return
 		}
 		model := ch.ExtraFields[modelKey]
@@ -164,25 +163,12 @@ func (sve *SkinVariantsEditor) buildRow(idx int) fyne.CanvasObject {
 		candidates := sve.editor.iconResolver.ResolveClassIconCandidates(model, skin, shader)
 		for _, candidate := range candidates {
 			if res := sve.editor.assetBrowser.LoadIconResource(candidate); res != nil {
-				preview.Resource = res
-				preview.Refresh()
+				setRasterPreview(preview, res)
 				return
 			}
 		}
 
-		// Fallback scan for any portrait matching the model
-		if model != "" && sve.editor.assetBrowser.vfs != nil {
-			if fallback := lookupModelPortraitFallback(model, sve.editor.assetBrowser.vfs); fallback != "" {
-				if res := sve.editor.assetBrowser.LoadIconResource(fallback); res != nil {
-					preview.Resource = res
-					preview.Refresh()
-					return
-				}
-			}
-		}
-
-		preview.Resource = theme.FileImageIcon()
-		preview.Refresh()
+		setRasterPreview(preview, nil)
 	}
 	refreshPreview()
 

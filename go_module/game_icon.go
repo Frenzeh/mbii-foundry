@@ -37,12 +37,8 @@ import (
 	"github.com/ftrvxmtrx/tga"
 )
 
-// gameIconCache memoizes decoded game icons so the asset doesn't get
-// re-decoded every time the weapon grid refreshes (which happens on
-// every search keystroke). Keyed by the base path sans extension —
-// that's what IconResolver returns. Value is nil when a base path
-// resolved but nothing decoded, so we remember the miss and don't
-// re-try. Separate from "not yet looked up" which is an absent key.
+// gameIconCache holds only immutable embedded icons (including embedded misses).
+// Runtime images belong to their VFS and are discarded when it refreshes.
 var (
 	gameIconCache   = map[string]image.Image{}
 	gameIconCacheMu sync.RWMutex
@@ -64,26 +60,44 @@ func LoadGameIcon(vfs *VirtualFileSystem, basePath string) (image.Image, bool) {
 	if basePath == "" {
 		return nil, false
 	}
-	key := strings.ToLower(basePath)
-
+	path := strings.ToLower(basePath)
 	gameIconCacheMu.RLock()
-	if cached, ok := gameIconCache[key]; ok {
-		gameIconCacheMu.RUnlock()
-		return cached, cached != nil
-	}
+	img, cached := gameIconCache[path]
 	gameIconCacheMu.RUnlock()
-
-	// Embedded lookup first — no I/O, no PK3 presence required.
-	img := loadEmbeddedIcon(key)
-	if img == nil && vfs != nil {
-		img = decodeGameIcon(vfs, key)
+	if !cached {
+		img = loadEmbeddedIcon(path)
+		gameIconCacheMu.Lock()
+		gameIconCache[path] = img
+		gameIconCacheMu.Unlock()
 	}
-
-	gameIconCacheMu.Lock()
-	gameIconCache[key] = img
-	gameIconCacheMu.Unlock()
+	if img == nil && vfs != nil {
+		img = vfs.loadGameIcon(path)
+	}
 
 	return img, img != nil
+}
+
+func (vfs *VirtualFileSystem) loadGameIcon(path string) image.Image {
+	vfs.mu.RLock()
+	img, cached := vfs.gameIcons[path]
+	generation := vfs.generation
+	vfs.mu.RUnlock()
+	if cached {
+		return img
+	}
+
+	img = decodeGameIcon(vfs, path)
+	vfs.mu.Lock()
+	// A scan may finish during decoding. Do not repopulate the new
+	// source's cache with an image (or miss) from the previous index.
+	if vfs.generation == generation {
+		if vfs.gameIcons == nil {
+			vfs.gameIcons = make(map[string]image.Image)
+		}
+		vfs.gameIcons[path] = img
+	}
+	vfs.mu.Unlock()
+	return img
 }
 
 // loadEmbeddedIcon searches the embedded icon FS for a PNG whose
@@ -132,7 +146,7 @@ func loadEmbeddedIcon(basePath string) image.Image {
 func decodeGameIcon(vfs *VirtualFileSystem, basePath string) image.Image {
 	for _, ext := range []string{".tga", ".png", ".jpg", ".jpeg"} {
 		full := basePath + ext
-		if _, ok := vfs.Index[full]; !ok {
+		if vfs.Lookup(full) == nil {
 			continue
 		}
 		rc, err := vfs.ReadFile(full)
@@ -155,7 +169,7 @@ func decodeGameIcon(vfs *VirtualFileSystem, basePath string) image.Image {
 		fallbackBase := strings.ReplaceAll(basePath, "big_bacta", "bacta")
 		for _, ext := range []string{".tga", ".png", ".jpg", ".jpeg"} {
 			full := fallbackBase + ext
-			if _, ok := vfs.Index[full]; !ok {
+			if vfs.Lookup(full) == nil {
 				continue
 			}
 			if rc, err := vfs.ReadFile(full); err == nil {
@@ -263,6 +277,19 @@ func NewRasterIconFromResource(res fyne.Resource, width, height float32) fyne.Ca
 	return container.New(layout.NewGridWrapLayout(fyne.NewSize(width, height)), fb)
 }
 
+// setRasterPreview updates an existing portrait without sending raster bytes
+// through Fyne's generic decoder (the TGA decoder claims any magic header).
+// Clear every previous source so missing assets cannot retain old pixels.
+func setRasterPreview(preview *canvas.Image, res fyne.Resource) {
+	preview.File = ""
+	preview.Resource = nil
+	preview.Image = decodedImageFor(res)
+	if preview.Image == nil {
+		preview.Resource = theme.AccountIcon()
+	}
+	preview.Refresh()
+}
+
 // decodedImageFor decodes PNG bytes from a resource into an
 // image.Image, caching by resource Name(). Negative results (non-PNG
 // or decode failure) are stored as nil so we don't re-attempt every
@@ -296,7 +323,6 @@ func decodedImageFor(res fyne.Resource) image.Image {
 	decodedImageCacheMu.Unlock()
 	return img
 }
-
 
 // pngMagic is the 8-byte PNG file signature. Pulled out so the
 // HasPrefix check in NewRasterIconFromResource stays a slice-compare

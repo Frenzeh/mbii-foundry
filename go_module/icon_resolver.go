@@ -127,13 +127,13 @@ var attributeIconAliases = map[string]string{
 	"MB_ATT_WESTARM5":         "icon_stats_westarm5",
 
 	// Grenades / explosives.
-	"MB_ATT_FIRE_GRENADES":   "icon_stats_fire",
-	"MB_ATT_FRAGS":           "icon_stats_frag",
+	"MB_ATT_FIRE_GRENADES":    "icon_stats_fire",
+	"MB_ATT_FRAGS":            "icon_stats_frag",
 	"MB_ATT_CRYOBAN_GRENADES": "icon_stats_sonic", // no cryo icon; sonic is a close thematic match
-	"MB_ATT_SONIC_DETONATOR": "icon_stats_sonic",
-	"MB_ATT_THERMALS":        "icon_stats_thermal",
-	"MB_ATT_PULSE_GRENADES":  "icon_stats_concblob",
-	"MB_ATT_BASE_TD":         "icon_stats_thermal",
+	"MB_ATT_SONIC_DETONATOR":  "icon_stats_sonic",
+	"MB_ATT_THERMALS":         "icon_stats_thermal",
+	"MB_ATT_PULSE_GRENADES":   "icon_stats_concblob",
+	"MB_ATT_BASE_TD":          "icon_stats_thermal",
 
 	// Darts.
 	"MB_ATT_POISON_DART":   "icon_stats_pdart",
@@ -141,22 +141,22 @@ var attributeIconAliases = map[string]string{
 
 	// Armor / durability — all share the armor icon since MBII doesn't
 	// ship dedicated variants.
-	"MB_ATT_ARMOUR":          "icon_stats_armor",
-	"MB_ATT_BLAST_ARMOUR":    "icon_stats_armor",
+	"MB_ATT_ARMOUR":           "icon_stats_armor",
+	"MB_ATT_BLAST_ARMOUR":     "icon_stats_armor",
 	"MB_ATT_MAGNETIC_PLATING": "icon_stats_armor",
-	"MB_ATT_CORTOSIS":        "icon_stats_armor",
-	"MB_ATT_DURABILITY":      "icon_stats_armor",
-	"MB_ATT_HULL_STRENGTH":   "icon_stats_armor",
-	"MB_ATT_DEKA_SHIELD":     "icon_stats_armor",
-	"MB_ATT_DEKA_HULL":       "icon_stats_armor",
-	"MB_ATT_WOOKIE_HEALTH":   "icon_stats_health",
+	"MB_ATT_CORTOSIS":         "icon_stats_armor",
+	"MB_ATT_DURABILITY":       "icon_stats_armor",
+	"MB_ATT_HULL_STRENGTH":    "icon_stats_armor",
+	"MB_ATT_DEKA_SHIELD":      "icon_stats_armor",
+	"MB_ATT_DEKA_HULL":        "icon_stats_armor",
+	"MB_ATT_WOOKIE_HEALTH":    "icon_stats_health",
 
 	// Health / bacta / healing.
-	"MB_ATT_HEALTH":     "icon_stats_health",
-	"MB_ATT_HEALING":    "i_icon_bacta",
-	"MB_ATT_MEDI_PACK":  "i_icon_medkit",
-	"MB_ATT_STIMPACK":   "i_icon_medkit",
-	"MB_ATT_AMMO_PACK":  "i_icon_medkit",
+	"MB_ATT_HEALTH":    "icon_stats_health",
+	"MB_ATT_HEALING":   "i_icon_bacta",
+	"MB_ATT_MEDI_PACK": "i_icon_medkit",
+	"MB_ATT_STIMPACK":  "i_icon_medkit",
+	"MB_ATT_AMMO_PACK": "i_icon_medkit",
 
 	// Speed / movement.
 	"MB_ATT_BASESPEED": "icon_stats_movespeed",
@@ -164,18 +164,18 @@ var attributeIconAliases = map[string]string{
 	"MB_ATT_DEXTERITY": "icon_stats_movespeed",
 
 	// Jetpack / fuel.
-	"MB_ATT_FUEL":         "icon_stats_fuel",
-	"MB_ATT_FUELREGEN":    "icon_stats_fuel",
-	"MB_ATT_JETPACK":      "icon_stats_fuel",
-	"MB_ATT_JET_JUMPS":    "i_icon_jetpack",
+	"MB_ATT_FUEL":           "icon_stats_fuel",
+	"MB_ATT_FUELREGEN":      "icon_stats_fuel",
+	"MB_ATT_JETPACK":        "icon_stats_fuel",
+	"MB_ATT_JET_JUMPS":      "i_icon_jetpack",
 	"MB_ATT_ASTRO_JUMPJETS": "i_icon_jetpack",
 
 	// Pool / battery / energy.
-	"MB_ATT_BATTERY":           "i_icon_battery",
-	"MB_ATT_FP_BATTERY":        "i_icon_battery",
-	"MB_ATT_SBD_BATTERY":       "i_icon_battery",
-	"MB_ATT_FORCEPOOL":         "i_icon_battery",
-	"MB_ATT_FORCE_REGEN":       "i_icon_battery",
+	"MB_ATT_BATTERY":               "i_icon_battery",
+	"MB_ATT_FP_BATTERY":            "i_icon_battery",
+	"MB_ATT_SBD_BATTERY":           "i_icon_battery",
+	"MB_ATT_FORCEPOOL":             "i_icon_battery",
+	"MB_ATT_FORCE_REGEN":           "i_icon_battery",
 	"MB_ATT_RESOURCE_REGEN_AMOUNT": "i_icon_battery",
 	"MB_ATT_RESOURCE_REGEN_RATE":   "i_icon_battery",
 	"MB_ATT_RESOURCE_REGEN_CAP":    "i_icon_battery",
@@ -193,58 +193,58 @@ var attributeIconAliases = map[string]string{
 	"MB_ATT_BLOCK_REGEN_CAP":     "icon_stats_armor",
 
 	// Inventory items / class specials with embedded icons.
-	"MB_ATT_CLOAK":             "i_icon_cloak",
-	"MB_ATT_SPY_DISGUISE":      "i_icon_cloak",
-	"MB_ATT_BINOCULARS":        "i_icon_goggles",
-	"MB_ATT_SBD_ZOOM":          "i_icon_zoom",
-	"MB_ATT_SHIELD":            "i_icon_shieldwall",
-	"MB_ATT_SHIELD_PROJ":       "i_icon_shieldwall",
-	"MB_ATT_SHIELD_NADE":       "i_icon_shieldwall",
-	"MB_ATT_FORCEFIELD":        "i_icon_shieldwall",
-	"MB_ATT_PSHIELD":           "i_icon_shieldwall",
-	"MB_ATT_PERSONAL_SHIELD":   "i_icon_shieldwall",
-	"MB_ATT_SEEKER":            "i_icon_seeker",
-	"MB_ATT_BASESEEKER":        "i_icon_seeker",
-	"MB_ATT_SENTRY_GUN":        "i_icon_sentrygun",
-	"MB_ATT_EWEB":              "i_icon_eweb",
-	"MB_ATT_BACTA":             "i_icon_bacta",
-	"MB_ATT_BACTA_BIG":         "i_icon_big_bacta",
-	"MB_ATT_BIG_BACTA":         "i_icon_big_bacta",
-	"MB_ATT_BACTA_BOMB":        "i_icon_bacta",
-	"MB_ATT_PSD":               "i_icon_psd",
+	"MB_ATT_CLOAK":                   "i_icon_cloak",
+	"MB_ATT_SPY_DISGUISE":            "i_icon_cloak",
+	"MB_ATT_BINOCULARS":              "i_icon_goggles",
+	"MB_ATT_SBD_ZOOM":                "i_icon_zoom",
+	"MB_ATT_SHIELD":                  "i_icon_shieldwall",
+	"MB_ATT_SHIELD_PROJ":             "i_icon_shieldwall",
+	"MB_ATT_SHIELD_NADE":             "i_icon_shieldwall",
+	"MB_ATT_FORCEFIELD":              "i_icon_shieldwall",
+	"MB_ATT_PSHIELD":                 "i_icon_shieldwall",
+	"MB_ATT_PERSONAL_SHIELD":         "i_icon_shieldwall",
+	"MB_ATT_SEEKER":                  "i_icon_seeker",
+	"MB_ATT_BASESEEKER":              "i_icon_seeker",
+	"MB_ATT_SENTRY_GUN":              "i_icon_sentrygun",
+	"MB_ATT_EWEB":                    "i_icon_eweb",
+	"MB_ATT_BACTA":                   "i_icon_bacta",
+	"MB_ATT_BACTA_BIG":               "i_icon_big_bacta",
+	"MB_ATT_BIG_BACTA":               "i_icon_big_bacta",
+	"MB_ATT_BACTA_BOMB":              "i_icon_bacta",
+	"MB_ATT_PSD":                     "i_icon_psd",
 	"MB_ATT_PERSONAL_DEFENSE_SHIELD": "i_icon_psd",
-	"MB_ATT_GOODIE_KEY":        "i_icon_goodie_key",
-	"MB_ATT_SECURITY_KEY":      "i_icon_security_key",
-	"MB_ATT_SECURITY_INTERFACE": "i_icon_security_key",
+	"MB_ATT_GOODIE_KEY":              "i_icon_goodie_key",
+	"MB_ATT_SECURITY_KEY":            "i_icon_security_key",
+	"MB_ATT_SECURITY_INTERFACE":      "i_icon_security_key",
 
 	// HI_* holdables direct icon aliases
-	"HI_MEDPAC":        "i_icon_bacta",
-	"HI_MEDPAC_BIG":    "i_icon_big_bacta",
-	"HI_BINOCULARS":    "i_icon_binoculars",
-	"HI_SENTRY_GUN":    "i_icon_sentrygun",
-	"HI_SEEKER":        "i_icon_seeker",
-	"HI_SHIELD":        "i_icon_shieldwall",
-	"HI_CLOAK":         "i_icon_cloak",
-	"HI_EWEB":          "i_icon_eweb",
-	"HI_HEALTHDISP":    "i_icon_healthdisp",
-	"HI_AMMODISP":      "i_icon_ammodisp",
-	"HI_STIMPACK":      "i_icon_bacta",
+	"HI_MEDPAC":         "i_icon_bacta",
+	"HI_MEDPAC_BIG":     "i_icon_big_bacta",
+	"HI_BINOCULARS":     "i_icon_binoculars",
+	"HI_SENTRY_GUN":     "i_icon_sentrygun",
+	"HI_SEEKER":         "i_icon_seeker",
+	"HI_SHIELD":         "i_icon_shieldwall",
+	"HI_CLOAK":          "i_icon_cloak",
+	"HI_EWEB":           "i_icon_eweb",
+	"HI_HEALTHDISP":     "i_icon_healthdisp",
+	"HI_AMMODISP":       "i_icon_ammodisp",
+	"HI_STIMPACK":       "i_icon_bacta",
 	"EAS_HI_MEDPAC_BIG": "i_icon_big_bacta",
 	"EAS_HI_MEDPAC":     "i_icon_bacta",
 
 	// More weapon-attribute mappings the original table missed.
-	"MB_ATT_REPEATER":         "icon_stats_concblob",
-	"MB_ATT_REPEATER_NADES":   "icon_stats_concblob",
-	"MB_ATT_FLECHETTE":        "icon_stats_concblob",
-	"MB_ATT_FLECHETTE_NADES":  "icon_stats_concblob",
-	"MB_ATT_MICRO_GRENADES":   "icon_stats_concblob",
-	"MB_ATT_AMBAN":            "icon_stats_t21",
-	"MB_ATT_BRYAR_OLD":        "icon_stats_pistol",
-	"MB_ATT_CR2":              "icon_stats_pistol",
-	"MB_ATT_DLT19":            "icon_stats_t21",
-	"MB_ATT_E_22":             "icon_stats_e11",
-	"MB_ATT_DC_CARBINE":       "icon_stats_clonerifle",
-	"MB_ATT_TRAD_BOWCASTER":   "icon_stats_bowcaster",
+	"MB_ATT_REPEATER":          "icon_stats_concblob",
+	"MB_ATT_REPEATER_NADES":    "icon_stats_concblob",
+	"MB_ATT_FLECHETTE":         "icon_stats_concblob",
+	"MB_ATT_FLECHETTE_NADES":   "icon_stats_concblob",
+	"MB_ATT_MICRO_GRENADES":    "icon_stats_concblob",
+	"MB_ATT_AMBAN":             "icon_stats_t21",
+	"MB_ATT_BRYAR_OLD":         "icon_stats_pistol",
+	"MB_ATT_CR2":               "icon_stats_pistol",
+	"MB_ATT_DLT19":             "icon_stats_t21",
+	"MB_ATT_E_22":              "icon_stats_e11",
+	"MB_ATT_DC_CARBINE":        "icon_stats_clonerifle",
+	"MB_ATT_TRAD_BOWCASTER":    "icon_stats_bowcaster",
 	"MB_ATT_THROWER":           "icon_stats_fire",
 	"MB_ATT_THROWER_FLAME":     "icon_stats_fire",
 	"MB_ATT_THROWER_ICE":       "icon_stats_fire",
@@ -253,29 +253,29 @@ var attributeIconAliases = map[string]string{
 	"MB_ATT_THROWER_POISON":    "icon_stats_fire",
 	"MB_ATT_WPFLAMETHROWER":    "icon_stats_fire",
 	"MB_ATT_MINIGUN":           "icon_stats_e11",
-	"MB_ATT_SHOTGUN":          "icon_stats_e11",
-	"MB_ATT_UGL":              "icon_stats_concblob",
-	"MB_ATT_MGL":              "icon_stats_concblob",
-	"MB_ATT_UGL_BURST":        "icon_stats_concblob",
-	"MB_ATT_UGL_IMPACT":       "icon_stats_concblob",
-	"MB_ATT_MGL_BURST":        "icon_stats_concblob",
-	"MB_ATT_MGL_IMPACT":       "icon_stats_concblob",
-	"MB_ATT_UGL_BURST_MIXED":  "icon_stats_concblob",
-	"MB_ATT_DET_PACK":         "icon_stats_thermal",
-	"MB_ATT_TRIP_MINES":       "icon_stats_thermal",
-	"MB_ATT_STICKY_BOMBS":     "icon_stats_thermal",
-	"MB_ATT_REMOTE_DETONATE":  "icon_stats_thermal",
-	"MB_ATT_WHISTLINGBIRD":    "icon_stats_sonic",
-	"MB_ATT_KNIFE":            "icon_stats_pdart",
-	"MB_ATT_SWORD":            "icon_stats_pdart",
-	"MB_ATT_ELECTRO_STAFF":    "icon_stats_emp",
-	"MB_ATT_STUN_BATON":       "icon_stats_emp",
-	"MB_ATT_DRONE":            "i_icon_seeker",
-	"MB_ATT_FLAMETHROWER":     "icon_stats_fire",
-	"MB_ATT_BESKAR":           "icon_stats_armor",
-	"MB_ATT_FIREPOWER":        "icon_stats_e11",
-	"MB_ATT_QUICKTHROW":       "icon_stats_thermal",
-	"MB_ATT_QUICKDRAW":        "icon_stats_pistol",
+	"MB_ATT_SHOTGUN":           "icon_stats_e11",
+	"MB_ATT_UGL":               "icon_stats_concblob",
+	"MB_ATT_MGL":               "icon_stats_concblob",
+	"MB_ATT_UGL_BURST":         "icon_stats_concblob",
+	"MB_ATT_UGL_IMPACT":        "icon_stats_concblob",
+	"MB_ATT_MGL_BURST":         "icon_stats_concblob",
+	"MB_ATT_MGL_IMPACT":        "icon_stats_concblob",
+	"MB_ATT_UGL_BURST_MIXED":   "icon_stats_concblob",
+	"MB_ATT_DET_PACK":          "icon_stats_thermal",
+	"MB_ATT_TRIP_MINES":        "icon_stats_thermal",
+	"MB_ATT_STICKY_BOMBS":      "icon_stats_thermal",
+	"MB_ATT_REMOTE_DETONATE":   "icon_stats_thermal",
+	"MB_ATT_WHISTLINGBIRD":     "icon_stats_sonic",
+	"MB_ATT_KNIFE":             "icon_stats_pdart",
+	"MB_ATT_SWORD":             "icon_stats_pdart",
+	"MB_ATT_ELECTRO_STAFF":     "icon_stats_emp",
+	"MB_ATT_STUN_BATON":        "icon_stats_emp",
+	"MB_ATT_DRONE":             "i_icon_seeker",
+	"MB_ATT_FLAMETHROWER":      "icon_stats_fire",
+	"MB_ATT_BESKAR":            "icon_stats_armor",
+	"MB_ATT_FIREPOWER":         "icon_stats_e11",
+	"MB_ATT_QUICKTHROW":        "icon_stats_thermal",
+	"MB_ATT_QUICKDRAW":         "icon_stats_pistol",
 }
 
 // forceIconAliases maps MB_ATT_FP_* IDs to the basename of the icon
@@ -378,14 +378,14 @@ func (ir *IconResolver) ResolveClassIcon(model, skin, customShader string) strin
 //
 //   - MBAssets1..4.pk3      core gameplay + shaders (incl. shaders/<model>.shader)
 //   - FAMBModels.pk3        FA models with their portraits — most
-//                           `models/players/<model>/mb2_icon_<skin>.jpg`
-//                           textures live here
+//     `models/players/<model>/mb2_icon_<skin>.jpg`
+//     textures live here
 //   - mb2_pb_assets*.pk3,   per-mode asset packs that may add models
 //     mb2_pbr_*, mb2_um_*,  + portraits the FA core doesn't ship
 //     mb2_cmp_*, map PK3s
 //   - TextAssets/           NO IMAGES — only `.mbch` / `.sab` / `.veh`
-//                           source. CI builds these into PK3s with
-//                           the same name scheme.
+//     source. CI builds these into PK3s with
+//     the same name scheme.
 //
 // Foundry's VFS unions all PK3s under `gamedata/MBII/` (and
 // gamedata/, gamedata/base/) plus the TextAssets directory, so a
@@ -402,12 +402,12 @@ func (ir *IconResolver) ResolveClassIcon(model, skin, customShader string) strin
 //
 // Resolution order:
 //
-//   1. Explicit `uishader` field — author's stated intent.
-//   2. `models/players/<model>/mb2_icon_<skin>` — the canonical pattern.
-//   3. `models/players/<model>/icon_<skin>`     — older content variant.
-//   4. `models/players/<model>/<skin>`          — bare-skin filename.
-//   5. `models/players/<model>/mb2_icon_default` — fall-through to default.
-//   6. `models/players/<model>/icon_default`    — older default fallback.
+//  1. Explicit `uishader` field — author's stated intent.
+//  2. `models/players/<model>/mb2_icon_<skin>` — the canonical pattern.
+//  3. `models/players/<model>/icon_<skin>`     — older content variant.
+//  4. `models/players/<model>/<skin>`          — bare-skin filename.
+//  5. `models/players/<model>/mb2_icon_default` — fall-through to default.
+//  6. `models/players/<model>/icon_default`    — older default fallback.
 //
 // All paths normalised to lowercase since the VFS index keys are
 // stored lowercased. If every candidate misses (the author shipped
@@ -457,11 +457,8 @@ func (ir *IconResolver) ResolveClassIconCandidates(model, skin, customShader str
 func (ir *IconResolver) checkExists(basePath string) bool {
 	extensions := []string{".jpg", ".tga", ".png", ".shader"}
 	for _, ext := range extensions {
-		// This requires VFS to support 'Exists' check efficiently
-		// For now, we assume VFS Index has keys.
-		// NOTE: VFS keys are usually lower case in our implementation
 		path := strings.ToLower(basePath + ext)
-		if _, ok := ir.vfs.Index[path]; ok {
+		if ir.vfs.Lookup(path) != nil {
 			return true
 		}
 	}

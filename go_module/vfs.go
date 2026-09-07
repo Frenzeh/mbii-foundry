@@ -2,6 +2,7 @@ package main
 
 import (
 	"archive/zip"
+	"image"
 	"io"
 	"io/fs"
 	"os"
@@ -20,6 +21,7 @@ type AssetSource struct {
 	PK3Path     string // Path to PK3 file (empty if loose file)
 	Size        int64
 	ModTime     time.Time
+	CRC32       uint32 // PK3 content identity, including replacements with the same timestamp
 	IsDirectory bool
 }
 
@@ -32,7 +34,9 @@ type VirtualFileSystem struct {
 	GamedataPath string
 	TextAssets   string
 
-	mu sync.RWMutex
+	mu         sync.RWMutex
+	generation uint64
+	gameIcons  map[string]image.Image
 }
 
 func NewVirtualFileSystem(gamedata, textAssets string) *VirtualFileSystem {
@@ -89,6 +93,8 @@ func (vfs *VirtualFileSystem) Refresh() error {
 	vfs.Index = staging.Index
 	vfs.Directories = staging.Directories
 	vfs.Sources = staging.Sources
+	vfs.generation++
+	vfs.gameIcons = nil
 	vfs.mu.Unlock()
 	return nil
 }
@@ -173,6 +179,7 @@ func (vfs *VirtualFileSystem) indexPK3(path string) {
 			PK3Path:     path,
 			Size:        int64(f.UncompressedSize64),
 			ModTime:     f.Modified,
+			CRC32:       f.CRC32,
 			IsDirectory: false,
 		}
 	}
@@ -267,6 +274,14 @@ func (vfs *VirtualFileSystem) ensureParentDirs(dir string) {
 	}
 
 	vfs.ensureParentDirs(parent)
+}
+
+// Lookup returns the current winning source without exposing the mutable index.
+func (vfs *VirtualFileSystem) Lookup(path string) *AssetSource {
+	norm := strings.ToLower(strings.ReplaceAll(path, "\\", "/"))
+	vfs.mu.RLock()
+	defer vfs.mu.RUnlock()
+	return vfs.Index[norm]
 }
 
 // ReadFile opens a file from the VFS (PK3 or local)

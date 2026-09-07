@@ -16,13 +16,13 @@
 
 > A visual content editor for **Movie Battles II**. Shape classes, sabers, and vehicles without wrestling raw config syntax.
 
-**Status:** Veeery alpha — works end-to-end for `.mbch` editing, other formats rolling in. Rough edges expected; feedback needed.
+**Status:** Alpha — `.mbch` is the primary editor, with known save and round-trip safety limitations. Work on copies of important files. See the [Foundry audit](docs/FOUNDRY_AUDIT.md) for verified findings, current capabilities, and prioritized improvements.
 
 ---
 
 ## What it does
 
-MBII Foundry is a standalone desktop app that replaces hand-editing MBII's text-based content files. Open a class file, tick boxes for weapons and force powers, slide attribute levels — save back to a clean, valid file every time.
+MBII Foundry is a standalone desktop app for visual editing of MBII's text-based content files. Open a class file, choose weapons and force powers, and adjust attribute levels. Saving regenerates the file; it does not currently preserve every original comment, field, or additional definition block.
 
 | File type | Editor | Notes |
 |---|---|---|
@@ -35,7 +35,7 @@ Plus:
 
 - **Asset browser** — peek at models/textures/sounds directly from PK3s. (wip)
 - **Modpack packager** — bundle your edits into a loadable pk3. (wip)
-- **Validation** — prevents the common "typo in enum → crash on map load" class of bug.
+- **Validation** — checks selected character, saber, and size constraints. It is advisory and not a guarantee that a file is safe or valid for every engine revision.
 
 ## Who it's for
 
@@ -49,7 +49,7 @@ You do not need to be a programmer. You do not need any AI assistant or backend 
 
 There are two install paths. **Most people want the Easy Path.** Only use "From Source" if you're on the bleeding edge or there's no prebuilt release for your platform yet.
 
-### Easy Path — prebuilt download (not yet available)
+### Easy Path — prebuilt downloads, when available
 
 1. Open the [Releases page](https://github.com/Frenzeh/mbii-foundry/releases).
 2. Find the latest release → scroll to **Assets**.
@@ -59,18 +59,18 @@ There are two install paths. **Most people want the Easy Path.** Only use "From 
    - Linux → `mbii-foundry-linux.tar.gz` → extract → `./mbii-foundry`.
 4. Launch. First run will ask for your **MBII gamedata path** (the folder with the `MBII` subfolder inside your Jedi Academy install). Point it there.
 
-> **Status note:** MBII Foundry is alpha; no prebuilt Releases exist yet. Until one does, use "From Source" below.
+> **Availability note:** Check the Releases page for a prebuilt download for your platform; otherwise use "From Source" below.
 
 ### From Source — for alpha testers and contributors
 
-You need **Go 1.21 or newer** installed. Go is free and fast to set up.
+You need **Go 1.24 or newer** installed, matching the module and CI configuration.
 
 **Install Go (one-time):**
 - **macOS:** `brew install go` (or download from [go.dev/dl](https://go.dev/dl/))
 - **Windows:** download the MSI from [go.dev/dl](https://go.dev/dl/) and run it
 - **Linux (Ubuntu/Debian):** `sudo apt install golang` (Fedora/Arch users already know the drill)
 
-Verify: open a terminal and run `go version`. If it prints a version, you're set.
+Verify: open a terminal and run `go version`. Confirm it reports Go 1.24 or newer.
 
 **Build and launch MBII Foundry:**
 
@@ -83,7 +83,7 @@ cd mbii-foundry
 
 On **Windows**, use the same commands from a Git Bash or WSL terminal. If you're in PowerShell/cmd, run `cd go_module && go build -o mbii-foundry.exe` then double-click `mbii-foundry.exe`.
 
-**Want a double-clickable Mac app?** After `setup_mbii-foundry.sh`, run `./build_app.sh`. You'll get `MBII Foundry.app` you can drag into Applications.
+**Want a double-clickable Mac app?** `./build_app.sh` builds the executable, then directly replaces `/Applications/MBII Foundry.app`. Preserve your existing bundle first; this script does not stage or retain a rollback copy. See the [packaging and setup audit](docs/FOUNDRY_AUDIT.md#setup-packaging-and-portability).
 
 ### Update to the latest version
 
@@ -106,8 +106,8 @@ MBII Foundry edits files; it doesn't ship with any. The `.mbch` / `.sab` / `.veh
 
 ### Getting help
 
-- App crashes on launch? Check the log at `go_module/mbii-foundry.log` (or `mbii-foundry.log` next to the binary).
-- Build failed? Re-read the Go version message (`go version` must print 1.21+) and file an [issue](https://github.com/Frenzeh/mbii-foundry/issues) with the error output.
+- App crashes on launch? Check `mbii-foundry.log` in the operating system's temporary directory (`os.TempDir()`), not beside the binary. Remove private paths and credentials before sharing logs.
+- Build failed? Confirm `go version` reports 1.24 or newer, then file an issue with the sanitized error output.
 - Gamedata path? You're looking for the folder that contains `base/` and `MBII/` subfolders — that's your Jedi Academy `GameData` install directory.
 
 ## Contributing

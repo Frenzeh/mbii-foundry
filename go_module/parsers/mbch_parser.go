@@ -75,7 +75,7 @@ func drainVariants(sb *strings.Builder, fields map[string]string, base string) {
 // ParseWeaponOverrides loop (bg_saga.c:2126-2253) stops scanning at the
 // first gap, so renumbering would silently change what the game loads.
 type WeaponInfo struct {
-	astName string
+	astName            string
 	WeaponToReplace    string
 	WeaponBasedOff     string
 	NewWorldModel      string
@@ -105,7 +105,7 @@ type WeaponInfo struct {
 // ForceInfo represents a force power override block. astName mirrors
 // WeaponInfo.astName (e.g. "forceinfo1").
 type ForceInfo struct {
-	astName string
+	astName        string
 	ForceToReplace string
 	Icon           string
 	ForcePowerName string
@@ -116,7 +116,7 @@ type ForceInfo struct {
 
 // MBCHCharacter represents the parsed data of a .mbch file
 type MBCHCharacter struct {
-	ctx *sourceContext
+	ctx               *sourceContext
 	Name              string
 	MBClass           string
 	Model             string
@@ -179,8 +179,8 @@ type MBCHCharacter struct {
 	// (otherwise they leak into the alphabetical ExtraFields tail
 	// and read oddly in the generated file).
 	HasCustomSpec   int
-	IsOnlyOneSpec   int       // bg_saga.c:2367 — point investment cannot span specs
-	DefaultSpec     int       // bg_saga.c:2370 — initial visible spec tab (1-3)
+	IsOnlyOneSpec   int // bg_saga.c:2367 — point investment cannot span specs
+	DefaultSpec     int // bg_saga.c:2370 — initial visible spec tab (1-3)
 	CustomSpecNames [3]string
 	CustomSpecIcons [3]string
 	CustomSpecDescs [3]string // bg_saga.c:2375 — tooltip-style spec description
@@ -208,15 +208,6 @@ func NewMBCHCharacter() *MBCHCharacter {
 }
 
 // ParseMBCH parses the content of an MBCH file
-
-
-
-
-
-
-
-
-
 
 // GenerateMBCH generates the string content for an MBCH file
 func GenerateMBCH(char *MBCHCharacter) (string, error) {
@@ -511,18 +502,19 @@ func GenerateMBCH(char *MBCHCharacter) (string, error) {
 	return sb.String(), nil
 }
 
-
 func ParseMBCH(content string) (*MBCHCharacter, error) {
 	tokens, err := Lex(content)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	doc := parseAST(tokens)
-	
+
 	char := NewMBCHCharacter()
 	char.ctx = &sourceContext{doc: doc}
-	
+
 	for i := 0; i < len(doc.Nodes); i++ {
 		if tok, ok := doc.Nodes[i].(*ASTToken); ok && tok.Type == TokenString && strings.ToLower(unquote(tok.Text)) == "description" {
-			for j := i+1; j < len(doc.Nodes); j++ {
+			for j := i + 1; j < len(doc.Nodes); j++ {
 				if vTok, ok := doc.Nodes[j].(*ASTToken); ok {
 					if vTok.Type == TokenWhitespace || vTok.Type == TokenComment {
 						continue
@@ -545,7 +537,9 @@ func ParseMBCH(content string) (*MBCHCharacter, error) {
 						break
 					}
 				}
-				if _, ok := doc.Nodes[j].(*ASTBlock); ok { break }
+				if _, ok := doc.Nodes[j].(*ASTBlock); ok {
+					break
+				}
 			}
 			break
 		}
@@ -642,15 +636,38 @@ func populateClassInfo(b *ASTBlock, char *MBCHCharacter) {
 	char.RankAttributes = make(map[string]string)
 	typedKeys := make(map[string]bool)
 	markTyped := func(k string) { typedKeys[strings.ToLower(k)] = true }
-	markTyped("name"); markTyped("mbclass"); markTyped("model"); markTyped("skin")
-	markTyped("uishader"); markTyped("soundset"); markTyped("weapons"); markTyped("attributes")
-	markTyped("forcepowers"); markTyped("saberstyle"); markTyped("classflags")
-	markTyped("maxhealth"); markTyped("maxarmor"); markTyped("forcepool"); markTyped("forceregen")
-	markTyped("speed"); markTyped("apmultiplier"); markTyped("bpmultiplier"); markTyped("csmultiplier")
-	markTyped("asmultiplier"); markTyped("saber1"); markTyped("saber2"); markTyped("sabercolor")
-	markTyped("saber2color"); markTyped("classnumberlimit"); markTyped("respawncustomtime")
-	markTyped("extralives"); markTyped("iscustombuild"); markTyped("mbpoints")
-	markTyped("isonlyonespec"); markTyped("defaultspec"); markTyped("hascustomspec")
+	markTyped("name")
+	markTyped("mbclass")
+	markTyped("model")
+	markTyped("skin")
+	markTyped("uishader")
+	markTyped("soundset")
+	markTyped("weapons")
+	markTyped("attributes")
+	markTyped("forcepowers")
+	markTyped("saberstyle")
+	markTyped("classflags")
+	markTyped("maxhealth")
+	markTyped("maxarmor")
+	markTyped("forcepool")
+	markTyped("forceregen")
+	markTyped("speed")
+	markTyped("apmultiplier")
+	markTyped("bpmultiplier")
+	markTyped("csmultiplier")
+	markTyped("asmultiplier")
+	markTyped("saber1")
+	markTyped("saber2")
+	markTyped("sabercolor")
+	markTyped("saber2color")
+	markTyped("classnumberlimit")
+	markTyped("respawncustomtime")
+	markTyped("extralives")
+	markTyped("iscustombuild")
+	markTyped("mbpoints")
+	markTyped("isonlyonespec")
+	markTyped("defaultspec")
+	markTyped("hascustomspec")
 	// description is synced at file top level (SGPV reads it from the
 	// file buffer, bg_saga.c:2383 — never inside ClassInfo). Excluding it
 	// here keeps a stray in-block description from being duplicated into
@@ -668,55 +685,133 @@ func populateClassInfo(b *ASTBlock, char *MBCHCharacter) {
 		markTyped(fmt.Sprintf("c_att_descs_%d", i))
 	}
 	// RankAttributes are populated below and dynamically typed, so they don't need marking here yet.
-	
-	if val, ok := getFieldValueSGPV(b, "name"); ok { char.Name = val }
-	if val, ok := getFieldValueSGPV(b, "mbclass"); ok { char.MBClass = val }
-	if val, ok := getFieldValueSGPV(b, "model"); ok { char.Model = val }
-	if val, ok := getFieldValueSGPV(b, "skin"); ok { char.Skin = val }
-	if val, ok := getFieldValueSGPV(b, "uishader"); ok { char.UIShader = val }
-	if val, ok := getFieldValueSGPV(b, "soundset"); ok { char.Soundset = val }
-	if val, ok := getFieldValueSGPV(b, "weapons"); ok { char.Weapons = val }
-	if val, ok := getFieldValueSGPV(b, "attributes"); ok { char.Attributes = val }
-	if val, ok := getFieldValueSGPV(b, "forcepowers"); ok { char.ForcePowers = val }
-	if val, ok := getFieldValueSGPV(b, "saberstyle"); ok { char.SaberStyle = val }
-	if val, ok := getFieldValueSGPV(b, "classflags"); ok { char.ClassFlags = val }
-	if val, ok := getFieldValueSGPV(b, "maxhealth"); ok { char.MaxHealth, _ = strconv.Atoi(val) }
-	if val, ok := getFieldValueSGPV(b, "maxarmor"); ok { char.MaxArmor, _ = strconv.Atoi(val) }
-	if val, ok := getFieldValueSGPV(b, "forcepool"); ok { char.ForcePool, _ = strconv.Atoi(val) }
-	if val, ok := getFieldValueSGPV(b, "forceregen"); ok { char.ForceRegen, _ = strconv.ParseFloat(val, 64) }
-	if val, ok := getFieldValueSGPV(b, "speed"); ok { char.Speed, _ = strconv.ParseFloat(val, 64) }
-	if val, ok := getFieldValueSGPV(b, "apmultiplier"); ok { char.APMultiplier, _ = strconv.ParseFloat(val, 64) }
-	if val, ok := getFieldValueSGPV(b, "bpmultiplier"); ok { char.BPMultiplier, _ = strconv.ParseFloat(val, 64) }
-	if val, ok := getFieldValueSGPV(b, "csmultiplier"); ok { char.CSMultiplier, _ = strconv.ParseFloat(val, 64) }
-	if val, ok := getFieldValueSGPV(b, "asmultiplier"); ok { char.ASMultiplier, _ = strconv.ParseFloat(val, 64) }
-	if val, ok := getFieldValueSGPV(b, "saber1"); ok { char.Saber1 = val }
-	if val, ok := getFieldValueSGPV(b, "saber2"); ok { char.Saber2 = val }
-	if val, ok := getFieldValueSGPV(b, "sabercolor"); ok { char.SaberColor, _ = strconv.Atoi(val) }
-	if val, ok := getFieldValueSGPV(b, "saber2color"); ok { char.Saber2Color, _ = strconv.Atoi(val) }
-	if val, ok := getFieldValueSGPV(b, "classnumberlimit"); ok { char.ClassNumberLimit, _ = strconv.Atoi(val) }
-	if val, ok := getFieldValueSGPV(b, "respawncustomtime"); ok { char.RespawnCustomTime, _ = strconv.Atoi(val) }
-	if val, ok := getFieldValueSGPV(b, "extralives"); ok { char.ExtraLives, _ = strconv.Atoi(val) }
-	if val, ok := getFieldValueSGPV(b, "iscustombuild"); ok { char.IsCustomBuild, _ = strconv.Atoi(val) }
-	if val, ok := getFieldValueSGPV(b, "mbpoints"); ok { char.MBPoints, _ = strconv.Atoi(val) }
-	if val, ok := getFieldValueSGPV(b, "isonlyonespec"); ok { char.IsOnlyOneSpec, _ = strconv.Atoi(val) }
-	if val, ok := getFieldValueSGPV(b, "defaultspec"); ok { char.DefaultSpec, _ = strconv.Atoi(val) }
-	if val, ok := getFieldValueSGPV(b, "hascustomspec"); ok { char.HasCustomSpec, _ = strconv.Atoi(val) }
-	
+
+	if val, ok := getFieldValueSGPV(b, "name"); ok {
+		char.Name = val
+	}
+	if val, ok := getFieldValueSGPV(b, "mbclass"); ok {
+		char.MBClass = val
+	}
+	if val, ok := getFieldValueSGPV(b, "model"); ok {
+		char.Model = val
+	}
+	if val, ok := getFieldValueSGPV(b, "skin"); ok {
+		char.Skin = val
+	}
+	if val, ok := getFieldValueSGPV(b, "uishader"); ok {
+		char.UIShader = val
+	}
+	if val, ok := getFieldValueSGPV(b, "soundset"); ok {
+		char.Soundset = val
+	}
+	if val, ok := getFieldValueSGPV(b, "weapons"); ok {
+		char.Weapons = val
+	}
+	if val, ok := getFieldValueSGPV(b, "attributes"); ok {
+		char.Attributes = val
+	}
+	if val, ok := getFieldValueSGPV(b, "forcepowers"); ok {
+		char.ForcePowers = val
+	}
+	if val, ok := getFieldValueSGPV(b, "saberstyle"); ok {
+		char.SaberStyle = val
+	}
+	if val, ok := getFieldValueSGPV(b, "classflags"); ok {
+		char.ClassFlags = val
+	}
+	if val, ok := getFieldValueSGPV(b, "maxhealth"); ok {
+		char.MaxHealth, _ = strconv.Atoi(val)
+	}
+	if val, ok := getFieldValueSGPV(b, "maxarmor"); ok {
+		char.MaxArmor, _ = strconv.Atoi(val)
+	}
+	if val, ok := getFieldValueSGPV(b, "forcepool"); ok {
+		char.ForcePool, _ = strconv.Atoi(val)
+	}
+	if val, ok := getFieldValueSGPV(b, "forceregen"); ok {
+		char.ForceRegen, _ = strconv.ParseFloat(val, 64)
+	}
+	if val, ok := getFieldValueSGPV(b, "speed"); ok {
+		char.Speed, _ = strconv.ParseFloat(val, 64)
+	}
+	if val, ok := getFieldValueSGPV(b, "apmultiplier"); ok {
+		char.APMultiplier, _ = strconv.ParseFloat(val, 64)
+	}
+	if val, ok := getFieldValueSGPV(b, "bpmultiplier"); ok {
+		char.BPMultiplier, _ = strconv.ParseFloat(val, 64)
+	}
+	if val, ok := getFieldValueSGPV(b, "csmultiplier"); ok {
+		char.CSMultiplier, _ = strconv.ParseFloat(val, 64)
+	}
+	if val, ok := getFieldValueSGPV(b, "asmultiplier"); ok {
+		char.ASMultiplier, _ = strconv.ParseFloat(val, 64)
+	}
+	if val, ok := getFieldValueSGPV(b, "saber1"); ok {
+		char.Saber1 = val
+	}
+	if val, ok := getFieldValueSGPV(b, "saber2"); ok {
+		char.Saber2 = val
+	}
+	if val, ok := getFieldValueSGPV(b, "sabercolor"); ok {
+		char.SaberColor, _ = strconv.Atoi(val)
+	}
+	if val, ok := getFieldValueSGPV(b, "saber2color"); ok {
+		char.Saber2Color, _ = strconv.Atoi(val)
+	}
+	if val, ok := getFieldValueSGPV(b, "classnumberlimit"); ok {
+		char.ClassNumberLimit, _ = strconv.Atoi(val)
+	}
+	if val, ok := getFieldValueSGPV(b, "respawncustomtime"); ok {
+		char.RespawnCustomTime, _ = strconv.Atoi(val)
+	}
+	if val, ok := getFieldValueSGPV(b, "extralives"); ok {
+		char.ExtraLives, _ = strconv.Atoi(val)
+	}
+	if val, ok := getFieldValueSGPV(b, "iscustombuild"); ok {
+		char.IsCustomBuild, _ = strconv.Atoi(val)
+	}
+	if val, ok := getFieldValueSGPV(b, "mbpoints"); ok {
+		char.MBPoints, _ = strconv.Atoi(val)
+	}
+	if val, ok := getFieldValueSGPV(b, "isonlyonespec"); ok {
+		char.IsOnlyOneSpec, _ = strconv.Atoi(val)
+	}
+	if val, ok := getFieldValueSGPV(b, "defaultspec"); ok {
+		char.DefaultSpec, _ = strconv.Atoi(val)
+	}
+	if val, ok := getFieldValueSGPV(b, "hascustomspec"); ok {
+		char.HasCustomSpec, _ = strconv.Atoi(val)
+	}
+
 	for i := 0; i < 3; i++ {
 		suffix := fmt.Sprintf("_%d", i+1)
-		if val, ok := getFieldValueSGPV(b, "customspecname"+suffix); ok { char.CustomSpecNames[i] = val }
-		if val, ok := getFieldValueSGPV(b, "customspecicon"+suffix); ok { char.CustomSpecIcons[i] = val }
-		if val, ok := getFieldValueSGPV(b, "customspecdesc"+suffix); ok { char.CustomSpecDescs[i] = val }
+		if val, ok := getFieldValueSGPV(b, "customspecname"+suffix); ok {
+			char.CustomSpecNames[i] = val
+		}
+		if val, ok := getFieldValueSGPV(b, "customspecicon"+suffix); ok {
+			char.CustomSpecIcons[i] = val
+		}
+		if val, ok := getFieldValueSGPV(b, "customspecdesc"+suffix); ok {
+			char.CustomSpecDescs[i] = val
+		}
 	}
-	
+
 	for i := 0; i < 45; i++ {
 		suffix := fmt.Sprintf("_%d", i)
-		if val, ok := getFieldValueSGPV(b, "c_att_skill"+suffix); ok { char.CustomSkills[i] = val }
-		if val, ok := getFieldValueSGPV(b, "c_att_names"+suffix); ok { char.CustomNames[i] = val }
-		if val, ok := getFieldValueSGPV(b, "c_att_ranks"+suffix); ok { char.CustomRanks[i] = val }
-		if val, ok := getFieldValueSGPV(b, "c_att_descs"+suffix); ok { char.CustomDescs[i] = val }
+		if val, ok := getFieldValueSGPV(b, "c_att_skill"+suffix); ok {
+			char.CustomSkills[i] = val
+		}
+		if val, ok := getFieldValueSGPV(b, "c_att_names"+suffix); ok {
+			char.CustomNames[i] = val
+		}
+		if val, ok := getFieldValueSGPV(b, "c_att_ranks"+suffix); ok {
+			char.CustomRanks[i] = val
+		}
+		if val, ok := getFieldValueSGPV(b, "c_att_descs"+suffix); ok {
+			char.CustomDescs[i] = val
+		}
 	}
-	
+
 	// SGPV-accurate pairing: the first key of each line owns its value;
 	// everything after the pair on the line is dead text (bg_saga.c:294-
 	// 297 skips to the next newline), so value tokens are never misread
@@ -736,47 +831,110 @@ func populateClassInfo(b *ASTBlock, char *MBCHCharacter) {
 		}
 		return true
 	})
-	
-	for k := range char.RankAttributes { markTyped(k) }
+
+	for k := range char.RankAttributes {
+		markTyped(k)
+	}
 }
 
 func parseWeaponInfo(b *ASTBlock, char *MBCHCharacter, astName string) {
 	wi := WeaponInfo{ExtraFields: make(map[string]string), astName: astName}
 	typedKeys := make(map[string]bool)
 	markTyped := func(k string) { typedKeys[strings.ToLower(k)] = true }
-	markTyped("weapontoreplace"); markTyped("weaponbasedoff"); markTyped("newworldmodel")
-	markTyped("newviewmodel"); markTyped("icon"); markTyped("weaponname"); markTyped("muzzleeffect")
-	markTyped("altmuzzleeffect"); markTyped("missileeffect"); markTyped("altmissileeffect")
-	markTyped("missile3effect"); markTyped("altmissileeffect3"); markTyped("powerupshoteffect")
-	markTyped("powerupshoteffect3"); markTyped("flashsound0"); markTyped("altflashsound0")
-	markTyped("chargesound"); markTyped("altchargesound"); markTyped("primhitsound")
-	markTyped("althitsound");
-	markTyped("customammo"); markTyped("clipsize"); markTyped("reloadtimemodifier")
-	
-	if val, ok := getFieldValueSGPV(b, "weapontoreplace"); ok { wi.WeaponToReplace = val }
-	if val, ok := getFieldValueSGPV(b, "weaponbasedoff"); ok { wi.WeaponBasedOff = val }
-	if val, ok := getFieldValueSGPV(b, "newworldmodel"); ok { wi.NewWorldModel = val }
-	if val, ok := getFieldValueSGPV(b, "newviewmodel"); ok { wi.NewViewModel = val }
-	if val, ok := getFieldValueSGPV(b, "icon"); ok { wi.Icon = val }
-	if val, ok := getFieldValueSGPV(b, "weaponname"); ok { wi.WeaponName = val }
-	if val, ok := getFieldValueSGPV(b, "muzzleeffect"); ok { wi.MuzzleEffect = val }
-	if val, ok := getFieldValueSGPV(b, "altmuzzleeffect"); ok { wi.AltMuzzleEffect = val }
-	if val, ok := getFieldValueSGPV(b, "missileeffect"); ok { wi.MissileEffect = val }
-	if val, ok := getFieldValueSGPV(b, "altmissileeffect"); ok { wi.AltMissileEffect = val }
-	if val, ok := getFieldValueSGPV(b, "missile3effect"); ok { wi.Missile3Effect = val }
-	if val, ok := getFieldValueSGPV(b, "altmissileeffect3"); ok { wi.AltMissileEffect3 = val }
-	if val, ok := getFieldValueSGPV(b, "powerupshoteffect"); ok { wi.PowerupShotEffect = val }
-	if val, ok := getFieldValueSGPV(b, "powerupshoteffect3"); ok { wi.PowerupShotEffect3 = val }
-	if val, ok := getFieldValueSGPV(b, "flashsound0"); ok { wi.FlashSound0 = val }
-	if val, ok := getFieldValueSGPV(b, "altflashsound0"); ok { wi.AltFlashSound0 = val }
-	if val, ok := getFieldValueSGPV(b, "chargesound"); ok { wi.ChargeSound = val }
-	if val, ok := getFieldValueSGPV(b, "altchargesound"); ok { wi.AltChargeSound = val }
-	if val, ok := getFieldValueSGPV(b, "primhitsound"); ok { wi.PrimHitSound = val }
-	if val, ok := getFieldValueSGPV(b, "althitsound"); ok { wi.AltHitSound = val }
-	if val, ok := getFieldValueSGPV(b, "customammo"); ok { wi.CustomAmmo, _ = strconv.Atoi(val) }
-	if val, ok := getFieldValueSGPV(b, "clipsize"); ok { wi.ClipSize, _ = strconv.Atoi(val) }
-	if val, ok := getFieldValueSGPV(b, "reloadtimemodifier"); ok { wi.ReloadTimeModifier, _ = strconv.ParseFloat(val, 64) }
-	
+	markTyped("weapontoreplace")
+	markTyped("weaponbasedoff")
+	markTyped("newworldmodel")
+	markTyped("newviewmodel")
+	markTyped("icon")
+	markTyped("weaponname")
+	markTyped("muzzleeffect")
+	markTyped("altmuzzleeffect")
+	markTyped("missileeffect")
+	markTyped("altmissileeffect")
+	markTyped("missile3effect")
+	markTyped("altmissileeffect3")
+	markTyped("powerupshoteffect")
+	markTyped("powerupshoteffect3")
+	markTyped("flashsound0")
+	markTyped("altflashsound0")
+	markTyped("chargesound")
+	markTyped("altchargesound")
+	markTyped("primhitsound")
+	markTyped("althitsound")
+	markTyped("customammo")
+	markTyped("clipsize")
+	markTyped("reloadtimemodifier")
+
+	if val, ok := getFieldValueSGPV(b, "weapontoreplace"); ok {
+		wi.WeaponToReplace = val
+	}
+	if val, ok := getFieldValueSGPV(b, "weaponbasedoff"); ok {
+		wi.WeaponBasedOff = val
+	}
+	if val, ok := getFieldValueSGPV(b, "newworldmodel"); ok {
+		wi.NewWorldModel = val
+	}
+	if val, ok := getFieldValueSGPV(b, "newviewmodel"); ok {
+		wi.NewViewModel = val
+	}
+	if val, ok := getFieldValueSGPV(b, "icon"); ok {
+		wi.Icon = val
+	}
+	if val, ok := getFieldValueSGPV(b, "weaponname"); ok {
+		wi.WeaponName = val
+	}
+	if val, ok := getFieldValueSGPV(b, "muzzleeffect"); ok {
+		wi.MuzzleEffect = val
+	}
+	if val, ok := getFieldValueSGPV(b, "altmuzzleeffect"); ok {
+		wi.AltMuzzleEffect = val
+	}
+	if val, ok := getFieldValueSGPV(b, "missileeffect"); ok {
+		wi.MissileEffect = val
+	}
+	if val, ok := getFieldValueSGPV(b, "altmissileeffect"); ok {
+		wi.AltMissileEffect = val
+	}
+	if val, ok := getFieldValueSGPV(b, "missile3effect"); ok {
+		wi.Missile3Effect = val
+	}
+	if val, ok := getFieldValueSGPV(b, "altmissileeffect3"); ok {
+		wi.AltMissileEffect3 = val
+	}
+	if val, ok := getFieldValueSGPV(b, "powerupshoteffect"); ok {
+		wi.PowerupShotEffect = val
+	}
+	if val, ok := getFieldValueSGPV(b, "powerupshoteffect3"); ok {
+		wi.PowerupShotEffect3 = val
+	}
+	if val, ok := getFieldValueSGPV(b, "flashsound0"); ok {
+		wi.FlashSound0 = val
+	}
+	if val, ok := getFieldValueSGPV(b, "altflashsound0"); ok {
+		wi.AltFlashSound0 = val
+	}
+	if val, ok := getFieldValueSGPV(b, "chargesound"); ok {
+		wi.ChargeSound = val
+	}
+	if val, ok := getFieldValueSGPV(b, "altchargesound"); ok {
+		wi.AltChargeSound = val
+	}
+	if val, ok := getFieldValueSGPV(b, "primhitsound"); ok {
+		wi.PrimHitSound = val
+	}
+	if val, ok := getFieldValueSGPV(b, "althitsound"); ok {
+		wi.AltHitSound = val
+	}
+	if val, ok := getFieldValueSGPV(b, "customammo"); ok {
+		wi.CustomAmmo, _ = strconv.Atoi(val)
+	}
+	if val, ok := getFieldValueSGPV(b, "clipsize"); ok {
+		wi.ClipSize, _ = strconv.Atoi(val)
+	}
+	if val, ok := getFieldValueSGPV(b, "reloadtimemodifier"); ok {
+		wi.ReloadTimeModifier, _ = strconv.ParseFloat(val, 64)
+	}
+
 	// SGPV-accurate pairing (see populateClassInfo).
 	walkSGPVPairs(b.Children, func(_ int, key string, _ int, val string, hasVal bool) bool {
 		if hasVal && !typedKeys[strings.ToLower(key)] {
@@ -793,13 +951,27 @@ func parseForceInfo(b *ASTBlock, char *MBCHCharacter, astName string) {
 	fi := ForceInfo{ExtraFields: make(map[string]string), astName: astName}
 	typedKeys := make(map[string]bool)
 	markTyped := func(k string) { typedKeys[strings.ToLower(k)] = true }
-	markTyped("forcetoreplace"); markTyped("icon"); markTyped("forcepowername"); markTyped("startsound"); markTyped("loopsound")
+	markTyped("forcetoreplace")
+	markTyped("icon")
+	markTyped("forcepowername")
+	markTyped("startsound")
+	markTyped("loopsound")
 
-	if val, ok := getFieldValueSGPV(b, "forcetoreplace"); ok { fi.ForceToReplace = val }
-	if val, ok := getFieldValueSGPV(b, "icon"); ok { fi.Icon = val }
-	if val, ok := getFieldValueSGPV(b, "forcepowername"); ok { fi.ForcePowerName = val }
-	if val, ok := getFieldValueSGPV(b, "startsound"); ok { fi.StartSound = val }
-	if val, ok := getFieldValueSGPV(b, "loopsound"); ok { fi.LoopSound = val }
+	if val, ok := getFieldValueSGPV(b, "forcetoreplace"); ok {
+		fi.ForceToReplace = val
+	}
+	if val, ok := getFieldValueSGPV(b, "icon"); ok {
+		fi.Icon = val
+	}
+	if val, ok := getFieldValueSGPV(b, "forcepowername"); ok {
+		fi.ForcePowerName = val
+	}
+	if val, ok := getFieldValueSGPV(b, "startsound"); ok {
+		fi.StartSound = val
+	}
+	if val, ok := getFieldValueSGPV(b, "loopsound"); ok {
+		fi.LoopSound = val
+	}
 
 	// SGPV-accurate pairing (see populateClassInfo).
 	walkSGPVPairs(b.Children, func(_ int, key string, _ int, val string, hasVal bool) bool {
@@ -812,4 +984,3 @@ func parseForceInfo(b *ASTBlock, char *MBCHCharacter, astName string) {
 	})
 	char.ForceOverrides = append(char.ForceOverrides, fi)
 }
-

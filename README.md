@@ -63,10 +63,10 @@ When a release provides binaries, download the matching asset from the
 - Windows: `mbii-foundry-windows-amd64.zip`.
 - Linux: `mbii-foundry-linux-amd64.tar.gz`.
 
-The release workflow does **not** perform Apple notarization. A macOS bundle is
-Developer ID signed only when release credentials are configured; otherwise it
-is ad-hoc signed and Gatekeeper may require explicit approval on first launch.
-Do not treat an intact ad-hoc signature as publisher identity.
+The v0.16.0-alpha macOS archive is intentionally ad-hoc signed and is not
+notarized. The signature verifies bundle structure only: it supplies no Apple
+publisher identity, and Gatekeeper may require explicit approval on first
+launch.
 
 ### Build from source
 
@@ -178,12 +178,22 @@ display, but still review any diagnostic text before sharing it.
 
 ## Updates and platform limits
 
-Foundry checks the latest GitHub release in the background and caches the result
-for six hours. Automatic installation is available only when the running build
-contains a configured Ed25519 publisher key and the downloaded manifest binds
-the requested version, platform, architecture, byte length, and SHA-256 digest.
+Foundry lists GitHub releases in the background and caches the highest eligible
+release for six hours. Alpha and beta builds may follow newer prereleases or a
+stable release; stable builds ignore prereleases. Drafts and releases whose
+GitHub prerelease flag disagrees with their SemVer tag are ignored.
+
+Automatic installation is available only when the running build contains the
+long-lived Ed25519 publisher public key and the downloaded manifest binds the
+requested version, platform, architecture, byte length, and SHA-256 digest.
 Missing or invalid trust data disables auto-install rather than accepting an
 unsigned payload.
+
+**v0.16.0-alpha is the trust bootstrap.** v0.15.0-alpha did not embed this key
+or ship signed manifests, and its release checker did not discover GitHub
+prereleases. Upgrade from v0.15.0-alpha to v0.16.0-alpha manually from the
+Releases page. A release-built v0.16.0-alpha can authenticate later Foundry
+updates signed by the same publisher key.
 
 - macOS and Linux have automatic installers with rollback behavior.
 - Windows opens the release page instead of replacing the running executable;

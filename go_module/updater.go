@@ -11,12 +11,10 @@ package main
 //      reads the cached result and offers to install (Mac/Linux) or
 //      open the release page (Windows).
 //
-// Version comparison is intentionally lenient — GitHub release tags
-// have looked like "v0.2.0-alpha", "v0.3.0-alpha" etc., and semver
-// parsers from the stdlib choke on the -alpha suffix. We parse
-// "major.minor.patch" out of whatever prefix/suffix is present and
-// compare numerically. Pre-release suffix on current-but-not-latest
-// still counts as "update available" so testers get the stable bump.
+// Release selection follows the running build's channel. Prerelease builds may
+// advance through prereleases or to stable; stable builds ignore prereleases.
+// Drafts, malformed versions, and releases whose GitHub prerelease flag
+// disagrees with their SemVer tag are never eligible.
 
 import (
 	"encoding/json"
@@ -38,7 +36,7 @@ const (
 	updateOwner    = "Frenzeh"
 	updateRepo     = "mbii-foundry"
 	updateCacheTTL = 6 * time.Hour
-	updateAPIURL   = "https://api.github.com/repos/" + updateOwner + "/" + updateRepo + "/releases/latest"
+	updateAPIURL   = "https://api.github.com/repos/" + updateOwner + "/" + updateRepo + "/releases?per_page=100"
 )
 
 // UpdateInfo is the subset of the GitHub release response we care
@@ -50,6 +48,7 @@ type UpdateInfo struct {
 	PublishedAt time.Time      `json:"published_at"`
 	Assets      []ReleaseAsset `json:"assets"`
 	Prerelease  bool           `json:"prerelease"`
+	Draft       bool           `json:"draft"`
 
 	// Derived at check-time, persisted in cache.
 	IsNewer    bool      `json:"is_newer"`
@@ -147,9 +146,7 @@ func (uc *UpdateChecker) checkAsync(force bool, onDone func(*UpdateInfo)) {
 			}
 			return
 		}
-		info.CurrentVer = AppVersion
 		info.CheckedAt = time.Now()
-		info.IsNewer = versionNewer(info.TagName, AppVersion)
 
 		uc.mu.Lock()
 		uc.info = info
@@ -230,6 +227,17 @@ func (uc *UpdateChecker) loadCache() {
 	if err := json.Unmarshal(data, &info); err != nil {
 		return
 	}
+	// A cache created by an older binary must not keep advertising that
+	// binary's update after the newly installed version restarts.
+	if info.CurrentVer != AppVersion {
+		return
+	}
+	candidate, ok := eligibleReleaseVersion(&info)
+	current, currentOK := parseVersion(AppVersion)
+	if !ok || !currentOK || (!current.isPrerelease() && candidate.isPrerelease()) {
+		return
+	}
+	info.IsNewer = compareVersions(candidate, current) > 0
 	uc.mu.Lock()
 	uc.info = &info
 	uc.mu.Unlock()
@@ -252,17 +260,19 @@ func (uc *UpdateChecker) saveCache() {
 	_ = os.WriteFile(p, data, 0644)
 }
 
-// fetchLatestRelease hits the GitHub API. The token-less rate limit
-// (60 req/hr/IP) is fine for end-user update checks — cached 6h means
-// about 4 hits per day per machine.
+// fetchLatestRelease lists GitHub releases rather than using /releases/latest,
+// because GitHub excludes prereleases from that endpoint. The token-less rate
+// limit (60 req/hr/IP) is fine for end-user checks; the six-hour cache limits
+// each installation to about four requests per day.
 func fetchLatestRelease() (*UpdateInfo, error) {
 	return fetchLatestReleaseFrom(
 		&http.Client{Timeout: 15 * time.Second},
 		updateAPIURL,
+		AppVersion,
 	)
 }
 
-func fetchLatestReleaseFrom(client *http.Client, url string) (*UpdateInfo, error) {
+func fetchLatestReleaseFrom(client *http.Client, url, currentVersion string) (*UpdateInfo, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
@@ -293,64 +303,186 @@ func fetchLatestReleaseFrom(client *http.Client, url string) (*UpdateInfo, error
 		return nil, fmt.Errorf("GitHub release response exceeds %d-byte limit", maxReleaseResponseBytes)
 	}
 
-	var info UpdateInfo
-	if err := json.Unmarshal(body, &info); err != nil {
+	var releases []UpdateInfo
+	if err := json.Unmarshal(body, &releases); err != nil {
 		return nil, err
 	}
-	if info.TagName == "" {
-		return nil, errors.New("empty tag in release response")
-	}
-	return &info, nil
+	return selectLatestEligibleRelease(releases, currentVersion)
 }
 
-// versionNewer reports whether latestTag is newer than currentVer.
-// Both strings are parsed leniently — "v0.3.0-alpha" and "0.3.0"
-// both yield (0, 3, 0) for comparison. Pre-release suffixes break
-// ties so that "0.3.0" beats "0.3.0-alpha" (stable > prerelease of
-// same triplet), but a higher triplet always wins outright.
+// versionNewer reports whether latestTag is a strictly newer SemVer than
+// currentVer. Invalid versions never win.
 func versionNewer(latestTag, currentVer string) bool {
-	la, lb, lc, lPre := parseVersion(latestTag)
-	ca, cb, cc, cPre := parseVersion(currentVer)
+	latest, latestOK := parseVersion(latestTag)
+	current, currentOK := parseVersion(currentVer)
+	return latestOK && currentOK && compareVersions(latest, current) > 0
+}
 
-	if la != ca {
-		return la > ca
+type semanticVersion struct {
+	major      uint64
+	minor      uint64
+	patch      uint64
+	prerelease []string
+}
+
+func (v semanticVersion) isPrerelease() bool {
+	return len(v.prerelease) != 0
+}
+
+var versionRe = regexp.MustCompile(`^v?(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$`)
+
+func parseVersion(raw string) (semanticVersion, bool) {
+	match := versionRe.FindStringSubmatch(strings.TrimSpace(raw))
+	if match == nil {
+		return semanticVersion{}, false
 	}
-	if lb != cb {
-		return lb > cb
+	major, err := strconv.ParseUint(match[1], 10, 64)
+	if err != nil {
+		return semanticVersion{}, false
 	}
-	if lc != cc {
-		return lc > cc
+	minor, err := strconv.ParseUint(match[2], 10, 64)
+	if err != nil {
+		return semanticVersion{}, false
 	}
-	// Same triplet: stable (no prerelease) beats prerelease.
-	if lPre == "" && cPre != "" {
-		return true
+	patch, err := strconv.ParseUint(match[3], 10, 64)
+	if err != nil {
+		return semanticVersion{}, false
 	}
-	if lPre != "" && cPre == "" {
+	var prerelease []string
+	if match[4] != "" {
+		prerelease = strings.Split(match[4], ".")
+		for _, identifier := range prerelease {
+			if isNumericIdentifier(identifier) && len(identifier) > 1 && identifier[0] == '0' {
+				return semanticVersion{}, false
+			}
+		}
+	}
+	return semanticVersion{
+		major:      major,
+		minor:      minor,
+		patch:      patch,
+		prerelease: prerelease,
+	}, true
+}
+
+func selectLatestEligibleRelease(releases []UpdateInfo, currentVersion string) (*UpdateInfo, error) {
+	current, ok := parseVersion(currentVersion)
+	if !ok {
+		return nil, fmt.Errorf("invalid current application version %q", currentVersion)
+	}
+
+	bestIndex := -1
+	var best semanticVersion
+	for i := range releases {
+		if releases[i].Draft {
+			continue
+		}
+		candidate, valid := eligibleReleaseVersion(&releases[i])
+		if !valid {
+			continue
+		}
+		if !current.isPrerelease() && candidate.isPrerelease() {
+			continue
+		}
+		if bestIndex == -1 || compareVersions(candidate, best) > 0 {
+			bestIndex = i
+			best = candidate
+		}
+	}
+	if bestIndex == -1 {
+		return nil, errors.New("no eligible release found for the current update channel")
+	}
+
+	selected := releases[bestIndex]
+	selected.CurrentVer = currentVersion
+	selected.IsNewer = compareVersions(best, current) > 0
+	return &selected, nil
+}
+
+func eligibleReleaseVersion(release *UpdateInfo) (semanticVersion, bool) {
+	if release == nil || release.Draft {
+		return semanticVersion{}, false
+	}
+	version, ok := parseVersion(release.TagName)
+	if !ok || release.Prerelease != version.isPrerelease() {
+		return semanticVersion{}, false
+	}
+	return version, true
+}
+
+func compareVersions(left, right semanticVersion) int {
+	if result := compareUint64(left.major, right.major); result != 0 {
+		return result
+	}
+	if result := compareUint64(left.minor, right.minor); result != 0 {
+		return result
+	}
+	if result := compareUint64(left.patch, right.patch); result != 0 {
+		return result
+	}
+	if !left.isPrerelease() && !right.isPrerelease() {
+		return 0
+	}
+	if !left.isPrerelease() {
+		return 1
+	}
+	if !right.isPrerelease() {
+		return -1
+	}
+	for i := 0; i < len(left.prerelease) && i < len(right.prerelease); i++ {
+		if result := comparePrereleaseIdentifier(left.prerelease[i], right.prerelease[i]); result != 0 {
+			return result
+		}
+	}
+	switch {
+	case len(left.prerelease) < len(right.prerelease):
+		return -1
+	case len(left.prerelease) > len(right.prerelease):
+		return 1
+	default:
+		return 0
+	}
+}
+
+func compareUint64(left, right uint64) int {
+	switch {
+	case left < right:
+		return -1
+	case left > right:
+		return 1
+	default:
+		return 0
+	}
+}
+
+func comparePrereleaseIdentifier(left, right string) int {
+	leftNumeric := isNumericIdentifier(left)
+	rightNumeric := isNumericIdentifier(right)
+	if leftNumeric && rightNumeric {
+		if len(left) < len(right) {
+			return -1
+		}
+		if len(left) > len(right) {
+			return 1
+		}
+	}
+	if leftNumeric != rightNumeric {
+		if leftNumeric {
+			return -1
+		}
+		return 1
+	}
+	return strings.Compare(left, right)
+}
+
+func isNumericIdentifier(value string) bool {
+	if value == "" {
 		return false
 	}
-	// Both prerelease or both stable: alphabetical on the prerelease
-	// suffix is a reasonable-enough ordering for our use (alpha < beta
-	// < rc alphabetically).
-	return lPre > cPre
-}
-
-var versionRe = regexp.MustCompile(`(\d+)\.(\d+)\.(\d+)(?:[.-]?(.*))?`)
-
-func parseVersion(v string) (int, int, int, string) {
-	v = strings.TrimSpace(v)
-	v = strings.TrimPrefix(v, "v")
-	m := versionRe.FindStringSubmatch(v)
-	if m == nil {
-		// Give up — treat unparseable versions as 0.0.0 so the remote
-		// wins iff it has any recognizable triplet.
-		return 0, 0, 0, v
+	for _, r := range value {
+		if r < '0' || r > '9' {
+			return false
+		}
 	}
-	major, _ := strconv.Atoi(m[1])
-	minor, _ := strconv.Atoi(m[2])
-	patch, _ := strconv.Atoi(m[3])
-	pre := ""
-	if len(m) > 4 {
-		pre = m[4]
-	}
-	return major, minor, patch, pre
+	return true
 }

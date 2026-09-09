@@ -181,22 +181,22 @@ func (fm *FileManager) CreateBackup(path string) (string, error) {
 	ext := filepath.Ext(baseName)
 	nameWithoutExt := strings.TrimSuffix(baseName, ext)
 	pathHash := fm.getPathHash(path)
-	
+
 	timestamp := time.Now().Format("20060102_150405")
-	
+
 	randBytes := make([]byte, 4)
 	rand.Read(randBytes)
 	randHex := hex.EncodeToString(randBytes)
 
 	baseBackupName := fmt.Sprintf("%s_%s_%s_%s", nameWithoutExt, pathHash, timestamp, randHex)
-	
+
 	// Create an exclusive staging file
 	tmpF, err := os.CreateTemp(fm.getBackupPath(), "staging_*.tmp")
 	if err != nil {
 		return "", fmt.Errorf("failed to create backup staging file: %w", err)
 	}
 	tmpName := tmpF.Name()
-	
+
 	// Copy data to the staging file
 	srcFile, err := os.Open(path)
 	if err != nil {
@@ -244,7 +244,7 @@ func (fm *FileManager) CreateBackup(path string) (string, error) {
 			counter++
 			continue
 		}
-		
+
 		// For unsupported filesystems or other link errors, fail cleanly
 		os.Remove(tmpName)
 		return "", fmt.Errorf("failed to finalize backup link: %w", err)
@@ -283,11 +283,11 @@ func (fm *FileManager) isBackupForPath(backupName, originalPath string) bool {
 
 func (fm *FileManager) cleanupOldBackups(path string) {
 	matches := fm.ListBackups(path)
-	
+
 	if len(matches) <= MaxBackupsPerFile {
 		return
 	}
-	
+
 	// ListBackups already sorts them newest first
 	for i := MaxBackupsPerFile; i < len(matches); i++ {
 		os.Remove(matches[i])
@@ -300,7 +300,7 @@ func (fm *FileManager) ListBackups(path string) []string {
 	}
 	backupDir := fm.getBackupPath()
 	var matches []string
-	
+
 	if path == "" {
 		// Return all backups if no path provided
 		ext := ".mbch"

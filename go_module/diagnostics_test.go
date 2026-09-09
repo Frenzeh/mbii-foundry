@@ -11,9 +11,15 @@ func TestDiagnosticJSONRedactsEscapedCredentials(t *testing.T) {
 	input := `{"github_token":"fixture\"secret-tail","message":"decode failed","password":"second-fixture"}`
 	got := SanitizeDiagnosticText(input, nil, nil)
 	var fields map[string]string
-	if err := json.Unmarshal([]byte(got), &fields); err != nil { t.Fatal("sanitized diagnostic JSON is invalid") }
-	if strings.Contains(got, "secret-tail") || strings.Contains(got, "second-fixture") { t.Fatal("escaped credential material leaked") }
-	if fields["message"] != "decode failed" { t.Fatal("useful nonsensitive diagnostic was lost") }
+	if err := json.Unmarshal([]byte(got), &fields); err != nil {
+		t.Fatal("sanitized diagnostic JSON is invalid")
+	}
+	if strings.Contains(got, "secret-tail") || strings.Contains(got, "second-fixture") {
+		t.Fatal("escaped credential material leaked")
+	}
+	if fields["message"] != "decode failed" {
+		t.Fatal("useful nonsensitive diagnostic was lost")
+	}
 }
 
 func TestDiagnosticKnownSecretRedactsJSONEscapedAndOverlappingForms(t *testing.T) {
@@ -45,7 +51,9 @@ func TestDiagnosticSecretsAndRootPrecedence(t *testing.T) {
 		{Path: "/fixture/root/assets", Label: "<assets>"},
 	})
 	for _, private := range []string{"fixture-secret", "-long", "fixture-user", "fixture-pass", "/fixture/root"} {
-		if strings.Contains(got, private) { t.Fatal("private diagnostic content leaked") }
+		if strings.Contains(got, private) {
+			t.Fatal("private diagnostic content leaked")
+		}
 	}
 	if !strings.Contains(got, "example.invalid/release") || !strings.Contains(got, "<assets>/models/mira/icon.png") {
 		t.Fatal("sanitization lost the useful release endpoint or source-relative asset identity")
@@ -57,16 +65,22 @@ func TestDiagnosticExportRedactsJSONEncodedRoots(t *testing.T) {
 	macRoot := `/Users/fixture-private/Assets "custom"`
 	encoded, err := json.Marshal(map[string]string{
 		"windows": windowsRoot + `\models\icon.png`,
-		"mac": macRoot + "/models/icon.png",
+		"mac":     macRoot + "/models/icon.png",
 	})
-	if err != nil { t.Fatal(err) }
+	if err != nil {
+		t.Fatal(err)
+	}
 	got := SanitizeDiagnosticText(string(encoded), nil, []DiagnosticRoot{
 		{Path: windowsRoot, Label: "<GameData>"},
 		{Path: macRoot, Label: "<TextAssets>"},
 	})
-	if strings.Contains(got, "fixture-private") { t.Fatal("JSON-encoded root identity leaked") }
+	if strings.Contains(got, "fixture-private") {
+		t.Fatal("JSON-encoded root identity leaked")
+	}
 	var decoded map[string]string
-	if err := json.Unmarshal([]byte(got), &decoded); err != nil { t.Fatal("encoded root redaction corrupted exported JSON") }
+	if err := json.Unmarshal([]byte(got), &decoded); err != nil {
+		t.Fatal("encoded root redaction corrupted exported JSON")
+	}
 	if decoded["windows"] != `<GameData>\models\icon.png` || decoded["mac"] != "<TextAssets>/models/icon.png" {
 		t.Fatal("source-relative asset identities were not preserved")
 	}

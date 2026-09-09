@@ -101,8 +101,8 @@ func TestFileManager_Backups(t *testing.T) {
 	importBase := filepath.Base(importPath)
 	importExt := filepath.Ext(importBase)
 	importNameWithoutExt := importBase[:len(importBase)-len(importExt)]
-	
-	// Fast way to guarantee a collision: 
+
+	// Fast way to guarantee a collision:
 	// CreateBackup will generate something like: name_hash_timestamp.mbch
 	// Let's create a backup, get its name, delete it, wait a bit? No, we can just pre-create a file that MATCHES the pattern!
 	// Actually, just calling CreateBackup once gives us the exact timestamp it used if we do it fast.
@@ -115,13 +115,13 @@ func TestFileManager_Backups(t *testing.T) {
 		predict := filepath.Join(fm.getBackupPath(), importNameWithoutExt+"_"+importHash+"_"+tStr+importExt)
 		os.WriteFile(predict, []byte("pre-existing data"), 0644)
 	}
-	
+
 	// Now CreateBackup MUST find a collision and use the _1 fallback!
 	bPath, err := fm.CreateBackup(importPath)
 	if err != nil {
 		t.Fatalf("CreateBackup failed on collision: %v", err)
 	}
-	
+
 	// Check that the returned path is the _1 version (or at least different from the base)
 	// But more importantly, check that ALL the pre-existing files STILL contain "pre-existing data"!
 	for i := 0; i <= 2; i++ {
@@ -134,7 +134,7 @@ func TestFileManager_Backups(t *testing.T) {
 			}
 		}
 	}
-	
+
 	// Check the newly created backup actually contains the correct content2 data
 	newData, err := os.ReadFile(bPath)
 	if err != nil || string(newData) != "content2" {
@@ -168,5 +168,3 @@ func TestFileManagerEmptyConfigStaysMemoryOnly(t *testing.T) {
 		t.Fatal("memory-only manager joined an empty config path into the working directory")
 	}
 }
-
-

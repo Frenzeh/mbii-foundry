@@ -247,11 +247,11 @@ func (ag *AttributeGrid) createUI() {
 	}
 
 	defaultOpen := map[string]bool{
-		"Weapons & Explosives":        true,
+		"Weapons & Explosives":         true,
 		"Physicals, Agility & Defense": true,
-		"Force Powers":                true,
-		"Lightsaber Mastery":          true,
-		"Class & Droid Tech":          true,
+		"Force Powers":                 true,
+		"Lightsaber Mastery":           true,
+		"Class & Droid Tech":           true,
 	}
 
 	var content *fyne.Container

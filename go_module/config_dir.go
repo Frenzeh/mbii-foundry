@@ -59,7 +59,7 @@ func appConfigDirWithBase(base string) (string, error) {
 			LogError("%v; staying on old path", wrapped)
 			return oldDir, wrapped
 		}
-		
+
 		// Ensure we clean up the temp dir on failure or if rename fails
 		defer os.RemoveAll(tmpDir)
 

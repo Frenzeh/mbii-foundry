@@ -4,9 +4,9 @@ import "testing"
 
 // TestCustomSpecExtendedRoundTrip pins the three custom-build fields
 // promoted from ExtraFields catch-all to first-class struct slots:
-//   * IsOnlyOneSpec   (bg_saga.c:2367)
-//   * DefaultSpec     (bg_saga.c:2370)
-//   * CustomSpecDescs (bg_saga.c:2375)
+//   - IsOnlyOneSpec   (bg_saga.c:2367)
+//   - DefaultSpec     (bg_saga.c:2370)
+//   - CustomSpecDescs (bg_saga.c:2375)
 //
 // Before promotion, CustomSpecDescs was dropped silently and the other
 // two leaked into the alphabetical ExtraFields tail. The round-trip

@@ -30,7 +30,6 @@ func getFieldValueSGPV(block *ASTBlock, key string) (string, bool) {
 func getFieldValue(block *ASTBlock, key string) (string, bool) {
 	keyLower := strings.ToLower(key)
 
-	
 	for i := 0; i < len(block.Children); i++ {
 		node := block.Children[i]
 		if tok, ok := node.(*ASTToken); ok && tok.Type == TokenString {
@@ -62,14 +61,14 @@ func getFieldValue(block *ASTBlock, key string) (string, bool) {
 // setFieldValue updates the FIRST occurrence of an existing field or adds a new one.
 func setFieldValue(block *ASTBlock, key string, val string, useQuotes bool) {
 	keyLower := strings.ToLower(key)
-	
+
 	valStr := val
 	if useQuotes {
 		valStr = fmt.Sprintf("\"%s\"", val)
 	} else if val == "" {
 		valStr = "\"\""
 	}
-	
+
 	for i := 0; i < len(block.Children); i++ {
 		node := block.Children[i]
 		if tok, ok := node.(*ASTToken); ok && tok.Type == TokenString {
@@ -96,7 +95,7 @@ func setFieldValue(block *ASTBlock, key string, val string, useQuotes bool) {
 						break
 					}
 				}
-				
+
 				block.Children = append(block.Children[:i+1], append([]ASTNode{
 					&ASTToken{Type: TokenWhitespace, Text: " "},
 					&ASTToken{Type: TokenString, Text: valStr},
@@ -114,7 +113,7 @@ func setFieldValue(block *ASTBlock, key string, val string, useQuotes bool) {
 			}
 		}
 	}
-	
+
 	insertIdx := len(block.Children)
 	var indent string = "\t"
 	if insertIdx > 0 {
@@ -134,7 +133,7 @@ func setFieldValue(block *ASTBlock, key string, val string, useQuotes bool) {
 		block.Children = append(block.Children, &ASTToken{Type: TokenWhitespace, Text: "\n"})
 		insertIdx = 1
 	}
-	
+
 	var newNodes []ASTNode
 	if insertIdx > 0 {
 		lastNode := block.Children[insertIdx-1]
@@ -146,21 +145,21 @@ func setFieldValue(block *ASTBlock, key string, val string, useQuotes bool) {
 			newNodes = append(newNodes, &ASTToken{Type: TokenWhitespace, Text: "\n"})
 		}
 	}
-	
-	newNodes = append(newNodes, 
+
+	newNodes = append(newNodes,
 		&ASTToken{Type: TokenWhitespace, Text: indent},
 		&ASTToken{Type: TokenString, Text: key},
 		&ASTToken{Type: TokenWhitespace, Text: "\t\t"},
 		&ASTToken{Type: TokenString, Text: valStr},
 		&ASTToken{Type: TokenWhitespace, Text: "\n"},
 	)
-	
+
 	block.Children = append(block.Children, newNodes...)
 }
 
 func removeField(block *ASTBlock, key string) {
 	keyLower := strings.ToLower(key)
-	
+
 	for i := 0; i < len(block.Children); i++ {
 		node := block.Children[i]
 		if tok, ok := node.(*ASTToken); ok && tok.Type == TokenString {
@@ -176,7 +175,7 @@ func removeField(block *ASTBlock, key string) {
 						break
 					}
 				}
-				
+
 				endIdx := i
 				for endIdx = i + 1; endIdx < len(block.Children); endIdx++ {
 					if vTok, ok := block.Children[endIdx].(*ASTToken); ok && vTok.Type == TokenString {
@@ -187,7 +186,7 @@ func removeField(block *ASTBlock, key string) {
 						break
 					}
 				}
-				
+
 				if endIdx < len(block.Children) {
 					for endIdx++; endIdx < len(block.Children); endIdx++ {
 						if wTok, ok := block.Children[endIdx].(*ASTToken); ok {
@@ -207,9 +206,9 @@ func removeField(block *ASTBlock, key string) {
 						}
 					}
 				}
-				
+
 				block.Children = append(block.Children[:startIdx], block.Children[endIdx:]...)
-				
+
 				i = startIdx - 1
 				if i < -1 {
 					i = -1

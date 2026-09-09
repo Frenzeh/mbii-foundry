@@ -47,11 +47,11 @@ type WeaponInfoUI struct {
 	weaponToReplaceSelect *widget.Select
 	weaponBasedOffSelect  *widget.Select
 
-	iconPreview       *canvas.Image // live render of the override's Icon field
+	iconPreview        *canvas.Image // live render of the override's Icon field
 	newWorldModelEntry *widget.Entry
-	newViewModelEntry *widget.Entry
-	iconEntry         *widget.Entry
-	weaponNameEntry   *widget.Entry
+	newViewModelEntry  *widget.Entry
+	iconEntry          *widget.Entry
+	weaponNameEntry    *widget.Entry
 
 	muzzleEffectEntry     *widget.Entry
 	altMuzzleEffectEntry  *widget.Entry

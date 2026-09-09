@@ -18,11 +18,11 @@ func (t *ASTToken) String() string {
 }
 
 type ASTBlock struct {
-	NameToken   *ASTToken
-	Preamble    []ASTNode // Whitespace/comments between name and {
-	OpenBrace   *ASTToken
-	Children    []ASTNode // Inside the block
-	CloseBrace  *ASTToken
+	NameToken  *ASTToken
+	Preamble   []ASTNode // Whitespace/comments between name and {
+	OpenBrace  *ASTToken
+	Children   []ASTNode // Inside the block
+	CloseBrace *ASTToken
 }
 
 func (b *ASTBlock) String() string {
@@ -77,19 +77,19 @@ func unquote(s string) string {
 func parseAST(tokens []Token) *ASTDocument {
 	doc := &ASTDocument{}
 	i := 0
-	
+
 	var parseNodes func(isBlock bool) []ASTNode
 	parseNodes = func(isBlock bool) []ASTNode {
 		var nodes []ASTNode
 		for i < len(tokens) {
 			tok := tokens[i]
-			
+
 			if tok.Type == TokenWhitespace || tok.Type == TokenComment {
 				nodes = append(nodes, &ASTToken{Type: tok.Type, Text: tok.Text})
 				i++
 				continue
 			}
-			
+
 			if tok.Type == TokenBraceClose {
 				if isBlock {
 					// Don't consume it here, let the block parser consume it
@@ -100,7 +100,7 @@ func parseAST(tokens []Token) *ASTDocument {
 				i++
 				continue
 			}
-			
+
 			if tok.Type == TokenString {
 				// Is it a block name?
 				// Look ahead to see if there is an OpenBrace
@@ -119,15 +119,15 @@ func parseAST(tokens []Token) *ASTDocument {
 						break
 					}
 				}
-				
+
 				if isBlockName {
 					// We found a block!
 					nameTok := &ASTToken{Type: tok.Type, Text: tok.Text}
 					openBrace := &ASTToken{Type: tokens[j].Type, Text: tokens[j].Text}
 					i = j + 1
-					
+
 					children := parseNodes(true)
-					
+
 					var closeBrace *ASTToken
 					if i < len(tokens) && tokens[i].Type == TokenBraceClose {
 						closeBrace = &ASTToken{Type: tokens[i].Type, Text: tokens[i].Text}
@@ -135,24 +135,24 @@ func parseAST(tokens []Token) *ASTDocument {
 					} else {
 						// Malformed block, missing close brace. We just preserve what we can.
 					}
-					
+
 					block := &ASTBlock{
-						NameToken: nameTok,
-						Preamble: preamble,
-						OpenBrace: openBrace,
-						Children: children,
+						NameToken:  nameTok,
+						Preamble:   preamble,
+						OpenBrace:  openBrace,
+						Children:   children,
 						CloseBrace: closeBrace,
 					}
 					nodes = append(nodes, block)
 					continue
 				}
-				
+
 				// Normal string token (key or value)
 				nodes = append(nodes, &ASTToken{Type: tok.Type, Text: tok.Text})
 				i++
 				continue
 			}
-			
+
 			if tok.Type == TokenBraceOpen {
 				// Block without a name? Just treat as a block with nil NameToken
 				openBrace := &ASTToken{Type: tok.Type, Text: tok.Text}
@@ -164,21 +164,21 @@ func parseAST(tokens []Token) *ASTDocument {
 					i++
 				}
 				nodes = append(nodes, &ASTBlock{
-					NameToken: nil,
-					OpenBrace: openBrace,
-					Children: children,
+					NameToken:  nil,
+					OpenBrace:  openBrace,
+					Children:   children,
 					CloseBrace: closeBrace,
 				})
 				continue
 			}
-			
+
 			// Fallback
 			nodes = append(nodes, &ASTToken{Type: tok.Type, Text: tok.Text})
 			i++
 		}
 		return nodes
 	}
-	
+
 	doc.Nodes = parseNodes(false)
 	return doc
 }

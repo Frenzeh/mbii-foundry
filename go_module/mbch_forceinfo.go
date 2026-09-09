@@ -410,4 +410,3 @@ func (ui *ForceInfoUI) onDetailChanged(s string) {
 	ui.editor.markDirty()
 	ui.forceList.RefreshItem(ui.currentForceIndex)
 }
-

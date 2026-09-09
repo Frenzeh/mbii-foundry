@@ -180,25 +180,35 @@ interactive keychain.
 
 ## Release and update trust
 
-Tags matching `v*` start the release workflow. The workflow:
+Tags matching `v*` start the release workflow. Before any platform build, the
+workflow requires the tag to point at the current `main` commit, requires a
+successful completed `main` CI run for that exact commit, and verifies the tag,
+`AppVersion`, changelog heading, and macOS marketing version agree. It then:
 
-- verifies `AppVersion` matches the tag;
 - builds Linux amd64, Windows amd64, and a true macOS universal executable;
-- requires a matching Ed25519 publisher keypair;
-- embeds the public key in release binaries;
-- signs a manifest binding version, platform, architecture, length, and digest;
+- requires the canonical Ed25519 public key in every release binary;
+- exposes the private key only to one isolated signing job;
+- proves the private and public keys match;
+- signs manifests binding version, platform, architecture, length, and digest;
   and
-- publishes the platform archive and its manifest.
+- creates a draft GitHub release containing exactly three archives and three
+  manifests. Publishing the inspected draft is a separate, explicit action.
 
-The macOS packaging step does not notarize. It uses Developer ID only when that
-secret is configured and otherwise uses an ad-hoc structural signature. The
-project does not configure Authenticode signing for Windows, and the Windows
-application opens the release page instead of auto-replacing itself.
+v0.16.0-alpha is intentionally ad-hoc signed on macOS and is not notarized.
+This workflow does not import a Developer ID certificate or claim Apple
+publisher identity. The project does not configure Authenticode for Windows,
+and the Windows application opens the release page instead of replacing itself.
+
+The Ed25519 publisher key is a long-lived update trust root, not an operating
+system signing identity. Keep its private half outside the repository and logs,
+restrict access, and maintain an offline recovery copy. After a public key ships
+inside v0.16.0-alpha, loss or unplanned rotation of the private key strands
+automatic updates; compromise permits forged manifests. Any rotation therefore
+requires a planned transition release that trusts both old and new keys.
 
 Never describe a release as notarized, Developer ID signed, Authenticode signed,
-or authenticated by a publisher key unless the specific release job produced
-the corresponding verifiable evidence. A signed Foundry update manifest is not
-an operating-system trust verdict.
+or authenticated by a publisher key unless the inspected release artifacts
+provide the corresponding verifiable evidence.
 
 ## Reporting issues
 

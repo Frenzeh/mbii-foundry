@@ -472,8 +472,6 @@ func renderRawNodes(raw string) []ASTNode {
 	return sub.Nodes
 }
 
-
-
 func removeUnclaimedTopLevelBlocks(doc *ASTDocument, claimedTeams, rawSeen map[string]bool) {
 	out := doc.Nodes[:0]
 	for _, node := range doc.Nodes {

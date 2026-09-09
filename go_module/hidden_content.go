@@ -165,11 +165,11 @@ func markHiddenAttributes(attrs []AttributeDef) {
 //   - Supply:         DISP_*, DROP_*, STIM_*, *_PACK, BACTA*, SUPPLYDROP, DISPENSER
 //   - Class Specific: class-prefixed attributes (Wookiee, Deka, SBD, Clone, etc.)
 //   - Weapons:        everything in the weapon-attribute allow-set
-//                     (mirrors the WP_* ↔ MB_ATT_* relationships)
+//     (mirrors the WP_* ↔ MB_ATT_* relationships)
 //   - Advanced:       engine-tuning / movement-tech attributes that
-//                     are rarely bought directly. Collapsed by default
-//                     in the grid so they don't drown out the bread-
-//                     and-butter attribute buckets above.
+//     are rarely bought directly. Collapsed by default
+//     in the grid so they don't drown out the bread-
+//     and-butter attribute buckets above.
 //   - General:        fallback for anything unmatched
 //
 // Not exhaustive — a handful of utility attributes land in General

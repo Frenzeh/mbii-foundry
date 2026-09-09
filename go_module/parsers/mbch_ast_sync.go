@@ -2,8 +2,8 @@ package parsers
 
 import (
 	"fmt"
-	"strings"
 	"sort"
+	"strings"
 )
 
 func syncMBCHToAST(char *MBCHCharacter, doc *ASTDocument) {
@@ -14,18 +14,18 @@ func syncMBCHToAST(char *MBCHCharacter, doc *ASTDocument) {
 			break
 		}
 	}
-	
+
 	if classInfoBlock == nil {
 		classInfoBlock = &ASTBlock{
-			NameToken: &ASTToken{Type: TokenString, Text: "ClassInfo"},
-			Preamble: []ASTNode{&ASTToken{Type: TokenWhitespace, Text: "\n"}},
-			OpenBrace: &ASTToken{Type: TokenBraceOpen, Text: "{"},
-			Children: []ASTNode{&ASTToken{Type: TokenWhitespace, Text: "\n"}},
+			NameToken:  &ASTToken{Type: TokenString, Text: "ClassInfo"},
+			Preamble:   []ASTNode{&ASTToken{Type: TokenWhitespace, Text: "\n"}},
+			OpenBrace:  &ASTToken{Type: TokenBraceOpen, Text: "{"},
+			Children:   []ASTNode{&ASTToken{Type: TokenWhitespace, Text: "\n"}},
 			CloseBrace: &ASTToken{Type: TokenBraceClose, Text: "}"},
 		}
 		doc.Nodes = append(doc.Nodes, classInfoBlock)
 	}
-	
+
 	syncStr := func(block *ASTBlock, k, v, def string, quote bool) {
 		_, found := getFieldValue(block, k)
 		if v != def {
@@ -34,7 +34,7 @@ func syncMBCHToAST(char *MBCHCharacter, doc *ASTDocument) {
 			setFieldValue(block, k, v, quote)
 		}
 	}
-	
+
 	syncInt := func(block *ASTBlock, k string, v, def int) {
 		_, found := getFieldValue(block, k)
 		if v != def {
@@ -43,7 +43,7 @@ func syncMBCHToAST(char *MBCHCharacter, doc *ASTDocument) {
 			setFieldValue(block, k, fmt.Sprintf("%d", v), false)
 		}
 	}
-	
+
 	syncFloat := func(block *ASTBlock, k string, v, def float64) {
 		_, found := getFieldValue(block, k)
 		if v != def {
@@ -52,7 +52,7 @@ func syncMBCHToAST(char *MBCHCharacter, doc *ASTDocument) {
 			setFieldValue(block, k, fmt.Sprintf("%g", v), false)
 		}
 	}
-	
+
 	b := classInfoBlock
 	syncStr(b, "name", char.Name, "", true)
 	syncStr(b, "MBClass", char.MBClass, "", false)
@@ -85,16 +85,16 @@ func syncMBCHToAST(char *MBCHCharacter, doc *ASTDocument) {
 	syncInt(b, "mbPoints", char.MBPoints, 0)
 	syncInt(b, "isOnlyOneSpec", char.IsOnlyOneSpec, 0)
 	syncInt(b, "defaultSpec", char.DefaultSpec, 0)
-	
+
 	syncInt(b, "hasCustomSpec", char.HasCustomSpec, 0)
-	
+
 	for i := 0; i < 3; i++ {
 		suffix := fmt.Sprintf("_%d", i+1)
 		syncStr(b, "customSpecName"+suffix, char.CustomSpecNames[i], "", true)
 		syncStr(b, "customSpecIcon"+suffix, char.CustomSpecIcons[i], "", true)
 		syncStr(b, "customSpecDesc"+suffix, char.CustomSpecDescs[i], "", true)
 	}
-	
+
 	for i := 0; i < 45; i++ {
 		suffix := fmt.Sprintf("_%d", i)
 		syncStr(b, "c_att_skill"+suffix, char.CustomSkills[i], "", false)
@@ -102,7 +102,7 @@ func syncMBCHToAST(char *MBCHCharacter, doc *ASTDocument) {
 		syncStr(b, "c_att_ranks"+suffix, char.CustomRanks[i], "", false)
 		syncStr(b, "c_att_descs"+suffix, char.CustomDescs[i], "", true)
 	}
-	
+
 	// Rank attributes + ExtraFields — deletion-aware sync. The union of
 	// both maps is the set of live untyped keys; an untyped key line
 	// carrying a value that is neither typed nor live was deleted in the
@@ -229,7 +229,7 @@ func syncMBCHToAST(char *MBCHCharacter, doc *ASTDocument) {
 		removeStaleExtras(fBlock, fi.ExtraFields, forceInfoTyped)
 		upsertExtras(fBlock, fi.ExtraFields)
 	}
-	
+
 	// Top-level description. With the SGPV lexer the value is a single
 	// token (possibly spanning lines), so set/remove are exact token
 	// operations — no orphaned leading quotes, no doubled quoting.

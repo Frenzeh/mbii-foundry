@@ -37,10 +37,10 @@ import (
 // One instance per VFS — populated lazily on first lookup, rebuilt
 // when the VFS reindexes (caller invokes Reset() at that point).
 type ShaderResolver struct {
-	vfs      *VirtualFileSystem
-	mu       sync.RWMutex
-	built    bool
-	shaders  map[string]string // shader name (lowercased) → texture path
+	vfs     *VirtualFileSystem
+	mu      sync.RWMutex
+	built   bool
+	shaders map[string]string // shader name (lowercased) → texture path
 }
 
 // NewShaderResolver constructs a resolver bound to a VFS. The shader
@@ -99,12 +99,12 @@ func (sr *ShaderResolver) Prebuild() {
 // shaders map. Invariant: every key is lowercased.
 //
 // Lock discipline:
-//   1. Snapshot the .shader path list under vfs.mu.RLock — short
-//      critical section, no I/O held.
-//   2. Release vfs lock, then call vfs.ReadFile() per file. ReadFile
-//      itself acquires vfs.mu.RLock — we'd deadlock if we held it
-//      across the call. Recovered output is appended into a local
-//      map, then assigned under sr.mu at the end.
+//  1. Snapshot the .shader path list under vfs.mu.RLock — short
+//     critical section, no I/O held.
+//  2. Release vfs lock, then call vfs.ReadFile() per file. ReadFile
+//     itself acquires vfs.mu.RLock — we'd deadlock if we held it
+//     across the call. Recovered output is appended into a local
+//     map, then assigned under sr.mu at the end.
 //
 // Earlier draft acquired sr.mu.Lock() across the entire scan, which
 // blocked any concurrent Resolve call for the duration of the parse

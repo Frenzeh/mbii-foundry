@@ -11,7 +11,7 @@ import (
 func TestAtomicWrite_Success(t *testing.T) {
 	dir := t.TempDir()
 	target := filepath.Join(dir, "test.txt")
-	
+
 	err := AtomicWrite(target, 0644, func(w io.Writer) error {
 		_, err := w.Write([]byte("success"))
 		return err
@@ -19,7 +19,7 @@ func TestAtomicWrite_Success(t *testing.T) {
 	if err != nil {
 		t.Fatalf("AtomicWrite failed: %v", err)
 	}
-	
+
 	content, err := os.ReadFile(target)
 	if err != nil {
 		t.Fatalf("failed to read file: %v", err)
@@ -33,7 +33,7 @@ func TestAtomicWrite_Failure(t *testing.T) {
 	dir := t.TempDir()
 	target := filepath.Join(dir, "test.txt")
 	os.WriteFile(target, []byte("original"), 0644)
-	
+
 	expectedErr := errors.New("simulated error")
 	err := AtomicWrite(target, 0644, func(w io.Writer) error {
 		w.Write([]byte("new content"))
@@ -42,7 +42,7 @@ func TestAtomicWrite_Failure(t *testing.T) {
 	if err != expectedErr {
 		t.Fatalf("expected error %v, got %v", expectedErr, err)
 	}
-	
+
 	content, err := os.ReadFile(target)
 	if err != nil {
 		t.Fatalf("failed to read file: %v", err)
@@ -52,12 +52,11 @@ func TestAtomicWrite_Failure(t *testing.T) {
 	}
 }
 
-
 func TestAtomicWrite_PreservesMode(t *testing.T) {
 	dir := t.TempDir()
 	target := filepath.Join(dir, "test.txt")
 	os.WriteFile(target, []byte("original"), 0755) // executable
-	
+
 	err := AtomicWrite(target, 0600, func(w io.Writer) error {
 		_, err := w.Write([]byte("new"))
 		return err
@@ -65,7 +64,7 @@ func TestAtomicWrite_PreservesMode(t *testing.T) {
 	if err != nil {
 		t.Fatalf("AtomicWrite failed: %v", err)
 	}
-	
+
 	info, err := os.Stat(target)
 	if err != nil {
 		t.Fatalf("failed to stat file: %v", err)
@@ -78,12 +77,12 @@ func TestAtomicWrite_PreservesMode(t *testing.T) {
 func TestWriteFile(t *testing.T) {
 	dir := t.TempDir()
 	target := filepath.Join(dir, "test.txt")
-	
+
 	err := WriteFile(target, []byte("data"), 0644)
 	if err != nil {
 		t.Fatalf("WriteFile failed: %v", err)
 	}
-	
+
 	content, err := os.ReadFile(target)
 	if err != nil {
 		t.Fatalf("failed to read file: %v", err)

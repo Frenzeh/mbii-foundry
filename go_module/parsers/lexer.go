@@ -1,6 +1,5 @@
 package parsers
 
-
 import "fmt"
 
 type TokenType int

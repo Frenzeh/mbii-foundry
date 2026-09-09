@@ -8,7 +8,7 @@ import (
 )
 
 type SiegeObjective struct {
-	astName string // parse-time block identity; sync matches by name
+	astName      string // parse-time block identity; sync matches by name
 	Name         string // e.g. Objective1
 	GoalName     string
 	Final        int
@@ -27,7 +27,7 @@ type SiegeObjective struct {
 }
 
 type SiegeTeam struct {
-	astName string // parse-time block identity (the team's block name)
+	astName            string // parse-time block identity (the team's block name)
 	Name               string // The key used in the file (e.g. "Imperials")
 	TeamName           string // team1 or team2 (mapped from Teams block)
 	UseTeam            string
@@ -78,7 +78,7 @@ func NewSiegeData() *SiegeData {
 // ParseSiege parses a .siege file content using a brace-counting tokenizer.
 func ParseSiege(content string) (*SiegeData, error) {
 	siege := NewSiegeData()
-	
+
 	astTokens, err := Lex(content)
 	if err == nil {
 		siege.ctx = &sourceContext{doc: parseAST(astTokens)}
@@ -113,7 +113,6 @@ func ParseSiege(content string) (*SiegeData, error) {
 			processGlobalField(siege, key, val)
 		}
 	}
-
 
 	// Parse-time identity for canonical AST sync: teams and objectives
 	// are keyed by their ORIGINAL block names, so later renames update

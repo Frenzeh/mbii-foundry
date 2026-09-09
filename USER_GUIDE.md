@@ -262,17 +262,25 @@ before display. Review all text again before sharing it.
 ## 13. Updates
 
 Startup uses a six-hour cached GitHub release check;
-`Help -> Check for Updates` forces a fresh request.
+`Help -> Check for Updates` forces a fresh request. Alpha and beta builds may
+follow newer prereleases or stable releases, while stable builds ignore
+prereleases. Drafts and releases with inconsistent tag/prerelease metadata are
+not offered.
 
-Automatic installation requires a publisher public key embedded at build time
-and a valid Ed25519 manifest matching the requested version, platform,
-architecture, byte length, and SHA-256 digest. Missing or invalid trust data
-fails closed.
+Automatic installation requires the long-lived publisher public key embedded
+at release-build time and a valid Ed25519 manifest matching the requested
+version, platform, architecture, byte length, and SHA-256 digest. Missing or
+invalid trust data fails closed.
+
+v0.16.0-alpha is the first trusted-key build. v0.15.0-alpha cannot discover or
+authenticate it, so that upgrade must be downloaded manually from the Releases
+page. Once v0.16.0-alpha is installed, later releases signed by the same
+publisher key can use the authenticated installer.
 
 - macOS and Linux implement automatic replacement with rollback.
 - Windows opens the release page; no Authenticode publisher identity is
   configured for an in-place updater.
 - Ordinary local builds do not embed the release publisher key.
 - Manifest verification is not Apple notarization, Developer ID verification,
-  Windows Authenticode, or an OS trust-store judgment. The release workflow does
-  not notarize macOS bundles and may use an ad-hoc code signature.
+  Windows Authenticode, or an OS trust-store judgment. The v0.16.0-alpha macOS
+  archive is intentionally ad-hoc signed and unnotarized.

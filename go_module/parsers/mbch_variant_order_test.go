@@ -8,12 +8,12 @@ import (
 // TestDrainVariantsOrdering covers bug #4 from the 2026-04-28 tester
 // report ("model_1 isn't next to model but somewhere down in the file").
 // Asserts that:
-//   1. Variant keys appear in numeric order, not Go's randomized map order
-//   2. model_N is emitted adjacent to `model` (and same for skin / uishader / saber)
-//   3. ExtraFields not in any base group still fall through to
-//      writeExtraFields's alphabetical tail
-//   4. GenerateMBCH does not mutate the input character — required for the
-//      legends round-trip tests, which assume orig stays unchanged
+//  1. Variant keys appear in numeric order, not Go's randomized map order
+//  2. model_N is emitted adjacent to `model` (and same for skin / uishader / saber)
+//  3. ExtraFields not in any base group still fall through to
+//     writeExtraFields's alphabetical tail
+//  4. GenerateMBCH does not mutate the input character — required for the
+//     legends round-trip tests, which assume orig stays unchanged
 func TestDrainVariantsOrdering(t *testing.T) {
 	c := NewMBCHCharacter()
 	c.Name = "test"

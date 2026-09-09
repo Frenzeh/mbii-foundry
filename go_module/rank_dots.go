@@ -36,10 +36,10 @@ import (
 type RankDots struct {
 	widget.BaseWidget
 
-	costs       []int
-	current     int
-	affordable  func(rank int) bool
-	onChange    func(newRank int)
+	costs      []int
+	current    int
+	affordable func(rank int) bool
+	onChange   func(newRank int)
 
 	content *fyne.Container
 }

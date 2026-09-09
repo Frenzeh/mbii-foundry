@@ -5,9 +5,9 @@ import "testing"
 // Round-trip a small fragment of typical MBII portrait shader syntax
 // so we don't regress on shader-name lookup the next time someone
 // touches parseShaderFile. Two cases:
-//   1. shader-name { stage { map <texture> } } — the common case.
-//   2. shader-name { surfaceparm nopicmip stage { map ... } } — top-
-//      level directive before the stage opens.
+//  1. shader-name { stage { map <texture> } } — the common case.
+//  2. shader-name { surfaceparm nopicmip stage { map ... } } — top-
+//     level directive before the stage opens.
 func TestParseShaderFile_BasicMap(t *testing.T) {
 	body := `
 models/players/t_yoda/mb2_icon_default

@@ -141,10 +141,10 @@ func (a *App) showIconInventory() {
 // took. Width/height of the decoded image are printed too, so
 // "rendered to 0×0" is visible.
 //
-//   ✓ wxh — image.Image decoded, sized w×h
-//   M     — embedIcons.ReadFile failed (PNG isn't in the binary)
-//   E0    — file embedded but zero bytes
-//   D     — decode failed (corrupt PNG)
+//	✓ wxh — image.Image decoded, sized w×h
+//	M     — embedIcons.ReadFile failed (PNG isn't in the binary)
+//	E0    — file embedded but zero bytes
+//	D     — decode failed (corrupt PNG)
 func buildIconInventoryTile(basename, dir string) fyne.CanvasObject {
 	path := "assets/icons/" + dir + "/" + basename + ".png"
 	var (
@@ -182,9 +182,9 @@ func buildIconInventoryTile(basename, dir string) fyne.CanvasObject {
 
 	footer := container.NewBorder(nil, nil, statusLbl, nil, label)
 	tile := container.NewBorder(
-		nil,                      // top
-		footer,                   // bottom
-		nil, nil,                 // left/right
+		nil,      // top
+		footer,   // bottom
+		nil, nil, // left/right
 		container.NewCenter(img), // center
 	)
 	if bg != nil {

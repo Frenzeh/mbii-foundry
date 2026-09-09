@@ -75,7 +75,10 @@ func (a *App) storeCredential(token string, done func(error)) {
 	// a future retry or restart could resurrect the obsolete credential.
 	if a.legacyTokenPending != "" {
 		a.loadCredentials(func(err error) {
-			if err != nil { done(err); return }
+			if err != nil {
+				done(err)
+				return
+			}
 			a.storeCredential(token, done)
 		})
 		return
@@ -103,7 +106,9 @@ func (a *App) showCredentialConnect(continueAction func()) {
 	entry := NewPasswordInputEntry()
 	entry.SetPlaceHolder("New token (only for replacement or first-time setup)")
 	finish := func(err error) {
-		if closed { return }
+		if closed {
+			return
+		}
 		if err != nil {
 			status.SetText(a.credentialWarning + "\n" + err.Error())
 			return
@@ -125,19 +130,26 @@ func (a *App) showCredentialConnect(continueAction func()) {
 	})
 	useSaved.Importance = widget.HighImportance
 	store := widget.NewButton("Store new token", func() {
-		if entry.Text == "" { status.SetText("Enter a new token, or choose Use saved credential."); return }
+		if entry.Text == "" {
+			status.SetText("Enter a new token, or choose Use saved credential.")
+			return
+		}
 		status.SetText("Storing securely. The main editor remains available.")
 		a.storeCredential(entry.Text, finish)
 	})
 	remove := widget.NewButton("Remove stored credential", func() {
 		dialog.ShowConfirm("Remove GitHub access?", "Remove only Foundry's stored credential? Local files and projects are unchanged.", func(yes bool) {
-			if !yes { return }
+			if !yes {
+				return
+			}
 			status.SetText("Removing the stored credential. The main editor remains available.")
 			a.storeCredential("", finish)
 		}, win)
 	})
 	getToken := widget.NewButton("Create a GitHub token", func() {
-		if address, err := url.Parse("https://github.com/settings/tokens"); err == nil { a.fyneApp.OpenURL(address) }
+		if address, err := url.Parse("https://github.com/settings/tokens"); err == nil {
+			a.fyneApp.OpenURL(address)
+		}
 	})
 	win.SetContent(container.NewPadded(container.NewVBox(status, useSaved, widget.NewSeparator(), entry,
 		container.NewGridWithColumns(2, store, getToken), remove)))

@@ -72,7 +72,6 @@ func TestCopyDirMigratesReadOnlyNestedDirectory(t *testing.T) {
 	}
 }
 
-
 func TestMigrationPreservesUnownedPartialDirectory(t *testing.T) {
 	base := t.TempDir()
 	oldDir := filepath.Join(base, "mbii-fa-creator")
@@ -129,14 +128,24 @@ func TestMigrationFailureRetainsOriginalAndRetries(t *testing.T) {
 	base := t.TempDir()
 	oldDir := filepath.Join(base, "mbii-fa-creator")
 	newDir := filepath.Join(base, "mbii-foundry")
-	if err := os.MkdirAll(oldDir, 0700); err != nil { t.Fatal(err) }
+	if err := os.MkdirAll(oldDir, 0700); err != nil {
+		t.Fatal(err)
+	}
 	original := []byte(`{"theme":"gold"}`)
-	if err := os.WriteFile(filepath.Join(oldDir, "config.json"), original, 0600); err != nil { t.Fatal(err) }
+	if err := os.WriteFile(filepath.Join(oldDir, "config.json"), original, 0600); err != nil {
+		t.Fatal(err)
+	}
 	link := filepath.Join(oldDir, "linked.json")
-	if err := os.Symlink("config.json", link); err != nil { t.Skipf("symlink unavailable: %v", err) }
+	if err := os.Symlink("config.json", link); err != nil {
+		t.Skipf("symlink unavailable: %v", err)
+	}
 	got, err := appConfigDirWithBase(base)
-	if err == nil || got != oldDir { t.Fatal("incomplete migration was not reported with the intact legacy fallback") }
-	if _, err := os.Stat(newDir); !os.IsNotExist(err) { t.Fatal("failed migration published a partial configuration") }
+	if err == nil || got != oldDir {
+		t.Fatal("incomplete migration was not reported with the intact legacy fallback")
+	}
+	if _, err := os.Stat(newDir); !os.IsNotExist(err) {
+		t.Fatal("failed migration published a partial configuration")
+	}
 	staging, globErr := filepath.Glob(filepath.Join(base, "mbii-foundry-migration-*"))
 	if globErr != nil || len(staging) != 0 {
 		t.Fatalf("failed migration left owned staging data behind: paths=%v err=%v", staging, globErr)
@@ -149,11 +158,17 @@ func TestMigrationFailureRetainsOriginalAndRetries(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(got, "fallback-state.json"), fallbackWrite, 0600); err != nil {
 		t.Fatalf("returned legacy fallback was not usable: %v", err)
 	}
-	if err := os.Remove(link); err != nil { t.Fatal(err) }
+	if err := os.Remove(link); err != nil {
+		t.Fatal(err)
+	}
 	got, err = appConfigDirWithBase(base)
-	if err != nil || got != newDir { t.Fatalf("migration could not retry: %v", err) }
+	if err != nil || got != newDir {
+		t.Fatalf("migration could not retry: %v", err)
+	}
 	migrated, err := os.ReadFile(filepath.Join(newDir, "config.json"))
-	if err != nil || string(migrated) != string(original) { t.Fatal("retry did not preserve the original contents") }
+	if err != nil || string(migrated) != string(original) {
+		t.Fatal("retry did not preserve the original contents")
+	}
 	migratedFallback, err := os.ReadFile(filepath.Join(newDir, "fallback-state.json"))
 	if err != nil || string(migratedFallback) != string(fallbackWrite) {
 		t.Fatal("retry did not migrate state written through the usable fallback")
@@ -164,7 +179,9 @@ func TestConfigDirectoryCannotBeFile(t *testing.T) {
 	base := t.TempDir()
 	path := filepath.Join(base, "mbii-foundry")
 	original := []byte("unrelated file")
-	if err := os.WriteFile(path, original, 0600); err != nil { t.Fatal(err) }
+	if err := os.WriteFile(path, original, 0600); err != nil {
+		t.Fatal(err)
+	}
 	directory, err := appConfigDirWithBase(base)
 	if err == nil || directory != "" {
 		t.Fatal("non-directory configuration location was accepted")

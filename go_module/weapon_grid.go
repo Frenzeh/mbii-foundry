@@ -44,13 +44,13 @@ type WeaponGrid struct {
 
 	// Cross-tab integration. All optional — if any are nil the card
 	// renders without the corresponding affordance.
-	attrLevelGetter    func(attID string) int    // current level of the paired MB_ATT_*
-	attrLevelSetter    func(attID string, n int) // set the paired MB_ATT_* level
-	flagsCountGetter   func(wpID string) int     // # of HELD_* flags applied to wpID
-	overrideExists     func(wpID string) bool    // true if a WeaponInfoN targets wpID
-	onOverrideJump     func(wpID string)         // navigate to Weapon Mods + select
-	onFlagsJump        func(wpID string)         // navigate to Flags + select
-	onClickInfo        func(string, string)      // click on weapon icon → pin sidebar
+	attrLevelGetter  func(attID string) int    // current level of the paired MB_ATT_*
+	attrLevelSetter  func(attID string, n int) // set the paired MB_ATT_* level
+	flagsCountGetter func(wpID string) int     // # of HELD_* flags applied to wpID
+	overrideExists   func(wpID string) bool    // true if a WeaponInfoN targets wpID
+	onOverrideJump   func(wpID string)         // navigate to Weapon Mods + select
+	onFlagsJump      func(wpID string)         // navigate to Flags + select
+	onClickInfo      func(string, string)      // click on weapon icon → pin sidebar
 
 	filter string
 	search *widget.Entry

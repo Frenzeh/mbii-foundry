@@ -11,19 +11,31 @@ import (
 func TestOversizedCredentialPreservesStoredValue(t *testing.T) {
 	keyring.MockInit()
 	t.Cleanup(keyring.MockInit)
-	if err := SaveGitHubToken("existing-fixture"); err != nil { t.Fatal(err) }
-	if err := SaveGitHubToken(strings.Repeat("x", MaxTokenSize+1)); !errors.Is(err, ErrSetDataTooBig) { t.Fatal("oversized credential was not rejected") }
+	if err := SaveGitHubToken("existing-fixture"); err != nil {
+		t.Fatal(err)
+	}
+	if err := SaveGitHubToken(strings.Repeat("x", MaxTokenSize+1)); !errors.Is(err, ErrSetDataTooBig) {
+		t.Fatal("oversized credential was not rejected")
+	}
 	got, err := LoadGitHubToken()
-	if err != nil || got != "existing-fixture" { t.Fatal("rejected credential changed existing storage") }
+	if err != nil || got != "existing-fixture" {
+		t.Fatal("rejected credential changed existing storage")
+	}
 }
 
 func TestLegacyMigrationCannotReplaceNewerCredential(t *testing.T) {
 	keyring.MockInit()
 	t.Cleanup(keyring.MockInit)
-	if err := SaveGitHubToken("newer-fixture"); err != nil { t.Fatal(err) }
-	if err := MigrateLegacyGitHubToken("older-fixture"); err != nil { t.Fatal(err) }
+	if err := SaveGitHubToken("newer-fixture"); err != nil {
+		t.Fatal(err)
+	}
+	if err := MigrateLegacyGitHubToken("older-fixture"); err != nil {
+		t.Fatal(err)
+	}
 	got, err := LoadGitHubToken()
-	if err != nil || got != "newer-fixture" { t.Fatal("stale plaintext migration overwrote newer native credential") }
+	if err != nil || got != "newer-fixture" {
+		t.Fatal("stale plaintext migration overwrote newer native credential")
+	}
 }
 
 func TestLegacyMigrationRequiresVerifiedNativePublication(t *testing.T) {

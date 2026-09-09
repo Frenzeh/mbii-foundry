@@ -30,4 +30,3 @@ func (a *App) persistConfig() error {
 	a.legacyCredentialSecured = false
 	return nil
 }
-

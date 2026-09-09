@@ -7,6 +7,8 @@ pre-release suffixes until the project stabilizes.
 
 ## [Unreleased]
 
+## [0.16.0-alpha] — 2026-09-09
+
 ### Added
 - Reviewed Save and Save As flow for session-aware editors: the current
   destination and exact candidate bytes are shown side by side, and approval is
@@ -56,12 +58,16 @@ pre-release suffixes until the project stabilizes.
 ### Security
 - Automatic update installation now fails closed unless the running build has a
   configured Ed25519 publisher key and the manifest binds the requested version,
-  platform, architecture, length, and SHA-256 digest. Windows continues to open
-  the release page instead of replacing an executable without Authenticode
-  publisher identity.
-- macOS packaging verifies an arm64+x86_64 universal executable and a structural
-  code signature. Local and release packaging explicitly distinguish ad-hoc
-  signing from Developer ID and do not claim notarization.
+  platform, architecture, length, and SHA-256 digest. Release discovery lists
+  eligible releases explicitly: alpha builds can follow prereleases, stable
+  builds ignore them, and drafts or mismatched tag metadata are rejected.
+- The release workflow uses least-privilege permissions, requires a successful
+  main CI run for the exact tagged commit, keeps the private publisher key in
+  one isolated signing job, and creates an inspectable draft with exactly three
+  archives and three signed manifests.
+- The v0.16.0-alpha macOS archive is intentionally ad-hoc signed and
+  unnotarized. The workflow verifies the universal executable and structural
+  signature without claiming Apple publisher identity.
 
 ### Fixed
 - Character portraits now use explicit PNG decoding in Profile and Skins,

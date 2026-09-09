@@ -9,9 +9,9 @@
     <key>CFBundleIdentifier</key>
     <string>com.frenzeh.mbii-foundry</string>
     <key>CFBundleVersion</key>
-    <string>1.1</string>
+    <string>16</string>
     <key>CFBundleShortVersionString</key>
-    <string>1.1</string>
+    <string>0.16.0</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleExecutable</key>
@@ -56,6 +56,16 @@
             <key>CFBundleTypeExtensions</key>
             <array>
                 <string>veh</string>
+            </array>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+        </dict>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>MBII Siege File</string>
+            <key>CFBundleTypeExtensions</key>
+            <array>
+                <string>siege</string>
             </array>
             <key>CFBundleTypeRole</key>
             <string>Editor</string>

@@ -358,4 +358,3 @@ func attributeColor(id, category string) color.Color {
 func (w *AttributeToggleWidget) CreateRenderer() fyne.WidgetRenderer {
 	return widget.NewSimpleRenderer(w.container)
 }
-

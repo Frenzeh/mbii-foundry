@@ -19,16 +19,16 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
-	"strings"
-	"time"
-
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+	"path/filepath"
+	"strings"
+	"sync"
+	"sync/atomic"
+	"time"
 
 	"github.com/Frenzeh/mbii-foundry/parsers"
 )
@@ -61,9 +61,39 @@ type SourcePanel struct {
 	provider  SourceProvider
 	editorRef Editor
 
+	// drafts is the app-wide per-document draft store, shared with
+	// every mirror panel. It retains each document's unapplied source
+	// text + diagnostics across tab / mode / pop-out switches.
+	drafts *SourceDraftStore
+
+	// lastParseErr is the live parse diagnostics for the current edit
+	// text; stored with the draft so re-selecting a tab restores the
+	// exact validation state.
+	lastParseErr string
+
+	// srcRemove unsubscribes this panel from the current editor's
+	// source-changed push notifications; srcSubEditor is the editor
+	// the subscription belongs to.
+	srcRemove    func()
+	srcSubEditor Editor
+
+	tickerStop chan struct{}
+	tickerDone chan struct{}
+	closeOnce  sync.Once
+	closed     atomic.Bool
+
+	// Legacy SourceProvider subscriptions have setter semantics instead
+	// of a remove callback. Track the provider so Close can detach it.
+	legacySource SourceProvider
+
 	// True while the user has pending edits in the Entry. While true,
 	// the auto-refresh from form → source is paused.
 	userDirty bool
+
+	// settingText distinguishes programmatic mirror/render synchronization
+	// from user typing. Programmatic Entry.SetText callbacks must never
+	// create, replace, or delete the shared document draft.
+	settingText bool
 
 	// onPopOut, if set, opens this panel's content in a new window
 	// for dual-monitor workflows. The pop-out button next to the
@@ -81,33 +111,50 @@ type SourcePanel struct {
 }
 
 func NewSourcePanel(a *App) *SourcePanel {
-	sp := &SourcePanel{app: a}
-
+	sp := &SourcePanel{
+		app:        a,
+		tickerStop: make(chan struct{}),
+		tickerDone: make(chan struct{}),
+	}
+	// Every panel owned by an App uses exactly the same draft store.
+	// Initialize it here for lightweight/test Apps rather than silently
+	// creating a private store that mirrors cannot see.
+	if a != nil {
+		if a.sourceDrafts == nil {
+			a.sourceDrafts = NewSourceDraftStore()
+		}
+		sp.drafts = a.sourceDrafts
+	} else {
+		sp.drafts = NewSourceDraftStore()
+	}
 	// Safety-net ticker for editors that don't invoke
 	// SetOnSourceChanged on every mutation. Must fyne.Do for UI
 	// thread safety.
 	go func() {
 		ticker := time.NewTicker(500 * time.Millisecond)
 		defer ticker.Stop()
-		for range ticker.C {
-			if sp.provider == nil {
-				continue
+		defer close(sp.tickerDone)
+		for {
+			select {
+			case <-sp.tickerStop:
+				return
+			case <-ticker.C:
+				if sp.closed.Load() || sp.provider == nil {
+					continue
+				}
+				fyne.Do(func() {
+					if sp.closed.Load() || sp.provider == nil {
+						return
+					}
+					sp.refreshFromProvider()
+				})
 			}
-			fyne.Do(func() {
-				if sp.provider == nil || sp.userDirty {
-					return
-				}
-				cur := sp.provider.GenerateSource()
-				if cur != sp.lastRenderedSource {
-					sp.renderFromProvider(cur)
-				}
-			})
 		}
 	}()
 
-	sp.header = widget.NewLabelWithStyle("Source", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	sp.header = widget.NewLabelWithStyle("SOURCE", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	sp.byteCount = widget.NewLabel("")
-	sp.byteCount.TextStyle = fyne.TextStyle{Italic: true, Monospace: true}
+	sp.byteCount.TextStyle = fyne.TextStyle{Monospace: true}
 
 	// Highlighted view (default). TextWrapOff: long lines extend past
 	// the right edge and the bi-directional Scroll wrapper provides
@@ -118,25 +165,28 @@ func NewSourcePanel(a *App) *SourcePanel {
 	sp.highlighted = widget.NewRichText()
 	sp.highlighted.Wrapping = fyne.TextWrapOff
 	sp.setPlaceholder("Select a file to see its live source here.")
-
-	// Edit view (hidden until toggled). Same no-wrap rationale — the
-	// editor scrolls horizontally for long lines instead of reflowing.
 	sp.editor = widget.NewMultiLineEntry()
-	sp.editor.TextStyle = fyne.TextStyle{Monospace: true}
 	sp.editor.Wrapping = fyne.TextWrapOff
 	sp.editor.OnChanged = func(s string) {
-		if sp.provider == nil {
+		if sp.provider == nil || sp.settingText {
 			return
 		}
-		sp.userDirty = s != sp.lastRenderedSource
+		// Entry changes not initiated by render/mirror synchronization are
+		// user work. Retain even text that happens to equal the rendered
+		// source; only Apply, Revert, or confirmed Discard may consume it.
+		sp.userDirty = true
 		sp.updateByteCount(s)
-		// Keep the colored preview live-in-sync with what the user
-		// types — swapping back to View then shows the latest edits
-		// already highlighted, and anyone peeking at the preview
-		// during edit mode sees the right colors.
+		// Keep the colored preview live-in-sync with what the user types.
 		sp.highlighted.Segments = highlightedSegments(s)
 		sp.highlighted.Refresh()
 		sp.validateEdits(s)
+		if sp.editorRef != nil {
+			sp.drafts.Set(sp.editorRef, SourceDraft{
+				Text:     s,
+				ParseErr: sp.lastParseErr,
+				EditMode: sp.inEditMode,
+			})
+		}
 	}
 
 	// Stack wraps both views; Show/Hide flips which is visible.
@@ -190,28 +240,25 @@ func NewSourcePanel(a *App) *SourcePanel {
 	}, "Pop out source panel into its own window (collapses rail)")
 	popOutBtn.Importance = widget.LowImportance
 
-	rule := NewAccentRule()
-
-	// Validation indicator — confirm icon + message. Hidden outside
-	// edit mode; visible only when there's something to say.
+	// Validation indicator — visible only while editing and only when
+	// there is useful parser feedback.
 	sp.validationIcon = widget.NewIcon(theme.ConfirmIcon())
 	sp.validationMsg = widget.NewLabel("")
 	sp.validationMsg.TextStyle = fyne.TextStyle{Monospace: true}
 	sp.validationMsg.Wrapping = fyne.TextWrapWord
 	validationRow := container.NewHBox(sp.validationIcon, sp.validationMsg)
 	validationRow.Hide()
-	// Save a reference so we can toggle visibility with edit mode.
 	sp.validationRow = validationRow
 
-	headerRow := container.NewBorder(nil, nil, sp.header, container.NewHBox(sp.byteCount, copyBtn, popOutBtn, collapseBtn))
+	headerActions := container.NewHBox(copyBtn, popOutBtn, collapseBtn)
+	headerRow := container.NewBorder(nil, nil, sp.header, headerActions, sp.byteCount)
 	actionRow := container.NewHBox(sp.editToggle, sp.applyBtn, sp.revertBtn)
-	// Wrap chrome in a TilePanel so the source panel reads as a peer
-	// surface to the info-panel hero (same offset-stroke language).
-	chrome := NewTilePanel(
-		container.NewVBox(headerRow, actionRow, validationRow),
-		TileOpts{Padded: true},
-	)
-	topBlock := container.NewVBox(chrome, rule)
+
+	// Source is utility chrome, not a promotional card. A flat padded
+	// header with one divider keeps it distinct without competing with
+	// the editor or repeating the info panel's card treatment.
+	chrome := container.NewPadded(container.NewVBox(headerRow, actionRow, validationRow))
+	topBlock := container.NewVBox(chrome, NewAccentRule())
 
 	sp.container = container.NewBorder(topBlock, nil, nil, nil, sp.viewHost)
 	return sp
@@ -220,6 +267,24 @@ func NewSourcePanel(a *App) *SourcePanel {
 // GetContent returns the panel's root widget.
 func (sp *SourcePanel) GetContent() fyne.CanvasObject { return sp.container }
 
+// Close releases the panel's background refresh loop and source subscription.
+// It is safe to call repeatedly (including both reattach and window-close
+// paths); a disposed panel cannot be attached to another editor.
+func (sp *SourcePanel) Close() {
+	if sp == nil {
+		return
+	}
+	sp.closeOnce.Do(func() {
+		sp.closed.Store(true)
+		close(sp.tickerStop)
+		<-sp.tickerDone
+		sp.storeDraftFor(sp.editorRef)
+		sp.unsubscribeSource()
+		sp.provider = nil
+		sp.editorRef = nil
+	})
+}
+
 // SetOnPopOut wires the pop-out button. Pass nil to disable (used
 // by mirror panels so they don't spawn their own pop-outs).
 func (sp *SourcePanel) SetOnPopOut(cb func()) { sp.onPopOut = cb }
@@ -227,22 +292,110 @@ func (sp *SourcePanel) SetOnPopOut(cb func()) { sp.onPopOut = cb }
 // SetActiveEditor tells the panel which editor to track. Safe to
 // pass nil.
 func (sp *SourcePanel) SetActiveEditor(ed Editor) {
+	if sp == nil || sp.closed.Load() {
+		return
+	}
+	// 1. Park the outgoing editor's draft.
+	sp.storeDraftFor(sp.editorRef)
+	sp.unsubscribeSource()
+
 	sp.provider = nil
 	sp.editorRef = ed
-	sp.userDirty = false
-	// Force edit mode off whenever the active editor changes — we
-	// don't want someone's half-typed edits to bleed into the next
-	// file's session.
-	if sp.inEditMode {
-		sp.setEditMode(false)
-	}
+
+	// 2. Assign the provider + subscribe BEFORE restoring the draft:
+	// applyDraft and refreshFromProvider read provider-dependent state
+	// (byte counter, placeholders) and need the surface wired up.
 	if provider, ok := ed.(SourceProvider); ok {
 		sp.provider = provider
-		provider.SetOnSourceChanged(func() {
-			fyne.Do(sp.refreshFromProvider)
-		})
+		if lp, ok := ed.(SourceListenerProvider); ok {
+			sp.srcSubEditor = ed
+			sp.srcRemove = lp.AddSourceListener(func() {
+				fyne.Do(func() {
+					if !sp.closed.Load() {
+						sp.refreshFromProvider()
+					}
+				})
+			})
+		} else {
+			// Legacy fallback: retain the provider so Close can clear
+			// its setter-based callback.
+			sp.legacySource = provider
+			provider.SetOnSourceChanged(func() {
+				fyne.Do(func() {
+					if !sp.closed.Load() {
+						sp.refreshFromProvider()
+					}
+				})
+			})
+		}
+	}
+
+	// 3. Restore the incoming editor's draft, or reset document-local
+	// mode/diagnostics so the outgoing document cannot leak into it.
+	if d, ok := sp.drafts.Get(ed); ok {
+		sp.applyDraft(d)
+	} else {
+		sp.userDirty = false
+		sp.lastParseErr = ""
+		sp.setEditMode(false)
 	}
 	sp.refreshFromProvider()
+}
+
+// storeDraftFor parks the current edit text (if any) into the shared
+// store for ed. It only ever WRITES: passive surfaces (mirrors, tab
+// switches with no pending edits) must never erase another surface's
+// retained draft. Drafts are deleted exclusively by a successful
+// Apply, an explicit Revert, or a confirmed Discard.
+func (sp *SourcePanel) storeDraftFor(ed Editor) {
+	if ed == nil || sp.editorRef != ed || !sp.userDirty {
+		return
+	}
+	sp.drafts.Set(ed, SourceDraft{
+		Text:     sp.editor.Text,
+		ParseErr: sp.lastParseErr,
+		EditMode: sp.inEditMode,
+	})
+}
+
+// applyDraft restores a stored draft into the edit surface: text,
+// live-parse diagnostics, byte count and edit mode (in BOTH
+// directions — a doc saved without edit mode must not inherit the
+// previous doc's editor view).
+func (sp *SourcePanel) applyDraft(d SourceDraft) {
+	sp.userDirty = true
+	sp.lastParseErr = d.ParseErr
+	sp.setEditorText(d.Text)
+	sp.updateByteCount(d.Text)
+	sp.highlighted.Segments = highlightedSegments(d.Text)
+	sp.highlighted.Refresh()
+	// Reassess through the active parser so recovered/older drafts never
+	// become "valid" merely because their stored diagnostic was blank.
+	sp.validateEdits(d.Text)
+	if d.EditMode != sp.inEditMode {
+		sp.setEditMode(d.EditMode)
+	}
+	d.ParseErr = sp.lastParseErr
+	sp.drafts.Set(sp.editorRef, d)
+}
+
+func (sp *SourcePanel) setEditorText(text string) {
+	sp.settingText = true
+	sp.editor.SetText(text)
+	sp.settingText = false
+}
+
+// unsubscribeSource drops this panel's push subscription, if any.
+func (sp *SourcePanel) unsubscribeSource() {
+	if sp.srcRemove != nil {
+		sp.srcRemove()
+		sp.srcRemove = nil
+	}
+	if sp.legacySource != nil {
+		sp.legacySource.SetOnSourceChanged(nil)
+		sp.legacySource = nil
+	}
+	sp.srcSubEditor = nil
 }
 
 // refreshFromProvider re-renders from the provider's current source,
@@ -250,22 +403,39 @@ func (sp *SourcePanel) SetActiveEditor(ed Editor) {
 func (sp *SourcePanel) refreshFromProvider() {
 	if sp.provider == nil {
 		sp.setPlaceholder("Select a file to see its live source here.")
-		sp.editor.SetText("")
+		sp.setEditorText("")
 		sp.lastRenderedSource = ""
+		sp.userDirty = false
 		sp.byteCount.SetText("")
 		return
 	}
-	if sp.userDirty {
+
+	// The shared store is authoritative across the docked panel and all
+	// pop-outs. Pull newer mirror edits, and notice when another surface
+	// explicitly consumed the draft so this passive mirror can resume.
+	if d, ok := sp.drafts.Get(sp.editorRef); ok {
+		if !sp.userDirty || sp.editor.Text != d.Text ||
+			sp.lastParseErr != d.ParseErr || sp.inEditMode != d.EditMode {
+			sp.applyDraft(d)
+		}
 		return
+	}
+	if sp.userDirty {
+		sp.userDirty = false
+		sp.lastParseErr = ""
 	}
 	sp.renderFromProvider(sp.provider.GenerateSource())
 }
 
-// renderFromProvider pushes src into both views and updates bookkeeping.
+// renderFromProvider pushes src into both views and updates
+// bookkeeping. NOTE: never delete the stored draft here. Passive
+// refreshes (ticker, form-driven pushes) must not erase a retained
+// draft — only a successful Apply, an explicit Revert or a confirmed
+// Discard may consume one.
 func (sp *SourcePanel) renderFromProvider(src string) {
 	if src == "" {
 		sp.setPlaceholder("(no source yet — the editor is empty)")
-		sp.editor.SetText("")
+		sp.setEditorText("")
 	} else {
 		// No-wrap rendering: source goes into the highlighter as-is
 		// and overflows horizontally inside the bi-directional Scroll.
@@ -274,11 +444,12 @@ func (sp *SourcePanel) renderFromProvider(src string) {
 		// Only overwrite the Entry if we're not in edit mode — editing
 		// should feel uninterrupted even if the form is still ticking.
 		if !sp.inEditMode {
-			sp.editor.SetText(src)
+			sp.setEditorText(src)
 		}
 	}
 	sp.lastRenderedSource = src
 	sp.userDirty = false
+	sp.lastParseErr = ""
 	sp.updateByteCount(src)
 }
 
@@ -301,7 +472,7 @@ func (sp *SourcePanel) setPlaceholder(msg string) {
 // currentText returns whichever view's text is "live" — the Entry
 // text if the user is editing, otherwise the last-rendered source.
 func (sp *SourcePanel) currentText() string {
-	if sp.inEditMode {
+	if sp.userDirty || sp.inEditMode {
 		return sp.editor.Text
 	}
 	return sp.lastRenderedSource
@@ -313,10 +484,15 @@ func (sp *SourcePanel) toggleEditMode() {
 }
 
 func (sp *SourcePanel) setEditMode(on bool) {
+	entering := on && !sp.inEditMode
 	sp.inEditMode = on
 	if on {
-		// Sync editor text from last-rendered source on entry.
-		sp.editor.SetText(sp.lastRenderedSource)
+		// Sync editor text from last-rendered source on entry — but
+		// never clobber a restored draft that's already sitting in the
+		// Entry (tab-switch restore path).
+		if entering && !sp.userDirty {
+			sp.setEditorText(sp.lastRenderedSource)
+		}
 		sp.viewHost.Objects[0].Hide()
 		sp.viewHost.Objects[1].Show()
 		sp.editToggle.SetIcon(theme.VisibilityIcon())
@@ -334,6 +510,12 @@ func (sp *SourcePanel) setEditMode(on bool) {
 		sp.revertBtn.Hide()
 		sp.validationRow.Hide()
 	}
+	// Edit/view is document-local state whenever a draft exists.
+	if d, ok := sp.drafts.Get(sp.editorRef); ok {
+		d.EditMode = on
+		d.ParseErr = sp.lastParseErr
+		sp.drafts.Set(sp.editorRef, d)
+	}
 	sp.viewHost.Refresh()
 	if sp.validationRow != nil {
 		sp.validationRow.Refresh()
@@ -349,140 +531,234 @@ func (sp *SourcePanel) validateEdits(src string) {
 	}
 	err := sp.parseForActiveEditor(src)
 	if err == nil {
+		sp.lastParseErr = ""
 		sp.validationIcon.SetResource(theme.ConfirmIcon())
 		sp.validationMsg.SetText("Parses cleanly — Apply will update the form.")
 		sp.applyBtn.Enable()
 		return
 	}
-	sp.validationIcon.SetResource(theme.ErrorIcon())
 	// Clip overly long errors so the panel doesn't blow up vertically.
 	msg := err.Error()
 	if len(msg) > 240 {
 		msg = msg[:240] + "…"
 	}
+	sp.lastParseErr = msg
+	sp.validationIcon.SetResource(theme.ErrorIcon())
 	sp.validationMsg.SetText("Parse error: " + msg)
 	sp.applyBtn.Disable()
 }
 
-// parseForActiveEditor dispatches to the correct parser based on the
-// active editor's file extension. Parse functions are pure — they
-// don't mutate any editor state, making them safe to run on every
-// keystroke for live validation.
-func (sp *SourcePanel) parseForActiveEditor(src string) error {
-	if sp.editorRef == nil {
-		return nil // nothing to parse against
+func validateSourceStructure(src string) error {
+	if strings.TrimSpace(src) == "" {
+		return fmt.Errorf("source is empty")
 	}
-	ext := ""
-	if p := sp.editorRef.GetCurrentPath(); p != "" {
-		ext = strings.ToLower(filepath.Ext(p))
+	tokens, err := parsers.Lex(src)
+	if err != nil {
+		return err
 	}
-	// Fall back to probing the editor type if no file path is set
-	// yet (new unsaved file).
-	if ext == "" {
-		switch sp.editorRef.(type) {
-		case *MBCHEditor:
-			ext = ".mbch"
-		case *SABEditor:
-			ext = ".sab"
-		case *VEHEditor:
-			ext = ".veh"
-		case *SiegeEditor:
-			ext = ".siege"
+	depth := 0
+	topLevelBlocks := 0
+	for _, token := range tokens {
+		switch token.Type {
+		case parsers.TokenBraceOpen:
+			if depth == 0 {
+				topLevelBlocks++
+			}
+			depth++
+		case parsers.TokenBraceClose:
+			depth--
+			if depth < 0 {
+				return fmt.Errorf("unexpected closing brace")
+			}
 		}
 	}
-	switch ext {
-	case ".mbch":
-		_, err := parsers.ParseMBCH(src)
-		return err
-	case ".sab":
-		_, err := parsers.ParseSAB(src)
-		return err
-	case ".veh":
-		_, err := parsers.ParseVEH(src)
-		return err
-	case ".siege":
-		_, err := parsers.ParseSiege(src)
-		return err
+	if depth != 0 {
+		return fmt.Errorf("unbalanced braces")
+	}
+	if topLevelBlocks == 0 {
+		return fmt.Errorf("source contains no definition block")
+	}
+	if diagnostics := parsers.LexDiagnostics(src); len(diagnostics) > 0 {
+		return fmt.Errorf("%s", strings.Join(diagnostics, "; "))
 	}
 	return nil
 }
 
-// updateByteCount writes the byte total with MBCH-cap warnings.
+// parseSourceForEditor validates a draft against the actual editor
+// contract. Unsupported/nil editors are errors: the absence of a
+// parser is never evidence that arbitrary text is valid.
+func parseSourceForEditor(ed Editor, src string) error {
+	if err := validateSourceStructure(src); err != nil {
+		return err
+	}
+	switch e := ed.(type) {
+	case *MBCHEditor:
+		_, err := parsers.ParseMBCH(src)
+		return err
+	case *SABEditor:
+		_, err := parsers.ParseSABDefinition(src, e.SelectedDefinition())
+		return err
+	case *VEHEditor:
+		_, err := parsers.ParseVEHDefinition(src, e.SelectedDefinition())
+		return err
+	case *SiegeEditor:
+		_, err := parsers.ParseSiege(src)
+		return err
+	case nil:
+		return fmt.Errorf("no active editor")
+	default:
+		return fmt.Errorf("source parsing is unsupported for %T", ed)
+	}
+}
+
+func (sp *SourcePanel) parseForActiveEditor(src string) error {
+	return parseSourceForEditor(sp.editorRef, src)
+}
+
+// updateByteCount writes the byte total. MBCH warnings use the same
+// engine-faithful parser assessment as validation; other formats get a
+// plain count and are never assigned MBCH's file or block capacities.
 func (sp *SourcePanel) updateByteCount(src string) {
 	n := len(src)
-	switch {
-	case sp.provider == nil, n == 0:
+	if sp.provider == nil || n == 0 {
 		sp.byteCount.SetText("")
-	// R22.0.00 raised the .mbch overall cap from 8192 to 16384.
-	case n > 16384:
-		sp.byteCount.SetText(fmt.Sprintf("%d / 16384 ⚠ over limit", n))
-	case n > 15000:
-		sp.byteCount.SetText(fmt.Sprintf("%d / 16384 (near limit)", n))
+		return
+	}
+	if !sp.editorIsMBCH() {
+		sp.byteCount.SetText(fmt.Sprintf("%d bytes", n))
+		return
+	}
+
+	bs, err := parsers.AssessMBCHSourceBuffers(src)
+	if err != nil {
+		sp.byteCount.SetText(fmt.Sprintf("%d bytes (capacity assessment failed)", n))
+		return
+	}
+	switch {
+	case bs.TotalFileBytes >= parsers.MBCHMaxFileBytes:
+		sp.byteCount.SetText(fmt.Sprintf("%d / %d bytes — file limit reached", bs.TotalFileBytes, parsers.MBCHMaxFileBytes-1))
+	case bs.ClassInfoBytes > parsers.ClassInfoMaxPayload:
+		sp.byteCount.SetText(fmt.Sprintf("%d bytes — ClassInfo %d / %d", n, bs.ClassInfoBytes, parsers.ClassInfoMaxPayload))
+	case maxInt(bs.WeaponInfoBytes) > parsers.WeaponInfoMaxPayload:
+		sp.byteCount.SetText(fmt.Sprintf("%d bytes — WeaponInfo %d / %d", n, maxInt(bs.WeaponInfoBytes), parsers.WeaponInfoMaxPayload))
+	case maxInt(bs.ForceInfoBytes) > parsers.ForceInfoMaxPayload:
+		sp.byteCount.SetText(fmt.Sprintf("%d bytes — ForceInfo %d / %d", n, maxInt(bs.ForceInfoBytes), parsers.ForceInfoMaxPayload))
+	case bs.MaxPairedValueBytes > parsers.PairedValueMaxPayload:
+		sp.byteCount.SetText(fmt.Sprintf("%d bytes — value %d / %d", n, bs.MaxPairedValueBytes, parsers.PairedValueMaxPayload))
+	case bs.TotalFileBytes > parsers.MBCHMaxFileBytes-500:
+		sp.byteCount.SetText(fmt.Sprintf("%d / %d bytes (near file limit)", bs.TotalFileBytes, parsers.MBCHMaxFileBytes-1))
 	default:
 		sp.byteCount.SetText(fmt.Sprintf("%d bytes", n))
 	}
 }
 
-// applyEdits writes the Entry's text to a temp file and reuses the
-// editor's LoadFile parser to push changes back to the form.
+func maxInt(values []int) int {
+	max := 0
+	for _, value := range values {
+		if value > max {
+			max = value
+		}
+	}
+	return max
+}
+
+// editorIsMBCH reports whether the tracked document is a .mbch file
+// (by path extension, falling back to the editor type for untitled
+// documents).
+func (sp *SourcePanel) editorIsMBCH() bool {
+	if sp.editorRef == nil {
+		return false
+	}
+	if p := sp.editorRef.GetCurrentPath(); p != "" {
+		return strings.ToLower(filepath.Ext(p)) == ".mbch"
+	}
+	_, ok := sp.editorRef.(*MBCHEditor)
+	return ok
+}
+
+// applyEdits parses the Entry's text and pushes the result back to
+// the editor in-memory — no temp files, no LoadFile. This preserves
+// document identity (path + immutable baseline) and a failed parse
+// leaves the editor untouched, so the text stays editable and
+// correctable. The applied state becomes one undo step.
 func (sp *SourcePanel) applyEdits() {
 	if sp.editorRef == nil {
 		return
 	}
 	if !sp.userDirty {
-		// External tester reported "Apply doesn't work" — they were
-		// clicking Apply with no detectable changes. Silent no-op was
-		// the source of confusion. Surface it explicitly instead.
 		if sp.app != nil {
 			sp.app.updateStatus("Apply: no source changes to push back to the form")
 		}
 		return
 	}
-	// Capture the original path BEFORE LoadFile — LoadFile mutates
-	// the editor's currentPath to the temp file we're about to feed
-	// it. Without this snapshot, the post-LoadFile "restore" reads
-	// the just-mutated temp path and the editor stays pointed at
-	// `…\Temp\foundry-apply-*.txt`. The user then hits Save and ends
-	// up writing back to the temp directory with a .txt extension.
-	// Tester report 2026-04-26: "auto saves as .txt … in
-	// C:\Users\$ME\AppData\Local\Temp."
-	originalPath := sp.editorRef.GetCurrentPath()
-	ext := ".txt"
-	if originalPath != "" {
-		ext = filepath.Ext(originalPath)
-	}
-	tmp, err := os.CreateTemp("", "foundry-apply-*"+ext)
-	if err != nil {
-		dialog.ShowError(fmt.Errorf("couldn't create temp file: %w", err), sp.app.mainWindow)
-		return
-	}
-	tmpPath := tmp.Name()
-	defer os.Remove(tmpPath)
-	if _, err := tmp.WriteString(sp.editor.Text); err != nil {
-		tmp.Close()
-		dialog.ShowError(fmt.Errorf("couldn't write temp file: %w", err), sp.app.mainWindow)
-		return
-	}
-	tmp.Close()
-
-	if err := sp.editorRef.LoadFile(tmpPath); err != nil {
+	src := sp.editor.Text
+	draft := SourceDraft{Text: src, ParseErr: sp.lastParseErr, EditMode: sp.inEditMode}
+	// Validate first — applyBtn should already be disabled on parse
+	// failure, but belt-and-suspenders. A failed parse retains the
+	// text in the panel for correction.
+	if err := sp.parseForActiveEditor(src); err != nil {
 		dialog.ShowError(fmt.Errorf("source didn't parse: %w", err), sp.app.mainWindow)
 		return
 	}
-	// Restore the user's original path (or clear it for an unsaved
-	// new file — clearing forces saveFile() to redirect to Save As
-	// instead of writing back to the temp file).
-	sp.editorRef.SetCurrentPath(originalPath)
+	se, ok := sp.editorRef.(SessionEditor)
+	if !ok {
+		dialog.ShowError(fmt.Errorf("apply not supported for this editor type"), sp.app.mainWindow)
+		return
+	}
+	if err := se.ApplySourceText(src); err != nil {
+		dialog.ShowError(err, sp.app.mainWindow)
+		return
+	}
+	// Applied — consume exactly the version this surface applied. If a
+	// mirror published newer text, refreshFromProvider pulls that draft.
 	sp.userDirty = false
+	sp.lastParseErr = ""
+	sp.drafts.DeleteIfMatch(sp.editorRef, draft)
 	sp.refreshFromProvider()
 	sp.app.updateStatus("Applied source edits to the form")
 }
 
 // revertEdits drops in-progress edits and re-syncs from the form.
+// This is an explicit user-initiated discard of the draft.
 func (sp *SourcePanel) revertEdits() {
 	if !sp.userDirty {
 		return
 	}
+	current := SourceDraft{
+		Text:     sp.editor.Text,
+		ParseErr: sp.lastParseErr,
+		EditMode: sp.inEditMode,
+	}
 	sp.userDirty = false
+	sp.lastParseErr = ""
+	if sp.editorRef != nil {
+		sp.drafts.DeleteIfMatch(sp.editorRef, current)
+	}
 	sp.refreshFromProvider()
+}
+
+// DraftPendingFor reports whether ed has unapplied source work —
+// valid or not — retained in the panel's draft state. Close and quit
+// guards count this as unsaved changes.
+func (sp *SourcePanel) DraftPendingFor(ed Editor) bool {
+	if sp == nil || ed == nil {
+		return false
+	}
+	if ed == sp.editorRef && sp.userDirty {
+		return true
+	}
+	return sp.drafts.Has(ed)
+}
+
+// DiscardDraft drops ed's retained draft (used on confirmed tab
+// close after the user agreed to discard).
+func (sp *SourcePanel) DiscardDraft(ed Editor) {
+	if sp == nil || ed == nil {
+		return
+	}
+	sp.drafts.Delete(ed)
+	if sp.editorRef == ed {
+		sp.userDirty = false
+		sp.lastParseErr = ""
+	}
 }

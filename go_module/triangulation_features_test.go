@@ -13,20 +13,29 @@ func TestBufferGaugeCalculation(t *testing.T) {
 	char.MBClass = "MB_CLASS_CLONETROOPER"
 	char.MaxHealth = 100
 	char.MaxArmor = 100
+	char.Weapons = "WP_CLONE_RIFLE|WP_BLASTER_PISTOL"
+	char.Attributes = "MB_ATT_CLONERIFLE,3|MB_ATT_STAMINA,2|MB_ATT_MAGNETIC_PLATING,1"
+	char.Model = "models/players/clone_trooper/model_default.glm"
 
 	status := CalculateBufferStatus(char)
 	if status.ClassInfoLen <= 0 {
-		t.Fatalf("expected positive ClassInfoLen, got %d", status.ClassInfoLen)
+		t.Fatalf("expected positive ClassInfoLen from realistic character, got %d", status.ClassInfoLen)
 	}
 	if status.IsExceeded {
 		t.Fatalf("expected status not exceeded for minimal character")
+	}
+
+	// Verify threshold calculation: WarnThresholdBytes should be ClassInfoMaxPayload - 1000
+	expectedThreshold := parsers.ClassInfoMaxPayload - 1000
+	if WarnThresholdBytes != expectedThreshold {
+		t.Errorf("expected WarnThresholdBytes=%d, got %d", expectedThreshold, WarnThresholdBytes)
 	}
 
 	// Inflate character to test warning/exceeded threshold
 	char.Description = strings.Repeat("A", 8000)
 	status = CalculateBufferStatus(char)
 	if status.ClassInfoLen < 100 {
-		t.Fatalf("expected valid measurement")
+		t.Fatalf("expected valid measurement after inflation, got %d", status.ClassInfoLen)
 	}
 }
 
@@ -139,39 +148,25 @@ func TestRelationsMapping(t *testing.T) {
 	}
 }
 
-func TestDefensiveMatrixDR(t *testing.T) {
+func TestDefensiveMatrixUsesOnlyConfiguredPools(t *testing.T) {
 	char := parsers.NewMBCHCharacter()
 	char.MaxHealth = 100
 	char.MaxArmor = 100
 	char.Attributes = "MB_ATT_MAGNETIC_PLATING,1|MB_ATT_BLAST_ARMOUR,1|MB_ATT_CORTOSIS,1"
-	char.ExtraFields = map[string]string{
-		"reinforcements": "2", // 3 lives total
-	}
+	char.ExtraLives = 2
 
 	dm := CalculateDefensiveMatrix(char)
-
-	if dm.TotalLives != 3 {
-		t.Errorf("expected 3 total lives, got %d", dm.TotalLives)
+	if dm.TotalLives != 3 || dm.RawPool != 200 || dm.TotalRawEHP != 600 {
+		t.Fatalf("configured defensive pool arithmetic is wrong: %+v", dm)
 	}
-	if dm.RawPool != 200 {
-		t.Errorf("expected RawPool 200, got %d", dm.RawPool)
+	if dm.EnergyEHP != dm.TotalRawEHP || dm.ExplosiveEHP != dm.TotalRawEHP || dm.MeleeEHP != dm.TotalRawEHP {
+		t.Fatalf("unverified mechanics must not invent channel-specific EHP: %+v", dm)
 	}
-	if dm.TotalRawEHP != 600 {
-		t.Errorf("expected TotalRawEHP 600, got %d", dm.TotalRawEHP)
+	if dm.HasMagPlating || dm.HasBlastArmour || dm.HasCortosis != 0 {
+		t.Fatalf("attribute strings must not trigger fabricated DR/Cortosis inference: %+v", dm)
 	}
-
-	// 40% Energy DR -> RawPool (200) / 0.60 * 3 lives = 1000 Energy EHP
-	if dm.EnergyEHP < 990 || dm.EnergyEHP > 1010 {
-		t.Errorf("expected ~1000 Energy EHP with Mag Plating, got %d", dm.EnergyEHP)
-	}
-
-	// 40% Explosive DR -> RawPool (200) / 0.60 * 3 lives = 1000 Explosive EHP
-	if dm.ExplosiveEHP < 990 || dm.ExplosiveEHP > 1010 {
-		t.Errorf("expected ~1000 Explosive EHP with Blast Armour, got %d", dm.ExplosiveEHP)
-	}
-
-	if dm.HasCortosis != 1 {
-		t.Errorf("expected Cortosis level 1")
+	if dm.EvidenceStatus != "Unverified" {
+		t.Fatalf("unsupported damage-reduction mechanics must be Unverified, got %q", dm.EvidenceStatus)
 	}
 }
 

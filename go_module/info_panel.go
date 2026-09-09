@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"image/color"
 	"regexp"
 	"sort"
 	"strconv"
@@ -11,7 +10,6 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
@@ -19,21 +17,11 @@ import (
 type InfoPanel struct {
 	container *fyne.Container
 
-	// --- Header zone --------------------------------------------------
-	// "Hero" strip at top of the Context tab. Loose Swiss-ish grid:
-	// category chip pinned left, monospace ID pinned right, bold title
-	// below; tinted rectangle behind the whole block so it reads as a
-	// distinct identity band regardless of scroll position.
-	headerBG        *canvas.Rectangle // faint accent-tinted fill
-	headerFrame     *canvas.Rectangle // 1px accent border for a solid brutalist edge
-	categoryChip    *canvas.Text      // small caps, tinted
-	idChip          *canvas.Text      // monospace, muted
-	title           *widget.Label     // large, bold
-	headerIcon      *canvas.Image     // 44x44 icon preview in header hero
-	// Accent marker + rule below the header — the small square + thin
-	// line is the sci-fi note. Both use accent color.
-	headerMarker *canvas.Rectangle
-	headerRule   *canvas.Rectangle
+	// Compact identity header shown above the contextual documentation.
+	categoryChip *canvas.Text
+	idChip       *canvas.Text
+	title        *widget.Label
+	headerIcon   *canvas.Image
 
 	content *widget.RichText // markdown body
 	search  *widget.Entry
@@ -305,17 +293,6 @@ func (ip *InfoPanel) createUI() {
 	ip.idChip.TextStyle = fyne.TextStyle{Monospace: true}
 	ip.idChip.Alignment = fyne.TextAlignTrailing
 
-	// Hero panel — managed by NewTilePanel below. The headerBG /
-	// headerFrame fields on InfoPanel are now historical (the TilePanel
-	// primitive owns the offset-stroke shapes); kept on the struct for
-	// the few legacy refresh paths but not initialized here.
-
-	// Accent marker + rule — small filled square left, thin rule right.
-	ip.headerMarker = canvas.NewRectangle(CurrentThemeColor)
-	ip.headerMarker.SetMinSize(fyne.NewSize(8, 8))
-	ip.headerRule = canvas.NewRectangle(tintWithAlpha(CurrentThemeColor, 120))
-	ip.headerRule.SetMinSize(fyne.NewSize(0, 1))
-
 	welcomeMsg := `
 ### Info Panel
 
@@ -384,44 +361,26 @@ This panel provides real-time documentation and context for the field you're edi
 	ip.headerIcon.SetMinSize(fyne.NewSize(44, 44))
 	ip.headerIcon.Hide()
 
-	// Hero body — the inner double-pad is intentional: the outer
-	// Padded comes from TilePanel itself; the inner one reserves
-	// breathing room around the title block specifically.
 	heroTitleBlock := container.NewVBox(heroRow, ip.title)
 	heroContent := container.NewBorder(nil, nil,
 		container.NewGridWrap(fyne.NewSize(44, 44), ip.headerIcon),
 		nil,
 		heroTitleBlock,
 	)
-	heroBody := container.NewPadded(heroContent)
-	hero := NewTilePanel(heroBody, TileOpts{Padded: true})
+	hero := NewTilePanel(heroContent, TileOpts{
+		FillAlpha:   12,
+		StrokeAlpha: 48,
+		Padded:      true,
+	})
 
-	// Double-offset rule — two parallel accent lines of different
-	// lengths + a filled square marker pinned left. The first (longer)
-	// rule hangs off the left edge with the marker; the second
-	// (shorter, dimmer) starts indented 48px and lines up underneath,
-	// giving a mild "technical diagram" air without being noisy.
-	markerBox := container.New(layout.NewGridWrapLayout(fyne.NewSize(8, 8)), ip.headerMarker)
-	primaryRule := container.NewBorder(nil, nil, markerBox, nil, ip.headerRule)
-	secondaryLine := canvas.NewRectangle(tintWithAlpha(CurrentThemeColor, 55))
-	secondaryLine.SetMinSize(fyne.NewSize(0, 1))
-	secondaryIndent := canvas.NewRectangle(color.Transparent)
-	secondaryIndent.SetMinSize(fyne.NewSize(48, 1))
-	secondaryRule := container.NewBorder(nil, nil, secondaryIndent, nil, secondaryLine)
-	spacerBetweenRules := canvas.NewRectangle(color.Transparent)
-	spacerBetweenRules.SetMinSize(fyne.NewSize(0, 3))
-	rule := container.NewVBox(primaryRule, spacerBetweenRules, secondaryRule)
-
-	spacerTop := canvas.NewRectangle(color.Transparent)
-	spacerTop.SetMinSize(fyne.NewSize(0, 10))
-	spacerBottom := canvas.NewRectangle(color.Transparent)
-	spacerBottom.SetMinSize(fyne.NewSize(0, 14))
-
+	// One quiet divider is enough to separate identity from reference
+	// content. The old double-line technical ornament added noise to a
+	// pane that is already text-dense.
 	details := container.NewVBox(
 		hero,
-		spacerTop,
-		rule,
-		spacerBottom,
+		Gap(SpaceSM),
+		NewAccentRule(),
+		Gap(SpaceSM),
 		container.NewPadded(ip.content),
 	)
 	detailsScroll := container.NewScroll(details)

@@ -2,13 +2,14 @@ package parsers
 
 import (
 	"fmt"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 )
 
 type VehicleData struct {
+	ctx *sourceContext
+
 	Name          string
 	Type          string // e.g. VH_SPEEDER
 	Model         string
@@ -43,104 +44,64 @@ func NewVehicleData() *VehicleData {
 
 // ParseVEH parses the content of a VEH file
 func ParseVEH(content string) (*VehicleData, error) {
-	veh := NewVehicleData()
-
-	lines := []string{}
-	for _, line := range strings.Split(content, "\n") {
-		idx := strings.Index(line, "//")
-		if idx >= 0 {
-			line = line[:idx]
-		}
-		lines = append(lines, line)
-	}
-	cleanContent := strings.Join(lines, "\n")
-
-	// Extract Main Block: Name { ... }
-	// Using simple regex for outer block is usually fine if file is Name { ... }
-	// But robust brace counting is safer.
-	// For now, assuming standard VEH format Name { ... }
-	re := regexp.MustCompile(`(?is)(\w+)\s*{\s*([^}]+)\s*}`)
-	match := re.FindStringSubmatch(cleanContent)
-
-	if len(match) > 2 {
-		veh.Name = match[1]
-		parseVehicleBlock(match[2], veh)
-	} else {
-		return nil, fmt.Errorf("no valid vehicle block found")
-	}
-
-	return veh, nil
+	return ParseVEHDefinition(content, 0)
 }
 
-func parseVehicleBlock(block string, veh *VehicleData) {
-	for _, line := range strings.Split(block, "\n") {
-		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
-		}
-
-		parts := strings.Fields(line)
-		if len(parts) < 2 {
-			continue
-		}
-
-		key := parts[0]
-		idx := strings.Index(line, key)
-		valuePart := strings.TrimSpace(line[idx+len(key):])
-
-		value := valuePart
-		if strings.HasPrefix(value, "\"") && strings.HasSuffix(value, "\"") {
-			if len(value) >= 2 {
-				value = value[1 : len(value)-1]
-			}
-		}
-
-		switch strings.ToLower(key) {
-		case "name":
-			veh.Name = value
-		case "type":
-			veh.Type = value
-		case "model":
-			veh.Model = value
-		case "skin":
-			veh.Skin = value
-		case "speed":
-			veh.SpeedMax, _ = strconv.ParseFloat(value, 64)
-		case "turbospeed":
-			veh.TurboSpeed, _ = strconv.ParseFloat(value, 64)
-		case "accel":
-			veh.Accel, _ = strconv.ParseFloat(value, 64)
-		case "decel":
-			veh.Decel, _ = strconv.ParseFloat(value, 64)
-		case "strafeperc":
-			veh.StrafePerc, _ = strconv.ParseFloat(value, 64)
-		case "bankingspeed":
-			veh.BankingSpeed, _ = strconv.ParseFloat(value, 64)
-		case "rolllimit":
-			veh.RollLimit, _ = strconv.ParseFloat(value, 64)
-		case "pitchlimit":
-			veh.PitchLimit, _ = strconv.ParseFloat(value, 64)
-		case "braking":
-			veh.Braking, _ = strconv.ParseFloat(value, 64)
-		case "mouseyaw":
-			veh.MouseYaw, _ = strconv.ParseFloat(value, 64)
-		case "mousepitch":
-			veh.MousePitch, _ = strconv.ParseFloat(value, 64)
-		case "customgravity":
-			veh.CustomGravity, _ = strconv.ParseFloat(value, 64)
-		case "armor":
-			veh.Armor, _ = strconv.Atoi(value)
-		case "shields":
-			veh.Shields, _ = strconv.Atoi(value)
-		case "weapons":
-			veh.Weapons = value
-		default:
-			veh.ExtraFields[key] = value
-		}
+// setVehicleField applies one parsed key/value pair to the model.
+func setVehicleField(veh *VehicleData, key, value string) {
+	switch strings.ToLower(key) {
+	case "name":
+		veh.Name = value
+	case "type":
+		veh.Type = value
+	case "model":
+		veh.Model = value
+	case "skin":
+		veh.Skin = value
+	case "speedmax":
+		veh.SpeedMax, _ = strconv.ParseFloat(value, 64)
+	case "turbospeed":
+		veh.TurboSpeed, _ = strconv.ParseFloat(value, 64)
+	case "acceleration":
+		veh.Accel, _ = strconv.ParseFloat(value, 64)
+	case "decelidle":
+		veh.Decel, _ = strconv.ParseFloat(value, 64)
+	case "strafeperc":
+		veh.StrafePerc, _ = strconv.ParseFloat(value, 64)
+	case "bankingspeed":
+		veh.BankingSpeed, _ = strconv.ParseFloat(value, 64)
+	case "rolllimit":
+		veh.RollLimit, _ = strconv.ParseFloat(value, 64)
+	case "pitchlimit":
+		veh.PitchLimit, _ = strconv.ParseFloat(value, 64)
+	case "braking":
+		veh.Braking, _ = strconv.ParseFloat(value, 64)
+	case "mouseyaw":
+		veh.MouseYaw, _ = strconv.ParseFloat(value, 64)
+	case "mousepitch":
+		veh.MousePitch, _ = strconv.ParseFloat(value, 64)
+	case "customgravity":
+		veh.CustomGravity, _ = strconv.ParseFloat(value, 64)
+	case "armor":
+		veh.Armor, _ = strconv.Atoi(value)
+	case "shields":
+		veh.Shields, _ = strconv.Atoi(value)
+	case "weapons":
+		veh.Weapons = value
+	default:
+		veh.ExtraFields[key] = value
 	}
 }
 
 func GenerateVEH(veh *VehicleData) (string, error) {
+	if veh.ctx != nil && veh.ctx.doc != nil {
+		// Sync into a deep clone — the caller's retained parse baseline
+		// stays pristine (see GenerateMBCH).
+		doc := cloneASTDocument(veh.ctx.doc)
+		syncVehicleToAST(veh, doc.Nodes[veh.ctx.blockIndex].(*ASTBlock))
+		return doc.String(), nil
+	}
+
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "%s\n{\n", veh.Name)
 	fmt.Fprintf(&sb, "\tname\t\t%s\n", veh.Name)
@@ -153,16 +114,16 @@ func GenerateVEH(veh *VehicleData) (string, error) {
 	}
 
 	if veh.SpeedMax != 0 {
-		fmt.Fprintf(&sb, "\tspeed\t\t%.1f\n", veh.SpeedMax)
+		fmt.Fprintf(&sb, "\tspeedMax\t%.1f\n", veh.SpeedMax)
 	}
 	if veh.TurboSpeed != 0 {
 		fmt.Fprintf(&sb, "\tturboSpeed\t%.1f\n", veh.TurboSpeed)
 	}
 	if veh.Accel != 0 {
-		fmt.Fprintf(&sb, "\taccel\t\t%.1f\n", veh.Accel)
+		fmt.Fprintf(&sb, "\tacceleration\t%.1f\n", veh.Accel)
 	}
 	if veh.Decel != 0 {
-		fmt.Fprintf(&sb, "\tdecel\t\t%.1f\n", veh.Decel)
+		fmt.Fprintf(&sb, "\tdecelIdle\t%.1f\n", veh.Decel)
 	}
 	if veh.StrafePerc != 0 {
 		fmt.Fprintf(&sb, "\tstrafePerc\t%.1f\n", veh.StrafePerc)

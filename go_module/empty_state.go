@@ -33,17 +33,18 @@ func NewEmptyStateTile(headline, hint, actionLabel string, action func()) fyne.C
 	hintLabel := widget.NewLabelWithStyle(hint, fyne.TextAlignCenter, fyne.TextStyle{})
 	hintLabel.Wrapping = fyne.TextWrapWord
 
-	stack := container.NewVBox(headlineText, hintLabel)
-
+	stack := container.NewVBox(headlineText, Gap(SpaceXS), hintLabel)
 	if actionLabel != "" && action != nil {
 		btn := widget.NewButton(actionLabel, action)
 		btn.Importance = widget.LowImportance
+		stack.Add(Gap(SpaceXS))
 		stack.Add(container.NewCenter(btn))
 	}
 
-	tile := NewTilePanel(stack, TileOpts{Padded: true})
-	// Wrap once more in Padded so the tile floats inside its parent
-	// rather than touching the parent's edges — empty states are
-	// breathing-room moments, not dense data displays.
-	return container.NewPadded(tile)
+	tile := NewTilePanel(stack, TileOpts{
+		FillAlpha:   7,
+		StrokeAlpha: 28,
+		Padded:      true,
+	})
+	return container.NewPadded(container.NewCenter(tile))
 }

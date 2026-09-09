@@ -2,7 +2,6 @@ package parsers
 
 import (
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
 )
@@ -14,6 +13,8 @@ type BladeInfo struct {
 }
 
 type SaberData struct {
+	ctx *sourceContext
+
 	Name               string
 	FullName           string
 	SaberType          string
@@ -105,59 +106,11 @@ func NewSaberData() *SaberData {
 
 // ParseSAB parses the content of a SAB file
 func ParseSAB(content string) (*SaberData, error) {
-	saber := NewSaberData()
-
-	// Strip comments
-	lines := []string{}
-	for _, line := range strings.Split(content, "\n") {
-		idx := strings.Index(line, "//")
-		if idx >= 0 {
-			line = line[:idx]
-		}
-		lines = append(lines, line)
-	}
-	cleanContent := strings.Join(lines, "\n")
-
-	// Extract Main Block: Name { ... }
-	re := regexp.MustCompile(`(?is)(\w+)\s*\{([^}]+)\}`)
-	match := re.FindStringSubmatch(cleanContent)
-
-	if len(match) > 2 {
-		saber.Name = match[1]
-		parseSaberBlock(match[2], saber)
-	} else {
-		return nil, fmt.Errorf("no valid saber block found")
-	}
-
-	return saber, nil
+	return ParseSABDefinition(content, 0)
 }
-
-func parseSaberBlock(block string, saber *SaberData) {
-	for _, line := range strings.Split(block, "\n") {
-		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
-		}
-
-		// robust parsing
-		parts := strings.Fields(line)
-		if len(parts) < 2 {
-			continue
-		}
-
-		key := parts[0]
-		idx := strings.Index(line, key)
-		valuePart := strings.TrimSpace(line[idx+len(key):])
-
-		value := valuePart
-		if strings.HasPrefix(value, "\"") && strings.HasSuffix(value, "\"") {
-			if len(value) >= 2 {
-				value = value[1 : len(value)-1]
-			}
-		}
-
-		setSaberField(saber, strings.ToLower(key), value)
-	}
+func parseSaberBool(value string) bool {
+	n, err := strconv.Atoi(value)
+	return err == nil && n != 0
 }
 
 func setSaberField(saber *SaberData, key, value string) {
@@ -176,16 +129,20 @@ func setSaberField(saber *SaberData, key, value string) {
 			saber.Blades = append(saber.Blades, BladeInfo{Color: "blue", Length: 32.0, Radius: 3.0})
 		}
 	case "sabercolor":
-		if len(saber.Blades) > 0 {
-			saber.Blades[0].Color = value
+		for i := range saber.Blades {
+			saber.Blades[i].Color = value
 		}
 	case "saberlength":
-		if len(saber.Blades) > 0 {
-			saber.Blades[0].Length, _ = strconv.ParseFloat(value, 64)
+		if parsed, err := strconv.ParseFloat(value, 64); err == nil {
+			for i := range saber.Blades {
+				saber.Blades[i].Length = parsed
+			}
 		}
 	case "saberradius":
-		if len(saber.Blades) > 0 {
-			saber.Blades[0].Radius, _ = strconv.ParseFloat(value, 64)
+		if parsed, err := strconv.ParseFloat(value, 64); err == nil {
+			for i := range saber.Blades {
+				saber.Blades[i].Radius = parsed
+			}
 		}
 
 	// Handle numbered blades
@@ -289,53 +246,54 @@ func setSaberField(saber *SaberData, key, value string) {
 	case "hitothereffect":
 		saber.HitOtherEffect = value
 
-	// Boolean Flags
+	// Boolean flags are accumulated by the engine: each non-zero
+	// occurrence sets a bit, while a later zero never clears it.
 	case "nowallmarks":
-		saber.NoWallMarks = value == "1"
+		saber.NoWallMarks = saber.NoWallMarks || parseSaberBool(value)
 	case "nodlight":
-		saber.NoDlight = value == "1"
+		saber.NoDlight = saber.NoDlight || parseSaberBool(value)
 	case "noblade":
-		saber.NoBlade = value == "1"
+		saber.NoBlade = saber.NoBlade || parseSaberBool(value)
 	case "noclashflare":
-		saber.NoClashFlare = value == "1"
+		saber.NoClashFlare = saber.NoClashFlare || parseSaberBool(value)
 	case "nodismemberment":
-		saber.NoDismemberment = value == "1"
+		saber.NoDismemberment = saber.NoDismemberment || parseSaberBool(value)
 	case "noidleeffect":
-		saber.NoIdleEffect = value == "1"
+		saber.NoIdleEffect = saber.NoIdleEffect || parseSaberBool(value)
 	case "alwaysblock":
-		saber.AlwaysBlock = value == "1"
+		saber.AlwaysBlock = saber.AlwaysBlock || parseSaberBool(value)
 	case "nomanualdeactivate":
-		saber.NoManualDeactivate = value == "1"
+		saber.NoManualDeactivate = saber.NoManualDeactivate || parseSaberBool(value)
 	case "transitiondamage":
-		saber.TransitionDamage = value == "1"
+		saber.TransitionDamage = saber.TransitionDamage || parseSaberBool(value)
 	case "notinopen":
-		saber.NotInOpen = value == "1"
+		saber.NotInOpen = saber.NotInOpen || parseSaberBool(value)
 	case "notinmp":
-		saber.NotInMP = value == "1"
+		saber.NotInMP = saber.NotInMP || parseSaberBool(value)
 	case "nocartwheels":
-		saber.NoCartwheels = value == "1"
+		saber.NoCartwheels = saber.NoCartwheels || parseSaberBool(value)
 	case "throwable":
-		saber.Throwable = value == "1"
+		saber.Throwable = saber.Throwable || parseSaberBool(value)
 	case "disarmable":
-		saber.Disarmable = value == "1"
+		saber.Disarmable = saber.Disarmable || parseSaberBool(value)
 	case "blasterblocking":
-		saber.BlasterBlocking = value == "1"
+		saber.BlasterBlocking = saber.BlasterBlocking || parseSaberBool(value)
 	case "oninwater":
-		saber.OnInWater = value == "1"
+		saber.OnInWater = saber.OnInWater || parseSaberBool(value)
 	case "bounceonwalls":
-		saber.BounceOnWalls = value == "1"
+		saber.BounceOnWalls = saber.BounceOnWalls || parseSaberBool(value)
 	case "twohanded":
-		saber.TwoHanded = value == "1"
+		saber.TwoHanded = saber.TwoHanded || parseSaberBool(value)
 	case "usegoreconfig":
-		saber.UseGoreConfig = value == "1"
+		saber.UseGoreConfig = saber.UseGoreConfig || parseSaberBool(value)
 	case "usegoreconfig2":
-		saber.UseGoreConfig2 = value == "1"
+		saber.UseGoreConfig2 = saber.UseGoreConfig2 || parseSaberBool(value)
 	case "nodismemberment2":
-		saber.NoDismemberment2 = value == "1"
+		saber.NoDismemberment2 = saber.NoDismemberment2 || parseSaberBool(value)
 	case "nobladeeffects":
-		saber.NoBladeEffects = value == "1"
+		saber.NoBladeEffects = saber.NoBladeEffects || parseSaberBool(value)
 	case "nobladeeffects2":
-		saber.NoBladeEffects2 = value == "1"
+		saber.NoBladeEffects2 = saber.NoBladeEffects2 || parseSaberBool(value)
 
 	case "g2marksshader":
 		saber.G2MarksShader = value
@@ -358,6 +316,13 @@ func setSaberField(saber *SaberData, key, value string) {
 }
 
 func GenerateSAB(saber *SaberData) (string, error) {
+	if saber.ctx != nil && saber.ctx.doc != nil {
+		// Sync into a deep clone — the caller's retained parse baseline
+		// stays pristine (see GenerateMBCH).
+		doc := cloneASTDocument(saber.ctx.doc)
+		syncSaberToAST(saber, doc.Nodes[saber.ctx.blockIndex].(*ASTBlock))
+		return doc.String(), nil
+	}
 	var sb strings.Builder
 
 	fmt.Fprintf(&sb, "%s\n{\n", saber.Name)
@@ -376,9 +341,22 @@ func GenerateSAB(saber *SaberData) (string, error) {
 	}
 
 	if len(saber.Blades) > 0 {
-		fmt.Fprintf(&sb, "\tsaberColor\t\t%s\n", saber.Blades[0].Color)
-		fmt.Fprintf(&sb, "\tsaberLength\t\t%.1f\n", saber.Blades[0].Length)
-		fmt.Fprintf(&sb, "\tsaberRadius\t\t%.1f\n", saber.Blades[0].Radius)
+		first := saber.Blades[0]
+		fmt.Fprintf(&sb, "\tsaberColor\t\t%s\n", first.Color)
+		fmt.Fprintf(&sb, "\tsaberLength\t\t%s\n", strconv.FormatFloat(first.Length, 'f', -1, 64))
+		fmt.Fprintf(&sb, "\tsaberRadius\t\t%s\n", strconv.FormatFloat(first.Radius, 'f', -1, 64))
+		for i := 1; i < len(saber.Blades) && i < saber.NumBlades; i++ {
+			blade := saber.Blades[i]
+			if blade.Color != first.Color {
+				fmt.Fprintf(&sb, "\tsaberColor%d\t\t%s\n", i+1, blade.Color)
+			}
+			if blade.Length != first.Length {
+				fmt.Fprintf(&sb, "\tsaberLength%d\t\t%s\n", i+1, strconv.FormatFloat(blade.Length, 'f', -1, 64))
+			}
+			if blade.Radius != first.Radius {
+				fmt.Fprintf(&sb, "\tsaberRadius%d\t\t%s\n", i+1, strconv.FormatFloat(blade.Radius, 'f', -1, 64))
+			}
+		}
 	}
 
 	// Sounds
@@ -463,17 +441,17 @@ func GenerateSAB(saber *SaberData) (string, error) {
 		fmt.Fprintf(&sb, "\tdisarmBonus\t\t%d\n", saber.DisarmBonus)
 	}
 	if saber.MoveSpeedScale != 1.0 {
-		fmt.Fprintf(&sb, "\tmoveSpeedScale\t\t%.2f\n", saber.MoveSpeedScale)
+		fmt.Fprintf(&sb, "\tmoveSpeedScale\t\t%s\n", strconv.FormatFloat(saber.MoveSpeedScale, 'f', -1, 64))
 	}
 	if saber.AnimSpeedScale != 1.0 {
-		fmt.Fprintf(&sb, "\tanimSpeedScale\t\t%.2f\n", saber.AnimSpeedScale)
+		fmt.Fprintf(&sb, "\tanimSpeedScale\t\t%s\n", strconv.FormatFloat(saber.AnimSpeedScale, 'f', -1, 64))
 	}
 	if saber.DamageScale != 1.0 {
-		fmt.Fprintf(&sb, "\tdamageScale\t\t%.2f\n", saber.DamageScale)
+		fmt.Fprintf(&sb, "\tdamageScale\t\t%s\n", strconv.FormatFloat(saber.DamageScale, 'f', -1, 64))
 	}
 	if saber.KnockbackScale != 0.0 {
-		fmt.Fprintf(&sb, "\tknockbackScale\t\t%.2f\n", saber.KnockbackScale)
-	} // 0.0 default?
+		fmt.Fprintf(&sb, "\tknockbackScale\t\t%s\n", strconv.FormatFloat(saber.KnockbackScale, 'f', -1, 64))
+	}
 
 	// Effects
 	if saber.TrailStyle > 0 {
@@ -490,6 +468,12 @@ func GenerateSAB(saber *SaberData) (string, error) {
 	}
 	if saber.HitOtherEffect != "" {
 		fmt.Fprintf(&sb, "\thitOtherEffect\t\t\"%s\"\n", saber.HitOtherEffect)
+	}
+	if saber.G2MarksShader != "" {
+		fmt.Fprintf(&sb, "\tg2MarksShader\t\t\"%s\"\n", saber.G2MarksShader)
+	}
+	if saber.G2WeaponMarkShader != "" {
+		fmt.Fprintf(&sb, "\tg2WeaponMarkShader\t\"%s\"\n", saber.G2WeaponMarkShader)
 	}
 
 	// Boolean Flags
@@ -549,6 +533,35 @@ func GenerateSAB(saber *SaberData) (string, error) {
 	}
 	if saber.UseGoreConfig {
 		fmt.Fprintf(&sb, "\tuseGoreConfig\t\t1\n")
+	}
+	if saber.UseGoreConfig2 {
+		fmt.Fprintf(&sb, "\tuseGoreConfig2\t\t1\n")
+	}
+	if saber.NoDismemberment2 {
+		fmt.Fprintf(&sb, "\tnoDismemberment2\t1\n")
+	}
+	if saber.NoBladeEffects {
+		fmt.Fprintf(&sb, "\tnoBladeEffects\t\t1\n")
+	}
+	if saber.NoBladeEffects2 {
+		fmt.Fprintf(&sb, "\tnoBladeEffects2\t\t1\n")
+	}
+
+	// Animation overrides
+	if saber.SlapAnim != "" {
+		fmt.Fprintf(&sb, "\tslapAnim\t\t%s\n", saber.SlapAnim)
+	}
+	if saber.ReadyAnim != "" {
+		fmt.Fprintf(&sb, "\treadyAnim\t\t%s\n", saber.ReadyAnim)
+	}
+	if saber.JumpAtkUpMove != "" {
+		fmt.Fprintf(&sb, "\tjumpAtkUpMove\t\t%s\n", saber.JumpAtkUpMove)
+	}
+	if saber.JumpAtkFwdMove != "" {
+		fmt.Fprintf(&sb, "\tjumpAtkFwdMove\t\t%s\n", saber.JumpAtkFwdMove)
+	}
+	if saber.LungeAtkMove != "" {
+		fmt.Fprintf(&sb, "\tlungeAtkMove\t\t%s\n", saber.LungeAtkMove)
 	}
 
 	writeExtraFields(&sb, saber.ExtraFields)

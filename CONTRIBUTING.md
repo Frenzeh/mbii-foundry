@@ -1,328 +1,217 @@
 # Contributing to MBII Foundry
 
-```
-        ╔════════════════════════════════════════════════════════════╗
-        ║                                                            ║
-        ║   ░░░  ███╗   ███╗██████╗ ██╗██╗    ░░░                    ║
-        ║   ░░░  ████╗ ████║██╔══██╗██║██║    ░░░  F  O  U  N        ║
-        ║   ░░░  ██╔████╔██║██████╔╝██║██║    ░░░  D  R  Y           ║
-        ║   ░░░  ██║╚██╔╝██║██╔══██╗██║██║    ░░░                    ║
-        ║   ░░░  ██║ ╚═╝ ██║██████╔╝██║██║    ░░░  A L P H A         ║
-        ║   ░░░  ╚═╝     ╚═╝╚═════╝ ╚═╝╚═╝    ░░░                    ║
-        ║                                                            ║
-        ╚════════════════════════════════════════════════════════════╝
-```
+Contributions are welcome. Keep local content authoring separate from repository
+development: using Foundry to edit your own files needs no GitHub account, while
+submitting changes requires a normal branch and pull request.
 
-> *"Your focus determines your reality."* — Qui-Gon Jinn
+## Prerequisites
 
-Welcome. This guide gets you up to speed on the MBII Foundry codebase and on the kinds of contributions we're looking for during alpha.
+- Go 1.24 or newer, matching `go_module/go.mod` and CI.
+- Git.
+- Fyne's native requirements for your platform:
+  [docs.fyne.io/started](https://docs.fyne.io/started/).
+- An external MBII engine checkout only when verifying or changing
+  engine-backed metadata.
 
-## Quick Start
+Do development builds on the target operating system. WSL produces a Linux
+application, not a native Windows executable.
 
-### Prerequisites
-- Go 1.21 or later
-- macOS: `brew install pkg-config`
-- Linux: `sudo apt-get install gcc libgl1-mesa-dev xorg-dev`
-- Windows: Just Go (CGO dependencies handled automatically)
+## Build and run
 
-### First Build
 ```bash
+git clone https://github.com/Frenzeh/mbii-foundry.git
 cd mbii-foundry/go_module
+go run .
+```
+
+Or build a repository-local binary:
+
+```bash
 go build -o mbii-foundry
 ./mbii-foundry
 ```
 
-If it compiles and runs, you're ready to contribute!
+Native Windows PowerShell:
 
----
-
-## Project Overview
-
-MBII Foundry is a visual editor for Movie Battles II (MBII) "Full Authentic" game files. It's built with:
-
-- **Go** - Core application language
-- **Fyne** - Cross-platform GUI framework
-- **No external DB** - All data is file-based (.mbch, .sab, .veh)
-
-### What It Does
-- Opens/saves MBII configuration files
-- Provides form-based editing instead of raw text
-- Validates files before saving
-- Prevents common syntax errors (brackets, quotes, pipes)
-
-### Key File Types
-| Extension | Purpose | Editor File |
-|-----------|---------|-------------|
-| `.mbch` | Character class definitions | `mbch_editor.go` |
-| `.sab` | Saber configurations | `sab_editor.go` |
-| `.veh` | Vehicle definitions | `veh_editor.go` |
-| `.siege` | Siege mode configs | `siege_editor.go` |
-
----
-
-## Project Structure
-
-```
-mbii-foundry/
-├── CLAUDE.md              # AI assistant instructions (source of truth)
-├── CONTRIBUTING.md        # This file
-├── README.md              # User-facing documentation
-├── build_app.sh           # Build script for macOS .app
-│
-├── docs/
-│   ├── ROADMAP.md         # Strategic roadmap (READ THIS!)
-│   └── WAILS_MIGRATION.md # Future migration plan
-│
-└── go_module/             # Main Go application
-    ├── main.go            # Entry point, window setup, menus
-    ├── common.go          # Shared types (MBCHCharacter, etc.)
-    ├── definitions.go     # Enum lists (classes, weapons, etc.)
-    ├── validation.go      # Validation logic
-    │
-    ├── mbch_editor.go     # Character editor (largest file)
-    ├── mbch_pointbuy.go   # Point buy UI component
-    ├── mbch_weaponinfo.go # Weapon override editor
-    │
-    ├── sab_editor.go      # Saber editor
-    ├── veh_editor.go      # Vehicle editor
-    ├── siege_editor.go    # Siege mode editor
-    ├── bulk_editor.go     # Bulk team editing
-    │
-    ├── asset_browser.go   # PK3 file browser
-    ├── modpack_manager.go # Modpack packaging
-    ├── info_panel.go      # Information display
-    ├── syntax_highlighter.go # Source code highlighting
-    │
-    └── logger.go          # Logging utilities
-```
-
----
-
-## Current Priorities
-
-**Read `docs/ROADMAP.md` for the full strategic plan.**
-
-We are currently focused on:
-
-### Phase 1: Safety (P0/P1)
-1. **Undo/Redo System** - Command pattern implementation
-2. **AST-based Parsing** - Preserve comments and formatting
-3. **Character Limit Tracking** - MBCH files have 8192 char limit
-
-### Phase 2: Workflow (P1)
-1. **One-Click Build & Run** - Test your FA files in-game
-2. **Log Watcher** - See game errors in the editor
-
-**New editors are FROZEN until Phase 1-2 are complete.**
-
----
-
-## How to Contribute
-
-### Finding Work
-1. Check [`docs/ROADMAP.md`](docs/ROADMAP.md) for priorities
-2. Look for `// TODO:` comments in code
-3. Open issues on GitHub
-4. Ask in discussions
-
-### Non-code contributions (highest leverage)
-Most MBII Foundry contributions don't require writing Go. Fixing an enum description in `definitions/attributes/MB_ATT_*.md` directly improves the app's in-panel help for every user. See [`docs/DEFINITIONS_GUIDE.md`](docs/DEFINITIONS_GUIDE.md) — especially the "Common AI mistakes to watch for" section if you're reviewing generated stubs.
-
-### Making Changes
-
-1. **Create a branch** from `main`
-2. **Make focused changes** - One feature/fix per PR
-3. **Test manually** - No automated tests yet
-4. **Update docs** if needed
-5. **Submit PR** with clear description
-
-### Commit Messages
-Follow this format:
-```
-Type: Short description
-
-- Bullet point details
-- Another detail
-
-🤖 Generated with [Claude Code](https://claude.com/claude-code)
-```
-
-Types: `Fix`, `Feat`, `Refactor`, `Docs`, `Build`
-
----
-
-## Code Patterns
-
-### Editor Structure
-Each editor follows this pattern:
-
-```go
-type XxxEditor struct {
-    container   *fyne.Container   // Root UI element
-    currentPath string            // Currently open file
-    data        *XxxData          // Parsed file data
-
-    // UI widgets (entry fields, checkboxes, etc.)
-    nameEntry *widget.Entry
-    // ...
-}
-
-func NewXxxEditor() *XxxEditor {
-    e := &XxxEditor{data: &XxxData{}}
-    e.createUI()
-    return e
-}
-
-func (e *XxxEditor) GetContent() fyne.CanvasObject { return e.container }
-func (e *XxxEditor) LoadFile(path string) error { ... }
-func (e *XxxEditor) SaveFile(path string) error { ... }
-func (e *XxxEditor) GetCurrentPath() string { return e.currentPath }
-
-// Sync UI ↔ Data
-func (e *XxxEditor) updateUI() { ... }         // Data → UI
-func (e *XxxEditor) updateDataFromUI() { ... } // UI → Data
-```
-
-### Adding a New Field
-
-1. Add to the data struct in editor file
-2. Add UI widget to `createUI()`
-3. Add mapping in `updateUI()` (data → widget)
-4. Add mapping in `updateDataFromUI()` (widget → data)
-5. Add parsing in `LoadFile()` or `setField()`
-6. Add output in `SaveFile()`
-7. Add validation if needed
-
-### Parsing Pattern
-```go
-func (e *XxxEditor) setField(key, value string) {
-    switch key {
-    case "name":
-        e.data.Name = value
-    case "speed":
-        e.data.Speed, _ = strconv.Atoi(value)
-    // ... more cases
-    default:
-        e.data.ExtraFields[key] = value  // Preserve unknown fields
-    }
-}
-```
-
----
-
-## AI Assistant Notes
-
-### Working with AI (Claude, Gemini, etc.)
-
-**IMPORTANT: Backslash Escape Problem**
-
-AI file-writing tools corrupt Go regex patterns. The backslashes get mangled.
-
-**Symptom:** Build fails with regex errors after AI edit.
-
-**Solution:** Use Python via Bash for regex-containing edits:
-
-```bash
-python3 << 'PYEOF'
-path = "path/to/file.go"
-with open(path, 'r') as f:
-    content = f.read()
-content = content.replace('old_string', 'new_string')
-with open(path, 'w') as f:
-    f.write(content)
-PYEOF
-```
-
-### Key Documentation
-- **CLAUDE.md** - Instructions for Claude AI
-- **GEMINI.md** - Stub: redirects to CLAUDE.md
-- Both point to this file for human developers
-
----
-
-## Testing
-
-### Manual Testing Checklist
-Before submitting a PR:
-
-- [ ] App compiles: `go build -o mbii-foundry`
-- [ ] App launches without errors
-- [ ] Can open existing file
-- [ ] Can edit and save file
-- [ ] Saved file loads correctly
-- [ ] Validate function works
-- [ ] No regressions in other editors
-
-### Testing Commands
-```bash
-# Build
+```powershell
 cd go_module
-go build -o mbii-foundry
-
-# Run
-./mbii-foundry
-
-# Check for compile errors quickly
-go vet ./...
+go build -ldflags="-H windowsgui" -o mbii-foundry.exe
+.\mbii-foundry.exe
 ```
 
----
+Run development binaries from `go_module/` so resource discovery can find the
+repository's `data/`, `definitions/`, `schemas/`, and `templates/`. Do not
+commit generated binaries.
 
-## Build & Release
+For a local macOS bundle:
 
-### Local Build
 ```bash
-./build_app.sh  # Creates "MBII Foundry.app"
+./build_app.sh
 ```
 
-### CI/CD
-GitHub Actions handle:
-- **Push to main**: Build all platforms, upload artifacts
-- **Push tag v***: Build + create GitHub Release
+The script creates `dist/MBII Foundry.app`, not an application under
+`/Applications`. It builds an arm64+x86_64 executable, stages and verifies the
+complete bundle on the destination filesystem, and atomically replaces an
+existing bundle in `dist/`. The default signature is ad-hoc. Setting
+`FOUNDRY_CODESIGN_IDENTITY` selects a local signing identity, but the script
+does not notarize.
 
-See `.github/workflows/` for details.
+## Repository map
 
----
-
-## Common Gotchas
-
-### 1. MBCH Character Limit
-Files over 8192 characters silently break. We need to add tracking (Phase 1).
-
-### 2. Parser is Lossy
-Current regex parser loses comments. AST-based parser is planned (Phase 1).
-
-### 3. No Undo/Redo
-Users can't undo mistakes. High priority fix (Phase 1).
-
-### 4. Multi-Blade UI
-Only blade 1 is editable in UI, but all blades are stored correctly.
-
-### 5. Fyne Tooltips
-Fyne has no native tooltips. We use popup workarounds.
-
----
-
-## Getting Help
-
-- **Issues**: GitHub Issues for bugs/features
-- **Discussions**: GitHub Discussions for questions
-- **Docs**: Start with `docs/ROADMAP.md`, then `CLAUDE.md`
-
----
-
-## License
-
-See the root LICENSE file for terms. Part of the broader MBII modding ecosystem.
-
----
-
-```
-    ╔═══════════════════════════════════════════════════════════════════╗
-    ║  May the Force be with you, Developer.                            ║
-    ║                                                                   ║
-    ║  "Do. Or do not. There is no try." — Yoda                         ║
-    ╚═══════════════════════════════════════════════════════════════════╝
+```text
+go_module/         Go/Fyne application, canonical parsers, tests, updater
+data/              curated runtime enum metadata
+definitions/       human-readable enum and field prose
+schemas/           validation schemas
+templates/         starter content
+tools/             definition audit and engine snapshot generator
+macos/             app-bundle metadata and icon
+packager/          separate Python packaging library
 ```
 
-*Last updated: December 2024*
+Important application boundaries:
+
+- `go_module/parsers/` owns parsing and source-preserving AST updates.
+- `session_state.go`, `source_panel.go`, `save_review.go`, and
+  `crash_recovery.go` own document state and safe user workflows.
+- `safeio/` owns atomic publication primitives.
+- `archive_export.go` is the shared PK3/source ZIP writer.
+- `updatemanifest/`, `cmd/signer/`, and `update_installer*` share the update
+  trust contract.
+
+Reuse those paths rather than introducing a second parser, writer, credential
+file, or archive implementation.
+
+## Change workflow
+
+1. Create a branch from the current default branch.
+2. Make a focused change.
+3. Add or adjust a regression test only when it protects observable behavior.
+4. Run the checks relevant to the changed package.
+5. Inspect generated files and repository status; do not include binaries,
+   credentials, local paths, recovery snapshots, or private content.
+6. Open a pull request describing behavior and verification.
+
+### Core checks
+
+From `go_module/`:
+
+```bash
+gofmt -w <changed-go-files>
+go test ./...
+go vet ./...
+go build ./...
+```
+
+For UI changes, also launch the application and exercise the changed surface.
+For file-format changes, use a synthetic or redistributable fixture and inspect
+the exact Save review output. Do not use private game files as test fixtures.
+
+## Engine-backed metadata
+
+`go_module/testdata/engine_snapshot.json` records the external engine revision,
+source hashes, enum declaration ranges, enum numeric values, and parser-key
+inventory used by drift checks. To verify the committed snapshot:
+
+```bash
+cd go_module
+MBII_ENGINE_SRC=/absolute/path/to/moviebattles \
+  go test . -run '^TestExplicitEngineVerification$' -count=1
+```
+
+Requirements for `MBII_ENGINE_SRC`:
+
+- it names a Git checkout, not a copied header directory;
+- the relevant `bg_public.h` and `bg_saga.c` match the checkout's committed
+  `HEAD` bytes;
+- the files may be at the root, under `game/`, or under `codemp/game/`.
+
+Verification compares derived metadata with the committed snapshot and does not
+rewrite it. To intentionally regenerate a candidate:
+
+```bash
+MBII_ENGINE_SRC=/absolute/path/to/moviebattles \
+  go run ../tools/generate_snapshot.go \
+  -snapshot testdata/engine_snapshot.json \
+  -schema ../schemas/mbch_schema.json
+```
+
+Review the revision, hashes, enum values, parser-key changes, schema impact, and
+runtime consumers. Snapshot parity does not verify descriptive prose, costs,
+defaults, or gameplay mechanics.
+
+## Definition prose
+
+See [`docs/DEFINITIONS_GUIDE.md`](docs/DEFINITIONS_GUIDE.md) for the definition
+format.
+
+- Preserve exact enum or field spelling.
+- Distinguish verified engine behavior, observed in-game behavior, wiki claims,
+  and inference.
+- Include the engine revision and source location when a statement was checked
+  against source.
+- Do not invent defaults, units, balance recommendations, synergies, or valid
+  values.
+- Do not treat `data/*.json`, schema prose, or existing generated stubs as
+  engine evidence.
+- A question mark or explicit unverified note is better than false precision.
+
+The SAB and VEH forms expose selected fields only. Definition prose must not
+turn that UI subset into a claim that unsupported types or fields are invalid.
+
+Run the prose inventory from the repository root:
+
+```bash
+python3 tools/audit-definitions.py
+```
+
+The resulting quality report is a dated inventory, not engine verification.
+
+## Local paths, configuration, and credentials
+
+Never commit machine-local GameData, TextAssets, MD3View, document, or modpack
+paths. Tests must use temporary directories.
+
+The application stores preferences below
+`os.UserConfigDir()/mbii-foundry`. GitHub tokens belong in the OS native
+credential store and are excluded from `config.json`. Tests for credential
+migration must use the repository's mock/injected store, never a real token or
+interactive keychain.
+
+## Release and update trust
+
+Tags matching `v*` start the release workflow. The workflow:
+
+- verifies `AppVersion` matches the tag;
+- builds Linux amd64, Windows amd64, and a true macOS universal executable;
+- requires a matching Ed25519 publisher keypair;
+- embeds the public key in release binaries;
+- signs a manifest binding version, platform, architecture, length, and digest;
+  and
+- publishes the platform archive and its manifest.
+
+The macOS packaging step does not notarize. It uses Developer ID only when that
+secret is configured and otherwise uses an ad-hoc structural signature. The
+project does not configure Authenticode signing for Windows, and the Windows
+application opens the release page instead of auto-replacing itself.
+
+Never describe a release as notarized, Developer ID signed, Authenticode signed,
+or authenticated by a publisher key unless the specific release job produced
+the corresponding verifiable evidence. A signed Foundry update manifest is not
+an operating-system trust verdict.
+
+## Reporting issues
+
+Include:
+
+- Foundry version and operating system;
+- file format and a minimal redistributable example;
+- exact steps and observed result;
+- whether GameData and/or TextAssets was configured; and
+- sanitized diagnostics when relevant.
+
+The raw log is `mbii-foundry.log` in the operating-system temporary directory.
+The in-app Debug Logs view redacts configured roots and known credentials before
+display, but contributors must still inspect all diagnostic text before posting.
+
+See [LICENSE](LICENSE) for contribution terms.

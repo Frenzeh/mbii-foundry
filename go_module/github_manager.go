@@ -41,16 +41,32 @@ func NewGitHubManager(token string, repoPath string) *GitHubManager {
 		ctx := context.Background()
 		ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 		tc := oauth2.NewClient(ctx, ts)
+		tc.Timeout = 30 * time.Second
 		mgr.client = github.NewClient(tc)
 
-		// Fetch user info
-		u, _, err := mgr.client.Users.Get(ctx, "")
-		if err == nil {
-			mgr.user = u
-		}
 	}
 
 	return mgr
+}
+
+// ensureUser runs only inside an explicitly requested contribution operation.
+// Constructing the local editor or restoring a credential never performs network I/O.
+func (m *GitHubManager) ensureUser() error {
+	if m.user != nil {
+		return nil
+	}
+	if m.client == nil {
+		return fmt.Errorf("connect a stored GitHub credential before contributing")
+	}
+	user, _, err := m.client.Users.Get(context.Background(), "")
+	if err != nil {
+		return fmt.Errorf("could not verify GitHub account: %w", err)
+	}
+	if user == nil || user.GetLogin() == "" || user.GetID() == 0 {
+		return fmt.Errorf("GitHub did not return a valid account identity")
+	}
+	m.user = user
+	return nil
 }
 
 // DetectDevelopmentBranch attempts to find the active buildTest branch
@@ -121,8 +137,8 @@ func (m *GitHubManager) DeviceFlowStart() (string, string, int, string, error) {
 func (m *GitHubManager) SetupWorkspace(progressCallback func(string)) error {
 	ctx := context.Background()
 
-	if m.client == nil {
-		return fmt.Errorf("not logged in")
+	if err := m.ensureUser(); err != nil {
+		return err
 	}
 
 	// 1. Check for Fork
@@ -267,6 +283,9 @@ func (m *GitHubManager) SwitchToUpstream() error {
 
 // StageAndCommit adds all changes and commits them
 func (m *GitHubManager) StageAndCommit(message string) error {
+	if err := m.ensureUser(); err != nil {
+		return err
+	}
 	r, err := git.PlainOpen(m.repoPath)
 	if err != nil {
 		return err
@@ -281,10 +300,17 @@ func (m *GitHubManager) StageAndCommit(message string) error {
 		return err
 	}
 
+	name, email := m.user.GetName(), m.user.GetEmail()
+	if name == "" {
+		name = m.user.GetLogin()
+	}
+	if email == "" {
+		email = fmt.Sprintf("%d+%s@users.noreply.github.com", m.user.GetID(), m.user.GetLogin())
+	}
 	_, err = w.Commit(message, &git.CommitOptions{
 		Author: &object.Signature{
-			Name:  *m.user.Name,
-			Email: *m.user.Email,
+			Name:  name,
+			Email: email,
 			When:  time.Now(),
 		},
 	})
@@ -306,6 +332,9 @@ func (m *GitHubManager) PushCurrentBranch() error {
 
 // OpenPullRequest creates a PR from current branch to upstream base
 func (m *GitHubManager) OpenPullRequest(title, body string) (string, error) {
+	if err := m.ensureUser(); err != nil {
+		return "", err
+	}
 	branch, err := m.GetCurrentBranch()
 	if err != nil {
 		return "", err

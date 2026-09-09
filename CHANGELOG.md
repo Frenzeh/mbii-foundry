@@ -7,6 +7,62 @@ pre-release suffixes until the project stabilizes.
 
 ## [Unreleased]
 
+### Added
+- Reviewed Save and Save As flow for session-aware editors: the current
+  destination and exact candidate bytes are shown side by side, and approval is
+  bound to the unchanged document, Source draft, and destination.
+- Per-document undo/redo across form edits, valid Source applies, JSON imports,
+  templates, and multi-definition selection.
+- Retained, parse-checked Source drafts that survive tab, mode, and pop-out
+  changes; Save can explicitly apply a pending draft before review.
+- Crash-recovery snapshots for dirty `.mbch`, `.sab`, `.veh`, and `.siege`
+  documents, including unapplied Source drafts. Recovery reopens working state
+  without writing the original file.
+- Multi-definition navigation and source-preserving document sessions for SAB
+  and VEH files. Their forms deliberately expose selected fields while Source
+  retains parsed fields outside the visual subset.
+- Character model/skin asset diagnostics that distinguish absent, unreadable,
+  and fallback results and report source provenance and failure stage.
+- Explicit engine snapshot verification through `MBII_ENGINE_SRC`; the check
+  requires relevant source bytes to match the external checkout's committed
+  `HEAD` and compares derived metadata with the committed snapshot.
+
+### Changed
+- First-run setup is now a local-assets workflow: GameData is the installed
+  runtime/PK3 root, TextAssets is an optional loose override checkout, and users
+  may continue without either. Optional GitHub contribution access is separate.
+- Configuration, favorites, backups, project metadata, update cache, and
+  recovery use the OS user configuration directory. GitHub tokens use native
+  credential storage and legacy plaintext is removed only after verified
+  migration.
+- Bulk Edit can add one supported config or perform an uncapped recursive scan
+  for `.mbch`, `.sab`, `.veh`, `.siege`, and `.mbtc` files, with
+  case-insensitive extension matching. Its scrollable report retains exact
+  unsupported, duplicate, symlinked, unreadable, and unparseable paths.
+  Operations require a complete current preview, reject stale parameters or
+  files, retain pre-edit backups, and roll back earlier writes after a later
+  batch failure without clobbering newer external content.
+- Team Composer now models one team per `.mbtc`, validates the six contiguous
+  class slots and per-class subclasses, reports VFS class-reference checks as
+  warnings, and refuses to overwrite a loaded destination changed since open.
+  `ClassesAllowed` is labeled as preserved legacy data.
+- Modpack creation/import metadata is transactional. PK3 and source exports
+  share the contained atomic archive writer, can preview archive paths, exclude
+  hidden descendants and the output itself, reject symlinks/unsafe aliases, and
+  refuse empty archives.
+- Documentation now matches portable paths, save/recovery behavior, selected
+  SAB/VEH surfaces, asset diagnostics, packaging, and platform limitations.
+
+### Security
+- Automatic update installation now fails closed unless the running build has a
+  configured Ed25519 publisher key and the manifest binds the requested version,
+  platform, architecture, length, and SHA-256 digest. Windows continues to open
+  the release page instead of replacing an executable without Authenticode
+  publisher identity.
+- macOS packaging verifies an arm64+x86_64 universal executable and a structural
+  code signature. Local and release packaging explicitly distinguish ad-hoc
+  signing from Developer ID and do not claim notarization.
+
 ### Fixed
 - Character portraits now use explicit PNG decoding in Profile and Skins,
   avoiding the generic image decoder's TGA misclassification.

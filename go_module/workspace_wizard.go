@@ -13,7 +13,7 @@ import (
 
 func (a *App) showWorkspaceSetupWizard() {
 	if a.config.GitHubToken == "" {
-		dialog.ShowInformation("GitHub Token Required", "Please configure your GitHub Token in Preferences first.", a.mainWindow)
+		a.showCredentialConnect(a.showWorkspaceSetupWizard)
 		return
 	}
 

@@ -37,10 +37,11 @@ type TileCard struct {
 	Icon     fyne.Resource
 	OnTap    func()
 
+	hovering bool
+	focused  bool
 	bg       *canvas.Rectangle
 	border   *canvas.Rectangle
 	accent   *canvas.Rectangle // thin left-edge rule that lights up on hover
-	hovering bool
 }
 
 func NewTileCard(label, sublabel string, icon fyne.Resource, onTap func()) *TileCard {
@@ -51,28 +52,31 @@ func NewTileCard(label, sublabel string, icon fyne.Resource, onTap func()) *Tile
 
 func (c *TileCard) CreateRenderer() fyne.WidgetRenderer {
 	c.bg = canvas.NewRectangle(cardRestingFill())
+	c.bg.CornerRadius = TileOuterCornerRadius
 	c.border = canvas.NewRectangle(color.Transparent)
 	c.border.StrokeColor = cardRestingBorder()
 	c.border.StrokeWidth = 1
 	c.border.FillColor = color.Transparent
+	c.border.CornerRadius = TileOuterCornerRadius
 
 	c.accent = canvas.NewRectangle(color.Transparent)
 
 	iconWidget := widget.NewIcon(c.Icon)
+	iconBox := container.NewGridWrap(fyne.NewSize(28, 28), iconWidget)
 
 	label := canvas.NewText(c.Label, theme.ForegroundColor())
 	label.TextSize = SizeBody
 	label.TextStyle = fyne.TextStyle{Bold: true}
 
-	sub := canvas.NewText(c.Sublabel, theme.PlaceHolderColor())
+	sub := canvas.NewText(c.Sublabel, theme.ForegroundColor())
 	sub.TextSize = SizeSmall
-	sub.TextStyle = fyne.TextStyle{Monospace: true} // file-extension vibe
+	sub.TextStyle = fyne.TextStyle{Monospace: true}
 
-	// Icon on the left, label + sub stacked to the right of it.
 	textStack := container.NewVBox(label, sub)
+	chevron := widget.NewIcon(theme.NavigateNextIcon())
 	row := container.NewBorder(nil, nil,
-		container.NewPadded(iconWidget),
-		nil,
+		container.NewPadded(iconBox),
+		container.NewPadded(chevron),
 		container.NewPadded(textStack))
 
 	// Accent bar pinned to the left edge. 3px wide, full card height.
@@ -84,7 +88,7 @@ func (c *TileCard) CreateRenderer() fyne.WidgetRenderer {
 	return widget.NewSimpleRenderer(container.NewStack(c.bg, c.border, accentRow))
 }
 
-func (c *TileCard) MinSize() fyne.Size { return fyne.NewSize(240, 64) }
+func (c *TileCard) MinSize() fyne.Size { return fyne.NewSize(200, 58) }
 
 func (c *TileCard) Tapped(*fyne.PointEvent) {
 	if c.OnTap != nil {
@@ -104,6 +108,28 @@ func (c *TileCard) MouseOut() {
 
 func (c *TileCard) MouseMoved(*desktop.MouseEvent) {}
 
+func (c *TileCard) FocusGained() {
+	c.focused = true
+	c.applyStyle()
+}
+
+func (c *TileCard) FocusLost() {
+	c.focused = false
+	c.applyStyle()
+}
+
+func (c *TileCard) TypedRune(r rune) {
+	if r == ' ' && c.OnTap != nil {
+		c.OnTap()
+	}
+}
+
+func (c *TileCard) TypedKey(ev *fyne.KeyEvent) {
+	if (ev.Name == fyne.KeyReturn || ev.Name == fyne.KeyEnter) && c.OnTap != nil {
+		c.OnTap()
+	}
+}
+
 // Cursor tells Fyne to flip to pointer when hovering — reads as
 // "this is clickable" without needing a hover outline alone.
 func (c *TileCard) Cursor() desktop.Cursor { return desktop.PointerCursor }
@@ -112,7 +138,8 @@ func (c *TileCard) applyStyle() {
 	if c.bg == nil {
 		return
 	}
-	if c.hovering {
+	active := c.hovering || c.focused
+	if active {
 		c.bg.FillColor = cardHoverFill()
 		c.border.StrokeColor = cardHoverBorder()
 		c.accent.FillColor = tintWithAlpha(CurrentThemeColor, 220)
@@ -128,10 +155,10 @@ func (c *TileCard) applyStyle() {
 
 // cardRestingFill / cardHoverFill — subtle layered tints designed to
 // read as "there's a surface here" without demanding attention.
-func cardRestingFill() color.Color   { return color.NRGBA{R: 255, G: 255, B: 255, A: 8} }
-func cardHoverFill() color.Color     { return tintWithAlpha(CurrentThemeColor, 36) }
-func cardRestingBorder() color.Color { return color.NRGBA{R: 255, G: 255, B: 255, A: 28} }
-func cardHoverBorder() color.Color   { return tintWithAlpha(CurrentThemeColor, 180) }
+func cardRestingFill() color.Color   { return color.NRGBA{R: 255, G: 255, B: 255, A: 10} }
+func cardHoverFill() color.Color     { return tintWithAlpha(CurrentThemeColor, 28) }
+func cardRestingBorder() color.Color { return color.NRGBA{R: 255, G: 255, B: 255, A: 24} }
+func cardHoverBorder() color.Color   { return tintWithAlpha(CurrentThemeColor, 135) }
 
 // fixedWidthSpacer claims exactly `width` pixels horizontally and
 // renders `child` stretched to fill. Used for the card's left-edge

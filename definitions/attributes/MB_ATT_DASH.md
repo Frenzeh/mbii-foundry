@@ -6,18 +6,17 @@
 
 ## What it does
 
-Engine-level configuration for the Dash special. Determines cooldown, distance, and i-frame coverage of each dash. Bound to `EAS_HI_DASH`.
+Engine-level configuration for the Dash special. Determines the cooldown of each dash. Bound to `EAS_HI_DASH`.
 
 ## Per level
 
-- **Level 1** — 4-second cooldown · 8-direction dash (WASD + alt-fire backward) · cost 0.
-- **Level 2** — 3-second cooldown · damage-immune during the dash animation · cost 0.
+- **Level 1** — 4-second cooldown (calculated as `5000 - level * 1000` in `g_items.c:4037`).
+- **Level 2** — 3-second cooldown (calculated as `5000 - level * 1000` in `g_items.c:4037`).
 
 ## Notes
 
 - Pairs with `MB_ATT_DASH_JUMP` for jump-cancel mid-dash.
-- Bound by Hero (special2) and many trooper kits.
-- i-frames at Level 2 mean the dash itself can be a defensive escape, not just an offensive close.
+- *Note:* i-frames at Level 2 were removed (commented out in `w_force.c:8465`). Level 2 only provides a faster cooldown.
 
 ---
 

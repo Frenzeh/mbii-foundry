@@ -6,15 +6,18 @@ import (
 	"io"
 	"os"
 	"strconv"
+	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"image/color"
 
 	"github.com/Frenzeh/mbii-foundry/parsers"
+	"github.com/Frenzeh/mbii-foundry/safeio"
 )
 
 var SaberTypes = []string{"SABER_SINGLE", "SABER_STAFF"}
@@ -116,10 +119,20 @@ type SABEditor struct {
 	assetBrowser   *AssetBrowser
 	app            *App
 	sourceView     *widget.RichText
+	// Session state — baseline, retained draft, undo/redo history and
+	// the selected definition for multi-definition .sab files.
+	session   *DocumentSession
+	docSource string // full multi-definition source of the loaded file
+	defNames  []string
+	loading   bool // silences markDirty/source pushes during programmatic sync
+
+	defSelect  *widget.Select // definition navigator (summary strip)
+	defSummary *widget.Label
 
 	// Dirty tracking for unsaved changes
 	isDirty        bool
 	onDirtyChanged func(bool)
+	sourceSubs     *sourceListeners
 }
 
 func NewSABEditor(app *App) *SABEditor {
@@ -127,7 +140,13 @@ func NewSABEditor(app *App) *SABEditor {
 		saber:       parsers.NewSaberData(),
 		fileManager: app.fileManager,
 		app:         app,
+		sourceSubs:  &sourceListeners{},
 	}
+	e.session = NewDocumentSession(
+		func() string { return e.sessionRender() },
+		func(src string) error { return e.sessionRestore(src) },
+	)
+	e.session.SetOnDirtyChange(e.setDirtyState)
 	e.createUI()
 	return e
 }
@@ -136,12 +155,14 @@ func (e *SABEditor) SetOnHover(f func(string, string))        {}
 func (e *SABEditor) SetAssetBrowser(ab *AssetBrowser)         { e.assetBrowser = ab }
 func (e *SABEditor) SetHolocronClient(client *HolocronClient) { e.holocronClient = client }
 
-// SourceProvider impl — lets the live source panel render this
-// editor's output. Actual push-notification on change isn't wired;
-// SourcePanel's 500ms fallback timer catches updates.
+// SourceProvider impl — push-notified via sourceSubs; the SourcePanel
+// ticker remains as a fallback for editors that never fire.
 func (e *SABEditor) GenerateSource() string {
 	if e.saber == nil {
 		return ""
+	}
+	if !e.loading {
+		e.updateSaberFromUI()
 	}
 	content, err := parsers.GenerateSAB(e.saber)
 	if err != nil {
@@ -149,42 +170,64 @@ func (e *SABEditor) GenerateSource() string {
 	}
 	return content
 }
-func (e *SABEditor) SetOnSourceChanged(f func()) {}
 
-// Dirty tracking methods
-func (e *SABEditor) SetOnDirtyChanged(f func(bool)) { e.onDirtyChanged = f }
-func (e *SABEditor) IsDirty() bool                  { return e.isDirty }
-func (e *SABEditor) MarkClean() {
-	e.isDirty = false
-	if e.onDirtyChanged != nil {
-		e.onDirtyChanged(false)
+// SetOnSourceChanged keeps legacy single-callback semantics.
+func (e *SABEditor) SetOnSourceChanged(f func()) {
+	e.sourceSubs.reset(f)
+}
+
+// AddSourceListener lets mirrors and panels subscribe without
+// stealing each other's push notifications. Returns a remove func.
+func (e *SABEditor) AddSourceListener(fn func()) func() {
+	return e.sourceSubs.add(fn)
+}
+
+func (e *SABEditor) fireSourceChanged() {
+	if !e.loading {
+		e.sourceSubs.fire()
 	}
 }
 
-func (e *SABEditor) markDirty() {
-	if !e.isDirty {
-		e.isDirty = true
+// Dirty tracking — the flag mirrors the session's derived dirty state
+// so tab titles and close/quit guards stay in sync.
+func (e *SABEditor) SetOnDirtyChanged(f func(bool)) { e.onDirtyChanged = f }
+func (e *SABEditor) IsDirty() bool                  { return e.isDirty }
+
+func (e *SABEditor) setDirtyState(d bool) {
+	if e.isDirty != d {
+		e.isDirty = d
 		if e.onDirtyChanged != nil {
-			e.onDirtyChanged(true)
+			e.onDirtyChanged(d)
 		}
 	}
 }
 
+func (e *SABEditor) MarkClean() {
+	e.session.MarkClean()
+	e.setDirtyState(e.session.DerivedDirty())
+}
+
+// markDirty is invoked by every form OnChanged handler. During
+// programmatic syncs (load / restore / undo) the loading guard keeps
+// UI refreshes from dirtying the document or firing source pushes.
+// Otherwise it records the user edit for coalesced undo snapshots and
+// notifies source listeners.
+func (e *SABEditor) markDirty() {
+	if e.loading {
+		return
+	}
+	e.setDirtyState(true)
+	e.session.noteUserEdit()
+	e.fireSourceChanged()
+}
+
 // Helper to browse assets
 func (e *SABEditor) browseAsset(entry *widget.Entry, assetType AssetType) {
-	// Ideally use e.app.showFilePickerForEntry if app ref was passed, but SABEditor structure doesn't enforce it yet.
-	// Or generic custom picker if assetBrowser is set.
 	if e.assetBrowser == nil {
 		return
 	}
-
-	// win := fyne.CurrentApp().Driver().AllWindows()[0] // Not needed
-
 	filePickerWindow := fyne.CurrentApp().NewWindow("Select Asset")
 	filePickerWindow.Resize(fyne.NewSize(1200, 780))
-
-	// Use shared browser logic?
-	// Ideally re-use the CustomFilePicker logic
 	cfp := NewCustomFilePicker(filePickerWindow, e.assetBrowser)
 	cfp.Show(func(asset *AssetEntry) {
 		if asset != nil && asset.Path != "" {
@@ -383,12 +426,23 @@ func (e *SABEditor) createUI() {
 	sourceTab := container.NewMax(container.NewScroll(e.sourceView))
 
 	tabs := container.NewAppTabs(
-		container.NewTabItem("Identity", container.NewVScroll(identityForm)),
-		container.NewTabItem("Blades", container.NewVScroll(bladeGrid)),
-		container.NewTabItem("Sounds", container.NewVScroll(container.NewVBox(soundsForm, widget.NewCard("Swing", "", e.swingSoundsGroup), widget.NewCard("Fall", "", e.fallSoundsGroup), widget.NewCard("Hit", "", e.hitSoundsGroup), widget.NewCard("Block", "", e.blockSoundsGroup), widget.NewCard("Bounce", "", e.bounceSoundsGroup)))),
-		container.NewTabItem("Combat", container.NewVScroll(container.NewVBox(combatForm, speedDamageForm, animForm))),
-		container.NewTabItem("Flags", container.NewVScroll(behaviorFlagsContainer)),
-		container.NewTabItem("Effects", container.NewVScroll(effectsForm)),
+		container.NewTabItem("Identity", container.NewVScroll(NewFormSection("Saber identity", "Definition name, model, skin, and blade count.", identityForm))),
+		container.NewTabItem("Blades", container.NewVScroll(NewFormSection("Primary blade", "Color and blade proportions.", bladeGrid))),
+		container.NewTabItem("Sounds", container.NewVScroll(container.NewVBox(
+			NewFormSection("Core sounds", "", soundsForm),
+			NewFormSection("Swing", "", e.swingSoundsGroup),
+			NewFormSection("Fall", "", e.fallSoundsGroup),
+			NewFormSection("Hit", "", e.hitSoundsGroup),
+			NewFormSection("Block", "", e.blockSoundsGroup),
+			NewFormSection("Bounce", "", e.bounceSoundsGroup),
+		))),
+		container.NewTabItem("Combat", container.NewVScroll(container.NewVBox(
+			NewFormSection("Combat tuning", "", combatForm),
+			NewFormSection("Speed and damage", "", speedDamageForm),
+			NewFormSection("Animations", "", animForm),
+		))),
+		container.NewTabItem("Flags", container.NewVScroll(NewFormSection("Behavior flags", "Toggle only the exceptions this saber needs.", behaviorFlagsContainer))),
+		container.NewTabItem("Effects", container.NewVScroll(NewFormSection("Visual effects", "", effectsForm))),
 		container.NewTabItem("Source", sourceTab),
 	)
 
@@ -397,8 +451,27 @@ func (e *SABEditor) createUI() {
 			e.updateSourceView()
 		}
 	}
+	// Definition summary strip: navigates multi-definition .sab files
+	// and always names the definition being edited. Single-definition
+	// files just show "1 of 1".
+	e.defSelect = widget.NewSelect(nil, func(name string) {
+		for i, n := range e.defNames {
+			if n == name && i != e.session.SelectedDef {
+				if err := e.SelectDefinition(i); err != nil {
+					dialog.ShowError(err, fyne.CurrentApp().Driver().AllWindows()[0])
+				}
+				return
+			}
+		}
+	})
+	e.defSelect.PlaceHolder = "(single definition)"
+	e.defSummary = widget.NewLabel("")
+	e.defSummary.TextStyle = fyne.TextStyle{Italic: true}
+	defBar := NewFormSection("Active definition", "Choose which saber block in this file is being edited.",
+		container.NewBorder(nil, nil, nil, e.defSummary, e.defSelect))
 
-	e.container = container.NewMax(tabs)
+	e.container = container.NewBorder(container.NewPadded(defBar), nil, nil, nil, tabs)
+	e.refreshDefinitionBar()
 }
 
 func (e *SABEditor) updateSourceView() {
@@ -412,7 +485,6 @@ func (e *SABEditor) updateSourceView() {
 	e.sourceView.Segments = highlighter.Highlight(content).Segments
 	e.sourceView.Refresh()
 }
-
 func (e *SABEditor) updateBladePreview(colorName string) {
 	switch colorName {
 	case "red":
@@ -440,36 +512,180 @@ func (e *SABEditor) GetCurrentPath() string        { return e.currentPath }
 func (e *SABEditor) GetRecentFiles() []RecentFile  { return e.fileManager.GetRecentFiles() }
 
 func (e *SABEditor) NewSaber() {
+	e.session.beginDiscreteChange()
 	e.saber = parsers.NewSaberData()
-	e.currentPath = ""
+	e.docSource = ""
+	e.defNames = []string{}
+	e.session.SelectedDef = 0
 	e.updateUI()
+	e.session.endDiscreteChange()
+	e.refreshDefinitionBar()
 }
 
+// LoadFile reads a possibly multi-definition .sab file. The whole
+// source is kept (docSource) so definition switches can re-parse
+// sibling blocks byte-for-byte; the selected block drives the form.
 func (e *SABEditor) LoadFile(path string) error {
-	file, err := os.Open(path)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
 	content, err := os.ReadFile(path)
 	if err != nil {
 		e.lastError = fmt.Sprintf("Failed to read file: %v", err)
 		return err
 	}
-
-	saber, err := parsers.ParseSAB(string(content))
+	src := string(content)
+	saber, err := parsers.ParseSABDefinition(src, 0)
 	if err != nil {
+		e.lastError = fmt.Sprintf("Failed to parse file: %v", err)
 		return err
 	}
 
+	e.loading = true
+	e.docSource = src
 	e.saber = saber
+	e.session.SelectedDef = 0
+	if names, nerr := parsers.DefinitionNames(src); nerr == nil && len(names) > 0 {
+		e.defNames = names
+	} else {
+		e.defNames = []string{}
+	}
 	e.currentPath = path
 	e.updateUI()
+	e.loading = false
+	e.fireSourceChanged()
+
 	if e.fileManager != nil {
 		e.fileManager.AddRecentFile(path)
 	}
 	e.lastError = ""
-	e.MarkClean() // Freshly loaded file has no unsaved changes
+	e.session.Reset()
+	e.session.SetBaseline(path, src)
+	e.setDirtyState(false)
+	e.refreshDefinitionBar()
+	return nil
+}
+
+// DefinitionNames lists every saber block in the loaded document.
+func (e *SABEditor) DefinitionNames() []string { return e.defNames }
+
+// SelectedDefinition reports the block currently driving the form.
+func (e *SABEditor) SelectedDefinition() int { return e.session.SelectedDef }
+
+// SelectDefinition switches the edited block. The current block's
+// edits are folded back into docSource first; the new block is
+// parsed from that source, so sibling definitions are preserved
+// byte-for-byte by the AST-backed generator. Undoable as one step.
+func (e *SABEditor) SelectDefinition(index int) error {
+	if index < 0 || index >= len(e.defNames) {
+		return fmt.Errorf("definition %d out of range (%d definitions)", index+1, len(e.defNames))
+	}
+	if index == e.session.SelectedDef {
+		return nil
+	}
+	// Fold current form state into the document source; refuse the
+	// switch when the current block can't render (nothing mutated yet).
+	cur, err := parsers.GenerateSAB(e.saber)
+	if err != nil {
+		return fmt.Errorf("cannot switch definition: %v", err)
+	}
+	saber, err := parsers.ParseSABDefinition(cur, index)
+	if err != nil {
+		return fmt.Errorf("cannot parse definition %q: %v", e.defNames[index], err)
+	}
+
+	e.session.beginDiscreteChangeFrom(cur)
+	e.docSource = cur
+	e.session.SelectedDef = index
+	e.saber = saber
+	e.loading = true
+	e.updateUI()
+	e.loading = false
+	e.session.endDiscreteChange()
+	e.refreshDefinitionBar()
+	e.fireSourceChanged()
+	return nil
+}
+
+func (e *SABEditor) refreshDefinitionBar() {
+	if e.defSelect == nil || e.defSummary == nil {
+		return
+	}
+	if len(e.defNames) <= 1 {
+		e.defSelect.Options = e.defNames
+		e.defSelect.ClearSelected()
+		e.defSummary.SetText("")
+		e.defSelect.Refresh()
+		return
+	}
+	e.defSelect.Options = e.defNames
+	e.defSelect.SetSelected(e.defNames[e.session.SelectedDef])
+	e.defSummary.SetText(fmt.Sprintf("editing %d of %d", e.session.SelectedDef+1, len(e.defNames)))
+	e.defSelect.Refresh()
+}
+
+// sessionRender snapshots the working state (UI folded in).
+func (e *SABEditor) sessionRender() string { return e.GenerateSource() }
+
+// sessionRestore swaps a snapshot back into the working model
+// in-memory. Path, baseline and dirty bookkeeping are untouched.
+func (e *SABEditor) sessionRestore(src string) error {
+	names, err := parsers.DefinitionNames(src)
+	if err != nil || len(names) == 0 {
+		return fmt.Errorf("restore saber definitions: %v", err)
+	}
+	if e.session.SelectedDef < 0 || e.session.SelectedDef >= len(names) {
+		return fmt.Errorf("restore saber definition %d: source has %d definitions", e.session.SelectedDef+1, len(names))
+	}
+	saber, err := parsers.ParseSABDefinition(src, e.session.SelectedDef)
+	if err != nil {
+		return err
+	}
+	e.loading = true
+	e.docSource = src
+	e.defNames = names
+	e.saber = saber
+	e.updateUI()
+	e.loading = false
+	e.refreshDefinitionBar()
+	e.fireSourceChanged()
+	return nil
+}
+
+func (e *SABEditor) Session() *DocumentSession { return e.session }
+func (e *SABEditor) CurrentSource() string     { return e.sessionRender() }
+func (e *SABEditor) Undo() bool                { return e.session.Undo() }
+func (e *SABEditor) Redo() bool                { return e.session.Redo() }
+func (e *SABEditor) CanUndo() bool             { return e.session.CanUndo() }
+func (e *SABEditor) CanRedo() bool             { return e.session.CanRedo() }
+
+// ApplySourceText parses src in-memory (no temp files, no LoadFile)
+// and swaps it into the working model. A failed parse leaves the
+// document untouched so the source text stays correctable. The
+// applied state becomes one undo step; dirty recomputes from the
+// baseline, so undoing an apply returns to the prior draft state.
+func (e *SABEditor) ApplySourceText(src string) error {
+	if err := validateSourceStructure(src); err != nil {
+		return err
+	}
+	names, err := parsers.DefinitionNames(src)
+	if err != nil || len(names) == 0 {
+		return fmt.Errorf("parse saber definitions: %v", err)
+	}
+	if e.session.SelectedDef < 0 || e.session.SelectedDef >= len(names) {
+		return fmt.Errorf("definition %d out of range (%d definitions)", e.session.SelectedDef+1, len(names))
+	}
+	saber, err := parsers.ParseSABDefinition(src, e.session.SelectedDef)
+	if err != nil {
+		return err
+	}
+	e.session.beginDiscreteChange()
+	e.docSource = src
+	e.defNames = names
+	e.saber = saber
+	e.loading = true
+	e.updateUI()
+	e.loading = false
+	e.session.endDiscreteChange()
+	e.refreshDefinitionBar()
+	e.fireSourceChanged()
 	return nil
 }
 
@@ -483,24 +699,44 @@ func (e *SABEditor) SaveToWriter(w io.Writer) error {
 	return err
 }
 
-func (e *SABEditor) SaveFile(path string) error {
-	file, err := os.Create(path)
+// PrepareSave returns exact candidate bytes without consulting or
+// mutating widget state.
+func (e *SABEditor) PrepareSave(path string) (string, error) {
+	return parsers.GenerateSAB(e.saber)
+}
+
+// CommitSave publishes reviewed bytes, then refreshes document state.
+// Every failure before publication leaves model/path/baseline intact.
+func (e *SABEditor) CommitSave(path string, candidate string) error {
+	current, err := e.PrepareSave(path)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
-
-	if err := e.SaveToWriter(file); err != nil {
+	if current != candidate {
+		return fmt.Errorf("reviewed candidate no longer matches the current document")
+	}
+	if err := publishEditorCandidate(e.fileManager, path, candidate); err != nil {
+		e.lastError = fmt.Sprintf("Failed to save file: %v", err)
 		return err
 	}
-
 	e.currentPath = path
+	e.docSource = candidate
 	e.lastError = ""
-	if e.fileManager != nil {
-		e.fileManager.AddRecentFile(path)
-	}
-	e.MarkClean() // File saved, no unsaved changes
+	e.session.SetBaseline(path, candidate)
+	e.session.MarkClean()
+	e.setDirtyState(false)
+	e.fireSourceChanged()
 	return nil
+}
+
+// SaveFile is the programmatic (no-review) entry point; UI saves
+// route through PrepareSave/CommitSave via the review dialog.
+func (e *SABEditor) SaveFile(path string) error {
+	candidate, err := e.PrepareSave(path)
+	if err != nil {
+		return err
+	}
+	return e.CommitSave(path, candidate)
 }
 
 func (e *SABEditor) SetCurrentPath(path string) {
@@ -511,10 +747,28 @@ func (e *SABEditor) WriteContent(w io.Writer) {
 	e.SaveToWriter(w)
 }
 
+// Validate checks the current definition round-trips through the
+// parser and flags identity problems the engine cares about.
 func (e *SABEditor) Validate() []string {
 	e.updateSaberFromUI()
-	// Note: Validator will need update to support parsers.SaberData too
-	return []string{}
+	var issues []string
+	gen, err := parsers.GenerateSAB(e.saber)
+	if err != nil {
+		issues = append(issues, fmt.Sprintf("source generation failed: %v", err))
+		return issues
+	}
+	if _, err := parsers.ParseSABDefinition(gen, e.session.SelectedDef); err != nil {
+		issues = append(issues, fmt.Sprintf("generated source does not re-parse: %v", err))
+	}
+	if strings.TrimSpace(e.saber.Name) == "" {
+		issues = append(issues, "saber has no name — the engine needs `name` to register the saber")
+	}
+	if e.saber.NumBlades < 1 {
+		issues = append(issues, fmt.Sprintf("numblades is %d — sabers need at least one blade", e.saber.NumBlades))
+	} else if len(e.saber.Blades) < e.saber.NumBlades {
+		issues = append(issues, fmt.Sprintf("numblades is %d but only %d blade entr(ies) exist — trailing blades fall back to defaults", e.saber.NumBlades, len(e.saber.Blades)))
+	}
+	return issues
 }
 
 func (e *SABEditor) ExportJSON(path string) error {
@@ -524,7 +778,7 @@ func (e *SABEditor) ExportJSON(path string) error {
 		e.lastError = fmt.Sprintf("Failed to marshal JSON: %v", err)
 		return err
 	}
-	if err := os.WriteFile(path, data, 0644); err != nil {
+	if err := safeio.WriteFile(path, data, 0644); err != nil {
 		e.lastError = fmt.Sprintf("Failed to write JSON: %v", err)
 		return err
 	}
@@ -532,6 +786,9 @@ func (e *SABEditor) ExportJSON(path string) error {
 	return nil
 }
 
+// ImportJSON swaps the JSON payload in-memory; it is undoable as one
+// step and marks the document dirty (the model changed on disk
+// nowhere, but the working state now diverges from the baseline).
 func (e *SABEditor) ImportJSON(path string) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -543,13 +800,23 @@ func (e *SABEditor) ImportJSON(path string) error {
 		e.lastError = fmt.Sprintf("Failed to parse JSON: %v", err)
 		return err
 	}
+	e.session.beginDiscreteChange()
 	e.saber = saber
+	e.docSource = ""
+	e.defNames = []string{}
+	e.session.SelectedDef = 0
+	e.loading = true
 	e.updateUI()
+	e.loading = false
+	e.session.endDiscreteChange()
+	e.refreshDefinitionBar()
+	e.fireSourceChanged()
 	e.lastError = ""
 	return nil
 }
 
 func (e *SABEditor) LoadTemplate(template string) {
+	e.session.beginDiscreteChange()
 	e.saber = parsers.NewSaberData()
 	switch template {
 	case "single":
@@ -565,7 +832,15 @@ func (e *SABEditor) LoadTemplate(template string) {
 		e.saber.Blades[0].Radius = 2.5
 		e.saber.SaberFlagMap["darksaber"] = true
 	}
+	e.docSource = ""
+	e.defNames = []string{}
+	e.session.SelectedDef = 0
+	e.loading = true
 	e.updateUI()
+	e.loading = false
+	e.session.endDiscreteChange()
+	e.refreshDefinitionBar()
+	e.fireSourceChanged()
 }
 
 func (e *SABEditor) GetLastError() string { return e.lastError }
@@ -619,6 +894,11 @@ func (e *SABEditor) updateUI() {
 	e.hitOtherEffectEntry.SetText(e.saber.HitOtherEffect)
 	e.g2MarksShaderEntry.SetText(e.saber.G2MarksShader)
 	e.g2WeaponMarkShaderEntry.SetText(e.saber.G2WeaponMarkShader)
+	e.slapAnimEntry.SetText(e.saber.SlapAnim)
+	e.readyAnimEntry.SetText(e.saber.ReadyAnim)
+	e.jumpAtkUpMoveEntry.SetText(e.saber.JumpAtkUpMove)
+	e.jumpAtkFwdMoveEntry.SetText(e.saber.JumpAtkFwdMove)
+	e.lungeAtkMoveEntry.SetText(e.saber.LungeAtkMove)
 	e.noWallMarksCheck.SetChecked(e.saber.NoWallMarks)
 	e.noDlightCheck.SetChecked(e.saber.NoDlight)
 	e.noBladeCheck.SetChecked(e.saber.NoBlade)
@@ -693,6 +973,11 @@ func (e *SABEditor) updateSaberFromUI() {
 	e.saber.HitOtherEffect = e.hitOtherEffectEntry.Text
 	e.saber.G2MarksShader = e.g2MarksShaderEntry.Text
 	e.saber.G2WeaponMarkShader = e.g2WeaponMarkShaderEntry.Text
+	e.saber.SlapAnim = e.slapAnimEntry.Text
+	e.saber.ReadyAnim = e.readyAnimEntry.Text
+	e.saber.JumpAtkUpMove = e.jumpAtkUpMoveEntry.Text
+	e.saber.JumpAtkFwdMove = e.jumpAtkFwdMoveEntry.Text
+	e.saber.LungeAtkMove = e.lungeAtkMoveEntry.Text
 	e.saber.NoWallMarks = e.noWallMarksCheck.Checked
 	e.saber.NoDlight = e.noDlightCheck.Checked
 	e.saber.NoBlade = e.noBladeCheck.Checked

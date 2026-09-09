@@ -13,6 +13,10 @@ import (
 )
 
 func (a *App) showSubmissionWizard() {
+	if a.config.GitHubToken == "" {
+		a.showCredentialConnect(a.showSubmissionWizard)
+		return
+	}
 	if a.githubManager == nil {
 		dialog.ShowInformation("Git Not Configured", "Please setup your workspace first.", a.mainWindow)
 		return

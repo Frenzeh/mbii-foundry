@@ -5,6 +5,8 @@ go 1.24.0
 require (
 	fyne.io/fyne/v2 v2.7.1
 	github.com/ftrvxmtrx/tga v0.0.0-20150524081124-bd8e8d5be13a
+	golang.org/x/text v0.24.0
+	golang.org/x/sys v0.32.0
 )
 
 require (
@@ -15,6 +17,7 @@ require (
 	github.com/ProtonMail/go-crypto v1.1.6 // indirect
 	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/cyphar/filepath-securejoin v0.4.1 // indirect
+	github.com/danieljoos/wincred v1.2.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/fredbi/uri v1.1.1 // indirect
@@ -30,7 +33,7 @@ require (
 	github.com/go-gl/glfw/v3.3/glfw v0.0.0-20240506104042-037f3cc74f2a // indirect
 	github.com/go-text/render v0.2.0 // indirect
 	github.com/go-text/typesetting v0.2.1 // indirect
-	github.com/godbus/dbus/v5 v5.1.0 // indirect
+	github.com/godbus/dbus/v5 v5.2.2 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/google/go-github/v50 v50.2.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
@@ -53,12 +56,11 @@ require (
 	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/yuin/goldmark v1.7.8 // indirect
+	github.com/zalando/go-keyring v0.2.8 // indirect
 	golang.org/x/crypto v0.37.0 // indirect
 	golang.org/x/image v0.24.0 // indirect
 	golang.org/x/net v0.39.0 // indirect
 	golang.org/x/oauth2 v0.34.0 // indirect
-	golang.org/x/sys v0.32.0 // indirect
-	golang.org/x/text v0.24.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

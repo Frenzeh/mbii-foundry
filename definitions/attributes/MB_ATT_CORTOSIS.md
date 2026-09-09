@@ -2,6 +2,10 @@
 
 `MB_ATT_CORTOSIS`
 
+> **Evidence status: Unverified.** The mechanics below are authoring notes,
+> not an engine-parity claim. Verify them against the external engine revision
+> before relying on them.
+
 A rare, conductive material that shorts out lightsabers upon contact.
 
 > **Default:** None.

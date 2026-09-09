@@ -76,8 +76,7 @@ const (
 // in container.NewVBox / container.NewHBox where you'd otherwise
 // reach for a Separator but want breathing room, not a visible line.
 func Gap(token float32) fyne.CanvasObject {
-	sp := &fyneSpacer{size: fyne.NewSize(token, token)}
-	return sp
+	return &fyneSpacer{size: fyne.NewSize(token, token), visible: true}
 }
 
 // fyneSpacer is a CanvasObject that simply takes up space. Used by
@@ -94,7 +93,7 @@ func (s *fyneSpacer) Size() fyne.Size         { return s.cachedSize }
 func (s *fyneSpacer) Resize(sz fyne.Size)     { s.cachedSize = sz }
 func (s *fyneSpacer) Position() fyne.Position { return s.position }
 func (s *fyneSpacer) Move(pos fyne.Position)  { s.position = pos }
-func (s *fyneSpacer) Visible() bool           { return !s.visible }
+func (s *fyneSpacer) Visible() bool           { return s.visible }
 func (s *fyneSpacer) Show()                   { s.visible = true }
 func (s *fyneSpacer) Hide()                   { s.visible = false }
 func (s *fyneSpacer) Refresh()                {}

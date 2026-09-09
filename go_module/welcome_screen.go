@@ -46,7 +46,7 @@ func (w *WelcomeScreen) GetContent() fyne.CanvasObject {
 	// and NewImageFromResource were both claiming layout space but
 	// rendering blank on Fyne v2.7.1 / macOS. NewImageFromImage takes
 	// an already-decoded image and gives us a reliably drawable asset.
-	logoHeight := SizeDisplay * 1.8 // ~97px tall — roomy enough to read clearly
+	logoHeight := SizeTitle * 1.1
 	logoWidth := logoHeight * (305.0 / 189.0)
 	// Decode via png.Decode directly, NOT image.Decode. The generic
 	// image.Decode walks registered formats; one of our deps
@@ -59,7 +59,6 @@ func (w *WelcomeScreen) GetContent() fyne.CanvasObject {
 		img := canvas.NewImageFromImage(decoded)
 		img.FillMode = canvas.ImageFillContain
 		img.ScaleMode = canvas.ImageScaleSmooth
-		img.SetMinSize(fyne.NewSize(logoWidth, logoHeight))
 		// GridWrap forces an exact cell size so HBox allocates and
 		// the canvas.Image gets a concrete Resize call — MinSize alone
 		// was honored for layout math but not always for the draw pass.
@@ -70,10 +69,10 @@ func (w *WelcomeScreen) GetContent() fyne.CanvasObject {
 
 	title := canvas.NewText("FOUNDRY", theme.ForegroundColor())
 	title.Alignment = fyne.TextAlignLeading
-	title.TextSize = SizeDisplay
+	title.TextSize = SizeTitle
 	title.TextStyle = fyne.TextStyle{Bold: true}
 
-	subtitle := canvas.NewText("MOVIE BATTLES II CONTENT EDITOR", theme.PlaceHolderColor())
+	subtitle := canvas.NewText("MOVIE BATTLES II CONTENT EDITOR", theme.ForegroundColor())
 	subtitle.Alignment = fyne.TextAlignLeading
 	subtitle.TextSize = SizeSmall
 	subtitle.TextStyle = fyne.TextStyle{Bold: true}
@@ -119,13 +118,10 @@ func (w *WelcomeScreen) GetContent() fyne.CanvasObject {
 		createLabel,
 		Gap(SpaceXS),
 		newChar,
-		Gap(SpaceXS),
 		newSaber,
-		Gap(SpaceXS),
 		newVeh,
-		Gap(SpaceXS),
 		newSiege,
-		Gap(SpaceSM),
+		Gap(SpaceXS),
 		openCard,
 	)
 
@@ -146,11 +142,10 @@ func (w *WelcomeScreen) GetContent() fyne.CanvasObject {
 	footerBlock := container.NewVBox(rule(), Gap(SpaceSM), footer)
 
 	top := container.NewVBox(
-		Gap(SpaceSM),
 		heroRow,
-		Gap(SpaceMD),
+		Gap(SpaceSM),
 		rule(),
-		Gap(SpaceLG),
+		Gap(SpaceSM),
 		body,
 	)
 
@@ -160,12 +155,11 @@ func (w *WelcomeScreen) GetContent() fyne.CanvasObject {
 	return container.NewPadded(container.NewBorder(top, footerBlock, nil, nil, layout.NewSpacer()))
 }
 
-// sectionCaption renders the small-caps-style section header used by
-// each column. SizeSmall keeps it in Jost (≥11pt); Bold picks up the
-// heavier weight.
+// sectionCaption gives primary sections enough weight to anchor each column
+// without competing with the page title.
 func sectionCaption(text string) *canvas.Text {
-	t := canvas.NewText(text, theme.PlaceHolderColor())
-	t.TextSize = SizeSmall
+	t := canvas.NewText(text, theme.ForegroundColor())
+	t.TextSize = SizeBody
 	t.TextStyle = fyne.TextStyle{Bold: true}
 	return t
 }
@@ -197,11 +191,11 @@ func (w *WelcomeScreen) buildRecentColumn() fyne.CanvasObject {
 	emptyHeadline.TextSize = SizeSubtitle
 	emptyHeadline.TextStyle = fyne.TextStyle{Bold: true}
 
-	emptyHint := canvas.NewText("Pick a card on the left or open a file.", theme.PlaceHolderColor())
+	emptyHint := canvas.NewText("Pick a card on the left or open a file.", theme.ForegroundColor())
 	emptyHint.TextSize = SizeSmall
 
-	tipHeader := canvas.NewText("WHILE YOU'RE HERE", theme.PlaceHolderColor())
-	tipHeader.TextSize = SizeSmall
+	tipHeader := canvas.NewText("WHILE YOU'RE HERE", theme.ForegroundColor())
+	tipHeader.TextSize = SizeBody
 	tipHeader.TextStyle = fyne.TextStyle{Bold: true}
 
 	tip := func(body string) *canvas.Text {
@@ -234,9 +228,7 @@ func (w *WelcomeScreen) buildRecentColumn() fyne.CanvasObject {
 // the same place they look for the current version — no separate
 // banner up top fighting the hero for attention.
 func (w *WelcomeScreen) buildFooter() fyne.CanvasObject {
-	shortcutHeader := canvas.NewText("GET STARTED", theme.PlaceHolderColor())
-	shortcutHeader.TextSize = SizeSmall
-	shortcutHeader.TextStyle = fyne.TextStyle{Bold: true}
+	shortcutHeader := sectionCaption("GET STARTED")
 
 	mono := func(body string) *canvas.Text {
 		t := canvas.NewText(body, theme.ForegroundColor())

@@ -19,10 +19,10 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"image"
 	"image/jpeg"
 	"image/png"
-	"io"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -33,8 +33,6 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-
-	"github.com/ftrvxmtrx/tga"
 )
 
 // gameIconCache holds only immutable embedded icons (including embedded misses).
@@ -153,12 +151,12 @@ func decodeGameIcon(vfs *VirtualFileSystem, basePath string) image.Image {
 		if err != nil {
 			continue
 		}
-		data, err := io.ReadAll(rc)
-		rc.Close()
-		if err != nil || len(data) == 0 {
+		data, readErr := readRasterBytes(rc)
+		closeErr := rc.Close()
+		if readErr != nil || closeErr != nil || len(data) == 0 {
 			continue
 		}
-		img := decodeByExt(ext, data)
+		img, _ := decodeByExt(ext, data)
 		if img != nil {
 			return img
 		}
@@ -172,36 +170,52 @@ func decodeGameIcon(vfs *VirtualFileSystem, basePath string) image.Image {
 			if vfs.Lookup(full) == nil {
 				continue
 			}
-			if rc, err := vfs.ReadFile(full); err == nil {
-				data, _ := io.ReadAll(rc)
-				rc.Close()
-				if img := decodeByExt(ext, data); img != nil {
-					return img
-				}
+			rc, err := vfs.ReadFile(full)
+			if err != nil {
+				continue
+			}
+			data, readErr := readRasterBytes(rc)
+			closeErr := rc.Close()
+			if readErr != nil || closeErr != nil || len(data) == 0 {
+				continue
+			}
+			if img, _ := decodeByExt(ext, data); img != nil {
+				return img
 			}
 		}
 	}
 	return nil
 }
 
-// decodeByExt dispatches to the right decoder. We avoid image.Decode
-// because Foundry imports github.com/ftrvxmtrx/tga which registers
-// TGA with an empty magic string — image.Decode then tries TGA first
-// on every input and mis-parses PNG/JPG files. Explicit dispatch is
-// how welcome_screen.go dodges the same bug.
-func decodeByExt(ext string, data []byte) image.Image {
+// decodeByExt dispatches explicitly so raster resources never depend on
+// image.Decode's process-global format ordering.
+func decodeByExt(ext string, data []byte) (image.Image, error) {
+	if len(data) > maxRasterInputSize {
+		return nil, errRasterInputTooLarge
+	}
 	switch strings.ToLower(ext) {
 	case ".tga":
-		img, _ := tga.Decode(bytes.NewReader(data))
-		return img
+		return decodeTGA(data)
 	case ".png":
-		img, _ := png.Decode(bytes.NewReader(data))
-		return img
+		cfg, err := png.DecodeConfig(bytes.NewReader(data))
+		if err != nil {
+			return nil, err
+		}
+		if _, err := checkedRasterPixelCount(cfg.Width, cfg.Height); err != nil {
+			return nil, err
+		}
+		return png.Decode(bytes.NewReader(data))
 	case ".jpg", ".jpeg":
-		img, _ := jpeg.Decode(bytes.NewReader(data))
-		return img
+		cfg, err := jpeg.DecodeConfig(bytes.NewReader(data))
+		if err != nil {
+			return nil, err
+		}
+		if _, err := checkedRasterPixelCount(cfg.Width, cfg.Height); err != nil {
+			return nil, err
+		}
+		return jpeg.Decode(bytes.NewReader(data))
 	}
-	return nil
+	return nil, fmt.Errorf("unsupported image extension: %s", ext)
 }
 
 // NewGameIconCanvas returns a sized Fyne CanvasObject rendering the
@@ -215,7 +229,6 @@ func NewGameIconCanvas(vfs *VirtualFileSystem, basePath string, width, height fl
 		ci := canvas.NewImageFromImage(img)
 		ci.FillMode = canvas.ImageFillContain
 		ci.ScaleMode = canvas.ImageScaleSmooth
-		ci.SetMinSize(fyne.NewSize(width, height))
 		return container.New(layout.NewGridWrapLayout(fyne.NewSize(width, height)), ci)
 	}
 	// Fallback — generic "image" icon in the theme palette so users
@@ -232,17 +245,12 @@ func NewGameIconCanvas(vfs *VirtualFileSystem, basePath string, width, height fl
 // Render path: explicit png.Decode → canvas.NewImageFromImage,
 // SIZED ONLY by the parent GridWrap (no SetMinSize). Why:
 //
-//  1. canvas.NewImageFromResource → calls image.Decode internally.
-//     image.Decode iterates registered formats; Foundry imports
-//     github.com/ftrvxmtrx/tga which registers TGA with EMPTY magic
-//     bytes, so TGA decoder is tried first on every PNG. It fails
-//     ("tga: invalid format"), Fyne logs the error, the renderer
-//     repaints, repeats — UI thread starves under log spam (this
-//     exact pattern froze the app for the latest tester report).
+//  1. Raster formats are decoded explicitly before constructing the canvas
+//     image. This avoids process-global format sniffing and repeated decode
+//     attempts during repaint.
 //
-//  2. canvas.NewImageFromImage skips image.Decode entirely. We
-//     png.Decode the bytes ourselves with explicit format choice,
-//     so TGA isn't even consulted.
+//  2. canvas.NewImageFromImage keeps already-decoded pixels on the direct
+//     renderer path.
 //
 //  3. SetMinSize on canvas.Image fired Fyne's "param mismatch" log
 //     in v2.7.1 — the renderer's size negotiation dislikes a
@@ -262,14 +270,12 @@ func NewRasterIconFromResource(res fyne.Resource, width, height float32) fyne.Ca
 		ci := canvas.NewImageFromResource(res)
 		ci.FillMode = canvas.ImageFillContain
 		ci.ScaleMode = canvas.ImageScaleSmooth
-		ci.SetMinSize(fyne.NewSize(width, height))
 		return container.New(layout.NewGridWrapLayout(fyne.NewSize(width, height)), ci)
 	}
 	if img := decodedImageFor(res); img != nil {
 		ci := canvas.NewImageFromImage(img)
 		ci.FillMode = canvas.ImageFillContain
 		ci.ScaleMode = canvas.ImageScaleSmooth
-		ci.SetMinSize(fyne.NewSize(width, height))
 		return container.New(layout.NewGridWrapLayout(fyne.NewSize(width, height)), ci)
 	}
 	// Non-PNG/SVG. Fall back to a theme placeholder
@@ -283,8 +289,17 @@ func NewRasterIconFromResource(res fyne.Resource, width, height float32) fyne.Ca
 func setRasterPreview(preview *canvas.Image, res fyne.Resource) {
 	preview.File = ""
 	preview.Resource = nil
-	preview.Image = decodedImageFor(res)
-	if preview.Image == nil {
+	preview.Image = nil
+
+	if res != nil {
+		if strings.HasSuffix(strings.ToLower(res.Name()), ".svg") || (len(res.Content()) > 0 && bytes.Contains(res.Content(), []byte("<svg"))) {
+			preview.Resource = res
+		} else {
+			preview.Image = decodedImageFor(res)
+		}
+	}
+
+	if preview.Image == nil && preview.Resource == nil {
 		preview.Resource = theme.AccountIcon()
 	}
 	preview.Refresh()
@@ -313,11 +328,17 @@ func decodedImageFor(res fyne.Resource) image.Image {
 	decodedImageCacheMu.RUnlock()
 
 	var img image.Image
-	if data := res.Content(); len(data) >= 8 && bytes.HasPrefix(data, pngMagic) {
-		if decoded, err := png.Decode(bytes.NewReader(data)); err == nil {
-			img = decoded
+	data := res.Content()
+	ext := filepath.Ext(key)
+	if ext != "" {
+		img, _ = decodeByExt(ext, data)
+	} else {
+		// Fallback for missing ext: try PNG first
+		if len(data) >= 8 && bytes.HasPrefix(data, pngMagic) {
+			img, _ = png.Decode(bytes.NewReader(data))
 		}
 	}
+
 	decodedImageCacheMu.Lock()
 	decodedImageCache[key] = img
 	decodedImageCacheMu.Unlock()

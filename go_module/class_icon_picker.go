@@ -45,7 +45,7 @@ var classIconAliases = map[string]string{
 	"MB_CLASS_SOLDIER":       "reb", // Rebel soldier
 	"MB_CLASS_TROOPER":       "imp", // Imperial trooper
 	"MB_CLASS_COMMANDER":     "com",
-	"MB_CLASS_ELITETROOPER":  "imp", // reuse imp; no dedicated ET icon shipped
+	"MB_CLASS_ELITETROOPER":  "imp",  // reuse imp; no dedicated ET icon shipped
 	"MB_CLASS_SITH":          "jedi", // no dedicated sith icon; jedi/sith share the "user" art
 	"MB_CLASS_JEDI":          "jedi",
 	"MB_CLASS_BOUNTY_HUNTER": "bh",
@@ -188,7 +188,6 @@ func (c *classCard) CreateRenderer() fyne.WidgetRenderer {
 			ci := canvas.NewImageFromImage(img)
 			ci.FillMode = canvas.ImageFillContain
 			ci.ScaleMode = canvas.ImageScaleSmooth
-			ci.SetMinSize(fyne.NewSize(44, 44))
 			c.iconObj = container.New(layout.NewGridWrapLayout(fyne.NewSize(44, 44)), ci)
 		}
 	}

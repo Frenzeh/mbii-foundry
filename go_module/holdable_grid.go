@@ -197,8 +197,7 @@ func (hg *HoldableGrid) buildBadge(h HoldableDef) fyne.CanvasObject {
 		ci := canvas.NewImageFromImage(img)
 		ci.FillMode = canvas.ImageFillContain
 		ci.ScaleMode = canvas.ImageScaleSmooth
-		ci.SetMinSize(fyne.NewSize(26, 26))
-		iconObj = ci
+		iconObj = container.NewGridWrap(fyne.NewSize(26, 26), ci)
 	} else if res := FallbackIconForAttribute(h.ID, h.Name); res != nil {
 		iconObj = NewRasterIconFromResource(res, 22, 22)
 	} else {
@@ -367,4 +366,28 @@ func (c *clickableCell) MouseMoved(*desktop.MouseEvent) {}
 
 func (c *clickableCell) CreateRenderer() fyne.WidgetRenderer {
 	return widget.NewSimpleRenderer(c.content)
+}
+
+func (c *clickableCell) FocusGained() {
+	if c.onHover != nil {
+		c.onHover()
+	}
+}
+
+func (c *clickableCell) FocusLost() {
+	if c.onLeave != nil {
+		c.onLeave()
+	}
+}
+
+func (c *clickableCell) TypedRune(r rune) {
+	if r == ' ' && c.onTap != nil {
+		c.onTap()
+	}
+}
+
+func (c *clickableCell) TypedKey(ev *fyne.KeyEvent) {
+	if (ev.Name == fyne.KeyReturn || ev.Name == fyne.KeyEnter) && c.onTap != nil {
+		c.onTap()
+	}
 }

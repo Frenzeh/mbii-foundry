@@ -1,6 +1,6 @@
 # Acceleration
 
-`accel`
+`acceleration`
 
 > How quickly the vehicle reaches top speed.
 
@@ -15,7 +15,7 @@ How quickly the vehicle reaches top speed.
 
 ## Notes
 
-- Tanks should have low accel. Speeder bikes high.
+- Tanks should have low acceleration. Speeder bikes should have high acceleration.
 
 ---
 

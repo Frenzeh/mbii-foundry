@@ -1,23 +1,20 @@
-# Strafe Percentage
+# Vehicle Strafe Percentage
 
 `strafePerc`
 
-> Multiplier for sideways movement speed (strafing) relative to forward speed.
+> Stores the numeric VEH value shown as **Strafe %** in the form.
 
-## What it does
+## Foundry support
 
-Multiplier for sideways movement speed (strafing) relative to forward speed.
+Foundry parses and writes `strafePerc` as a floating-point value. The current
+metadata does not establish whether the engine interprets the number as a
+fraction, percentage, multiplier, or type-specific value.
 
-**Default:** 1.0 (Same speed)
+## Verification status
 
-## Valid values
-
-- **0.5:** Strafing is half as fast as moving forward.
-- **0.0:** Cannot strafe (Tank/Rail shooter style).
-
-## Notes
-
-- Lower this for heavy vehicles like AT-STs to make them feel cumbersome.
+No exact engine revision and source range is recorded for this field's units,
+default, bounds, or movement calculation. Avoid treating example values as
+verified behavior.
 
 ---
 

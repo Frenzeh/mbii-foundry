@@ -754,11 +754,11 @@
     "description": "Hull integrity of the vehicle."
   },
   {
-    "id": "accel",
+    "id": "acceleration",
     "name": "\ud83d\ude80 Acceleration",
     "overview": "How quickly the vehicle reaches top speed.\n\n**\u2699\ufe0f Mechanics**\n*   **Higher:** Snappy, responsive takeoff.\n*   **Lower:** Heavy, sluggish takeoff.",
     "tips": [
-      "Tanks should have low accel. Speeder bikes high."
+      "Tanks should have low acceleration. Speeder bikes should have high acceleration."
     ],
     "levels": {},
     "stats": {},
@@ -790,7 +790,7 @@
     "description": "Regenerating energy barrier."
   },
   {
-    "id": "speed",
+    "id": "speedMax",
     "name": "\ud83c\udfce\ufe0f Top Speed",
     "overview": "Maximum forward velocity of the vehicle.\n> **Default:** Varies (Speeder Bike ~800+)\n\n**\u2699\ufe0f Mechanics**\n*   **Units:** Game Units per Second.\n*   **Comparison:** Player run speed is ~250. 500 is fast. 1000 is extremely fast.",
     "tips": [

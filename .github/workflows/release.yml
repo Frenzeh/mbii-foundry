@@ -20,14 +20,20 @@ jobs:
             name: linux-amd64
             binary: mbii-foundry
             archive_ext: tar.gz
+            platform: linux
+            arch: amd64
           - os: macos-latest
             name: macos-universal
             binary: mbii-foundry
             archive_ext: zip
+            platform: darwin
+            arch: universal
           - os: windows-latest
             name: windows-amd64
             binary: mbii-foundry.exe
             archive_ext: zip
+            platform: windows
+            arch: amd64
     defaults:
       run:
         working-directory: go_module
@@ -77,22 +83,78 @@ jobs:
             libxxf86vm-dev libxrandr-dev libxinerama-dev \
             libxcursor-dev libxi-dev
 
-      - name: Build (non-Windows)
-        if: runner.os != 'Windows'
-        run: go build -v -o ${{ matrix.binary }} -ldflags="-s -w"
+      # Every auto-update binary embeds this public key. Validate its exact
+      # representation and prove it is derived from the signing key before any
+      # platform build starts; a missing or mismatched key aborts the release.
+      - name: Verify publisher keypair
+        shell: bash
+        env:
+          PUBLISHER_PUBLIC_KEY: ${{ secrets.PUBLISHER_PUBLIC_KEY }}
+          PUBLISHER_PRIVATE_KEY: ${{ secrets.PUBLISHER_PRIVATE_KEY }}
+        run: |
+          if [[ ! "$PUBLISHER_PUBLIC_KEY" =~ ^[0-9a-f]{64}$ ]]; then
+            echo "::error::PUBLISHER_PUBLIC_KEY must be exactly 64 lowercase hexadecimal characters."
+            exit 1
+          fi
+          if [[ ! "$PUBLISHER_PRIVATE_KEY" =~ ^[0-9a-f]{128}$ ]]; then
+            echo "::error::PUBLISHER_PRIVATE_KEY must be exactly 128 lowercase hexadecimal characters."
+            exit 1
+          fi
+          umask 077
+          KEY_DIR="$(mktemp -d)"
+          trap 'rm -rf "$KEY_DIR"' EXIT
+          printf '%s' "$PUBLISHER_PUBLIC_KEY" > "$KEY_DIR/public.hex"
+          printf '%s' "$PUBLISHER_PRIVATE_KEY" > "$KEY_DIR/private.hex"
+          go run ./cmd/signer -verify-keypair \
+            -key "$KEY_DIR/private.hex" \
+            -public-key-file "$KEY_DIR/public.hex"
+
+      - name: Build (Linux)
+        if: runner.os == 'Linux'
+        shell: bash
+        env:
+          PUBLISHER_PUBLIC_KEY: ${{ secrets.PUBLISHER_PUBLIC_KEY }}
+          RELEASE_ARCH: ${{ matrix.arch }}
+        run: |
+          GOOS=linux GOARCH="$RELEASE_ARCH" go build -v -o "${{ matrix.binary }}" -ldflags="-s -w -X=main.PublisherTrustedKey=$PUBLISHER_PUBLIC_KEY"
+          case "$(go version -m "${{ matrix.binary }}")" in
+            *"GOARCH=$RELEASE_ARCH"*"GOOS=linux"*) ;;
+            *) echo "::error::Linux artifact architecture does not match linux/$RELEASE_ARCH"; exit 1 ;;
+          esac
 
       - name: Build (Windows, GUI mode)
         if: runner.os == 'Windows'
-        run: go build -v -o ${{ matrix.binary }} -ldflags="-s -w -H windowsgui"
+        shell: bash
+        env:
+          PUBLISHER_PUBLIC_KEY: ${{ secrets.PUBLISHER_PUBLIC_KEY }}
+          RELEASE_ARCH: ${{ matrix.arch }}
+        run: |
+          GOOS=windows GOARCH="$RELEASE_ARCH" go build -v -o "${{ matrix.binary }}" -ldflags="-s -w -H=windowsgui -X=main.PublisherTrustedKey=$PUBLISHER_PUBLIC_KEY"
+          case "$(go version -m "${{ matrix.binary }}")" in
+            *"GOARCH=$RELEASE_ARCH"*"GOOS=windows"*) ;;
+            *) echo "::error::Windows artifact architecture does not match windows/$RELEASE_ARCH"; exit 1 ;;
+          esac
+
+      - name: Build macOS (Universal)
+        if: runner.os == 'macOS'
+        shell: bash
+        env:
+          PUBLISHER_PUBLIC_KEY: ${{ secrets.PUBLISHER_PUBLIC_KEY }}
+        run: |
+          CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 CC="clang -arch x86_64" CXX="clang++ -arch x86_64" \
+            go build -v -o mbii-foundry_amd64 -ldflags="-s -w -X=main.PublisherTrustedKey=$PUBLISHER_PUBLIC_KEY"
+          CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 CC="clang -arch arm64" CXX="clang++ -arch arm64" \
+            go build -v -o mbii-foundry_arm64 -ldflags="-s -w -X=main.PublisherTrustedKey=$PUBLISHER_PUBLIC_KEY"
+          test "$(lipo -archs mbii-foundry_amd64)" = "x86_64"
+          test "$(lipo -archs mbii-foundry_arm64)" = "arm64"
+          lipo -create -output mbii-foundry mbii-foundry_amd64 mbii-foundry_arm64
+          lipo mbii-foundry -verify_arch x86_64 arm64
+          ARCHS="$(lipo -archs mbii-foundry)"
+          test "$(wc -w <<<"$ARCHS" | tr -d ' ')" = "2"
 
       - name: Package macOS .app bundle
         if: runner.os == 'macOS'
         working-directory: .
-        # data/ definitions/ schemas/ templates/ go inside
-        # Contents/Resources so the shipped .app is self-contained.
-        # resolveDataPath in data_path.go knows to look there for the
-        # bundled layout, and the Mac auto-updater's bundle-swap
-        # brings them along automatically on upgrade.
         run: |
           APP_BUNDLE="MBII Foundry.app"
           mkdir -p "$APP_BUNDLE/Contents/MacOS" "$APP_BUNDLE/Contents/Resources"
@@ -100,12 +162,30 @@ jobs:
           cp macos/Info.plist "$APP_BUNDLE/Contents/"
           cp macos/AppIcon.icns "$APP_BUNDLE/Contents/Resources/"
           for dir in data definitions schemas templates; do
-            if [ -d "$dir" ]; then
-              cp -R "$dir" "$APP_BUNDLE/Contents/Resources/"
+            if [ ! -d "$dir" ]; then
+              echo "::error::Required release resource directory '$dir' is missing."
+              exit 1
             fi
+            cp -R "$dir" "$APP_BUNDLE/Contents/Resources/"
           done
-          codesign -s - -f --deep "$APP_BUNDLE" || true
+          # Signing policy (fails closed, never claims Apple trust):
+          # - MACOS_DEVELOPER_IDENTITY secret set → sign with Developer ID.
+          #   (Notarization is NOT performed here; the release notes must
+          #   not claim it without stapled proof.)
+          # - Otherwise → ad-hoc sign so the bundle is structurally
+          #   consistent for the updater's codesign --verify check. This
+          #   confers NO Gatekeeper trust; users bypass it on first launch.
+          if [ -n "$MACOS_DEVELOPER_IDENTITY" ]; then
+            codesign -s "$MACOS_DEVELOPER_IDENTITY" -f --deep --strict "$APP_BUNDLE"
+            echo "Signed with Developer ID identity (notarization NOT performed)"
+          else
+            echo "::warning::MACOS_DEVELOPER_IDENTITY is not set — signing AD-HOC. No Apple Developer ID trust, no notarization; Gatekeeper will flag first launch."
+            codesign -s - -f --deep --strict "$APP_BUNDLE"
+          fi
+          codesign --verify --deep --strict "$APP_BUNDLE"
           zip -qr "mbii-foundry-${{ matrix.name }}.zip" "$APP_BUNDLE"
+        env:
+          MACOS_DEVELOPER_IDENTITY: ${{ secrets.MACOS_DEVELOPER_IDENTITY }}
 
       - name: Package Linux tarball
         if: runner.os == 'Linux'
@@ -127,6 +207,25 @@ jobs:
           Copy-Item README.md, LICENSE, USER_GUIDE.md dist/
           Copy-Item -Recurse data, definitions, schemas, templates dist/
           Compress-Archive -Path dist/* -DestinationPath "mbii-foundry-${{ matrix.name }}.zip" -Force
+
+      - name: Sign manifest
+        working-directory: go_module
+        shell: bash
+        env:
+          PUBLISHER_PRIVATE_KEY: ${{ secrets.PUBLISHER_PRIVATE_KEY }}
+          RELEASE_PLATFORM: ${{ matrix.platform }}
+          RELEASE_ARCH: ${{ matrix.arch }}
+        run: |
+          go build -o signer ./cmd/signer
+          umask 077
+          KEY_DIR="$(mktemp -d)"
+          trap 'rm -rf "$KEY_DIR" signer' EXIT
+          printf '%s' "$PUBLISHER_PRIVATE_KEY" > "$KEY_DIR/private.hex"
+          ./signer -sign "../mbii-foundry-${{ matrix.name }}.${{ matrix.archive_ext }}" \
+                   -key "$KEY_DIR/private.hex" \
+                   -version "$GITHUB_REF_NAME" \
+                   -platform "$RELEASE_PLATFORM" \
+                   -arch "$RELEASE_ARCH"
 
       - uses: actions/upload-artifact@v7
         with:

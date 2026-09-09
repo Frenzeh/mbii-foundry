@@ -9,10 +9,10 @@ import (
 	"fmt"
 	"image"
 	"image/color"
-	"image/jpeg"
 	"image/png"
 	"io"
 	"os"
+	pathpkg "path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -26,7 +26,6 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-	"github.com/ftrvxmtrx/tga"
 	"github.com/nfnt/resize"
 )
 
@@ -71,14 +70,18 @@ type AssetEntry struct {
 }
 
 type AssetBrowser struct {
-	container      *fyne.Container
-	tree           *widget.Tree
-	grid           *fyne.Container
-	sourceSelect   *widget.Select
-	quickNavSelect *widget.Select
-	searchEntry    *widget.Entry
-	statusLabel    *widget.Label
-	topBar         *fyne.Container // Exposed for visibility toggling
+	container         *fyne.Container
+	tree              *widget.Tree
+	grid              *fyne.Container
+	sourceSelect      *widget.Select
+	quickNavSelect    *widget.Select
+	searchEntry       *widget.Entry
+	statusLabel       *widget.Label
+	breadcrumbLabel   *widget.Label
+	topBar            *fyne.Container // Exposed for visibility toggling
+	emptyState        fyne.CanvasObject
+	emptyHeadline     *widget.Label
+	emptySelectButton *widget.Button
 
 	// View Controls
 	viewModeSelect *widget.Select
@@ -99,7 +102,9 @@ type AssetBrowser struct {
 	// Tracks the currently-selected GridItem so we can clear its
 	// highlight when another item is clicked. Cleared on every
 	// loadGrid / loadFS.
-	selectedItem *GridItem
+	selectedItem  *GridItem
+	selectedAsset *AssetEntry
+	treeSyncing   bool
 
 	md3viewPath string
 	loadLock    sync.Mutex
@@ -154,8 +159,16 @@ func NewAssetBrowser(gamedataPath, textAssetsPath string, onReady func()) *Asset
 		onVFSReady:     onReady,
 	}
 
-	ab.favoritesFile = filepath.Join(AppConfigDir(), "favorites.json")
-	ab.loadFavorites()
+	configDir, err := AppConfigDir()
+	if err != nil {
+		LogInfo("Diagnostics: Config dir migration warning or error: " + err.Error())
+	}
+	if configDir != "" {
+		ab.favoritesFile = filepath.Join(configDir, "favorites.json")
+		ab.loadFavorites()
+	} else {
+		LogInfo("Diagnostics: Favorites unavailable, staying memory-only.")
+	}
 
 	ab.loadConfig()
 	ab.scanPK3Files()
@@ -195,6 +208,9 @@ func (ab *AssetBrowser) refreshVFS() {
 }
 
 func (ab *AssetBrowser) loadFavorites() {
+	if ab.favoritesFile == "" {
+		return
+	}
 	data, err := os.ReadFile(ab.favoritesFile)
 	if err == nil {
 		json.Unmarshal(data, &ab.favorites)
@@ -202,6 +218,9 @@ func (ab *AssetBrowser) loadFavorites() {
 }
 
 func (ab *AssetBrowser) saveFavorites() {
+	if ab.favoritesFile == "" {
+		return
+	}
 	data, _ := json.Marshal(ab.favorites)
 	os.WriteFile(ab.favoritesFile, data, 0644)
 }
@@ -395,14 +414,14 @@ func (ab *AssetBrowser) createUI() {
 			}
 		}
 	})
-	ab.sourceSelect.PlaceHolder = "Select Source..."
+	ab.sourceSelect.PlaceHolder = "Select source"
 	ab.refreshSources() // Populate initial options
 
-	favBtn := widget.NewButtonWithIcon("", theme.ContentAddIcon(), func() {
+	favBtn := NewTooltipButton("", theme.ContentAddIcon(), func() {
 		if ab.currentDir != nil && ab.currentDir.PK3Source == "" && ab.currentDir.Path != "" {
 			ab.addToFavorites(ab.currentDir.Path)
 		}
-	})
+	}, "Add the current folder to favorites")
 	favBtn.Importance = widget.LowImportance
 
 	navOptions := make([]string, 0, len(QuickNavPaths))
@@ -415,7 +434,7 @@ func (ab *AssetBrowser) createUI() {
 			ab.navigateToPath(path)
 		}
 	})
-	ab.quickNavSelect.PlaceHolder = "Quick Nav..."
+	ab.quickNavSelect.PlaceHolder = "Choose common path"
 
 	ab.searchEntry = NewInputEntry()
 	ab.searchEntry.SetPlaceHolder("Search...")
@@ -426,7 +445,7 @@ func (ab *AssetBrowser) createUI() {
 	// to swap between two states; an icon toggle is the natural shape.
 	// Icon shown reflects the CURRENT mode so the user sees "I am in
 	// grid view" at a glance.
-	viewModeBtn := widget.NewButtonWithIcon("", theme.GridIcon(), nil)
+	viewModeBtn := NewTooltipButton("", theme.GridIcon(), nil, "Switch to list view")
 	viewModeBtn.Importance = widget.LowImportance
 	// Icon shows the mode you'd SWITCH TO on click — standard toolbar
 	// toggle convention. Currently in grid → button shows list (tap
@@ -434,8 +453,10 @@ func (ab *AssetBrowser) createUI() {
 	syncViewModeIcon := func() {
 		if ab.viewMode == ViewModeGrid {
 			viewModeBtn.SetIcon(theme.ListIcon())
+			viewModeBtn.SetTooltip("Switch to list view")
 		} else {
 			viewModeBtn.SetIcon(theme.GridIcon())
+			viewModeBtn.SetTooltip("Switch to grid view")
 		}
 	}
 	viewModeBtn.OnTapped = func() {
@@ -474,27 +495,27 @@ func (ab *AssetBrowser) createUI() {
 	// MoveUpIcon (↑) — the action is "go up a directory", not
 	// history-back. The back-arrow was reading as a browser back
 	// button, which is semantically wrong here.
-	upBtn := widget.NewButtonWithIcon("", theme.MoveUpIcon(), func() {
+	upBtn := NewTooltipButton("", theme.MoveUpIcon(), func() {
 		if ab.currentDir != nil && ab.currentDir.PK3Source == "" && ab.currentDir.Path != "" {
 			parent := filepath.Dir(ab.currentDir.Path)
 			if parent != "" && parent != "." {
 				ab.loadFS(parent)
 			}
 		}
-	})
+	}, "Go to parent folder")
 	upBtn.Importance = widget.LowImportance
 
-	homeBtn := widget.NewButtonWithIcon("", theme.HomeIcon(), func() {
+	homeBtn := NewTooltipButton("", theme.HomeIcon(), func() {
 		home, _ := os.UserHomeDir()
 		ab.loadFS(home)
-	})
+	}, "Go to home folder")
 	homeBtn.Importance = widget.LowImportance
 
-	refreshBtn := widget.NewButtonWithIcon("", theme.ViewRefreshIcon(), func() {
+	refreshBtn := NewTooltipButton("", theme.ViewRefreshIcon(), func() {
 		if ab.currentDir != nil && ab.currentDir.PK3Source == "" && ab.currentDir.Path != "" {
 			ab.loadFS(ab.currentDir.Path)
 		}
-	})
+	}, "Refresh the current folder")
 	refreshBtn.Importance = widget.LowImportance
 
 	navButtons := container.NewHBox(upBtn, homeBtn, refreshBtn)
@@ -506,9 +527,23 @@ func (ab *AssetBrowser) createUI() {
 	controlsLeft := container.New(layout.NewGridLayoutWithColumns(2), ab.sortSelect, ab.zoomSlider)
 	controlsRow := container.NewBorder(nil, nil, nil, viewModeBtn, controlsLeft)
 
+	ab.breadcrumbLabel = widget.NewLabel("VFS /")
+	ab.breadcrumbLabel.Truncation = fyne.TextTruncateEllipsis
+
+	sourceCaption := widget.NewLabelWithStyle("Source", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	quickNavCaption := widget.NewLabelWithStyle("Go to asset path", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	quickNavHelp := NewTooltipButton("", theme.HelpIcon(), nil,
+		"Jump to a common asset directory in the selected virtual filesystem")
+	quickNavHelp.Importance = widget.LowImportance
+	quickNavHeader := container.NewBorder(nil, nil, quickNavCaption, quickNavHelp)
+	sourceNav := container.NewGridWithColumns(2,
+		container.NewVBox(sourceCaption, ab.sourceSelect),
+		container.NewVBox(quickNavHeader, ab.quickNavSelect),
+	)
+	locationSearch := container.NewGridWithColumns(2, ab.breadcrumbLabel, ab.searchEntry)
 	ab.topBar = container.NewVBox(
-		container.NewBorder(nil, nil, navButtons, favBtn, ab.sourceSelect),
-		ab.searchEntry,
+		container.NewBorder(nil, nil, navButtons, favBtn, sourceNav),
+		locationSearch,
 		controlsRow,
 	)
 
@@ -552,6 +587,9 @@ func (ab *AssetBrowser) createUI() {
 	// in the tree" reliably navigates the grid into it regardless
 	// of which pixel the click landed on.
 	navigateTreeEntry := func(id widget.TreeNodeID) {
+		if ab.treeSyncing {
+			return
+		}
 		entry, ok := ab.assets[id]
 		if !ok {
 			return
@@ -575,23 +613,50 @@ func (ab *AssetBrowser) createUI() {
 	ab.tree.OnBranchOpened = navigateTreeEntry
 
 	ab.grid = container.NewGridWrap(fyne.NewSize(ab.iconSize, ab.iconSize+30)) // Init with size
-	// Empty by default — "Ready" was noise that duplicated the app's
-	// global status label. This label now just mirrors directory
-	// load results (see loadFS / loadPK3).
+	// Empty by default — status text alone looked like a failed render.
+	// The action opens the same source chooser used by the toolbar control.
+	ab.emptySelectButton = widget.NewButtonWithIcon("Select Asset Root", theme.FolderOpenIcon(), func() {
+		ab.sourceSelect.Tapped(&fyne.PointEvent{})
+	})
+	ab.emptySelectButton.Importance = widget.HighImportance
+	ab.emptyHeadline = widget.NewLabelWithStyle("No asset root selected", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	emptyBody := widget.NewLabel("Choose an asset root: GameData VFS, TextAssets, a favorite folder, or a PK3 archive.")
+	emptyBody.Alignment = fyne.TextAlignCenter
+	emptyBody.Wrapping = fyne.TextWrapWord
+	emptyContent := container.NewVBox(
+		ab.emptyHeadline,
+		emptyBody,
+		Gap(SpaceSM),
+		container.NewCenter(ab.emptySelectButton),
+	)
+	ab.emptyState = container.NewPadded(container.NewCenter(NewTilePanel(emptyContent, TileOpts{
+		FillAlpha: 7, StrokeAlpha: 28, Padded: true,
+	})))
+
+	// This label mirrors directory load/error results below the browser.
 	ab.statusLabel = widget.NewLabel("")
 
 	// Tree scroll gets an explicit MinSize. Without it, Fyne's HSplit
-	// clamps the offset against child MinSizes — and since the grid's
-	// Scroll reports a large MinSize from its children (icon tiles +
-	// search row above), the clamp was collapsing the tree pane to
-	// effectively zero width on first render. Users had to drag the
-	// divider right before any folders appeared.
+	// clamps the offset against child MinSizes.
 	treeScroll := container.NewScroll(ab.tree)
 	treeScroll.SetMinSize(fyne.NewSize(160, 0))
-	split := container.NewHSplit(treeScroll, container.NewScroll(ab.grid))
+	gridHost := container.NewStack(container.NewScroll(ab.grid), ab.emptyState)
+	split := container.NewHSplit(treeScroll, gridHost)
 	split.SetOffset(0.3)
 
 	ab.container = container.NewBorder(ab.topBar, ab.statusLabel, nil, nil, split)
+	ab.updateEmptyState()
+}
+
+func (ab *AssetBrowser) updateEmptyState() {
+	if ab.emptyState == nil {
+		return
+	}
+	if ab.currentDir == nil && len(ab.assets) == 0 {
+		ab.emptyState.Show()
+	} else {
+		ab.emptyState.Hide()
+	}
 }
 
 func (ab *AssetBrowser) updateGridSize() {
@@ -647,7 +712,9 @@ func (ab *AssetBrowser) loadPK3(pk3Path string) {
 	ab.currentPK3 = pk3Path
 	ab.assets = make(map[string]*AssetEntry)
 	ab.rootEntries = []*AssetEntry{}
+	ab.currentDir = nil
 	ab.grid.Objects = nil
+	ab.updateEmptyState()
 
 	reader, err := zip.OpenReader(pk3Path)
 	if err != nil {
@@ -685,7 +752,11 @@ func (ab *AssetBrowser) loadPK3(pk3Path string) {
 	}
 
 	ab.statusLabel.SetText(fmt.Sprintf("Loaded %d assets", len(ab.assets)))
+	if ab.breadcrumbLabel != nil {
+		ab.breadcrumbLabel.SetText("PK3 / " + filepath.Base(pk3Path))
+	}
 	ab.tree.Refresh()
+	ab.updateEmptyState()
 }
 
 func (ab *AssetBrowser) ensureDirectory(dirMap map[string]*AssetEntry, path, pk3Source string) {
@@ -710,9 +781,11 @@ func (ab *AssetBrowser) ensureDirectory(dirMap map[string]*AssetEntry, path, pk3
 
 func (ab *AssetBrowser) loadGrid(dir *AssetEntry) {
 	ab.currentDir = dir
+	ab.updateEmptyState()
 	// Clear any selected-item pointer — the widget's about to be
 	// destroyed when we rebuild the grid.
 	ab.selectedItem = nil
+	ab.selectedAsset = nil
 
 	ab.grid.Objects = nil
 	ab.grid.Refresh()
@@ -799,6 +872,7 @@ type GridItem struct {
 	Icon           fyne.Resource
 	OnTapped       func()
 	OnDoubleTapped func()
+	Entry          *AssetEntry
 	ViewMode       ViewMode
 
 	// TypeBadge is a short tag (MBCH / SAB / VEH / etc.) rendered
@@ -947,6 +1021,7 @@ func (ab *AssetBrowser) createGridItem(entry *AssetEntry, isParent bool) fyne.Ca
 
 	item := NewGridItem(displayName, icon, nil)
 	item.ViewMode = ab.viewMode
+	item.Entry = entry
 	item.TypeBadge = typeBadge
 	item.OnTapped = func() {
 		// Highlight this item; clear any previous selection so only
@@ -956,6 +1031,7 @@ func (ab *AssetBrowser) createGridItem(entry *AssetEntry, isParent bool) fyne.Ca
 		}
 		item.SetSelected(true)
 		ab.selectedItem = item
+		ab.selectedAsset = entry
 		if ab.onAssetSelected != nil {
 			ab.onAssetSelected(entry)
 		}
@@ -1062,22 +1138,14 @@ func (ab *AssetBrowser) LoadIconResource(path string) fyne.Resource {
 	if err != nil {
 		return nil
 	}
-	defer rc.Close()
 
-	var img image.Image
 	ext := strings.ToLower(filepath.Ext(path))
-
-	if ext == ".tga" {
-		img, err = tga.Decode(rc)
-	} else if ext == ".jpg" || ext == ".jpeg" {
-		img, err = jpeg.Decode(rc)
-	} else if ext == ".png" {
-		img, err = png.Decode(rc)
-	} else {
-		// Shaders? Not handled yet
+	data, readErr := readRasterBytes(rc)
+	closeErr := rc.Close()
+	if readErr != nil || closeErr != nil {
 		return nil
 	}
-
+	img, err := decodeByExt(ext, data)
 	if err != nil || img == nil {
 		return nil
 	}
@@ -1093,10 +1161,10 @@ func (ab *AssetBrowser) LoadIconResource(path string) fyne.Resource {
 		return nil
 	}
 
-	data := buf.Bytes()
-	os.WriteFile(cachePath, data, 0644)
+	pngData := buf.Bytes()
+	_ = os.WriteFile(cachePath, pngData, 0644)
 
-	return fyne.NewStaticResource(hashStr+".png", data)
+	return fyne.NewStaticResource(hashStr+".png", pngData)
 }
 
 func (ab *AssetBrowser) isImageAsset(asset *AssetEntry) bool {
@@ -1105,54 +1173,57 @@ func (ab *AssetBrowser) isImageAsset(asset *AssetEntry) bool {
 
 func (ab *AssetBrowser) loadImage(asset *AssetEntry) image.Image {
 	if ab.vfs != nil && asset.PK3Source != "" && asset.PK3Source != "VFS" {
-		// Try using VFS helper if it's a known PK3
+		// Try using VFS helper if it's a known PK3.
 		rc, err := ab.vfs.ReadFile(asset.Path)
 		if err == nil {
-			defer rc.Close()
-			return decodeImage(rc, asset.Name)
+			return decodeImageReadCloser(rc, asset.Name)
 		}
 	} else if asset.PK3Source != "" && asset.PK3Source != "VFS" {
-		// Legacy PK3 loading
+		// Legacy PK3 loading.
 		reader, err := zip.OpenReader(asset.PK3Source)
 		if err != nil {
 			return nil
 		}
-		defer reader.Close()
-
 		for _, f := range reader.File {
-			if f.Name == asset.Path {
-				rc, err := f.Open()
-				if err != nil {
-					return nil
-				}
-				defer rc.Close()
-				return decodeImage(rc, asset.Name)
+			if f.Name != asset.Path {
+				continue
 			}
+			rc, err := f.Open()
+			if err != nil {
+				_ = reader.Close()
+				return nil
+			}
+			img := decodeImageReadCloser(rc, asset.Name)
+			if err := reader.Close(); err != nil {
+				return nil
+			}
+			return img
 		}
+		_ = reader.Close()
 	} else if asset.PK3Source == "VFS" && ab.vfs != nil {
-		// VFS loading
 		rc, err := ab.vfs.ReadFile(asset.Path)
 		if err == nil {
-			defer rc.Close()
-			return decodeImage(rc, asset.Name)
+			return decodeImageReadCloser(rc, asset.Name)
 		}
 	}
 	return nil
 }
 
-func decodeImage(r io.Reader, filename string) image.Image {
-	ext := strings.ToLower(filepath.Ext(filename))
-	if ext == ".tga" {
-		img, _ := tga.Decode(r)
-		return img
-	} else if ext == ".jpg" {
-		img, _ := jpeg.Decode(r)
-		return img
-	} else if ext == ".png" {
-		img, _ := png.Decode(r)
-		return img
+func decodeImageReadCloser(rc io.ReadCloser, filename string) image.Image {
+	img := decodeImage(rc, filename)
+	if err := rc.Close(); err != nil {
+		return nil
 	}
-	return nil
+	return img
+}
+
+func decodeImage(r io.Reader, filename string) image.Image {
+	data, err := readRasterBytes(r)
+	if err != nil {
+		return nil
+	}
+	img, _ := decodeByExt(filepath.Ext(filename), data)
+	return img
 }
 
 func (ab *AssetBrowser) filterGrid(text string) {
@@ -1192,75 +1263,218 @@ func (ab *AssetBrowser) filterGrid(text string) {
 	ab.grid.Refresh()
 }
 
-func (ab *AssetBrowser) navigateToPath(path string) {
-	// TODO: Implement actual navigation into the asset tree/grid.
-	// For now, this is a placeholder.
-	// This would involve finding the entry for the path and calling loadGrid or expanding tree.
-	ab.statusLabel.SetText("QuickNav to: " + path + " (Not yet fully implemented)")
+func canonicalAssetPath(value string) string {
+	value = strings.TrimSpace(strings.ReplaceAll(value, "\\", "/"))
+	if value == "" {
+		return ""
+	}
+	value = pathpkg.Clean("/" + strings.TrimLeft(value, "/"))
+	if value == "/" {
+		return ""
+	}
+	return strings.TrimPrefix(value, "/")
+}
+
+// resolveVFSPath returns the VFS-preserved casing and whether the target is a
+// directory. Resolution is case-insensitive because Quake asset references
+// are case-insensitive even when the host filesystem is not.
+func (ab *AssetBrowser) resolveVFSPath(requested string) (string, bool, bool) {
+	if ab.vfs == nil {
+		return "", false, false
+	}
+	clean := canonicalAssetPath(requested)
+	ab.vfs.mu.RLock()
+	defer ab.vfs.mu.RUnlock()
+	if clean == "" {
+		return "", true, true
+	}
+	if source := ab.vfs.Index[strings.ToLower(clean)]; source != nil {
+		return source.Path, false, true
+	}
+	for dir := range ab.vfs.Directories {
+		if strings.EqualFold(dir, clean) {
+			return dir, true, true
+		}
+	}
+	return clean, false, false
+}
+
+func (ab *AssetBrowser) vfsHasIndex() bool {
+	if ab.vfs == nil {
+		return false
+	}
+	ab.vfs.mu.RLock()
+	defer ab.vfs.mu.RUnlock()
+	return len(ab.vfs.Index) > 0
+}
+
+func (ab *AssetBrowser) navigateToPath(requested string) {
+	if ab.vfs == nil {
+		ab.statusLabel.SetText("Path not found in VFS: " + canonicalAssetPath(requested))
+		return
+	}
+	if !ab.vfsHasIndex() {
+		if err := ab.vfs.Refresh(); err != nil {
+			ab.statusLabel.SetText("Unable to index VFS: " + err.Error())
+			return
+		}
+	}
+
+	canonical, isDir, ok := ab.resolveVFSPath(requested)
+	if !ok {
+		ab.statusLabel.SetText("Path not found in VFS: " + canonicalAssetPath(requested))
+		return
+	}
+	if isDir {
+		ab.loadVFS(canonical)
+		return
+	}
+
+	parent := canonicalAssetPath(pathpkg.Dir(canonical))
+	ab.loadVFS(parent)
+	for _, object := range ab.grid.Objects {
+		item, ok := object.(*GridItem)
+		if !ok || item.Entry == nil || !strings.EqualFold(item.Entry.Path, canonical) {
+			continue
+		}
+		item.SetSelected(true)
+		ab.selectedItem = item
+		ab.selectedAsset = item.Entry
+		if ab.onAssetSelected != nil {
+			ab.onAssetSelected(item.Entry)
+		}
+		break
+	}
 }
 
 func (ab *AssetBrowser) SetOnAssetSelected(f func(*AssetEntry)) { ab.onAssetSelected = f }
 func (ab *AssetBrowser) SetOnAssetDouble(f func(*AssetEntry))   { ab.onAssetDouble = f } // New method
 
 func (ab *AssetBrowser) GetSelectedAsset() *AssetEntry {
-	// This method is primarily used by the custom file picker logic.
-	// It should reflect the last single-clicked asset.
-	return nil // To be implemented with actual selection tracking
+	return ab.selectedAsset
 }
 
 func (ab *AssetBrowser) Refresh() { ab.scanPK3Files() }
 
-func (ab *AssetBrowser) loadVFS(path string) {
+func (ab *AssetBrowser) loadVFS(requested string) {
 	if ab.vfs == nil {
 		return
 	}
 
-	// Ensure VFS is indexed (lazy load)
-	if len(ab.vfs.Index) == 0 {
+	// Ensure VFS is indexed (lazy load).
+	if !ab.vfsHasIndex() {
 		ab.statusLabel.SetText("Indexing Game Assets...")
-		ab.vfs.Refresh()
+		if err := ab.vfs.Refresh(); err != nil {
+			ab.statusLabel.SetText("Unable to index VFS: " + err.Error())
+			return
+		}
 	}
 
-	ab.currentPK3 = "VFS" // Marker
-	ab.assets = make(map[string]*AssetEntry)
-	ab.rootEntries = []*AssetEntry{}
-	ab.grid.Objects = nil
-
-	contents, ok := ab.vfs.Directories[path]
-	if !ok && path != "" {
-		ab.statusLabel.SetText("Path not found in VFS")
+	path, isDir, ok := ab.resolveVFSPath(requested)
+	if !ok || !isDir {
+		ab.statusLabel.SetText("Path not found in VFS: " + canonicalAssetPath(requested))
 		return
 	}
 
-	// Create entries
-	for _, src := range contents {
-		entry := &AssetEntry{
-			Name:      filepath.Base(src.Path),
-			Path:      src.Path,
-			Size:      src.Size,
-			Type:      detectAssetType(src.Path),
-			PK3Source: src.PK3Path,
-			IsDir:     src.IsDirectory,
+	// Snapshot the VFS directory graph while it is stable, then build the
+	// complete tree. Keeping all directory entries (rather than only the
+	// current folder) makes tree expansion and Quick Nav selection agree.
+	ab.vfs.mu.RLock()
+	directories := make(map[string][]*AssetSource, len(ab.vfs.Directories))
+	for dir, contents := range ab.vfs.Directories {
+		directories[dir] = append([]*AssetSource(nil), contents...)
+	}
+	ab.vfs.mu.RUnlock()
+
+	ab.currentPK3 = "VFS"
+	ab.assets = make(map[string]*AssetEntry)
+	ab.rootEntries = nil
+	ab.grid.Objects = nil
+
+	for _, contents := range directories {
+		for _, src := range contents {
+			if _, exists := ab.assets[src.Path]; exists {
+				continue
+			}
+			pk3Source := src.PK3Path
+			if src.IsDirectory {
+				pk3Source = "VFS"
+			}
+			ab.assets[src.Path] = &AssetEntry{
+				Name:      pathpkg.Base(src.Path),
+				Path:      src.Path,
+				Size:      src.Size,
+				Type:      detectAssetType(src.Path),
+				PK3Source: pk3Source,
+				IsDir:     src.IsDirectory,
+			}
 		}
-		// If it's a directory, we need to populate children for tree view?
-		// For now, tree view in VFS mode might be tricky if we don't build full tree.
-		// Let's just handle current directory for Grid.
-		ab.assets[entry.Path] = entry
-		ab.rootEntries = append(ab.rootEntries, entry)
 	}
 
-	// Sort
-	ab.sortAssets(ab.rootEntries)
+	for dir, contents := range directories {
+		children := make([]*AssetEntry, 0, len(contents))
+		for _, src := range contents {
+			if child := ab.assets[src.Path]; child != nil {
+				children = append(children, child)
+			}
+		}
+		ab.sortAssets(children)
+		if dir == "" {
+			ab.rootEntries = children
+		} else if entry := ab.assets[dir]; entry != nil {
+			entry.Children = children
+		}
+	}
 
-	ab.statusLabel.SetText(fmt.Sprintf("VFS: %s (%d items)", path, len(ab.rootEntries)))
+	current := &AssetEntry{
+		Name:      pathpkg.Base(path),
+		Path:      path,
+		IsDir:     true,
+		PK3Source: "VFS",
+		Children:  ab.rootEntries,
+	}
+	if path != "" {
+		if entry := ab.assets[path]; entry != nil {
+			current = entry
+		} else {
+			current.Children = nil
+			for dir, children := range directories {
+				if !strings.EqualFold(dir, path) {
+					continue
+				}
+				for _, src := range children {
+					if child := ab.assets[src.Path]; child != nil {
+						current.Children = append(current.Children, child)
+					}
+				}
+				break
+			}
+		}
+	}
 
-	// Refresh the tree so its folder list shows up without the user
-	// needing to jostle the split divider first.
 	ab.tree.Refresh()
+	ab.loadGrid(current)
+	if ab.breadcrumbLabel != nil {
+		location := "VFS /"
+		if path != "" {
+			location += " " + path
+		}
+		ab.breadcrumbLabel.SetText(location)
+	}
+	ab.statusLabel.SetText(fmt.Sprintf("VFS: %s (%d items)", path, len(current.Children)))
 
-	// Dummy entry for grid loading
-	dummyDir := &AssetEntry{Path: path, IsDir: true, Children: ab.rootEntries, PK3Source: "VFS"}
-	ab.loadGrid(dummyDir)
+	// Opening and selecting branches emits Tree callbacks. Suppress the
+	// navigation dispatcher while reflecting this programmatic selection.
+	ab.treeSyncing = true
+	ab.tree.UnselectAll()
+	if path != "" {
+		parts := strings.Split(path, "/")
+		for i := range parts {
+			ab.tree.OpenBranch(strings.Join(parts[:i+1], "/"))
+		}
+		ab.tree.Select(path)
+	}
+	ab.treeSyncing = false
 }
 
 func (ab *AssetBrowser) loadFS(path string) {
@@ -1269,9 +1483,11 @@ func (ab *AssetBrowser) loadFS(path string) {
 	ab.currentPK3 = "" // Not in a PK3
 	ab.assets = make(map[string]*AssetEntry)
 	ab.rootEntries = []*AssetEntry{}
+	ab.currentDir = nil
 
 	ab.grid.Objects = nil
 	ab.grid.Refresh()
+	ab.updateEmptyState()
 
 	entries, err := os.ReadDir(path)
 	if err != nil {
@@ -1340,6 +1556,9 @@ func (ab *AssetBrowser) loadFS(path string) {
 	ab.rootEntries = append(ab.rootEntries, fileEntries...)
 
 	ab.statusLabel.SetText(fmt.Sprintf("Loaded %d items", len(ab.rootEntries)))
+	if ab.breadcrumbLabel != nil {
+		ab.breadcrumbLabel.SetText("Files / " + path)
+	}
 
 	// Tell the tree its data changed — otherwise it sits empty until
 	// the user drags the split divider (which forces a relayout).

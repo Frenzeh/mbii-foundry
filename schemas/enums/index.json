@@ -1,13 +1,14 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "MBII FA Creator Enums Index",
-  "description": "Index of all enum definition files for MBII Full Authentic character files",
-  "version": "1.0.0",
+  "description": "Index of editor enum catalogs. Each catalog states its own evidence status; only classes_t and MBAttribute_t are tied to the recorded engine revision.",
+  "version": "1.1.0",
+  "evidence_status": "Mixed",
 
   "enums": {
     "attributes": {
       "file": "attributes.json",
-      "description": "MB_ATT_* attribute definitions (150+ entries)"
+      "description": "Verified MBAttribute_t declaration (302 ordered numeric values; 300 selectable MB_ATT_* identifiers)"
     },
     "weapons": {
       "file": "weapons.json",
@@ -35,7 +36,7 @@
     },
     "classes": {
       "file": "classes.json",
-      "description": "MB_CLASS_* character class types (26 entries)"
+      "description": "Verified classes_t declaration (27 ordered numeric values; 25 selectable MB_CLASS_* identifiers)"
     }
   },
 
@@ -59,10 +60,9 @@
   },
 
   "source_files": {
-    "bg_public.h": ["classes", "holdables", "powerups"],
+    "bg_public.h": ["attributes", "classes"],
     "bg_weapons.h": ["weapons"],
     "bg_saga.h": ["class_flags"],
-    "q_shared.h": ["force_powers", "saber_styles"],
-    "bg_misc.c": ["attributes"]
+    "q_shared.h": ["force_powers", "saber_styles"]
   }
 }

@@ -1,7 +1,7 @@
 package main
 
-// Point Buy editor — models the MBII Legends 2.0 loadout system:
-//
+// Point Buy editor — exposes the parser's bounded custom-build layout.
+// Runtime purchase and specialization mechanics remain Unverified.
 //   * Single archetype (hasCustomSpec <= 1): 15 skill slots
 //   * Multi archetype (hasCustomSpec 2–3): 15 slots per archetype,
 //     stored contiguously in CustomSkills[] — spec 1 uses 0-14,
@@ -19,13 +19,8 @@ package main
 //   │ ... 15 rows per archetype ...                  │
 //   └────────────────────────────────────────────────┘
 //
-// Archetype tabs sit at the top; count picker adds/removes
-// archetypes by toggling HasCustomSpec. Budget tracker sums
-// max-spend across the currently-visible archetype vs mbPoints.
-//
-// Rank modifiers (rank*) live in their own collapsible section
-// below — they apply across all archetypes since MBII doesn't
-// namespace them per spec.
+// Archetype tabs edit the bounded slot windows. The budget tracker is an
+// authoring aid over configured rank costs; it is not an engine-parity claim.
 
 import (
 	"fmt"
@@ -40,13 +35,11 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+
+	"github.com/Frenzeh/mbii-foundry/parsers"
 )
 
-const (
-	slotsPerArchetype = 15 // c_att_skill_0..14 per spec
-	maxArchetypes     = 3
-	maxTotalSlots     = slotsPerArchetype * maxArchetypes // 45
-)
+// No local consts needed, using limits from parsers package
 
 // KnownRankAttributes lists the `rank*` field names from Legends 2.0's
 // expanded system — used by the "Add Rank Modifier" picker.
@@ -86,7 +79,7 @@ type PointBuyUI struct {
 	specTabs           *container.AppTabs
 	archetypeHost      *fyne.Container // holds specTabs + the count picker row
 
-	// Per-slot widgets, indexed globally (0..maxTotalSlots-1). Each
+	// Per-slot widgets, indexed globally (0..parsers.PointbuyMaxTotalSlots-1). Each
 	// archetype's tab owns slots [i*15, (i+1)*15).
 	slotRows      []*fyne.Container
 	slotModes     []*widget.Select
@@ -96,15 +89,15 @@ type PointBuyUI struct {
 	slotRanks     []*widget.Entry
 	slotDescs     []*widget.Entry
 	slotMaxCost   []*widget.Label
-	slotForms     []*widget.Form        // one form per slot — rebuilt items drive mode-based visibility
-	slotFormItems [][]*widget.FormItem  // [slot][0..3] = Skill / Name / Costs / Description items
+	slotForms     []*widget.Form       // one form per slot — rebuilt items drive mode-based visibility
+	slotFormItems [][]*widget.FormItem // [slot][0..3] = Skill / Name / Costs / Description items
 
 	// Per-archetype spec header (name + icon + description) widgets.
 	// Description was previously dropped — engine parses customSpecDesc_N
 	// (bg_saga.c:2375) but Foundry's older write path skipped it.
-	specNameEntries [maxArchetypes]*widget.Entry
-	specIconEntries [maxArchetypes]*widget.Entry
-	specDescEntries [maxArchetypes]*widget.Entry
+	specNameEntries [parsers.PointbuyMaxArchetypes]*widget.Entry
+	specIconEntries [parsers.PointbuyMaxArchetypes]*widget.Entry
+	specDescEntries [parsers.PointbuyMaxArchetypes]*widget.Entry
 
 	// Rank modifiers (applies across archetypes).
 	rankAttrContainer *fyne.Container
@@ -159,9 +152,9 @@ func (p *PointBuyUI) createUI() {
 	// Archetype count buttons. GridWrap forces all three to the same
 	// width so "1 / 2 / 3" reads as a coherent toggle group, not three
 	// differently-sized buttons.
-	p.archetypeCountBtns = make([]*widget.Button, maxArchetypes)
+	p.archetypeCountBtns = make([]*widget.Button, parsers.PointbuyMaxArchetypes)
 	archetypeBtnRow := container.NewHBox()
-	for i := 0; i < maxArchetypes; i++ {
+	for i := 0; i < parsers.PointbuyMaxArchetypes; i++ {
 		n := i + 1
 		btn := widget.NewButton(strconv.Itoa(n), func() {
 			p.selectArchetypeCount(n, true)
@@ -186,17 +179,17 @@ func (p *PointBuyUI) createUI() {
 	// archetype range stay unreferenced (but kept in memory so
 	// toggling HasCustomSpec doesn't lose edits).
 	attrOptions := pointBuyAttrOptions()
-	p.slotRows = make([]*fyne.Container, maxTotalSlots)
-	p.slotModes = make([]*widget.Select, maxTotalSlots)
-	p.slotSkills = make([]*widget.Select, maxTotalSlots)
-	p.slotIcons = make([]*canvas.Image, maxTotalSlots)
-	p.slotNames = make([]*widget.Entry, maxTotalSlots)
-	p.slotRanks = make([]*widget.Entry, maxTotalSlots)
-	p.slotDescs = make([]*widget.Entry, maxTotalSlots)
-	p.slotMaxCost = make([]*widget.Label, maxTotalSlots)
-	p.slotForms = make([]*widget.Form, maxTotalSlots)
-	p.slotFormItems = make([][]*widget.FormItem, maxTotalSlots)
-	for i := 0; i < maxTotalSlots; i++ {
+	p.slotRows = make([]*fyne.Container, parsers.PointbuyMaxTotalSlots)
+	p.slotModes = make([]*widget.Select, parsers.PointbuyMaxTotalSlots)
+	p.slotSkills = make([]*widget.Select, parsers.PointbuyMaxTotalSlots)
+	p.slotIcons = make([]*canvas.Image, parsers.PointbuyMaxTotalSlots)
+	p.slotNames = make([]*widget.Entry, parsers.PointbuyMaxTotalSlots)
+	p.slotRanks = make([]*widget.Entry, parsers.PointbuyMaxTotalSlots)
+	p.slotDescs = make([]*widget.Entry, parsers.PointbuyMaxTotalSlots)
+	p.slotMaxCost = make([]*widget.Label, parsers.PointbuyMaxTotalSlots)
+	p.slotForms = make([]*widget.Form, parsers.PointbuyMaxTotalSlots)
+	p.slotFormItems = make([][]*widget.FormItem, parsers.PointbuyMaxTotalSlots)
+	for i := 0; i < parsers.PointbuyMaxTotalSlots; i++ {
 		p.slotRows[i] = p.buildSlotRow(i, attrOptions)
 	}
 
@@ -270,7 +263,7 @@ func (p *PointBuyUI) createUI() {
 // (so archetype 2 slot 0 displays "0" even though its stored index
 // is 15).
 func (p *PointBuyUI) buildSlotRow(globalIdx int, attrOptions []string) *fyne.Container {
-	displayIdx := globalIdx % slotsPerArchetype
+	displayIdx := globalIdx % parsers.PointbuySlotsPerArchetype
 	slotLabel := canvas.NewText(fmt.Sprintf("%d", displayIdx), theme.PlaceHolderColor())
 	slotLabel.TextSize = SizeSmall
 	slotLabel.TextStyle = fyne.TextStyle{Bold: true, Monospace: true}
@@ -408,8 +401,8 @@ func (p *PointBuyUI) selectArchetypeCount(n int, fromUser bool) {
 	if n < 1 {
 		n = 1
 	}
-	if n > maxArchetypes {
-		n = maxArchetypes
+	if n > parsers.PointbuyMaxArchetypes {
+		n = parsers.PointbuyMaxArchetypes
 	}
 	for i, btn := range p.archetypeCountBtns {
 		if i+1 == n {
@@ -450,8 +443,8 @@ func (p *PointBuyUI) rebuildArchetypeTabs() {
 	if count < 2 {
 		count = 1
 	}
-	if count > maxArchetypes {
-		count = maxArchetypes
+	if count > parsers.PointbuyMaxArchetypes {
+		count = parsers.PointbuyMaxArchetypes
 	}
 
 	p.specTabs.Items = nil
@@ -520,9 +513,9 @@ func (p *PointBuyUI) buildSpecPane(spec, totalSpecs int) fyne.CanvasObject {
 	}
 
 	// Slot rows — 15 from the right window.
-	base := spec * slotsPerArchetype
+	base := spec * parsers.PointbuySlotsPerArchetype
 	slotBox := container.NewVBox()
-	for i := 0; i < slotsPerArchetype; i++ {
+	for i := 0; i < parsers.PointbuySlotsPerArchetype; i++ {
 		slotBox.Add(p.slotRows[base+i])
 	}
 	scroll := container.NewVScroll(slotBox)
@@ -536,9 +529,10 @@ func (p *PointBuyUI) buildSpecPane(spec, totalSpecs int) fyne.CanvasObject {
 // relevant to the current mode render. Unlike Hide() on a FormItem's
 // content widget, rebuilding the slice actually removes the label +
 // hint rows that would otherwise leave empty blocks behind.
-//   Empty  → no fields at all
-//   Header → just the Name entry (the section label text)
-//   Skill  → all four: Skill, Name, Costs, Description
+//
+//	Empty  → no fields at all
+//	Header → just the Name entry (the section label text)
+//	Skill  → all four: Skill, Name, Costs, Description
 func (p *PointBuyUI) refreshSlotLayout(i int) {
 	form := p.slotForms[i]
 	items := p.slotFormItems[i]
@@ -590,37 +584,29 @@ func (p *PointBuyUI) refreshSlotMaxCost(i int) {
 	}
 }
 
-// refreshBudget recomputes the max-spend ceiling across ALL
-// archetypes combined. Per-archetype budget isn't how MBII's runtime
-// works — a player only buys within one archetype at a time, so the
-// real budget comparison is mbPoints vs max-of-any-spec. Show the
-// max-of-any instead of a sum for that reason.
+// refreshBudget recomputes the largest configured rank-cost sum among the
+// active archetype windows. This is an editor consistency check only; engine
+// purchase behavior remains Unverified.
 func (p *PointBuyUI) refreshBudget() {
 	specs := p.editor.character.HasCustomSpec
 	if specs < 2 {
 		specs = 1
 	}
-	if specs > maxArchetypes {
-		specs = maxArchetypes
+	if specs > parsers.PointbuyMaxArchetypes {
+		specs = parsers.PointbuyMaxArchetypes
 	}
 	worst := 0
 	for s := 0; s < specs; s++ {
 		total := 0
-		for i := 0; i < slotsPerArchetype; i++ {
-			total += parseRankCostSum(p.editor.character.CustomRanks[s*slotsPerArchetype+i])
+		for i := 0; i < parsers.PointbuySlotsPerArchetype; i++ {
+			total += parseRankCostSum(p.editor.character.CustomRanks[s*parsers.PointbuySlotsPerArchetype+i])
 		}
 		if total > worst {
 			worst = total
 		}
 	}
 	target := p.editor.character.MBPoints
-	msg := fmt.Sprintf("max spend per spec: %d / %d", worst, target)
-	if target > 0 && worst < target/2 {
-		msg += " · consider adding more purchasable skills"
-	} else if target > 0 && worst > target*3 {
-		msg += " · costs far exceed budget"
-	}
-	p.budgetLabel.SetText(msg)
+	p.budgetLabel.SetText(fmt.Sprintf("max configured rank costs: %d / %d · runtime behavior Unverified", worst, target))
 }
 
 // parseRankCostSum parses a CSV of rank costs and returns the sum.
@@ -784,13 +770,13 @@ func (p *PointBuyUI) UpdateUI() {
 	if archetypeCount < 1 {
 		archetypeCount = 1
 	}
-	if archetypeCount > maxArchetypes {
-		archetypeCount = maxArchetypes
+	if archetypeCount > parsers.PointbuyMaxArchetypes {
+		archetypeCount = parsers.PointbuyMaxArchetypes
 	}
 	// fromUser=false so loading a file doesn't mark it dirty.
 	p.selectArchetypeCount(archetypeCount, false)
 
-	for i := 0; i < maxTotalSlots; i++ {
+	for i := 0; i < parsers.PointbuyMaxTotalSlots; i++ {
 		skill := p.editor.character.CustomSkills[i]
 		name := p.editor.character.CustomNames[i]
 		ranks := p.editor.character.CustomRanks[i]

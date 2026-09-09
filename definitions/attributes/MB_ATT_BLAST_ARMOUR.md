@@ -2,6 +2,10 @@
 
 `MB_ATT_BLAST_ARMOUR`
 
+> **Evidence status: Unverified.** The mechanics and percentages below are
+> authoring notes, not an engine-parity claim. Verify them against the external
+> engine revision before relying on them.
+
 Reinforced padding/plating designed to absorb kinetic shockwaves and shrapnel.
 
 > **Default:** None.

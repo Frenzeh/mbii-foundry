@@ -1,22 +1,20 @@
-# Armor (Vehicle)
+# Vehicle Armor
 
 `armor`
 
-> Hull integrity of the vehicle.
+> Stores the integer VEH value shown as **Armor** in the form.
 
-## What it does
+## Foundry support
 
-Hull integrity of the vehicle.
+Foundry parses and writes the `armor` key. The current form does not enforce an
+engine-derived range.
 
-## Valid values
+## Verification status
 
-- **Health:** When this hits 0, the vehicle explodes.
-- **Resistance:** Vehicles generally resist small arms fire better than players.
-
-## Notes
-
-- **Speeder Bike:** ~200-400.
-- **Tank:** ~2000+.
+The damage model, destruction threshold, resistance behavior, default, and
+type-specific balance ranges are not verified here against a named engine
+revision. Test the value in the target game build before relying on those
+semantics.
 
 ---
 

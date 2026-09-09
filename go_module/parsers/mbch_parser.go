@@ -2,8 +2,6 @@ package parsers
 
 import (
 	"fmt"
-	"log"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -70,8 +68,14 @@ func drainVariants(sb *strings.Builder, fields map[string]string, base string) {
 	}
 }
 
-// WeaponInfo represents a weapon override block in an MBCH file
+// WeaponInfo represents a weapon override block in an MBCH file.
+// astName is the parse-time block identity (e.g. "weaponinfo2",
+// lowercase): override blocks are keyed by NAME, never by slice index —
+// files may carry non-contiguous numbering and the engine's
+// ParseWeaponOverrides loop (bg_saga.c:2126-2253) stops scanning at the
+// first gap, so renumbering would silently change what the game loads.
 type WeaponInfo struct {
+	astName string
 	WeaponToReplace    string
 	WeaponBasedOff     string
 	NewWorldModel      string
@@ -98,8 +102,10 @@ type WeaponInfo struct {
 	ExtraFields        map[string]string
 }
 
-// ForceInfo represents a force power override block
+// ForceInfo represents a force power override block. astName mirrors
+// WeaponInfo.astName (e.g. "forceinfo1").
 type ForceInfo struct {
+	astName string
 	ForceToReplace string
 	Icon           string
 	ForcePowerName string
@@ -110,6 +116,7 @@ type ForceInfo struct {
 
 // MBCHCharacter represents the parsed data of a .mbch file
 type MBCHCharacter struct {
+	ctx *sourceContext
 	Name              string
 	MBClass           string
 	Model             string
@@ -142,6 +149,11 @@ type MBCHCharacter struct {
 	Description       string
 	ExtraFields       map[string]string
 
+	// Diags collects non-fatal sync findings (e.g. non-contiguous
+	// WeaponInfo<N> numbering, which makes the engine stop scanning at
+	// the gap and ignore every later override). Non-destructive: the
+	// file is never renumbered. Editors surface these to the user.
+	Diags []string
 	// Point-buy slots. Fixed capacity of 45 accommodates the
 	// Legends 2.0 archetype system: up to 3 archetypes × 15 slots
 	// each (spec1 uses 0-14, spec2 uses 15-29, spec3 uses 30-44).
@@ -196,370 +208,26 @@ func NewMBCHCharacter() *MBCHCharacter {
 }
 
 // ParseMBCH parses the content of an MBCH file
-func ParseMBCH(content string) (*MBCHCharacter, error) {
-	char := NewMBCHCharacter()
 
-	// Strip comments
-	lines := []string{}
-	for _, line := range strings.Split(content, "\n") {
-		idx := strings.Index(line, "//")
-		if idx >= 0 {
-			line = line[:idx]
-		}
-		lines = append(lines, line)
-	}
-	cleanContent := strings.Join(lines, "\n")
 
-	// Extract ClassInfo block
-	re := regexp.MustCompile(`(?is)ClassInfo\s*\{([^}]+)\}`)
-	match := re.FindStringSubmatch(cleanContent)
-	if len(match) > 1 {
-		log.Printf("DEBUG: Found ClassInfo Block. Length: %d\n", len(match[1]))
-		parseClassInfo(match[1], char)
-	} else {
-		return nil, fmt.Errorf("no ClassInfo block found")
-	}
 
-	// Extract WeaponInfo blocks
-	wiRe := regexp.MustCompile(`(?is)WeaponInfo\d+\s*\{([^}]+)\}`)
-	wiMatches := wiRe.FindAllStringSubmatch(cleanContent, -1)
-	for _, m := range wiMatches {
-		parseWeaponInfo(m[1], char)
-	}
 
-	// Extract ForceInfo blocks
-	fiRe := regexp.MustCompile(`(?is)ForceInfo\d+\s*\{([^}]+)\}`)
-	fiMatches := fiRe.FindAllStringSubmatch(cleanContent, -1)
-	for _, m := range fiMatches {
-		parseForceInfo(m[1], char)
-	}
 
-	// Extract Description (outside ClassInfo usually)
-	descRe := regexp.MustCompile(`(?is)description\s+\"([^\"]*)\"`)
-	descMatch := descRe.FindStringSubmatch(cleanContent)
-	if len(descMatch) > 1 {
-		char.Description = descMatch[1]
-	}
 
-	return char, nil
-}
 
-func parseClassInfo(block string, char *MBCHCharacter) {
-	for _, line := range strings.Split(block, "\n") {
-		line = strings.TrimSpace(line)
-		if line == "" || strings.HasPrefix(line, "//") {
-			continue
-		}
 
-		parts := strings.Fields(line)
-		if len(parts) < 2 {
-			continue
-		}
 
-		key := parts[0]
-		idx := strings.Index(line, key)
-		valuePart := strings.TrimSpace(line[idx+len(key):])
-
-		value := valuePart
-		if strings.HasPrefix(value, "\"") && strings.HasSuffix(value, "\"") {
-			if len(value) >= 2 {
-				value = value[1 : len(value)-1]
-			}
-		}
-
-		setField(char, key, value)
-	}
-}
-
-func parseWeaponInfo(block string, char *MBCHCharacter) {
-	wi := WeaponInfo{ExtraFields: make(map[string]string)}
-
-	for _, line := range strings.Split(block, "\n") {
-		line = strings.TrimSpace(line)
-		if line == "" || strings.HasPrefix(line, "//") {
-			continue
-		}
-
-		parts := strings.Fields(line)
-		if len(parts) < 2 {
-			continue
-		}
-
-		key := parts[0]
-		idx := strings.Index(line, key)
-		valuePart := strings.TrimSpace(line[idx+len(key):])
-
-		value := valuePart
-		if strings.HasPrefix(value, "\"") && strings.HasSuffix(value, "\"") {
-			if len(value) >= 2 {
-				value = value[1 : len(value)-1]
-			}
-		}
-
-		switch strings.ToLower(key) {
-		case "weapontoreplace":
-			wi.WeaponToReplace = value
-		case "weaponbasedoff":
-			wi.WeaponBasedOff = value
-		case "newworldmodel":
-			wi.NewWorldModel = value
-		case "newviewmodel":
-			wi.NewViewModel = value
-		case "icon":
-			wi.Icon = value
-		case "weaponname":
-			wi.WeaponName = value
-		case "muzzleeffect":
-			wi.MuzzleEffect = value
-		case "altmuzzleeffect":
-			wi.AltMuzzleEffect = value
-		case "missileeffect":
-			wi.MissileEffect = value
-		case "altmissileeffect":
-			wi.AltMissileEffect = value
-		case "missile3effect":
-			wi.Missile3Effect = value
-		case "altmissileeffect3":
-			wi.AltMissileEffect3 = value
-		case "powerupshoteffect":
-			wi.PowerupShotEffect = value
-		case "powerupshoteffect3":
-			wi.PowerupShotEffect3 = value
-		case "flashsound0":
-			wi.FlashSound0 = value
-		case "altflashsound0":
-			wi.AltFlashSound0 = value
-		case "chargesound":
-			wi.ChargeSound = value
-		case "altchargesound":
-			wi.AltChargeSound = value
-		case "primhitsound":
-			wi.PrimHitSound = value
-		case "althitsound":
-			wi.AltHitSound = value
-		case "customammo":
-			wi.CustomAmmo, _ = strconv.Atoi(value)
-		case "clipsize":
-			wi.ClipSize, _ = strconv.Atoi(value)
-		case "reloadtimemodifier":
-			wi.ReloadTimeModifier, _ = strconv.ParseFloat(value, 64)
-		default:
-			wi.ExtraFields[key] = value
-		}
-	}
-	char.WeaponOverrides = append(char.WeaponOverrides, wi)
-}
-
-func parseForceInfo(block string, char *MBCHCharacter) {
-	fi := ForceInfo{ExtraFields: make(map[string]string)}
-
-	for _, line := range strings.Split(block, "\n") {
-		line = strings.TrimSpace(line)
-		if line == "" || strings.HasPrefix(line, "//") {
-			continue
-		}
-
-		parts := strings.Fields(line)
-		if len(parts) < 2 {
-			continue
-		}
-
-		key := parts[0]
-		idx := strings.Index(line, key)
-		valuePart := strings.TrimSpace(line[idx+len(key):])
-
-		value := valuePart
-		if strings.HasPrefix(value, "\"") && strings.HasSuffix(value, "\"") {
-			if len(value) >= 2 {
-				value = value[1 : len(value)-1]
-			}
-		}
-
-		switch strings.ToLower(key) {
-		case "forcetoreplace":
-			fi.ForceToReplace = value
-		case "icon":
-			fi.Icon = value
-		case "forcepowername":
-			fi.ForcePowerName = value
-		case "startsound":
-			fi.StartSound = value
-		case "loopsound":
-			fi.LoopSound = value
-		default:
-			fi.ExtraFields[key] = value
-		}
-	}
-	char.ForceOverrides = append(char.ForceOverrides, fi)
-}
-
-func setField(char *MBCHCharacter, key, value string) {
-	// Point-buy slots — up to 45 (3 archetypes × 15). Legends FAs
-	// like h3_CloneCom already emit c_att_skill_30+; legacy single-
-	// archetype files stay inside 0-14.
-	if strings.HasPrefix(key, "c_att_skill_") {
-		if idx, err := strconv.Atoi(strings.TrimPrefix(key, "c_att_skill_")); err == nil && idx >= 0 && idx < 45 {
-			char.CustomSkills[idx] = value
-			return
-		}
-	}
-	if strings.HasPrefix(key, "c_att_names_") {
-		if idx, err := strconv.Atoi(strings.TrimPrefix(key, "c_att_names_")); err == nil && idx >= 0 && idx < 45 {
-			char.CustomNames[idx] = value
-			return
-		}
-	}
-	if strings.HasPrefix(key, "c_att_ranks_") {
-		if idx, err := strconv.Atoi(strings.TrimPrefix(key, "c_att_ranks_")); err == nil && idx >= 0 && idx < 45 {
-			char.CustomRanks[idx] = value
-			return
-		}
-	}
-	// c_att_descs_N — per-slot description string seen in legends
-	// (monkey-lizard uses it for "Retain momentum from first
-	// Grapple" style hints that render under the purchase button).
-	if strings.HasPrefix(key, "c_att_descs_") {
-		if idx, err := strconv.Atoi(strings.TrimPrefix(key, "c_att_descs_")); err == nil && idx >= 0 && idx < 45 {
-			char.CustomDescs[idx] = value
-			return
-		}
-	}
-
-	// Archetype system (customSpec).
-	if strings.EqualFold(key, "hasCustomSpec") {
-		if n, err := strconv.Atoi(value); err == nil {
-			char.HasCustomSpec = n
-		}
-		return
-	}
-	if strings.EqualFold(key, "isOnlyOneSpec") {
-		if n, err := strconv.Atoi(value); err == nil {
-			char.IsOnlyOneSpec = n
-		}
-		return
-	}
-	if strings.EqualFold(key, "defaultSpec") {
-		if n, err := strconv.Atoi(value); err == nil {
-			char.DefaultSpec = n
-		}
-		return
-	}
-	if strings.HasPrefix(key, "customSpecName_") {
-		if idx, err := strconv.Atoi(strings.TrimPrefix(key, "customSpecName_")); err == nil && idx >= 0 && idx <= 3 {
-			// Wiki uses 1-based indexing (customSpecName_1 is spec 1).
-			// Normalize to 0-based internally by decrementing, but
-			// guard against customSpecName_0 in case any file uses 0.
-			// Upper bound is <= 3 so customSpecName_3 (the third spec
-			// of a 3-archetype class) maps to CustomSpecNames[2]. The
-			// older `< 3` bound silently dropped that third spec into
-			// the ExtraFields tail.
-			if idx > 0 {
-				idx--
-			}
-			char.CustomSpecNames[idx] = value
-			return
-		}
-	}
-	if strings.HasPrefix(key, "customSpecIcon_") {
-		if idx, err := strconv.Atoi(strings.TrimPrefix(key, "customSpecIcon_")); err == nil && idx >= 0 && idx <= 3 {
-			if idx > 0 {
-				idx--
-			}
-			char.CustomSpecIcons[idx] = value
-			return
-		}
-	}
-	if strings.HasPrefix(key, "customSpecDesc_") {
-		if idx, err := strconv.Atoi(strings.TrimPrefix(key, "customSpecDesc_")); err == nil && idx >= 0 && idx <= 3 {
-			if idx > 0 {
-				idx--
-			}
-			char.CustomSpecDescs[idx] = value
-			return
-		}
-	}
-
-	// Handle Rank Attributes (e.g. rankHealth)
-	if strings.HasPrefix(strings.ToLower(key), "rank") {
-		char.RankAttributes[key] = value
-		return
-	}
-
-	// Normalized to lowercase for robust matching
-	switch strings.ToLower(key) {
-	case "name":
-		char.Name = value
-	case "mbclass":
-		char.MBClass = value
-	case "model":
-		char.Model = value
-	case "skin":
-		char.Skin = value
-	case "uishader":
-		char.UIShader = value
-	case "soundset":
-		char.Soundset = value
-	case "weapons":
-		char.Weapons = value
-	case "attributes":
-		char.Attributes = value
-	case "forcepowers":
-		char.ForcePowers = value
-	case "saberstyle":
-		char.SaberStyle = value
-	case "classflags":
-		char.ClassFlags = value
-	case "maxhealth":
-		char.MaxHealth, _ = strconv.Atoi(value)
-	case "maxarmor":
-		char.MaxArmor, _ = strconv.Atoi(value)
-	case "forcepool":
-		char.ForcePool, _ = strconv.Atoi(value)
-	case "forceregen":
-		char.ForceRegen, _ = strconv.ParseFloat(value, 64)
-	case "speed":
-		char.Speed, _ = strconv.ParseFloat(value, 64)
-	case "basespeed":
-		char.Speed, _ = strconv.ParseFloat(value, 64) // Alias for Speed
-	case "apmultiplier":
-		char.APMultiplier, _ = strconv.ParseFloat(value, 64)
-	case "bpmultiplier":
-		char.BPMultiplier, _ = strconv.ParseFloat(value, 64)
-	case "csmultiplier":
-		char.CSMultiplier, _ = strconv.ParseFloat(value, 64)
-	case "asmultiplier":
-		char.ASMultiplier, _ = strconv.ParseFloat(value, 64)
-	case "saber1":
-		char.Saber1 = value
-	case "saber2":
-		char.Saber2 = value
-	case "sabercolor":
-		char.SaberColor, _ = strconv.Atoi(value)
-	case "saber2color":
-		char.Saber2Color, _ = strconv.Atoi(value)
-	case "classnumberlimit":
-		char.ClassNumberLimit, _ = strconv.Atoi(value)
-	case "respawncustomtime":
-		char.RespawnCustomTime, _ = strconv.Atoi(value)
-	case "extralives":
-		char.ExtraLives, _ = strconv.Atoi(value)
-	case "iscustombuild":
-		// Parse the actual int — earlier code unconditionally set
-		// IsCustomBuild=1 on any presence of the key, which made
-		// every loaded MBCH show the Custom Build toggle as ON in
-		// the Context tab regardless of the file's `iscustombuild 0`.
-		char.IsCustomBuild, _ = strconv.Atoi(value)
-	case "mbpoints":
-		char.MBPoints, _ = strconv.Atoi(value)
-	default:
-		char.ExtraFields[key] = value
-	}
-}
 
 // GenerateMBCH generates the string content for an MBCH file
 func GenerateMBCH(char *MBCHCharacter) (string, error) {
-	var sb strings.Builder
+	if char.ctx != nil && char.ctx.doc != nil {
+		doc := cloneASTDocument(char.ctx.doc)
+		syncMBCHToAST(char, doc)
+		diagnoseOverrideGaps(char)
+		return doc.String(), nil
+	}
 
+	var sb strings.Builder
 	// Work on a shallow copy of ExtraFields so drainVariants doesn't
 	// mutate the caller's character — round-trip tests (and any caller
 	// that re-uses the struct after generating) depended on the input
@@ -769,6 +437,18 @@ func GenerateMBCH(char *MBCHCharacter) (string, error) {
 		if wi.AltMissileEffect != "" {
 			fmt.Fprintf(&sb, "\tAltMissileEffect\t\"%s\"\n", wi.AltMissileEffect)
 		}
+		if wi.Missile3Effect != "" {
+			fmt.Fprintf(&sb, "\tMissile3Effect\t\t\"%s\"\n", wi.Missile3Effect)
+		}
+		if wi.AltMissileEffect3 != "" {
+			fmt.Fprintf(&sb, "\tAltMissileEffect3\t\"%s\"\n", wi.AltMissileEffect3)
+		}
+		if wi.PowerupShotEffect != "" {
+			fmt.Fprintf(&sb, "\tPowerupShotEffect\t\"%s\"\n", wi.PowerupShotEffect)
+		}
+		if wi.PowerupShotEffect3 != "" {
+			fmt.Fprintf(&sb, "\tPowerupShotEffect3\t\"%s\"\n", wi.PowerupShotEffect3)
+		}
 		if wi.FlashSound0 != "" {
 			fmt.Fprintf(&sb, "\tFlashSound0\t\t\"%s\"\n", wi.FlashSound0)
 		}
@@ -777,6 +457,15 @@ func GenerateMBCH(char *MBCHCharacter) (string, error) {
 		}
 		if wi.ChargeSound != "" {
 			fmt.Fprintf(&sb, "\tChargeSound\t\t\"%s\"\n", wi.ChargeSound)
+		}
+		if wi.AltChargeSound != "" {
+			fmt.Fprintf(&sb, "\tAltChargeSound\t\t\"%s\"\n", wi.AltChargeSound)
+		}
+		if wi.PrimHitSound != "" {
+			fmt.Fprintf(&sb, "\tPrimHitSound\t\t\"%s\"\n", wi.PrimHitSound)
+		}
+		if wi.AltHitSound != "" {
+			fmt.Fprintf(&sb, "\tAltHitSound\t\t\"%s\"\n", wi.AltHitSound)
 		}
 		if wi.CustomAmmo > 0 {
 			fmt.Fprintf(&sb, "\tcustomAmmo\t\t%d\n", wi.CustomAmmo)
@@ -821,3 +510,306 @@ func GenerateMBCH(char *MBCHCharacter) (string, error) {
 
 	return sb.String(), nil
 }
+
+
+func ParseMBCH(content string) (*MBCHCharacter, error) {
+	tokens, err := Lex(content)
+	if err != nil { return nil, err }
+	doc := parseAST(tokens)
+	
+	char := NewMBCHCharacter()
+	char.ctx = &sourceContext{doc: doc}
+	
+	for i := 0; i < len(doc.Nodes); i++ {
+		if tok, ok := doc.Nodes[i].(*ASTToken); ok && tok.Type == TokenString && strings.ToLower(unquote(tok.Text)) == "description" {
+			for j := i+1; j < len(doc.Nodes); j++ {
+				if vTok, ok := doc.Nodes[j].(*ASTToken); ok {
+					if vTok.Type == TokenWhitespace || vTok.Type == TokenComment {
+						continue
+					}
+					if vTok.Type == TokenString {
+						// Found the start of the description
+						desc := vTok.Text
+						if strings.HasPrefix(desc, "\"") && !strings.HasSuffix(desc, "\"") {
+							// It's an unclosed quote, consume tokens until we find the closing quote
+							for k := j + 1; k < len(doc.Nodes); k++ {
+								if kTok, ok := doc.Nodes[k].(*ASTToken); ok {
+									desc += kTok.Text
+									if strings.Contains(kTok.Text, "\"") {
+										break
+									}
+								}
+							}
+						}
+						char.Description = unquote(desc)
+						break
+					}
+				}
+				if _, ok := doc.Nodes[j].(*ASTBlock); ok { break }
+			}
+			break
+		}
+	}
+
+	seenClassInfo := false
+	seenWeaponInfo := make(map[string]bool)
+	seenForceInfo := make(map[string]bool)
+
+	// Only TOP-LEVEL groups are effective: BG_SiegeGetValueGroup skips
+	// non-matching group bodies by brace counting (bg_saga.c:1429-1465),
+	// so a nested ClassInfo/WeaponInfo/ForceInfo is
+	// dead text the engine never reads. Nested bodies stay in the
+	// document verbatim and are never parsed into the model.
+	for _, node := range doc.Nodes {
+		b, ok := node.(*ASTBlock)
+		if !ok || b.NameToken == nil {
+			continue
+		}
+		name := strings.ToLower(b.NameToken.Text)
+		switch {
+		case name == "classinfo" && !seenClassInfo:
+			seenClassInfo = true
+			populateClassInfo(b, char)
+		case strings.HasPrefix(name, "weaponinfo") && !seenWeaponInfo[name]:
+			seenWeaponInfo[name] = true
+			parseWeaponInfo(b, char, name)
+		case strings.HasPrefix(name, "forceinfo") && !seenForceInfo[name]:
+			seenForceInfo[name] = true
+			parseForceInfo(b, char, name)
+		}
+	}
+	diagnoseOverrideGaps(char)
+	return char, nil
+}
+
+// diagnoseOverrideGaps records non-contiguous WeaponInfo<N>/ForceInfo<N>
+// numbering. The engine consumes overrides through a linear scan seeded
+// at WeaponInfo0 (bg_saga.c:2126: Com_sprintf(curValueGroup,
+// "WeaponInfo%i", 0); i++ per hit — bg_saga.c:2250-2253) that stops at
+// the FIRST missing index, so numbering is zero-based and must be
+// contiguous; a gap orphans every later block. We diagnose instead of
+// renumbering: the numbering is the file's identity and renumbering
+// would silently change what the game loads.
+func diagnoseOverrideGaps(char *MBCHCharacter) {
+	// Filter out old gap diagnostics so they don't compound on re-generation
+	var newDiags []string
+	for _, d := range char.Diags {
+		if !strings.Contains(d, "missing: the engine stops scanning at the first gap") {
+			newDiags = append(newDiags, d)
+		}
+	}
+	char.Diags = newDiags
+
+	check := func(kind string, overrides []string) {
+		seen := make(map[int]bool)
+		max := -1
+		for _, name := range overrides {
+			idx := -1
+			fmt.Sscanf(name, kind+"%d", &idx)
+			if idx < 0 {
+				continue
+			}
+			seen[idx] = true
+			if idx > max {
+				max = idx
+			}
+		}
+		for i := range max {
+			if !seen[i] {
+				char.Diags = append(char.Diags, fmt.Sprintf(
+					"%s%d missing: the engine stops scanning at the first gap and will ignore every later override block", kind, i))
+			}
+		}
+	}
+	wNames := make([]string, 0, len(char.WeaponOverrides))
+	for _, wi := range char.WeaponOverrides {
+		if wi.astName != "" {
+			wNames = append(wNames, wi.astName)
+		}
+	}
+	check("weaponinfo", wNames)
+	fNames := make([]string, 0, len(char.ForceOverrides))
+	for _, fi := range char.ForceOverrides {
+		if fi.astName != "" {
+			fNames = append(fNames, fi.astName)
+		}
+	}
+	check("forceinfo", fNames)
+}
+
+func populateClassInfo(b *ASTBlock, char *MBCHCharacter) {
+	char.ExtraFields = make(map[string]string)
+	char.RankAttributes = make(map[string]string)
+	typedKeys := make(map[string]bool)
+	markTyped := func(k string) { typedKeys[strings.ToLower(k)] = true }
+	markTyped("name"); markTyped("mbclass"); markTyped("model"); markTyped("skin")
+	markTyped("uishader"); markTyped("soundset"); markTyped("weapons"); markTyped("attributes")
+	markTyped("forcepowers"); markTyped("saberstyle"); markTyped("classflags")
+	markTyped("maxhealth"); markTyped("maxarmor"); markTyped("forcepool"); markTyped("forceregen")
+	markTyped("speed"); markTyped("apmultiplier"); markTyped("bpmultiplier"); markTyped("csmultiplier")
+	markTyped("asmultiplier"); markTyped("saber1"); markTyped("saber2"); markTyped("sabercolor")
+	markTyped("saber2color"); markTyped("classnumberlimit"); markTyped("respawncustomtime")
+	markTyped("extralives"); markTyped("iscustombuild"); markTyped("mbpoints")
+	markTyped("isonlyonespec"); markTyped("defaultspec"); markTyped("hascustomspec")
+	// description is synced at file top level (SGPV reads it from the
+	// file buffer, bg_saga.c:2383 — never inside ClassInfo). Excluding it
+	// here keeps a stray in-block description from being duplicated into
+	// the extras tail on save.
+	markTyped("description")
+	for i := 1; i <= 3; i++ {
+		markTyped(fmt.Sprintf("customspecname_%d", i))
+		markTyped(fmt.Sprintf("customspecicon_%d", i))
+		markTyped(fmt.Sprintf("customspecdesc_%d", i))
+	}
+	for i := 0; i <= 45; i++ {
+		markTyped(fmt.Sprintf("c_att_skill_%d", i))
+		markTyped(fmt.Sprintf("c_att_names_%d", i))
+		markTyped(fmt.Sprintf("c_att_ranks_%d", i))
+		markTyped(fmt.Sprintf("c_att_descs_%d", i))
+	}
+	// RankAttributes are populated below and dynamically typed, so they don't need marking here yet.
+	
+	if val, ok := getFieldValueSGPV(b, "name"); ok { char.Name = val }
+	if val, ok := getFieldValueSGPV(b, "mbclass"); ok { char.MBClass = val }
+	if val, ok := getFieldValueSGPV(b, "model"); ok { char.Model = val }
+	if val, ok := getFieldValueSGPV(b, "skin"); ok { char.Skin = val }
+	if val, ok := getFieldValueSGPV(b, "uishader"); ok { char.UIShader = val }
+	if val, ok := getFieldValueSGPV(b, "soundset"); ok { char.Soundset = val }
+	if val, ok := getFieldValueSGPV(b, "weapons"); ok { char.Weapons = val }
+	if val, ok := getFieldValueSGPV(b, "attributes"); ok { char.Attributes = val }
+	if val, ok := getFieldValueSGPV(b, "forcepowers"); ok { char.ForcePowers = val }
+	if val, ok := getFieldValueSGPV(b, "saberstyle"); ok { char.SaberStyle = val }
+	if val, ok := getFieldValueSGPV(b, "classflags"); ok { char.ClassFlags = val }
+	if val, ok := getFieldValueSGPV(b, "maxhealth"); ok { char.MaxHealth, _ = strconv.Atoi(val) }
+	if val, ok := getFieldValueSGPV(b, "maxarmor"); ok { char.MaxArmor, _ = strconv.Atoi(val) }
+	if val, ok := getFieldValueSGPV(b, "forcepool"); ok { char.ForcePool, _ = strconv.Atoi(val) }
+	if val, ok := getFieldValueSGPV(b, "forceregen"); ok { char.ForceRegen, _ = strconv.ParseFloat(val, 64) }
+	if val, ok := getFieldValueSGPV(b, "speed"); ok { char.Speed, _ = strconv.ParseFloat(val, 64) }
+	if val, ok := getFieldValueSGPV(b, "apmultiplier"); ok { char.APMultiplier, _ = strconv.ParseFloat(val, 64) }
+	if val, ok := getFieldValueSGPV(b, "bpmultiplier"); ok { char.BPMultiplier, _ = strconv.ParseFloat(val, 64) }
+	if val, ok := getFieldValueSGPV(b, "csmultiplier"); ok { char.CSMultiplier, _ = strconv.ParseFloat(val, 64) }
+	if val, ok := getFieldValueSGPV(b, "asmultiplier"); ok { char.ASMultiplier, _ = strconv.ParseFloat(val, 64) }
+	if val, ok := getFieldValueSGPV(b, "saber1"); ok { char.Saber1 = val }
+	if val, ok := getFieldValueSGPV(b, "saber2"); ok { char.Saber2 = val }
+	if val, ok := getFieldValueSGPV(b, "sabercolor"); ok { char.SaberColor, _ = strconv.Atoi(val) }
+	if val, ok := getFieldValueSGPV(b, "saber2color"); ok { char.Saber2Color, _ = strconv.Atoi(val) }
+	if val, ok := getFieldValueSGPV(b, "classnumberlimit"); ok { char.ClassNumberLimit, _ = strconv.Atoi(val) }
+	if val, ok := getFieldValueSGPV(b, "respawncustomtime"); ok { char.RespawnCustomTime, _ = strconv.Atoi(val) }
+	if val, ok := getFieldValueSGPV(b, "extralives"); ok { char.ExtraLives, _ = strconv.Atoi(val) }
+	if val, ok := getFieldValueSGPV(b, "iscustombuild"); ok { char.IsCustomBuild, _ = strconv.Atoi(val) }
+	if val, ok := getFieldValueSGPV(b, "mbpoints"); ok { char.MBPoints, _ = strconv.Atoi(val) }
+	if val, ok := getFieldValueSGPV(b, "isonlyonespec"); ok { char.IsOnlyOneSpec, _ = strconv.Atoi(val) }
+	if val, ok := getFieldValueSGPV(b, "defaultspec"); ok { char.DefaultSpec, _ = strconv.Atoi(val) }
+	if val, ok := getFieldValueSGPV(b, "hascustomspec"); ok { char.HasCustomSpec, _ = strconv.Atoi(val) }
+	
+	for i := 0; i < 3; i++ {
+		suffix := fmt.Sprintf("_%d", i+1)
+		if val, ok := getFieldValueSGPV(b, "customspecname"+suffix); ok { char.CustomSpecNames[i] = val }
+		if val, ok := getFieldValueSGPV(b, "customspecicon"+suffix); ok { char.CustomSpecIcons[i] = val }
+		if val, ok := getFieldValueSGPV(b, "customspecdesc"+suffix); ok { char.CustomSpecDescs[i] = val }
+	}
+	
+	for i := 0; i < 45; i++ {
+		suffix := fmt.Sprintf("_%d", i)
+		if val, ok := getFieldValueSGPV(b, "c_att_skill"+suffix); ok { char.CustomSkills[i] = val }
+		if val, ok := getFieldValueSGPV(b, "c_att_names"+suffix); ok { char.CustomNames[i] = val }
+		if val, ok := getFieldValueSGPV(b, "c_att_ranks"+suffix); ok { char.CustomRanks[i] = val }
+		if val, ok := getFieldValueSGPV(b, "c_att_descs"+suffix); ok { char.CustomDescs[i] = val }
+	}
+	
+	// SGPV-accurate pairing: the first key of each line owns its value;
+	// everything after the pair on the line is dead text (bg_saga.c:294-
+	// 297 skips to the next newline), so value tokens are never misread
+	// as keys.
+	walkSGPVPairs(b.Children, func(_ int, key string, _ int, val string, hasVal bool) bool {
+		lowerKey := strings.ToLower(key)
+		if hasVal && !typedKeys[lowerKey] {
+			if strings.HasPrefix(lowerKey, "rank_") {
+				if _, exists := char.RankAttributes[key]; !exists {
+					char.RankAttributes[key] = val
+				}
+			} else {
+				if _, exists := char.ExtraFields[key]; !exists {
+					char.ExtraFields[key] = val
+				}
+			}
+		}
+		return true
+	})
+	
+	for k := range char.RankAttributes { markTyped(k) }
+}
+
+func parseWeaponInfo(b *ASTBlock, char *MBCHCharacter, astName string) {
+	wi := WeaponInfo{ExtraFields: make(map[string]string), astName: astName}
+	typedKeys := make(map[string]bool)
+	markTyped := func(k string) { typedKeys[strings.ToLower(k)] = true }
+	markTyped("weapontoreplace"); markTyped("weaponbasedoff"); markTyped("newworldmodel")
+	markTyped("newviewmodel"); markTyped("icon"); markTyped("weaponname"); markTyped("muzzleeffect")
+	markTyped("altmuzzleeffect"); markTyped("missileeffect"); markTyped("altmissileeffect")
+	markTyped("missile3effect"); markTyped("altmissileeffect3"); markTyped("powerupshoteffect")
+	markTyped("powerupshoteffect3"); markTyped("flashsound0"); markTyped("altflashsound0")
+	markTyped("chargesound"); markTyped("altchargesound"); markTyped("primhitsound")
+	markTyped("althitsound");
+	markTyped("customammo"); markTyped("clipsize"); markTyped("reloadtimemodifier")
+	
+	if val, ok := getFieldValueSGPV(b, "weapontoreplace"); ok { wi.WeaponToReplace = val }
+	if val, ok := getFieldValueSGPV(b, "weaponbasedoff"); ok { wi.WeaponBasedOff = val }
+	if val, ok := getFieldValueSGPV(b, "newworldmodel"); ok { wi.NewWorldModel = val }
+	if val, ok := getFieldValueSGPV(b, "newviewmodel"); ok { wi.NewViewModel = val }
+	if val, ok := getFieldValueSGPV(b, "icon"); ok { wi.Icon = val }
+	if val, ok := getFieldValueSGPV(b, "weaponname"); ok { wi.WeaponName = val }
+	if val, ok := getFieldValueSGPV(b, "muzzleeffect"); ok { wi.MuzzleEffect = val }
+	if val, ok := getFieldValueSGPV(b, "altmuzzleeffect"); ok { wi.AltMuzzleEffect = val }
+	if val, ok := getFieldValueSGPV(b, "missileeffect"); ok { wi.MissileEffect = val }
+	if val, ok := getFieldValueSGPV(b, "altmissileeffect"); ok { wi.AltMissileEffect = val }
+	if val, ok := getFieldValueSGPV(b, "missile3effect"); ok { wi.Missile3Effect = val }
+	if val, ok := getFieldValueSGPV(b, "altmissileeffect3"); ok { wi.AltMissileEffect3 = val }
+	if val, ok := getFieldValueSGPV(b, "powerupshoteffect"); ok { wi.PowerupShotEffect = val }
+	if val, ok := getFieldValueSGPV(b, "powerupshoteffect3"); ok { wi.PowerupShotEffect3 = val }
+	if val, ok := getFieldValueSGPV(b, "flashsound0"); ok { wi.FlashSound0 = val }
+	if val, ok := getFieldValueSGPV(b, "altflashsound0"); ok { wi.AltFlashSound0 = val }
+	if val, ok := getFieldValueSGPV(b, "chargesound"); ok { wi.ChargeSound = val }
+	if val, ok := getFieldValueSGPV(b, "altchargesound"); ok { wi.AltChargeSound = val }
+	if val, ok := getFieldValueSGPV(b, "primhitsound"); ok { wi.PrimHitSound = val }
+	if val, ok := getFieldValueSGPV(b, "althitsound"); ok { wi.AltHitSound = val }
+	if val, ok := getFieldValueSGPV(b, "customammo"); ok { wi.CustomAmmo, _ = strconv.Atoi(val) }
+	if val, ok := getFieldValueSGPV(b, "clipsize"); ok { wi.ClipSize, _ = strconv.Atoi(val) }
+	if val, ok := getFieldValueSGPV(b, "reloadtimemodifier"); ok { wi.ReloadTimeModifier, _ = strconv.ParseFloat(val, 64) }
+	
+	// SGPV-accurate pairing (see populateClassInfo).
+	walkSGPVPairs(b.Children, func(_ int, key string, _ int, val string, hasVal bool) bool {
+		if hasVal && !typedKeys[strings.ToLower(key)] {
+			if _, exists := wi.ExtraFields[key]; !exists {
+				wi.ExtraFields[key] = val
+			}
+		}
+		return true
+	})
+	char.WeaponOverrides = append(char.WeaponOverrides, wi)
+}
+
+func parseForceInfo(b *ASTBlock, char *MBCHCharacter, astName string) {
+	fi := ForceInfo{ExtraFields: make(map[string]string), astName: astName}
+	typedKeys := make(map[string]bool)
+	markTyped := func(k string) { typedKeys[strings.ToLower(k)] = true }
+	markTyped("forcetoreplace"); markTyped("icon"); markTyped("forcepowername"); markTyped("startsound"); markTyped("loopsound")
+
+	if val, ok := getFieldValueSGPV(b, "forcetoreplace"); ok { fi.ForceToReplace = val }
+	if val, ok := getFieldValueSGPV(b, "icon"); ok { fi.Icon = val }
+	if val, ok := getFieldValueSGPV(b, "forcepowername"); ok { fi.ForcePowerName = val }
+	if val, ok := getFieldValueSGPV(b, "startsound"); ok { fi.StartSound = val }
+	if val, ok := getFieldValueSGPV(b, "loopsound"); ok { fi.LoopSound = val }
+
+	// SGPV-accurate pairing (see populateClassInfo).
+	walkSGPVPairs(b.Children, func(_ int, key string, _ int, val string, hasVal bool) bool {
+		if hasVal && !typedKeys[strings.ToLower(key)] {
+			if _, exists := fi.ExtraFields[key]; !exists {
+				fi.ExtraFields[key] = val
+			}
+		}
+		return true
+	})
+	char.ForceOverrides = append(char.ForceOverrides, fi)
+}
+

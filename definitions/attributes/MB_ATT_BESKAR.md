@@ -2,6 +2,10 @@
 
 `MB_ATT_BESKAR`
 
+> **Evidence status: Unverified.** The mechanics, numeric values, and stale
+> source links below are authoring notes, not a verified engine-parity claim.
+> Re-verify them against the external engine revision before relying on them.
+
 **Class-specific:** Mandalorian only.
 
 Multiplicative damage reduction against specific sources. Applied *before* Armor Points absorb the rest — beskar and AP stack.

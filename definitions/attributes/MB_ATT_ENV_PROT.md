@@ -2,6 +2,10 @@
 
 `MB_ATT_ENV_PROT`
 
+> **Evidence status: Unverified.** The mechanics below are authoring notes,
+> not an engine-parity claim. Verify them against the external engine revision
+> before relying on them.
+
 > Resists environmental and elemental damage not covered by other armors.
 
 ## What it does

@@ -2,24 +2,28 @@
 
 `saberType`
 
-> Defines the fundamental mechanic of the weapon.
+> Selects the saber category stored in a SAB definition.
 
-## What it does
+## Foundry support
 
-Defines the fundamental mechanic of the weapon.
+The visual SAB form currently offers:
 
-**Default:** SABER_SINGLE
+- `SABER_SINGLE`
+- `SABER_STAFF`
 
-## Valid values
+This picker is a selected authoring surface, not an exhaustive list of constants
+accepted by every engine revision. A different value already present in a
+parsed file remains inspectable in Source; changing the picker replaces it with
+one of the listed values.
 
-- `SABER_SINGLE`: Standard one-bladed hilt.
-- `SABER_STAFF`: Double-bladed (Maul style). Requires `numBlades 2`.
-- `SABER_BROAD`: ? (Specific broadsaber mechanics).
-- `SABER_CRYSTAL`: ? (Non-standard).
+New Foundry saber documents start with `SABER_SINGLE`. That is an application
+default, not a verified statement about omitted-field behavior in the engine.
 
-## Notes
+## Verification status
 
-- Use `SABER_SINGLE` for Dual Sabers (you just equip two of them). `SABER_STAFF` is for a single hilt with two blades.
+No exact engine revision or source range is recorded for the gameplay semantics
+of this field. Verify additional constants and blade behavior against the
+target engine checkout before documenting or relying on them.
 
 ---
 

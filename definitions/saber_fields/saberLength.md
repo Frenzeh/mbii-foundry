@@ -2,24 +2,24 @@
 
 `saberLength`
 
-> The physical length of the blade in game units.
+> Stores the first blade's length as a numeric SAB value.
 
-## What it does
+## Foundry support
 
-The physical length of the blade in game units.
+The SAB form edits the first blade through `saberLength`. Parsed indexed blade
+values such as `saberLength2` remain in the document and Source view, but the
+current form does not provide a visual control for every blade.
 
-**Default:** 32.0
+New Foundry saber documents initialize the first blade to `32`. This is an
+application template value, not a verified engine default or balance
+recommendation.
 
-## Valid values
+## Verification status
 
-- **32.0:** Standard one-handed hilt.
-- **40.0:** Long blade (Desann/Galak style). Good for reach, bad for close quarters (wall hits).
-- **24.0:** Shoto / Short blade (Yoda style). Fast, low reach.
-
-## Notes
-
-- Does not affect damage directly, but affects **reach** which is critical in duels.
+The field's unit, gameplay reach calculation, accepted range, and omitted-field
+behavior are not verified here against a named engine revision. Do not infer
+those semantics from the editor label.
 
 ---
 
-`saber` · `combat`
+`saber`

@@ -1,8 +1,8 @@
 package main
 
-// Point Buy simulator — mirrors MBII's in-game loadout menu so an
-// author can preview exactly what a player would see + experience
-// when picking a build. Layout:
+// Point Buy simulator — previews configured slots and performs local budget
+// arithmetic. Runtime affordability and specialization behavior are
+// Unverified; this UI does not claim engine parity.
 //
 //   ┌──────────────────────────────────────────────────────────┐
 //   │                                                          │
@@ -24,10 +24,8 @@ package main
 //   │                                                          │
 //   └──────────────────────────────────────────────────────────┘
 //
-// Unaffordable ranks disable visually; the current rank highlights
-// in accent color; Off pill is always available. Header rows
-// ("-Weapons-", "-Force Abilities-") render as centered accent
-// dividers so sections read at a glance.
+// Unaffordable ranks are disabled according to the local configured-cost
+// calculation. Header rows render as dividers.
 //
 // Purchases are ephemeral — the simulator never writes back to the
 // MBCH. Reset + archetype-switch both clear the build.
@@ -48,7 +46,7 @@ import (
 	"github.com/Frenzeh/mbii-foundry/parsers"
 )
 
-// PointBuySimulator renders the click-to-buy preview.
+// PointBuySimulator renders an Unverified local click-to-buy preview.
 type PointBuySimulator struct {
 	owner *PointBuyUI
 
@@ -89,10 +87,7 @@ func NewPointBuySimulator(owner *PointBuyUI) *PointBuySimulator {
 }
 
 func (s *PointBuySimulator) createUI() {
-	// Budget banner — MBII's in-game menu puts the points-remaining
-	// count front-and-center; we do the same. Size + color give the
-	// numbers the weight they deserve: this is the single most
-	// important readout on this screen.
+	// Budget banner for the local configured-cost preview.
 	s.budgetSpent = canvas.NewText("0", CurrentThemeColor)
 	s.budgetSpent.TextSize = SizeHeading
 	s.budgetSpent.TextStyle = fyne.TextStyle{Bold: true}
@@ -111,7 +106,7 @@ func (s *PointBuySimulator) createUI() {
 	s.budgetFill = canvas.NewRectangle(CurrentThemeColor)
 	s.budgetFill.SetMinSize(fyne.NewSize(0, 4))
 
-	budgetLabel := widget.NewLabel("Points Spent")
+	budgetLabel := widget.NewLabel("Points Spent (Unverified runtime behavior)")
 	budgetLabel.TextStyle = fyne.TextStyle{Bold: true}
 
 	spendRow := container.NewHBox(s.budgetSpent, s.budgetTotal)
@@ -165,9 +160,7 @@ func (s *PointBuySimulator) GetContent() fyne.CanvasObject {
 	return s.container
 }
 
-// Refresh tears down and rebuilds the simulator pane. Called by the
-// parent PointBuyUI whenever state that affects the simulation
-// changes (archetype count, slot costs, mbPoints, etc.).
+// Refresh rebuilds the local preview after configured values change.
 func (s *PointBuySimulator) Refresh() {
 	s.rebuildSpecOptions()
 	s.rebuild()
@@ -183,8 +176,8 @@ func (s *PointBuySimulator) rebuildSpecOptions() {
 	if count < 2 {
 		count = 1
 	}
-	if count > maxArchetypes {
-		count = maxArchetypes
+	if count > parsers.PointbuyMaxArchetypes {
+		count = parsers.PointbuyMaxArchetypes
 	}
 
 	s.specNames = make([]string, count)
@@ -235,8 +228,8 @@ func (s *PointBuySimulator) rebuild() {
 	s.slotBox.Objects = nil
 
 	ch := s.owner.editor.character
-	base := s.activeSpec * slotsPerArchetype
-	for i := 0; i < slotsPerArchetype; i++ {
+	base := s.activeSpec * parsers.PointbuySlotsPerArchetype
+	for i := 0; i < parsers.PointbuySlotsPerArchetype; i++ {
 		idx := base + i
 		row := s.buildSlotCard(idx, ch)
 		if row != nil {
@@ -290,10 +283,8 @@ func (s *PointBuySimulator) buildSlotCard(globalIdx int, ch *parsers.MBCHCharact
 		titleBlock = container.NewVBox(title)
 	}
 
-	// Rank dots — in-game loadout metaphor. Left-click a dot to fill
-	// ranks 1..N; right-click to step back one rank. Affordable dots
-	// glow accent-color; unaffordable ones dim. No "Off" pill — right-
-	// click on the rank-1 dot drops to unowned, matching MBII's menu.
+	// Rank dots use configured costs. Affordability is an authoring preview,
+	// not an assertion that runtime purchase rules are identical.
 	costs := parseRankCostList(ranks)
 	currentRank := s.purchased[globalIdx]
 	dots := NewRankDots(costs, currentRank,
@@ -400,8 +391,7 @@ func (s *PointBuySimulator) costForRank(globalIdx, rank int, ch *parsers.MBCHCha
 	return costs[rank-1]
 }
 
-// refreshBudget updates the banner numbers + fill strip. Matches the
-// in-game menu's live-updating "Points Remaining" counter.
+// refreshBudget updates the local configured-cost preview.
 func (s *PointBuySimulator) refreshBudget() {
 	spent := s.purchasedCostExcluding(-1)
 	target := s.owner.editor.character.MBPoints

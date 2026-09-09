@@ -8,6 +8,7 @@ import (
 )
 
 type SiegeObjective struct {
+	astName string // parse-time block identity; sync matches by name
 	Name         string // e.g. Objective1
 	GoalName     string
 	Final        int
@@ -26,6 +27,7 @@ type SiegeObjective struct {
 }
 
 type SiegeTeam struct {
+	astName string // parse-time block identity (the team's block name)
 	Name               string // The key used in the file (e.g. "Imperials")
 	TeamName           string // team1 or team2 (mapped from Teams block)
 	UseTeam            string
@@ -48,6 +50,8 @@ type SiegeTeam struct {
 }
 
 type SiegeData struct {
+	ctx *sourceContext
+
 	TeamsMap map[string]string // team1 -> Name, team2 -> Name
 	Team1    *SiegeTeam
 	Team2    *SiegeTeam
@@ -74,6 +78,11 @@ func NewSiegeData() *SiegeData {
 // ParseSiege parses a .siege file content using a brace-counting tokenizer.
 func ParseSiege(content string) (*SiegeData, error) {
 	siege := NewSiegeData()
+	
+	astTokens, err := Lex(content)
+	if err == nil {
+		siege.ctx = &sourceContext{doc: parseAST(astTokens)}
+	}
 
 	// Pre-process: Remove comments
 	cleanContent := stripComments(content)
@@ -105,6 +114,23 @@ func ParseSiege(content string) (*SiegeData, error) {
 		}
 	}
 
+
+	// Parse-time identity for canonical AST sync: teams and objectives
+	// are keyed by their ORIGINAL block names, so later renames update
+	// the document in place instead of orphaning blocks.
+	if siege.Team1 != nil {
+		siege.Team1.astName = siege.Team1.Name
+		for i := range siege.Team1.Objectives {
+			siege.Team1.Objectives[i].astName = siege.Team1.Objectives[i].Name
+		}
+	}
+	if siege.Team2 != nil {
+		siege.Team2.astName = siege.Team2.Name
+		for i := range siege.Team2.Objectives {
+			siege.Team2.Objectives[i].astName = siege.Team2.Objectives[i].Name
+		}
+	}
+
 	return siege, nil
 }
 
@@ -115,7 +141,11 @@ func stripComments(content string) string {
 		if idx := strings.Index(line, "//"); idx != -1 {
 			line = line[:idx]
 		}
-		sb.WriteString(strings.TrimSpace(line) + "\n")
+		// No TrimSpace: quoted values may span lines and SGPV copies
+		// their interior verbatim (tabs become spaces only at
+		// BG_SiegeStripTabs, after the copy) — trimming here would
+		// rewrite briefing/objdesc interiors on save.
+		sb.WriteString(line + "\n")
 	}
 	return sb.String()
 }
@@ -392,6 +422,13 @@ func reconstructBlock(tokens []string) string {
 }
 
 func GenerateSiege(siege *SiegeData) (string, error) {
+	if siege.ctx != nil && siege.ctx.doc != nil {
+		// Sync into a deep clone — the caller's retained parse baseline
+		// stays pristine (see GenerateMBCH).
+		doc := cloneASTDocument(siege.ctx.doc)
+		syncSiegeToAST(siege, doc)
+		return doc.String(), nil
+	}
 	var sb strings.Builder
 
 	// Global Fields

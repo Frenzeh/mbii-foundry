@@ -2,6 +2,10 @@
 
 `MB_ATT_MAGNETIC_PLATING`
 
+> **Evidence status: Unverified.** The mechanics and percentages below are
+> authoring notes, not an engine-parity claim. Verify them against the external
+> engine revision before relying on them.
+
 A specialized armor coating that disperses directed energy (blaster) fire.
 
 > **Default:** None.

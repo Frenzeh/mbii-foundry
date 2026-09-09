@@ -397,6 +397,10 @@ type pk3ReadCloser struct {
 
 func (p *pk3ReadCloser) Read(b []byte) (int, error) { return p.rc.Read(b) }
 func (p *pk3ReadCloser) Close() error {
-	p.rc.Close()
-	return p.zr.Close()
+	entryErr := p.rc.Close()
+	archiveErr := p.zr.Close()
+	if entryErr != nil {
+		return entryErr
+	}
+	return archiveErr
 }

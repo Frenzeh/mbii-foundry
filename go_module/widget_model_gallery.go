@@ -17,6 +17,7 @@ import (
 // ModelInfo represents a player model discovered in the VFS
 type ModelInfo struct {
 	Name        string
+	SearchName  string // Pre-lowercased for zero-allocation filtering
 	Skins       []string
 	PortraitKey string
 	Faction     string
@@ -48,8 +49,9 @@ func gatherModelsMap(vfs *VirtualFileSystem) map[string]*ModelInfo {
 		info, ok := modelsMap[modelName]
 		if !ok {
 			info = &ModelInfo{
-				Name:    modelName,
-				Faction: categorizeModelFaction(modelName),
+				Name:       modelName,
+				SearchName: strings.ToLower(modelName),
+				Faction:    categorizeModelFaction(modelName),
 			}
 			modelsMap[modelName] = info
 		}
@@ -223,101 +225,129 @@ func ShowSkinPickerModal(parent fyne.Window, modelName, currentSkin string, vfs 
 	dialogModal.Show()
 }
 
+type modelGalleryCard struct {
+	widget.BaseWidget
+	portrait *fyne.Container
+	name     *widget.Label
+}
+
+func newModelGalleryCard() *modelGalleryCard {
+	card := &modelGalleryCard{
+		portrait: container.NewStack(),
+		name:     widget.NewLabelWithStyle("", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+	}
+	card.name.Truncation = fyne.TextTruncateEllipsis
+	card.ExtendBaseWidget(card)
+	return card
+}
+
+func (card *modelGalleryCard) CreateRenderer() fyne.WidgetRenderer {
+	return widget.NewSimpleRenderer(container.NewVBox(
+		container.NewCenter(card.portrait),
+		card.name,
+	))
+}
+
+func (card *modelGalleryCard) MinSize() fyne.Size {
+	return fyne.NewSize(110, 130)
+}
+
+func (card *modelGalleryCard) update(model *ModelInfo, ab *AssetBrowser) {
+	portraitPath := model.PortraitKey
+	if portraitPath == "" {
+		portraitPath = "models/players/" + model.Name + "/mb2_icon_default"
+	}
+	var portrait fyne.CanvasObject
+	if res := ab.LoadIconResource(portraitPath); res != nil {
+		portrait = NewRasterIconFromResource(res, 64, 64)
+	} else {
+		portrait = container.NewGridWrap(fyne.NewSize(64, 64), widget.NewIcon(theme.AccountIcon()))
+	}
+	card.portrait.Objects = []fyne.CanvasObject{portrait}
+	card.portrait.Refresh()
+	card.name.SetText(model.Name)
+}
+
 // ShowModelGalleryModal displays an interactive visual picker dialog for player models and skins.
 func ShowModelGalleryModal(parent fyne.Window, vfs *VirtualFileSystem, ab *AssetBrowser, onSelected func(model, skin string)) {
-	if vfs == nil || ab == nil {
+	if parent == nil || vfs == nil || ab == nil {
 		return
 	}
 
 	modelsMap := gatherModelsMap(vfs)
-
-	var modelsList []*ModelInfo
-	for _, m := range modelsMap {
-		modelsList = append(modelsList, m)
+	modelsList := make([]*ModelInfo, 0, len(modelsMap))
+	for _, model := range modelsMap {
+		modelsList = append(modelsList, model)
 	}
 	sort.Slice(modelsList, func(i, j int) bool {
 		return modelsList[i].Name < modelsList[j].Name
 	})
 
 	var selectedModel *ModelInfo
-	var selectedSkin string = "default"
-
+	selectedSkin := "default"
 	var dialogModal *widget.PopUp
+
 	previewBox := container.NewMax()
 	skinSelect := widget.NewSelect([]string{"default"}, func(s string) {
 		selectedSkin = s
 		updateGalleryPreview(selectedModel, selectedSkin, previewBox, ab)
 	})
 
-	gridContainer := container.NewGridWrap(fyne.NewSize(110, 130))
-
-	renderCards := func(filterText, factionFilter string) {
-		gridContainer.Objects = nil
-		fText := strings.ToLower(strings.TrimSpace(filterText))
-
-		for _, m := range modelsList {
-			if fText != "" && !strings.Contains(strings.ToLower(m.Name), fText) {
-				continue
+	// widget.GridWrap virtualizes cells and reuses their widgets. The previous
+	// container.NewGridWrap rebuilt and text-shaped every model card on each
+	// keystroke, which dominated the measured gallery open/filter cost.
+	filteredModels := append([]*ModelInfo(nil), modelsList...)
+	modelGrid := widget.NewGridWrap(
+		func() int { return len(filteredModels) },
+		func() fyne.CanvasObject { return newModelGalleryCard() },
+		func(id widget.GridWrapItemID, item fyne.CanvasObject) {
+			if id < 0 || id >= len(filteredModels) {
+				return
 			}
-			if factionFilter != "All" && m.Faction != factionFilter {
-				continue
-			}
-
-			modelRef := m
-			var iconObj fyne.CanvasObject
-			portraitPath := modelRef.PortraitKey
-			if portraitPath == "" {
-				portraitPath = "models/players/" + modelRef.Name + "/mb2_icon_default"
-			}
-
-			res := ab.LoadIconResource(portraitPath)
-			if res != nil {
-				iconObj = NewRasterIconFromResource(res, 64, 64)
-			} else {
-				iconObj = container.NewGridWrap(fyne.NewSize(64, 64), widget.NewIcon(theme.AccountIcon()))
-			}
-
-			nameLbl := widget.NewLabelWithStyle(modelRef.Name, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
-			nameLbl.Truncation = fyne.TextTruncateEllipsis
-
-			cardContent := container.NewVBox(
-				container.NewCenter(iconObj),
-				nameLbl,
-			)
-
-			clickable := newClickableCell(cardContent, func() {
-				selectedModel = modelRef
-				skinSelect.Options = modelRef.Skins
-				if len(modelRef.Skins) > 0 {
-					selectedSkin = modelRef.Skins[0]
-					skinSelect.SetSelected(selectedSkin)
-				}
-				updateGalleryPreview(selectedModel, selectedSkin, previewBox, ab)
-			})
-
-			gridContainer.Add(clickable)
+			item.(*modelGalleryCard).update(filteredModels[id], ab)
+		},
+	)
+	modelGridBox := container.NewGridWrap(fyne.NewSize(520, 380), modelGrid)
+	modelGrid.OnSelected = func(id widget.GridWrapItemID) {
+		if id < 0 || id >= len(filteredModels) {
+			return
 		}
-		gridContainer.Refresh()
+		selectedModel = filteredModels[id]
+		skinSelect.Options = selectedModel.Skins
+		if len(selectedModel.Skins) > 0 {
+			selectedSkin = selectedModel.Skins[0]
+			skinSelect.SetSelected(selectedSkin)
+		}
+		updateGalleryPreview(selectedModel, selectedSkin, previewBox, ab)
 	}
 
 	searchEntry := widget.NewEntry()
 	searchEntry.SetPlaceHolder("Search models...")
 
-	factionSelect := widget.NewSelect([]string{"All", "Republic", "Imperial", "Rebel", "CIS", "Jedi/Sith", "Mandalorian", "Mercenary"}, func(s string) {
-		renderCards(searchEntry.Text, s)
-	})
+	factionSelect := widget.NewSelect([]string{"All", "Republic", "Imperial", "Rebel", "CIS", "Jedi/Sith", "Mandalorian", "Mercenary"}, nil)
+	renderCards := func(filterText, factionFilter string) {
+		modelGrid.UnselectAll()
+		filteredModels = filteredModels[:0]
+		filterText = strings.ToLower(strings.TrimSpace(filterText))
+		for _, model := range modelsList {
+			if filterText != "" && !strings.Contains(model.SearchName, filterText) {
+				continue
+			}
+			if factionFilter != "All" && model.Faction != factionFilter {
+				continue
+			}
+			filteredModels = append(filteredModels, model)
+		}
+		modelGrid.Refresh()
+	}
+	factionSelect.OnChanged = func(faction string) {
+		renderCards(searchEntry.Text, faction)
+	}
 	factionSelect.SetSelected("All")
-
-	searchEntry.OnChanged = func(s string) {
-		renderCards(s, factionSelect.Selected)
+	searchEntry.OnChanged = func(text string) {
+		renderCards(text, factionSelect.Selected)
 	}
 
-	renderCards("", "All")
-
-	scrollGrid := container.NewScroll(gridContainer)
-	scrollGrid.SetMinSize(fyne.NewSize(520, 380))
-
-	// Sidebar detail panel
 	applyBtn := widget.NewButtonWithIcon("Select Model & Skin", theme.ConfirmIcon(), func() {
 		if selectedModel != nil && onSelected != nil {
 			onSelected(selectedModel.Name, selectedSkin)
@@ -327,7 +357,6 @@ func ShowModelGalleryModal(parent fyne.Window, vfs *VirtualFileSystem, ab *Asset
 		}
 	})
 	applyBtn.Importance = widget.HighImportance
-
 	closeBtn := widget.NewButton("Cancel", func() {
 		if dialogModal != nil {
 			dialogModal.Hide()
@@ -341,22 +370,20 @@ func ShowModelGalleryModal(parent fyne.Window, vfs *VirtualFileSystem, ab *Asset
 		skinSelect,
 		container.NewHBox(applyBtn, closeBtn),
 	)
-
-	split := container.NewHSplit(scrollGrid, container.NewPadded(rightPanel))
+	split := container.NewHSplit(modelGridBox, container.NewPadded(rightPanel))
 	split.SetOffset(0.68)
-
 	modalContent := container.NewBorder(
 		container.NewVBox(
 			widget.NewLabelWithStyle("Player Model & Skin Gallery", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-			container.NewHBox(widget.NewIcon(theme.SearchIcon()), searchEntry, widget.NewLabel("Faction:"), factionSelect),
+			container.NewBorder(nil, nil, widget.NewIcon(theme.SearchIcon()), container.NewHBox(widget.NewLabel("Faction:"), factionSelect), searchEntry),
 		),
 		nil, nil, nil,
 		split,
 	)
-
 	dialogModal = widget.NewModalPopUp(container.NewPadded(modalContent), parent.Canvas())
 	dialogModal.Resize(fyne.NewSize(820, 520))
 	dialogModal.Show()
+	parent.Canvas().Focus(searchEntry)
 }
 
 func updateGalleryPreview(m *ModelInfo, skin string, containerObj *fyne.Container, ab *AssetBrowser) {

@@ -107,9 +107,10 @@ func (s *SidebarHeader) CreateRenderer() fyne.WidgetRenderer {
 		s.pills[it.ID] = pill
 		pillObjects = append(pillObjects, pill)
 	}
-	// Thin gaps between pills so they read as distinct items rather
-	// than a solid tab bar.
-	tabRow := container.New(layout.NewHBoxLayout(), pillObjects...)
+	// Every activity receives an equal share of the available sidebar
+	// width. The previous HBox summed four fixed 96px pills and clipped
+	// the final activity in the normal 280–340px sidebar.
+	tabRow := container.New(layout.NewGridLayoutWithColumns(len(pillObjects)), pillObjects...)
 
 	collapseItem := &ActivityItem{
 		ID:      "__collapse",
@@ -118,14 +119,7 @@ func (s *SidebarHeader) CreateRenderer() fyne.WidgetRenderer {
 	}
 	s.collapseBtn = newActivityPill(collapseItem, s, true)
 
-	// Collapse toggle pinned to the far LEFT of the header — the
-	// sidebar itself is on the left of the window, so a left-edge
-	// "push this out" button reads more directly than one on the
-	// right. Pills sit immediately to its right.
 	row := container.NewBorder(nil, nil, s.collapseBtn, nil, tabRow)
-
-	// Bottom rule — thin accent line under the whole header so it
-	// reads as its own band. AccentRule so it repaints on theme swap.
 	return widget.NewSimpleRenderer(container.NewVBox(row, NewAccentRule()))
 }
 
@@ -174,9 +168,9 @@ func (p *activityPill) CreateRenderer() fyne.WidgetRenderer {
 
 func (p *activityPill) MinSize() fyne.Size {
 	if p.isToggle {
-		return fyne.NewSize(34, 32)
+		return fyne.NewSize(36, 36)
 	}
-	return fyne.NewSize(96, 32)
+	return fyne.NewSize(64, 36)
 }
 
 func (p *activityPill) setIcon(icon fyne.Resource, tooltip string) {
@@ -208,14 +202,11 @@ func (p *activityPill) applyStyle() {
 			p.bg.FillColor = color.Transparent
 		}
 	case p.active:
-		p.bg.FillColor = tintWithAlpha(CurrentThemeColor, 140)
+		p.bg.FillColor = tintWithAlpha(CurrentThemeColor, 85)
 	case p.hovering:
-		p.bg.FillColor = tintWithAlpha(CurrentThemeColor, 50)
+		p.bg.FillColor = tintWithAlpha(CurrentThemeColor, 38)
 	default:
-		// Inactive resting: a whisper of fill so the pill is still
-		// findable when the user isn't hovering — feels more like
-		// "a disabled tab" than "invisible affordance."
-		p.bg.FillColor = color.NRGBA{R: 255, G: 255, B: 255, A: 8}
+		p.bg.FillColor = color.Transparent
 	}
 	p.bg.Refresh()
 

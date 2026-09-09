@@ -7,12 +7,9 @@ package main
 // copies in info_panel.go / widget_attribute_toggle.go / weapon_grid.go
 // so the look stays consistent and changes land in one place.
 //
-// Design: a tinted fill rectangle at full extent + a 1px stroke
-// rectangle inset by ~4px via container.NewPadded so the border
-// reads as its own ring rather than sharing the bg silhouette.
-// Content sits in a Padded wrapper above both. CornerRadius 6 on
-// the bg / 5 on the inset frame is the canonical "offset stroke"
-// shape the MBII launcher uses for its boxes and buttons.
+// Design: a low-contrast tinted surface with one inset accent stroke.
+// Rounded corners and restrained alpha separate content groups without
+// turning every section into a competing callout.
 
 import (
 	"image/color"
@@ -22,15 +19,14 @@ import (
 	"fyne.io/fyne/v2/container"
 )
 
-// TileOuterCornerRadius / TileInnerCornerRadius — the 6/5 split is
-// intentional: the inner frame is fractionally tighter than the
-// outer fill so the stroke reads as inset rather than overlaid.
+// The outer radius is one pixel larger than the inset frame so the two
+// curves remain visually parallel.
 const (
-	TileOuterCornerRadius = 6
-	TileInnerCornerRadius = 5
-	TileFrameInset        = 4   // px the stroke is moved inward of the bg
-	TileFillAlpha         = 22  // 0-255, applied via tintWithAlpha
-	TileStrokeAlpha       = 110 // 0-255, applied via tintWithAlpha
+	TileOuterCornerRadius = 7
+	TileInnerCornerRadius = 6
+	TileFrameInset        = 4
+	TileFillAlpha         = 14
+	TileStrokeAlpha       = 64
 )
 
 // TileOpts lets callers override the default accent-color identity

@@ -153,7 +153,7 @@ func (uc *UpdateCallout) runInstall() {
 	uc.content.Refresh()
 
 	go func() {
-		err := InstallUpdate(asset, func(p UpdateProgress) {
+		err := InstallUpdate(uc.info, func(p UpdateProgress) {
 			fyne.Do(func() {
 				uc.statusLabel.SetText(p.Message)
 				if p.Percent >= 0 {

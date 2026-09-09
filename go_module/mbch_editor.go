@@ -23,6 +23,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"github.com/Frenzeh/mbii-foundry/parsers"
+	"github.com/Frenzeh/mbii-foundry/safeio"
 )
 
 // MBClasses is now managed via data_loader.go and GetClasses()
@@ -74,6 +75,11 @@ type MBCHEditor struct {
 	// file is "dirty" the moment it opens.
 	loading bool
 
+	// Session state — immutable saved baseline, retained draft and
+	// undo/redo history.
+	session    *DocumentSession
+	sourceSubs *sourceListeners
+
 	nameEntry         *ValidatedEntry
 	classPicker       *ClassIconPicker // replaces the previous widget.Select
 	modelEntry        *ValidatedEntry
@@ -109,8 +115,9 @@ type MBCHEditor struct {
 	pointBuyUI     *PointBuyUI
 	weaponInfoUI   *WeaponInfoUI
 	forceInfoUI    *ForceInfoUI
-	weaponFlagsUI  *WeaponFlagsEditor  // WP_*Flags HELD_* grid (separate from WeaponInfoUI overrides)
-	skinVariantsUI *SkinVariantsEditor // model_N / skin_N / uishader_N tuples + RGB overrides
+	weaponFlagsUI  *WeaponFlagsEditor
+	skinVariantsUI *SkinVariantsEditor
+	summary        *CharacterSummaryWidget
 
 	// devSurfaces lists every UI element that's been opted into the
 	// "Show Developer Fields" toggle (View menu). Subsystems that
@@ -155,7 +162,13 @@ func NewMBCHEditor(app *App) *MBCHEditor {
 		character:       parsers.NewMBCHCharacter(),
 		app:             app,
 		devFieldEntries: make(map[string]*widget.Entry, len(devFieldsRegistry)),
+		sourceSubs:      &sourceListeners{},
 	}
+	e.session = NewDocumentSession(
+		func() string { return e.sessionRender() },
+		func(src string) error { return e.sessionRestore(src) },
+	)
+	e.session.SetOnDirtyChange(e.setDirtyState)
 	if app != nil {
 		e.fileManager = app.fileManager
 		e.assetBrowser = app.assetBrowser
@@ -189,6 +202,13 @@ func NewMBCHEditor(app *App) *MBCHEditor {
 	LogInfo("NewMBCHEditor: createUI took %s (total ctor %s)",
 		time.Since(tUI), time.Since(tCtor))
 	return e
+}
+
+// replaceCharacterContents keeps the editor's model address stable. Summary
+// and custom-skill widgets retain this pointer, while the other model-backed
+// panels retain the editor and dereference it dynamically.
+func (e *MBCHEditor) replaceCharacterContents(next *parsers.MBCHCharacter) {
+	*e.character = *next
 }
 
 func (e *MBCHEditor) SetOnHover(f func(string, string)) {
@@ -281,17 +301,27 @@ func (e *MBCHEditor) applyDeveloperVisibility(show bool) {
 	}
 }
 func (e *MBCHEditor) IsDirty() bool { return e.isDirty }
-func (e *MBCHEditor) MarkClean() {
-	e.isDirty = false
-	if e.onDirtyChanged != nil {
-		e.onDirtyChanged(false)
+
+func (e *MBCHEditor) setDirtyState(d bool) {
+	if e.isDirty != d {
+		e.isDirty = d
+		if e.onDirtyChanged != nil {
+			e.onDirtyChanged(d)
+		}
 	}
+}
+
+func (e *MBCHEditor) MarkClean() {
+	e.session.MarkClean()
+	e.setDirtyState(e.session.DerivedDirty())
 }
 
 // SourceProvider implementation — lets the right-pane live-source view
 // render this editor's current state.
 func (e *MBCHEditor) GenerateSource() string {
-	e.updateCharacterFromUI()
+	if !e.loading {
+		e.updateCharacterFromUI()
+	}
 	content, err := parsers.GenerateMBCH(e.character)
 	if err != nil {
 		return "// generate error: " + err.Error()
@@ -300,24 +330,96 @@ func (e *MBCHEditor) GenerateSource() string {
 }
 func (e *MBCHEditor) SetOnSourceChanged(f func()) { e.onSourceChanged = f }
 
+// AddSourceListener lets mirrors and panels subscribe without
+// stealing each other's push notifications.
+func (e *MBCHEditor) AddSourceListener(fn func()) func() {
+	return e.sourceSubs.add(fn)
+}
+
+func (e *MBCHEditor) fireSourceChanged() {
+	if e.onSourceChanged != nil {
+		e.onSourceChanged()
+	}
+	e.sourceSubs.fire()
+}
+
 func (e *MBCHEditor) markDirty() {
 	if e.loading {
 		return
 	}
-	if !e.isDirty {
-		e.isDirty = true
-		if e.onDirtyChanged != nil {
-			e.onDirtyChanged(true)
-		}
-	}
+	e.setDirtyState(true)
+	// Coalesced undo snapshot + source push.
+	e.session.noteUserEdit()
 	e.updateDefensiveMatrix()
 	e.updateAssetHealthBadges()
-	if e.onSourceChanged != nil {
-		e.onSourceChanged()
-	}
+	e.fireSourceChanged()
 	if e.app != nil && e.app.bufferGauge != nil {
 		e.app.bufferGauge.Update(e.character)
 	}
+}
+
+// sessionRender snapshots the working state (UI folded in).
+func (e *MBCHEditor) sessionRender() string { return e.GenerateSource() }
+
+// sessionRestore swaps a snapshot back into the working model
+// in-memory. Path, baseline and dirty bookkeeping are untouched.
+func (e *MBCHEditor) sessionRestore(src string) error {
+	char, err := parsers.ParseMBCH(src)
+	if err != nil {
+		return err
+	}
+	e.loading = true
+	e.replaceCharacterContents(char)
+	e.updateUI()
+	e.loading = false
+	e.fireSourceChanged()
+	return nil
+}
+
+func (e *MBCHEditor) Session() *DocumentSession { return e.session }
+func (e *MBCHEditor) CurrentSource() string     { return e.sessionRender() }
+func (e *MBCHEditor) Undo() bool                { return e.session.Undo() }
+func (e *MBCHEditor) Redo() bool                { return e.session.Redo() }
+func (e *MBCHEditor) CanUndo() bool             { return e.session.CanUndo() }
+func (e *MBCHEditor) CanRedo() bool             { return e.session.CanRedo() }
+
+// Definition navigation — .mbch files are single-block documents.
+func (e *MBCHEditor) DefinitionNames() []string {
+	if name := strings.TrimSpace(e.character.Name); name != "" {
+		return []string{name}
+	}
+	return []string{"character"}
+}
+func (e *MBCHEditor) SelectedDefinition() int { return 0 }
+func (e *MBCHEditor) SelectDefinition(index int) error {
+	if index != 0 {
+		return fmt.Errorf("definition %d out of range (1 definition)", index+1)
+	}
+	if e.DefinitionNames()[0] == "" {
+		return fmt.Errorf("no character definition loaded")
+	}
+	return nil
+}
+
+// ApplySourceText parses src in-memory (no temp files, no LoadFile)
+// and swaps it into the working model. A failed parse leaves the
+// document untouched; the applied state becomes one undo step.
+func (e *MBCHEditor) ApplySourceText(src string) error {
+	if err := validateSourceStructure(src); err != nil {
+		return err
+	}
+	char, err := parsers.ParseMBCH(src)
+	if err != nil {
+		return err
+	}
+	e.session.beginDiscreteChange()
+	e.replaceCharacterContents(char)
+	e.loading = true
+	e.updateUI()
+	e.loading = false
+	e.session.endDiscreteChange()
+	e.fireSourceChanged()
+	return nil
 }
 
 func (e *MBCHEditor) updateDefensiveMatrix() {
@@ -1207,8 +1309,13 @@ func (e *MBCHEditor) createUI() {
 	_ = weaponScroll
 	_ = flagsTab
 	_ = skinsTab
+	var vfs *VirtualFileSystem
+	if e.app != nil && e.app.assetBrowser != nil {
+		vfs = e.app.assetBrowser.vfs
+	}
+	e.summary = NewCharacterSummaryWidget(e.character, vfs, e.assetBrowser, e.iconResolver)
 
-	e.container = container.NewMax(tabs)
+	e.container = container.NewBorder(container.NewPadded(e.summary), nil, nil, nil, tabs)
 }
 
 // wrapForTab wraps a tab's content in a vertical Scroll with
@@ -1230,13 +1337,13 @@ func (e *MBCHEditor) updateSourceView() {
 		return
 	}
 
-	// Check 8192 character limit (CRITICAL for MBCH files)
+	// Check size limit (CRITICAL for MBCH files)
 	charCount := len(content)
-	if charCount > 8192 {
-		e.sourceView.ParseMarkdown(fmt.Sprintf("**⚠️ ERROR: File exceeds 8192 character limit! (%d chars)**\n\nReduce attributes or remove overrides to fix.\n\n---\n\n```\n%s\n```", charCount, content))
+	if charCount >= parsers.MBCHMaxFileBytes {
+		e.sourceView.ParseMarkdown(fmt.Sprintf("**⚠️ ERROR: File exceeds %d byte limit! (%d bytes)**\n\nReduce attributes or remove overrides to fix.\n\n---\n\n```\n%s\n```", parsers.MBCHMaxFileBytes, charCount, content))
 		return
-	} else if charCount > 7500 {
-		e.sourceView.ParseMarkdown(fmt.Sprintf("**⚠️ WARNING: Approaching 8192 character limit (%d/8192)**\n\n---\n\n```\n%s\n```", charCount, content))
+	} else if charCount > parsers.MBCHMaxFileBytes-500 {
+		e.sourceView.ParseMarkdown(fmt.Sprintf("**⚠️ WARNING: Approaching %d byte limit (%d/%d)**\n\n---\n\n```\n%s\n```", parsers.MBCHMaxFileBytes, charCount, parsers.MBCHMaxFileBytes, content))
 		return
 	}
 
@@ -1309,7 +1416,7 @@ func (e *MBCHEditor) LoadFile(path string) error {
 
 	LogInfo("Parsed Character: Name='%s', Class='%s'", char.Name, char.MBClass)
 
-	e.character = char
+	e.replaceCharacterContents(char)
 
 	if fromVFS {
 		e.currentPath = "" // Read-only / New file state
@@ -1321,7 +1428,15 @@ func (e *MBCHEditor) LoadFile(path string) error {
 	// updateUI silences markDirty via e.loading, but in case any later
 	// callback path slipped through (e.g. an attribute-grid rebuild
 	// that fires OnChanged outside the guard), reset to clean here so
-	// the file opens in a "no unsaved changes" state.
+	// the file opens in a "no unsaved changes" state. The session's
+	// immutable baseline records the exact on-disk bytes for the save
+	// review and dirty math.
+	e.session.Reset()
+	if !fromVFS {
+		e.session.SetBaseline(path, string(content))
+	} else {
+		e.session.SetBaseline("", string(content))
+	}
 	e.MarkClean()
 	if e.fileManager != nil && !fromVFS {
 		e.fileManager.AddRecentFile(path)
@@ -1337,46 +1452,90 @@ func (e *MBCHEditor) SaveToWriter(w io.Writer) error {
 		e.lastError = fmt.Sprintf("Failed to generate content: %v", err)
 		return err
 	}
-	if len(content) > 8192 {
-		e.lastError = fmt.Sprintf("File exceeds 8192 character limit (%d chars)", len(content))
-		return fmt.Errorf("file exceeds 8192 character limit (%d chars) - reduce attributes or remove overrides", len(content))
+	if len(content) >= parsers.MBCHMaxFileBytes {
+		e.lastError = fmt.Sprintf("File meets or exceeds %d byte limit (%d bytes)", parsers.MBCHMaxFileBytes, len(content))
+		return fmt.Errorf("file meets or exceeds %d byte limit (%d bytes) - engine rejects this", parsers.MBCHMaxFileBytes, len(content))
 	}
 
 	_, err = w.Write([]byte(content))
 	return err
 }
 
-func (e *MBCHEditor) SaveFile(path string) error {
-	if e.fileManager != nil {
-		e.fileManager.CreateBackup(path)
+// PrepareSave returns exact candidate bytes without staging any
+// path-specific state on the editor. In particular, a filename-derived
+// MBCH name lives only in the candidate until publication succeeds.
+func (e *MBCHEditor) PrepareSave(path string) (string, error) {
+	candidate, err := parsers.GenerateMBCH(e.character)
+	if err != nil {
+		return "", err
 	}
-
-	// Engine requires a non-empty `name` field — BG_SiegeParseClassFile
-	// hard-errors with "Siege class without name entry" when it's blank
-	// (bg_saga.c:2341). Files match the engine class by filename anyway,
-	// so derive name from the basename when the user left it empty.
+	if len(candidate) >= parsers.MBCHMaxFileBytes {
+		return "", fmt.Errorf("file meets or exceeds %d byte limit (%d bytes) - engine rejects this", parsers.MBCHMaxFileBytes, len(candidate))
+	}
+	// Engine requires a non-empty `name` field. Build that path-specific
+	// variant through a throwaway parse so the live model stays unchanged.
 	if strings.TrimSpace(e.character.Name) == "" {
 		base := filepath.Base(path)
-		e.character.Name = strings.TrimSuffix(base, filepath.Ext(base))
-		if e.nameEntry != nil {
-			e.nameEntry.SetText(e.character.Name)
+		derived := strings.TrimSuffix(base, filepath.Ext(base))
+		ch2, perr := parsers.ParseMBCH(candidate)
+		if perr != nil {
+			return "", fmt.Errorf("prepare filename-derived name: %w", perr)
+		}
+		ch2.Name = derived
+		named, gerr := parsers.GenerateMBCH(ch2)
+		if gerr != nil {
+			return "", fmt.Errorf("prepare filename-derived name: %w", gerr)
+		}
+		candidate = named
+		if len(candidate) >= parsers.MBCHMaxFileBytes {
+			return "", fmt.Errorf("file meets or exceeds %d byte limit (%d bytes) - engine rejects this", parsers.MBCHMaxFileBytes, len(candidate))
 		}
 	}
+	return candidate, nil
+}
 
-	file, err := os.Create(path)
+// CommitSave publishes the reviewed bytes, then and only then updates
+// model/path/baseline state.
+func (e *MBCHEditor) CommitSave(path string, candidate string) error {
+	current, err := e.PrepareSave(path)
 	if err != nil {
-		e.lastError = fmt.Sprintf("Failed to create file: %v", err)
 		return err
 	}
-	defer file.Close()
-
-	if err := e.SaveToWriter(file); err != nil {
+	if current != candidate {
+		return fmt.Errorf("reviewed candidate no longer matches the current document")
+	}
+	if err := publishEditorCandidate(e.fileManager, path, candidate); err != nil {
+		e.lastError = fmt.Sprintf("Failed to save file: %v", err)
 		return err
 	}
 
+	if strings.TrimSpace(e.character.Name) == "" {
+		if published, err := parsers.ParseMBCH(candidate); err == nil {
+			e.character.Name = published.Name
+			if e.nameEntry != nil {
+				// Keep the form projection aligned without invoking widget
+				// measurement or change callbacks from this publication path.
+				e.nameEntry.Text = e.character.Name
+			}
+		}
+	}
 	e.currentPath = path
-	e.MarkClean()
+	e.lastError = ""
+	e.session.SetBaseline(path, candidate)
+	e.session.MarkClean()
+	e.setDirtyState(false)
+	e.fireSourceChanged()
 	return nil
+}
+
+// SaveFile is the programmatic (no-review) entry point; UI saves
+// route through PrepareSave/CommitSave via the review dialog.
+func (e *MBCHEditor) SaveFile(path string) error {
+	candidate, err := e.PrepareSave(path)
+	if err != nil {
+		return err
+	}
+	return e.CommitSave(path, candidate)
 }
 
 func (e *MBCHEditor) SetCurrentPath(path string) {
@@ -1386,18 +1545,31 @@ func (e *MBCHEditor) SetCurrentPath(path string) {
 func (e *MBCHEditor) ExportJSON(path string) error {
 	e.updateCharacterFromUI()
 	data, _ := json.MarshalIndent(e.character, "", "  ")
-	return os.WriteFile(path, data, 0644)
+	return safeio.WriteFile(path, data, 0644)
 }
 
+// ImportJSON checks and reports Unmarshal errors instead of silently
+// keeping a half-populated character; a successful import is undoable
+// and marks the document dirty (working state diverged from baseline).
 func (e *MBCHEditor) ImportJSON(path string) error {
 	data, err := os.ReadFile(path)
 	if err != nil {
+		e.lastError = fmt.Sprintf("Failed to read JSON: %v", err)
 		return err
 	}
 	char := parsers.NewMBCHCharacter()
-	json.Unmarshal(data, char)
-	e.character = char
+	if err := json.Unmarshal(data, char); err != nil {
+		e.lastError = fmt.Sprintf("Failed to parse JSON: %v", err)
+		return fmt.Errorf("invalid character JSON: %w", err)
+	}
+	e.session.beginDiscreteChange()
+	e.replaceCharacterContents(char)
+	e.loading = true
 	e.updateUI()
+	e.loading = false
+	e.session.endDiscreteChange()
+	e.fireSourceChanged()
+	e.lastError = ""
 	return nil
 }
 
@@ -1409,7 +1581,12 @@ func (e *MBCHEditor) Validate() []string {
 	// scan the result for block sizes. Cheap (single allocation) and
 	// catches over-stuffed ClassInfo / WeaponInfoN / ForceInfoN before
 	// the engine truncates them silently at load time.
-	if rendered, err := parsers.GenerateMBCH(e.character); err == nil {
+	rendered, err := parsers.GenerateMBCH(e.character)
+	if err != nil {
+		// A generation failure is itself a validation error — it means
+		// SaveFile would refuse the document. Never drop it silently.
+		issues = append(issues, fmt.Sprintf("source generation failed: %v", err))
+	} else {
 		issues = append(issues, v.ValidateBlockSizes(rendered)...)
 	}
 	return issues
@@ -1426,9 +1603,10 @@ func (e *MBCHEditor) updateUI() {
 		// Re-render source for the source panel after UI sync, and
 		// ensure dirty stays clean post-load. SaveFile / explicit edits
 		// re-mark dirty as needed.
-		if e.onSourceChanged != nil {
-			e.onSourceChanged()
+		if e.summary != nil {
+			e.summary.Refresh()
 		}
+		e.fireSourceChanged()
 	}()
 	// Standard updates
 	e.nameEntry.SetText(e.character.Name)
@@ -1554,6 +1732,10 @@ func (e *MBCHEditor) updateCharacterFromUI() {
 	}
 	e.character.MBPoints = parseEntryInt(e.mbPointsEntry, 0, 999)
 	e.character.Description = e.descriptionEntry.Text
+
+	if e.summary != nil {
+		e.summary.Refresh()
+	}
 }
 
 // NewValidatedEntry creates a new Entry with a custom validation function.

@@ -172,8 +172,7 @@ func (uc *UpdateChecker) Latest() *UpdateInfo {
 
 // AssetForThisPlatform picks the release asset matching the current
 // GOOS/GOARCH from the release's asset list. Returns nil if no match.
-func (uc *UpdateChecker) AssetForThisPlatform() *ReleaseAsset {
-	info := uc.Latest()
+func AssetForPlatform(info *UpdateInfo) *ReleaseAsset {
 	if info == nil {
 		return nil
 	}
@@ -182,11 +181,16 @@ func (uc *UpdateChecker) AssetForThisPlatform() *ReleaseAsset {
 		return nil
 	}
 	for i := range info.Assets {
-		if strings.Contains(strings.ToLower(info.Assets[i].Name), match) {
+		name := strings.ToLower(info.Assets[i].Name)
+		if strings.Contains(name, match) && !strings.HasSuffix(name, ".manifest.json") {
 			return &info.Assets[i]
 		}
 	}
 	return nil
+}
+
+func (uc *UpdateChecker) AssetForThisPlatform() *ReleaseAsset {
+	return AssetForPlatform(uc.Latest())
 }
 
 // platformAssetSuffix returns the substring the release-workflow puts
@@ -197,20 +201,28 @@ func platformAssetSuffix() string {
 	case "darwin":
 		return "macos-universal"
 	case "linux":
-		return "linux-amd64"
+		return "linux-" + runtime.GOARCH
 	case "windows":
-		return "windows-amd64"
+		return "windows-" + runtime.GOARCH
+	default:
+		return ""
 	}
-	return ""
 }
 
 // cachePath is the JSON file we persist the last check into.
 func (uc *UpdateChecker) cachePath() string {
+	if uc.configDir == "" {
+		return ""
+	}
 	return filepath.Join(uc.configDir, "update_cache.json")
 }
 
 func (uc *UpdateChecker) loadCache() {
-	data, err := os.ReadFile(uc.cachePath())
+	p := uc.cachePath()
+	if p == "" {
+		return
+	}
+	data, err := os.ReadFile(p)
 	if err != nil {
 		return
 	}
@@ -224,6 +236,10 @@ func (uc *UpdateChecker) loadCache() {
 }
 
 func (uc *UpdateChecker) saveCache() {
+	p := uc.cachePath()
+	if p == "" {
+		return
+	}
 	info := uc.Latest()
 	if info == nil {
 		return
@@ -233,36 +249,50 @@ func (uc *UpdateChecker) saveCache() {
 		return
 	}
 	_ = os.MkdirAll(uc.configDir, 0755)
-	_ = os.WriteFile(uc.cachePath(), data, 0644)
+	_ = os.WriteFile(p, data, 0644)
 }
 
 // fetchLatestRelease hits the GitHub API. The token-less rate limit
 // (60 req/hr/IP) is fine for end-user update checks — cached 6h means
 // about 4 hits per day per machine.
 func fetchLatestRelease() (*UpdateInfo, error) {
-	req, err := http.NewRequest(http.MethodGet, updateAPIURL, nil)
+	return fetchLatestReleaseFrom(
+		&http.Client{Timeout: 15 * time.Second},
+		updateAPIURL,
+	)
+}
+
+func fetchLatestReleaseFrom(client *http.Client, url string) (*UpdateInfo, error) {
+	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", "mbii-foundry-updater/1.0")
 
-	client := &http.Client{Timeout: 15 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
-
+	const maxReleaseResponseBytes = 2 << 20
+	body, readErr := io.ReadAll(io.LimitReader(resp.Body, maxReleaseResponseBytes+1))
+	closeErr := resp.Body.Close()
+	if readErr != nil {
+		return nil, fmt.Errorf("read GitHub response: %w", readErr)
+	}
+	if closeErr != nil {
+		return nil, fmt.Errorf("close GitHub response: %w", closeErr)
+	}
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
+		if len(body) > 512 {
+			body = body[:512]
+		}
 		return nil, fmt.Errorf("github returned %s: %s", resp.Status, string(body))
 	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
+	if len(body) > maxReleaseResponseBytes {
+		return nil, fmt.Errorf("GitHub release response exceeds %d-byte limit", maxReleaseResponseBytes)
 	}
+
 	var info UpdateInfo
 	if err := json.Unmarshal(body, &info); err != nil {
 		return nil, err

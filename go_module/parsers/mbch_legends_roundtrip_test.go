@@ -101,7 +101,7 @@ func diffMBCH(a, b *MBCHCharacter) []string {
 		// Skip internal maps (diffed separately) and anything that
 		// doesn't round-trip by design (see note on ExtraFields).
 		switch name {
-		case "ExtraFields", "RankAttributes",
+		case "ctx", "ExtraFields", "RankAttributes",
 			"CustomSkills", "CustomNames", "CustomRanks", "CustomDescs",
 			"CustomSpecNames", "CustomSpecIcons",
 			"WeaponOverrides", "ForceOverrides":

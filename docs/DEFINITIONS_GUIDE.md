@@ -6,12 +6,18 @@
 
 ## What "definitions" are
 
-Every game enum the Foundry knows about (a force power, a weapon, a class, an attribute, a class flag) has:
+Foundry combines several documentation layers:
 
-1. A JSON row in `data/<category>.json` — the machine-readable metadata (id, level count, default values).
-2. A markdown file in `definitions/<category>/<ID>.md` — the human-readable prose (what it does, per-level effects, tips).
+1. Curated JSON under `data/` supplies runtime labels and structured metadata.
+2. Markdown under `definitions/` supplies human-readable prose shown in the
+   information panel.
+3. `go_module/testdata/engine_snapshot.json` records a verified external-engine
+   revision, hashes, selected enum numeric values, and the parser-key inventory.
 
-You're editing the **markdown**. That's where the words live. The JSON is maintained automatically by a maintainer running a regen tool against the game's C source.
+Most definition contributions should change only Markdown. Do not edit generated
+or engine-derived JSON to make an unsupported prose claim appear authoritative.
+The committed snapshot currently covers selected engine metadata; it is not
+evidence for every default, cost, level effect, or gameplay description.
 
 Categories you'll see:
 
@@ -61,22 +67,27 @@ When in doubt, **test the thing in-game** before rewriting its description.
 
 ---
 
-## What "good" looks like now
+## What a grounded definition contains
 
-**Update (2026-04-22):** the bar raised. Prose-only descriptions like "Legendary Mandalorian iron plating" read as lore, but what a balance designer actually needs are **numbers**: damage multipliers per level, FP costs, cooldowns, what's NOT affected, source-code references. Flavor prose without stats is no longer considered a complete definition.
+A useful definition says only what its evidence supports. Use
+[`definitions/attributes/MB_ATT_BESKAR.md`](../definitions/attributes/MB_ATT_BESKAR.md)
+as a structural example, not as proof for another field.
 
-The reference template is [`definitions/attributes/MB_ATT_BESKAR.md`](../definitions/attributes/MB_ATT_BESKAR.md). Every new or revised definition should follow its shape where applicable:
+Where applicable, include:
 
-1. `# <emoji> <Display Name>` — one-line title
-2. `` `<ENUM_ID>` `` — the exact enum as it appears in source
-3. One plain-English line summarizing what it does (for new players)
-4. Any class-specific / unlock requirements as bold metadata
-5. **`### Mechanics` or a stats table** — the mandatory part. Actual multipliers / costs / thresholds / rates. One row per level if it's a leveled attribute.
-6. `### What isn't affected` or exclusions — as important as the positive effects. Balance designers need to know the edges.
-7. `### Related` — cross-links to interacting attributes (`MB_ATT_ARMOUR`, `CFL_*`, etc.)
-8. `### Source references` — file + line ranges in the MBII C source so future reviewers can verify. Even a single `game/bg_weapons.h:1065-1084` is valuable.
+1. The exact enum or field ID.
+2. A short plain-language summary with an evidence label.
+3. Tested mechanics, conditions, and exclusions.
+4. Per-level numbers only when the source or test result establishes them.
+5. Related fields only when the interaction is verified.
+6. Engine revision plus file and line range for source-backed claims.
+7. Game version and reproduction steps for in-game observations.
 
-Run `tools/audit-definitions.py` to see the current quality rating for every entry; the report is checked in at `docs/DEFINITION_QUALITY_AUDIT.md`.
+If a default, range, unit, or interaction is unknown, say so or omit it. Do not
+turn a Foundry form label or initial template value into an engine claim.
+
+Run `python3 tools/audit-definitions.py` from the repository root to inventory
+prose shape. Its checked-in report is dated and does not verify correctness.
 
 ## Anatomy of a good definition — older format
 
@@ -143,23 +154,36 @@ Emoji headers match the existing style; keep using them. Pick something evocativ
 
 ---
 
-## Verifying your claims before writing
+## Verifying claims before writing
 
-**Ordered by authority:**
+Use the source that matches the kind of claim:
 
-1. **In-game testing.** The most reliable. Spin up a dev server (`/devmap mb2_dotf`), pick a class that has the attribute, feel what it does. Your memory of how the game plays beats any source code citation for prose about *how it feels*.
+1. **Exact enum IDs, numeric values, and parser keys:** verify the committed
+   snapshot against the intended external engine checkout:
 
-2. **MBII Wiki** — [moviebattles.fandom.com](https://moviebattles.fandom.com/wiki/Moviebattles_Wikia). Player-facing community docs. Good for class-level context, less good for per-attribute minutiae.
+   ```bash
+   cd go_module
+   MBII_ENGINE_SRC=/absolute/path/to/moviebattles \
+     go test . -run '^TestExplicitEngineVerification$' -count=1
+   ```
 
-3. **MBII source code**, if you have access. Look in `game/bg_public.h` for the enum definition, `game/bg_classes.h` for how classes use it, `game/bg_misc.c` for item/weapon tables, `game/g_active.c` or `g_combat.c` for combat behaviour. The Foundry repo *doesn't* include source — only maintainers with an MBII-dev checkout need to dig here.
+   `MBII_ENGINE_SRC` must be a Git checkout whose relevant `bg_public.h` and
+   `bg_saga.c` bytes match its committed `HEAD`. The verifier accepts those
+   files at the checkout root, under `game/`, or under `codemp/game/`, and fails
+   on drift instead of rewriting the snapshot.
 
-4. **The Holocron MCP** (advanced). If you're using an AI assistant with Holocron access, you can query `ask_holocron("What does MB_ATT_PUSH do?")` and it'll return source-grounded answers. Not required — wiki + in-game testing cover 95% of cases.
+2. **Gameplay mechanics:** cite the exact engine revision and source range that
+   implements the behavior. The snapshot alone does not contain those
+   semantics.
+3. **Observed in-game behavior or feel:** record the tested MBII version, setup,
+   and result. Observation can complement source but does not establish enum
+   numeric parity.
+4. **Community references:** identify the page and retrieval date, and label the
+   statement as community documentation rather than engine verification.
 
-**Ordered by unreliability:**
-
-- Your AI coding assistant *without* source context. It will make things up with perfect confidence. Always cross-check.
-- Old forum threads. MBII balance changes often; a 2019 thread may describe mechanics that no longer exist.
-- "I'm pretty sure this is how it works." Test it.
+Unreliable evidence includes an AI answer without the cited source, an undated
+forum post, memory, and another generated definition. Confident wording does not
+raise the quality of the evidence.
 
 ---
 

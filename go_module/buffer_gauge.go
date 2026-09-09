@@ -12,74 +12,114 @@ import (
 	"github.com/Frenzeh/mbii-foundry/parsers"
 )
 
-const (
-	MaxClassInfoBytes  = 8192
-	MaxWeaponInfoBytes = 4096
-	MaxForceInfoBytes  = 2048
-	WarnThresholdBytes = 7200
-)
+// WarnThresholdBytes is the established editor warning threshold for the
+// ClassInfo payload. It is intentionally advisory; the engine limit remains
+// parsers.ClassInfoMaxPayload.
+const WarnThresholdBytes = parsers.ClassInfoMaxPayload - 1000
 
 // BufferStatus calculates character and block lengths against engine memory buffers.
 type BufferStatus struct {
+	TotalFileLen  int
 	ClassInfoLen  int
 	MaxWeaponLen  int
 	MaxForceLen   int
-	AttrStringLen int
+	MaxPairedLen  int
 	IsExceeded    bool
 	IsWarning     bool
 	WarningMsg    string
+	Diagnostics   []string
+	GenerationErr error
+	AssessmentErr error
 }
 
 // CalculateBufferStatus measures character byte usage for engine limits.
 func CalculateBufferStatus(char *parsers.MBCHCharacter) BufferStatus {
 	if char == nil {
-		return BufferStatus{}
-	}
-
-	content, _ := parsers.GenerateMBCH(char)
-	
-	// Extract ClassInfo block
-	classInfoLen := len(content)
-	if idx := strings.Index(content, "WeaponInfo"); idx != -1 {
-		classInfoLen = idx
-	} else if idx := strings.Index(content, "description"); idx != -1 {
-		classInfoLen = idx
-	}
-
-	maxWeaponLen := 0
-	for _, w := range char.WeaponOverrides {
-		// Approximate weapon override block length
-		wLen := len(w.WeaponName) + len(w.NewWorldModel) + len(w.NewViewModel) + len(w.Icon) + len(w.MissileEffect) + len(w.FlashSound0) + 300
-		if wLen > maxWeaponLen {
-			maxWeaponLen = wLen
+		return BufferStatus{
+			IsExceeded: true,
+			WarningMsg: "Character is required",
 		}
 	}
 
-	maxForceLen := 0
-	for _, f := range char.ForceOverrides {
-		fLen := len(f.ForcePowerName) + len(f.Icon) + len(f.StartSound) + len(f.LoopSound) + 200
-		if fLen > maxForceLen {
-			maxForceLen = fLen
+	content, err := parsers.GenerateMBCH(char)
+	if err != nil {
+		return BufferStatus{
+			IsExceeded:    true,
+			WarningMsg:    fmt.Sprintf("GenerateMBCH failed: %v", err),
+			GenerationErr: err,
 		}
 	}
 
-	attrLen := len(char.Attributes)
+	assessment, err := parsers.AssessMBCHSourceBuffers(content)
+	if err != nil {
+		return BufferStatus{
+			IsExceeded:    true,
+			WarningMsg:    fmt.Sprintf("AssessMBCHSourceBuffers failed: %v", err),
+			AssessmentErr: err,
+		}
+	}
 
 	status := BufferStatus{
-		ClassInfoLen:  classInfoLen,
-		MaxWeaponLen:  maxWeaponLen,
-		MaxForceLen:   maxForceLen,
-		AttrStringLen: attrLen,
+		TotalFileLen: assessment.TotalFileBytes,
+		ClassInfoLen: assessment.ClassInfoBytes,
+		MaxPairedLen: assessment.MaxPairedValueBytes,
+		Diagnostics:  append([]string(nil), assessment.Diagnostics...),
+	}
+	for _, size := range assessment.WeaponInfoBytes {
+		if size > status.MaxWeaponLen {
+			status.MaxWeaponLen = size
+		}
+	}
+	for _, size := range assessment.ForceInfoBytes {
+		if size > status.MaxForceLen {
+			status.MaxForceLen = size
+		}
 	}
 
-	if classInfoLen >= MaxClassInfoBytes {
+	warnings := make([]string, 0, len(assessment.Diagnostics)+5)
+	for _, diagnostic := range assessment.Diagnostics {
+		warnings = append(warnings, fmt.Sprintf("Parser diagnostic: %s", diagnostic))
+	}
+	if status.TotalFileLen >= parsers.MBCHMaxFileBytes {
+		warnings = append(warnings, fmt.Sprintf(
+			"File exceeds engine payload limit (%d/%d bytes; buffer %d)",
+			status.TotalFileLen, parsers.MBCHMaxFileBytes-1, parsers.MBCHMaxFileBytes,
+		))
+	}
+	if status.ClassInfoLen > parsers.ClassInfoMaxPayload {
+		warnings = append(warnings, fmt.Sprintf(
+			"ClassInfo exceeds engine payload limit (%d/%d bytes; buffer %d)",
+			status.ClassInfoLen, parsers.ClassInfoMaxPayload, parsers.ClassInfoMaxBytes,
+		))
+	}
+	if status.MaxWeaponLen > parsers.WeaponInfoMaxPayload {
+		warnings = append(warnings, fmt.Sprintf(
+			"WeaponInfo exceeds engine payload limit (%d/%d bytes; buffer %d)",
+			status.MaxWeaponLen, parsers.WeaponInfoMaxPayload, parsers.WeaponInfoMaxBytes,
+		))
+	}
+	if status.MaxForceLen > parsers.ForceInfoMaxPayload {
+		warnings = append(warnings, fmt.Sprintf(
+			"ForceInfo exceeds engine payload limit (%d/%d bytes; buffer %d)",
+			status.MaxForceLen, parsers.ForceInfoMaxPayload, parsers.ForceInfoMaxBytes,
+		))
+	}
+	if status.MaxPairedLen > parsers.PairedValueMaxPayload {
+		warnings = append(warnings, fmt.Sprintf(
+			"Paired value exceeds engine payload limit (%d/%d bytes; buffer %d)",
+			status.MaxPairedLen, parsers.PairedValueMaxPayload, parsers.PairedValueMaxBytes,
+		))
+	}
+	if len(warnings) > 0 {
 		status.IsExceeded = true
-		status.WarningMsg = fmt.Sprintf("ClassInfo buffer exceeded (%d / %d bytes)! Map will crash on load.", classInfoLen, MaxClassInfoBytes)
-	} else if classInfoLen >= WarnThresholdBytes {
+		status.WarningMsg = strings.Join(warnings, "; ")
+	} else if status.ClassInfoLen >= WarnThresholdBytes {
 		status.IsWarning = true
-		status.WarningMsg = fmt.Sprintf("ClassInfo approaching engine limit (%d / %d bytes).", classInfoLen, MaxClassInfoBytes)
+		status.WarningMsg = fmt.Sprintf(
+			"ClassInfo approaching editor warning threshold (%d/%d bytes; engine payload limit %d)",
+			status.ClassInfoLen, WarnThresholdBytes, parsers.ClassInfoMaxPayload,
+		)
 	}
-
 	return status
 }
 
@@ -95,7 +135,7 @@ func NewBufferGaugeWidget() *BufferGaugeWidget {
 	badge.SetMinSize(fyne.NewSize(12, 12))
 	badge.CornerRadius = 6
 
-	label := widget.NewLabelWithStyle("Buffer: 0 / 8192 B", fyne.TextAlignLeading, fyne.TextStyle{Monospace: true})
+	label := widget.NewLabelWithStyle(bufferGaugeLabel(BufferStatus{}), fyne.TextAlignLeading, fyne.TextStyle{Monospace: true})
 
 	cnt := container.NewHBox(
 		badge,
@@ -112,7 +152,7 @@ func NewBufferGaugeWidget() *BufferGaugeWidget {
 func (bg *BufferGaugeWidget) Update(char *parsers.MBCHCharacter) {
 	status := CalculateBufferStatus(char)
 
-	bg.label.SetText(fmt.Sprintf("ClassInfo: %d / %d B", status.ClassInfoLen, MaxClassInfoBytes))
+	bg.label.SetText(bufferGaugeLabel(status))
 
 	if status.IsExceeded {
 		bg.badge.FillColor = color.RGBA{R: 220, G: 40, B: 40, A: 255} // Red
@@ -127,6 +167,18 @@ func (bg *BufferGaugeWidget) Update(char *parsers.MBCHCharacter) {
 
 	bg.badge.Refresh()
 	bg.label.Refresh()
+}
+
+func bufferGaugeLabel(status BufferStatus) string {
+	return fmt.Sprintf(
+		"File %d/%d · Class %d/%d · Weapon %d/%d · Force %d/%d · Value %d/%d · Key max %d B",
+		status.TotalFileLen, parsers.MBCHMaxFileBytes-1,
+		status.ClassInfoLen, parsers.ClassInfoMaxPayload,
+		status.MaxWeaponLen, parsers.WeaponInfoMaxPayload,
+		status.MaxForceLen, parsers.ForceInfoMaxPayload,
+		status.MaxPairedLen, parsers.PairedValueMaxPayload,
+		parsers.KeyMaxPayload,
+	)
 }
 
 func (bg *BufferGaugeWidget) GetContent() fyne.CanvasObject {

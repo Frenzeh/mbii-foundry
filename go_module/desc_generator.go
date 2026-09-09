@@ -1,11 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
-	"image"
 	"image/color"
-	"image/png"
 	"regexp"
 	"strconv"
 	"strings"
@@ -415,21 +412,9 @@ var Q3ColorLabels = []Q3ColorInfo{
 }
 
 func newColorDotResource(name string, c color.NRGBA) fyne.Resource {
-	const size = 16
-	img := image.NewRGBA(image.Rect(0, 0, size, size))
-	cx, cy, r := size/2, size/2, size/2-2
-	for y := 0; y < size; y++ {
-		for x := 0; x < size; x++ {
-			dx := x - cx
-			dy := y - cy
-			if dx*dx+dy*dy <= r*r {
-				img.Set(x, y, c)
-			}
-		}
-	}
-	var buf bytes.Buffer
-	png.Encode(&buf, img)
-	return fyne.NewStaticResource(name+".png", buf.Bytes())
+	hex := fmt.Sprintf("#%02X%02X%02X", c.R, c.G, c.B)
+	svgStr := fmt.Sprintf(`<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="6" fill="%s"/></svg>`, hex)
+	return fyne.NewStaticResource(name+".svg", []byte(svgStr))
 }
 
 // NewQ3ColorToolbar creates a toolbar with rich Q3 color swatches and Auto-Generate.

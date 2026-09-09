@@ -1,1031 +1,623 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "attributes.json",
-  "title": "MBII Character Attributes (MB_ATT_*)",
-  "description": "Complete list of MB_ATT_* attributes from bg_public.h with descriptions",
-  "version": "1.0.0",
-  "attributes": {
-    "CORE_STATS": {
-      "description": "Core character statistics",
-      "values": [
-        {
-          "id": "MB_ATT_NOATTRIBUTE",
-          "name": "No Attribute",
-          "maxRank": 0
-        },
-        {
-          "id": "MB_ATT_HEALTH",
-          "name": "Health",
-          "maxRank": 5,
-          "description": "Additional health points"
-        },
-        {
-          "id": "MB_ATT_ARMOR",
-          "name": "Armor",
-          "maxRank": 5,
-          "description": "Additional armor points"
-        },
-        {
-          "id": "MB_ATT_STAMINA",
-          "name": "Stamina",
-          "maxRank": 3,
-          "description": "Ability point capacity"
-        },
-        {
-          "id": "MB_ATT_FUEL",
-          "name": "Fuel",
-          "maxRank": 3,
-          "description": "Jetpack/resource fuel capacity"
-        }
-      ]
-    },
-    "FORCE_POWERS": {
-      "description": "Force power attributes",
-      "values": [
-        {
-          "id": "MB_ATT_FORCEPOOL",
-          "name": "Force Pool",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_FORCEREGEN",
-          "name": "Force Regen",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_PUSH",
-          "name": "Force Push",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_PULL",
-          "name": "Force Pull",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_SPEED",
-          "name": "Force Speed",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_JUMP",
-          "name": "Force Jump",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_GRIP",
-          "name": "Force Grip",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_LIGHTNING",
-          "name": "Force Lightning",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_MINDTRICK",
-          "name": "Mind Trick",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_HEAL",
-          "name": "Force Heal",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_RAGE",
-          "name": "Dark Rage",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_PROTECT",
-          "name": "Force Protect",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_ABSORB",
-          "name": "Force Absorb",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_DRAIN",
-          "name": "Force Drain",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_SEEING",
-          "name": "Force Seeing",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_SABERTHROW",
-          "name": "Saber Throw",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_DESTRUCTION",
-          "name": "Force Destruction",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_DEADLYSIGHT",
-          "name": "Deadly Sight",
-          "maxRank": 3
-        }
-      ]
-    },
-    "SABER_COMBAT": {
-      "description": "Lightsaber combat abilities",
-      "values": [
-        {
-          "id": "MB_ATT_SABER_OFFENSE",
-          "name": "Saber Offense",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_SABER_DEFENSE",
-          "name": "Saber Defense",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_STYLE_FAST",
-          "name": "Fast Style (Blue)",
-          "maxRank": 1
-        },
-        {
-          "id": "MB_ATT_STYLE_MEDIUM",
-          "name": "Medium Style (Yellow)",
-          "maxRank": 1
-        },
-        {
-          "id": "MB_ATT_STYLE_STRONG",
-          "name": "Strong Style (Red)",
-          "maxRank": 1
-        },
-        {
-          "id": "MB_ATT_STYLE_DESANN",
-          "name": "Desann Style (Purple)",
-          "maxRank": 1
-        },
-        {
-          "id": "MB_ATT_STYLE_TAVION",
-          "name": "Tavion Style (Cyan)",
-          "maxRank": 1
-        },
-        {
-          "id": "MB_ATT_STYLE_DUAL",
-          "name": "Dual Sabers",
-          "maxRank": 1
-        },
-        {
-          "id": "MB_ATT_STYLE_STAFF",
-          "name": "Saber Staff",
-          "maxRank": 1
-        },
-        {
-          "id": "MB_ATT_DUALWIELD",
-          "name": "Dual Wield",
-          "maxRank": 1,
-          "description": "Enables dual saber wielding"
-        },
-        {
-          "id": "MB_ATT_SABERSTAFF",
-          "name": "Saber Staff",
-          "maxRank": 1,
-          "description": "Enables saber staff"
-        }
-      ]
-    },
-    "WEAPONS_PRIMARY": {
-      "description": "Primary weapon attributes",
-      "values": [
-        {
-          "id": "MB_ATT_PISTOL1",
-          "name": "Pistol 1",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_PISTOL2",
-          "name": "Pistol 2",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_PISTOL3",
-          "name": "Pistol 3",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_PISTOL4",
-          "name": "Pistol 4",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_PISTOL5",
-          "name": "Pistol 5",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_RIFLE1",
-          "name": "Rifle 1",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_RIFLE2",
-          "name": "Rifle 2",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_RIFLE3",
-          "name": "Rifle 3",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_RIFLE4",
-          "name": "Rifle 4",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_RIFLE5",
-          "name": "Rifle 5",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_BLASTER",
-          "name": "Blaster",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_CARBINE",
-          "name": "Carbine",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_REPEATER",
-          "name": "Repeater",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_BOWCASTER",
-          "name": "Bowcaster",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_DISRUPTOR",
-          "name": "Disruptor",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_CONCUSSION",
-          "name": "Concussion Rifle",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_FLECHETTE",
-          "name": "Flechette",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_SHOTGUN",
-          "name": "Shotgun",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_PLX",
-          "name": "PLX Rocket",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_ROCKET",
-          "name": "Rocket Launcher",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_MINIGUN",
-          "name": "Minigun",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_DEMP2",
-          "name": "DEMP2",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_T21",
-          "name": "T-21",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_DLT19",
-          "name": "DLT-19",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_A280",
-          "name": "A280",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_EE3",
-          "name": "EE-3",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_EE4",
-          "name": "EE-4",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_AMBAN",
-          "name": "Amban Rifle",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_PROJRIFLE",
-          "name": "Projectile Rifle",
-          "maxRank": 3
-        }
-      ]
-    },
-    "WEAPONS_GRENADES": {
-      "description": "Grenade and explosive attributes",
-      "values": [
-        {
-          "id": "MB_ATT_THERMAL",
-          "name": "Thermal Detonator",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_THERMALDET",
-          "name": "Real Thermal Det",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_FRAG",
-          "name": "Frag Grenade",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_PULSE",
-          "name": "Pulse Grenade",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_SONIC",
-          "name": "Sonic Grenade",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_FIRE",
-          "name": "Fire Grenade",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_CRYO",
-          "name": "Cryo Grenade",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_CONC",
-          "name": "Concussion Grenade",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_IMPACT",
-          "name": "Impact Grenade",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_DETPACK",
-          "name": "Det Pack",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_TRIPMINE",
-          "name": "Trip Mine",
-          "maxRank": 3
-        }
-      ]
-    },
-    "EQUIPMENT": {
-      "description": "Equipment and gear attributes",
-      "values": [
-        {
-          "id": "MB_ATT_JETPACK",
-          "name": "Jetpack",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_CLOAK",
-          "name": "Cloaking Device",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_BACTA",
-          "name": "Bacta",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_RALLY",
-          "name": "Rally",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_BINOCULARS",
-          "name": "Binoculars",
-          "maxRank": 1
-        },
-        {
-          "id": "MB_ATT_SENTRY",
-          "name": "Sentry Gun",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_EWEB",
-          "name": "E-Web",
-          "maxRank": 1
-        },
-        {
-          "id": "MB_ATT_SEEKER",
-          "name": "Seeker Drone",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_FORCEFIELD",
-          "name": "Force Field",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_SHIELD",
-          "name": "Personal Shield",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_FLAMETHROWER",
-          "name": "Flamethrower",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_GRAPPLE",
-          "name": "Grappling Hook",
-          "maxRank": 1
-        },
-        {
-          "id": "MB_ATT_CORTOSIS",
-          "name": "Cortosis Armor",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_WRISTROCKET",
-          "name": "Wrist Rocket",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_WRISTLASER",
-          "name": "Wrist Laser",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_DARTS",
-          "name": "Darts",
-          "maxRank": 3
-        }
-      ]
-    },
-    "ABILITIES": {
-      "description": "Special abilities and skills",
-      "values": [
-        {
-          "id": "MB_ATT_MELEE",
-          "name": "Melee",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_GUNBASH",
-          "name": "Gunbash",
-          "maxRank": 1
-        },
-        {
-          "id": "MB_ATT_DODGE",
-          "name": "Dodge",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_DASH",
-          "name": "Dash",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_BLOCK",
-          "name": "Block",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_DEFLECT",
-          "name": "Deflect",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_REFLECT",
-          "name": "Reflect",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_TRACKING",
-          "name": "Tracking",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_EMPATHY",
-          "name": "Empathy",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_ENHANCED_VISION",
-          "name": "Enhanced Vision",
-          "maxRank": 3
-        }
-      ]
-    },
-    "MOVEMENT": {
-      "description": "Movement-related attributes",
-      "values": [
-        {
-          "id": "MB_ATT_ROLL",
-          "name": "Roll",
-          "maxRank": 1
-        },
-        {
-          "id": "MB_ATT_WALLRUN",
-          "name": "Wall Run",
-          "maxRank": 1
-        },
-        {
-          "id": "MB_ATT_WALLGRAB",
-          "name": "Wall Grab",
-          "maxRank": 1
-        },
-        {
-          "id": "MB_ATT_WALLFLIP",
-          "name": "Wall Flip",
-          "maxRank": 1
-        },
-        {
-          "id": "MB_ATT_CARTWHEEL",
-          "name": "Cartwheel",
-          "maxRank": 1
-        },
-        {
-          "id": "MB_ATT_BUTTERFLY",
-          "name": "Butterfly",
-          "maxRank": 1
-        },
-        {
-          "id": "MB_ATT_LONGFLIP",
-          "name": "Long Flip",
-          "maxRank": 1
-        },
-        {
-          "id": "MB_ATT_QUICKGETUP",
-          "name": "Quick Getup",
-          "maxRank": 1
-        }
-      ]
-    },
-    "DROID_SPECIFIC": {
-      "description": "Droid-class specific attributes",
-      "values": [
-        {
-          "id": "MB_ATT_DROIDWEAPON1",
-          "name": "Droid Weapon 1",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_DROIDWEAPON2",
-          "name": "Droid Weapon 2",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_DROIDWEAPON3",
-          "name": "Droid Weapon 3",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_DROIDSHIELD",
-          "name": "Droid Shield",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_DROIDEMP",
-          "name": "Droid EMP Resist",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_SBDPUNCH",
-          "name": "SBD Punch",
-          "maxRank": 1
-        },
-        {
-          "id": "MB_ATT_SBDCHARGE",
-          "name": "SBD Charge",
-          "maxRank": 1
-        },
-        {
-          "id": "MB_ATT_DROIDROLLOUT",
-          "name": "Droideka Rollout",
-          "maxRank": 1
-        }
-      ]
-    },
-    "WOOKIEE_SPECIFIC": {
-      "description": "Wookiee-class specific attributes",
-      "values": [
-        {
-          "id": "MB_ATT_WOOKIEEBOWCASTER",
-          "name": "Traditional Bowcaster",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_WOOKIEERAGE",
-          "name": "Wookiee Rage",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_WOOKIEESTRENGTH",
-          "name": "Wookiee Strength",
-          "maxRank": 3
-        }
-      ]
-    },
-    "MANDALORIAN_SPECIFIC": {
-      "description": "Mandalorian-class specific attributes",
-      "values": [
-        {
-          "id": "MB_ATT_MANDOPISTOL",
-          "name": "Mando Pistol",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_MANDOFLAME",
-          "name": "Mando Flamethrower",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_MANDOROCKET",
-          "name": "Mando Wrist Rocket",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_MANDODART",
-          "name": "Mando Darts",
-          "maxRank": 3
-        }
-      ]
-    },
-    "CLONE_SPECIFIC": {
-      "description": "Clone Trooper specific attributes",
-      "values": [
-        {
-          "id": "MB_ATT_DC17",
-          "name": "DC-17 Pistol",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_DC15A",
-          "name": "DC-15A Rifle",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_DC15S",
-          "name": "DC-15S Carbine",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_Z6",
-          "name": "Z-6 Rotary",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_ELECTROSTAFF",
-          "name": "Electrostaff",
-          "maxRank": 3
-        }
-      ]
-    },
-    "MEDIC_SPECIFIC": {
-      "description": "Medic class attributes",
-      "values": [
-        {
-          "id": "MB_ATT_HEALING",
-          "name": "Medical Healing",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_REVIVE",
-          "name": "Revive",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_POISON",
-          "name": "Poison",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_ANTIDOTE",
-          "name": "Antidote",
-          "maxRank": 3
-        }
-      ]
-    },
-    "BOUNTY_HUNTER_SPECIFIC": {
-      "description": "Bounty Hunter specific attributes",
-      "values": [
-        {
-          "id": "MB_ATT_BHTRACKING",
-          "name": "BH Tracking",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_BHPOISON",
-          "name": "BH Poison Darts",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_BHFLAME",
-          "name": "BH Flamethrower",
-          "maxRank": 3
-        }
-      ]
-    },
-    "MISC": {
-      "description": "Miscellaneous attributes",
-      "values": [
-        {
-          "id": "MB_ATT_FLASHBANG",
-          "name": "Flashbang",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_SMOKEBOMB",
-          "name": "Smoke Bomb",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_AMMO",
-          "name": "Extra Ammo",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_POWERUP",
-          "name": "Power-up",
-          "maxRank": 1
-        },
-        {
-          "id": "MB_ATT_HACKING",
-          "name": "Hacking",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_SLICING",
-          "name": "Slicing",
-          "maxRank": 3
-        },
-        {
-          "id": "MB_ATT_DISGUISE",
-          "name": "Disguise",
-          "maxRank": 3
-        }
-      ]
-    },
-    "SPECIAL_ABILITIES": {
-      "description": "EAS_* Special ability enums for special1-4 slots",
-      "values": [
-        {
-          "id": "EAS_NONE",
-          "name": "None"
-        },
-        {
-          "id": "EAS_DASH",
-          "name": "Dash"
-        },
-        {
-          "id": "EAS_DODGE",
-          "name": "Dodge"
-        },
-        {
-          "id": "EAS_ROLL",
-          "name": "Roll"
-        },
-        {
-          "id": "EAS_WALLRUN",
-          "name": "Wall Run"
-        },
-        {
-          "id": "EAS_WALLGRAB",
-          "name": "Wall Grab"
-        },
-        {
-          "id": "EAS_CARTWHEEL",
-          "name": "Cartwheel"
-        },
-        {
-          "id": "EAS_BUTTERFLY",
-          "name": "Butterfly"
-        },
-        {
-          "id": "EAS_FLIP",
-          "name": "Flip"
-        },
-        {
-          "id": "EAS_MELEE",
-          "name": "Melee"
-        },
-        {
-          "id": "EAS_JETPACK",
-          "name": "Jetpack"
-        },
-        {
-          "id": "EAS_CLOAK",
-          "name": "Cloak"
-        },
-        {
-          "id": "EAS_BACTA",
-          "name": "Bacta"
-        },
-        {
-          "id": "EAS_RALLY",
-          "name": "Rally"
-        },
-        {
-          "id": "EAS_GRAPPLE",
-          "name": "Grapple"
-        },
-        {
-          "id": "EAS_SHIELD",
-          "name": "Shield"
-        },
-        {
-          "id": "EAS_FORCEFIELD",
-          "name": "Force Field"
-        },
-        {
-          "id": "EAS_RAGE",
-          "name": "Rage"
-        },
-        {
-          "id": "EAS_CHARGE",
-          "name": "Charge"
-        },
-        {
-          "id": "EAS_ROLLOUT",
-          "name": "Rollout (Droideka)"
-        }
-      ]
+  "title": "MBII Character Attribute Enum Catalog",
+  "description": "Mechanically derived enum identifiers and numeric values. Gameplay mechanics and rank bounds are intentionally omitted because they are not proven by the enum declaration.",
+  "version": "2.0.0",
+  "evidence_status": "EnumValuesVerified",
+  "engine": {
+    "revision": "f5c3271b92fc6e610713f10193bc443e1cc3a0e6",
+    "source_path": "game/bg_public.h",
+    "source_sha256": "5b68539243e49887037b09bc1b318c5760a1da0600c3a33556971b4481f5c6ea",
+    "source_range": {
+      "start_line": 552,
+      "end_line": 907
     }
   },
+  "enumValues": {
+    "MB_ATT_INVALID": 0,
+    "MB_ATT_FP_HEAL": 1,
+    "MB_ATT_FP_LEVITATION": 2,
+    "MB_ATT_FP_SPEED": 3,
+    "MB_ATT_FP_PUSH": 4,
+    "MB_ATT_FP_PULL": 5,
+    "MB_ATT_FP_TELEPATHY": 6,
+    "MB_ATT_FP_GRIP": 7,
+    "MB_ATT_FP_LIGHTNING": 8,
+    "MB_ATT_FP_RAGE": 9,
+    "MB_ATT_FP_PROTECT": 10,
+    "MB_ATT_FP_ABSORB": 11,
+    "MB_ATT_FP_TEAM_HEAL": 12,
+    "MB_ATT_FP_TEAM_FORCE": 13,
+    "MB_ATT_FP_DRAIN": 14,
+    "MB_ATT_FP_SEE": 15,
+    "MB_ATT_FP_SABER_OFFENSE": 16,
+    "MB_ATT_FP_SABER_DEFENSE": 17,
+    "MB_ATT_FP_SABERTHROW": 18,
+    "MB_ATT_FP_BLIND": 19,
+    "MB_ATT_FP_DESTRUCTION": 20,
+    "MB_ATT_FP_PROJECTION": 21,
+    "MB_ATT_FP_DEADLYSIGHT": 22,
+    "MB_ATT_FP_STASIS": 23,
+    "MB_ATT_FP_BATTLEMED": 24,
+    "MB_ATT_FP_DOMINATION": 25,
+    "MB_ATT_FP_DARKRAGE": 26,
+    "MB_ATT_PISTOL": 27,
+    "MB_ATT_BLASTER": 28,
+    "MB_ATT_DISRUPTOR": 29,
+    "MB_ATT_BOWCASTER": 30,
+    "MB_ATT_SWORD": 31,
+    "MB_ATT_DURABILITY": 32,
+    "MB_ATT_SENTRY": 33,
+    "MB_ATT_LASERCOVER": 34,
+    "MB_ATT_ACROBACY": 35,
+    "MB_ATT_DRONE": 36,
+    "MB_ATT_WPFLAMETHROWER": 37,
+    "MB_ATT_CLONERIFLE": 38,
+    "MB_ATT_PROJECTILE_RIFLE": 39,
+    "MB_ATT_A280": 40,
+    "MB_ATT_THERMALS": 41,
+    "MB_ATT_HEALTH": 42,
+    "MB_ATT_ARMOUR": 43,
+    "MB_ATT_AMMO": 44,
+    "MB_ATT_POWER": 45,
+    "MB_ATT_REGEN": 46,
+    "MB_ATT_AP_MULTIPLIER": 47,
+    "MB_ATT_BP_MULTIPLIER": 48,
+    "MB_ATT_CS_MULTIPLIER": 49,
+    "MB_ATT_AS_MULTIPLIER": 50,
+    "MB_ATT_FP_MULTIPLIER": 51,
+    "MB_ATT_ROF_MULTIPLIER": 52,
+    "MB_ATT_STM_MULTIPLIER": 53,
+    "MB_ATT_HACK_MULTIPLIER": 54,
+    "MB_ATT_KB_TAKEN_MULTIPLIER": 55,
+    "MB_ATT_KB_GIVEN_MULTIPLIER": 56,
+    "MB_ATT_DMG_TAKEN_MULTIPLIER": 57,
+    "MB_ATT_DMG_GIVEN_MULTIPLIER": 58,
+    "MB_ATT_BASESPEED": 59,
+    "MB_ATT_SABER_DAMAGE": 60,
+    "MB_ATT_SABERTHROW_DAMAGE": 61,
+    "MB_ATT_SABERSPECIAL_DAMAGE": 62,
+    "MB_ATT_SABER_MAXCHAIN": 63,
+    "MB_ATT_MODELSCALE_MULTIPLIER": 64,
+    "MB_ATT_ROF_MELEE_MULTIPLIER": 65,
+    "MB_ATT_HEALTH_REGEN_CAP": 66,
+    "MB_ATT_HEALTH_REGEN_AMOUNT": 67,
+    "MB_ATT_HEALTH_REGEN_RATE": 68,
+    "MB_ATT_ARMOUR_REGEN_CAP": 69,
+    "MB_ATT_ARMOUR_REGEN_AMOUNT": 70,
+    "MB_ATT_ARMOUR_REGEN_RATE": 71,
+    "MB_ATT_RESOURCE_REGEN_CAP": 72,
+    "MB_ATT_RESOURCE_REGEN_AMOUNT": 73,
+    "MB_ATT_RESOURCE_REGEN_RATE": 74,
+    "MB_ATT_BLOCK_REGEN_CAP": 75,
+    "MB_ATT_BLOCK_REGEN_AMOUNT": 76,
+    "MB_ATT_BLOCK_REGEN_RATE": 77,
+    "MB_ATT_RESPAWNS": 78,
+    "MB_ATT_DODGE": 79,
+    "MB_ATT_HEALING": 80,
+    "MB_ATT_FLAMETHROWER": 81,
+    "MB_ATT_FUEL": 82,
+    "MB_ATT_FUELREGEN": 83,
+    "MB_ATT_ROCKET": 84,
+    "MB_ATT_WOOKIE_HEALTH": 85,
+    "MB_ATT_WOOKIE_STRENGTH": 86,
+    "MB_ATT_HULL_STRENGTH": 87,
+    "MB_ATT_SHIELD_PROJ": 88,
+    "MB_ATT_DEKA_SHIELD": 89,
+    "MB_ATT_DEKA_HULL": 90,
+    "MB_ATT_DEKA_DEPLOY": 91,
+    "MB_ATT_DEKA_POWER": 92,
+    "MB_ATT_TURN_RATE": 93,
+    "MB_ATT_FIREPOWER": 94,
+    "MB_ATT_FIRERATE": 95,
+    "MB_ATT_QUICKTHROW": 96,
+    "MB_ATT_RECHARGE": 97,
+    "MB_ATT_STAMINA": 98,
+    "MB_ATT_DEXTERITY": 99,
+    "MB_ATT_KNOCKDOWN_ROLL": 100,
+    "MB_ATT_PULSE_GRENADES": 101,
+    "MB_ATT_TRACKING_DART": 102,
+    "MB_ATT_POISON_DART": 103,
+    "MB_ATT_JETPACK": 104,
+    "MB_ATT_PLX1": 105,
+    "MB_ATT_T21": 106,
+    "MB_ATT_CLONEBLOBS": 107,
+    "MB_ATT_CORTOSIS": 108,
+    "MB_ATT_BLAST_ARMOUR": 109,
+    "MB_ATT_MAGNETIC_PLATING": 110,
+    "MB_ATT_WOOKIE_BALANCE": 111,
+    "MB_ATT_CCTRAINING": 112,
+    "MB_ATT_ET_CCTRAINING": 113,
+    "MB_ATT_MD_CCTRAINING": 114,
+    "MB_ATT_SBD_CANNON": 115,
+    "MB_ATT_WRISTLASER": 116,
+    "MB_ATT_SHOCKWAVE": 117,
+    "MB_ATT_SHIELD_RECHARGE": 118,
+    "MB_ATT_SHIELD_RECHARGE2": 119,
+    "MB_ATT_RALLY": 120,
+    "MB_ATT_ASSEMBLE": 121,
+    "MB_ATT_SPY_DISGUISE": 122,
+    "MB_ATT_ARC_RIFLE_SCOPE": 123,
+    "MB_ATT_ARC_RIFLE_GRENADELAUNCHER": 124,
+    "MB_ATT_WOOKIEE_FURY": 125,
+    "MB_ATT_WOOKIEE_AGILITY": 126,
+    "MB_ATT_ANTI_MT": 127,
+    "MB_ATT_ZOOM": 128,
+    "MB_ATT_RADAR": 129,
+    "MB_ATT_GRAPPLE_HOOK": 130,
+    "MB_ATT_FIBERCORD_WHIP": 131,
+    "MB_ATT_FIRE_GRENADES": 132,
+    "MB_ATT_CRYOBAN_GRENADES": 133,
+    "MB_ATT_SONIC_DETONATOR": 134,
+    "MB_ATT_QUICKDRAW": 135,
+    "MB_ATT_MICRO_GRENADES": 136,
+    "MB_ATT_IMPACT_NADE": 137,
+    "MB_ATT_BACTA_BOMB": 138,
+    "MB_ATT_GAS_NADE": 139,
+    "MB_ATT_FLASH_NADE": 140,
+    "MB_ATT_GLOP_NADE": 141,
+    "MB_ATT_IMPLODER_NADE": 142,
+    "MB_ATT_SMOKE_NADE": 143,
+    "MB_ATT_SHIELD_NADE": 144,
+    "MB_ATT_PROTON_NADE": 145,
+    "MB_ATT_STRONGBLOBS": 146,
+    "MB_ATT_STEALTH": 147,
+    "MB_ATT_BACKSTAB": 148,
+    "MB_ATT_DASH": 149,
+    "MB_ATT_DASH_JUMP": 150,
+    "MB_ATT_VIEWBASEDDRAIN": 151,
+    "MB_ATT_CLONE_PISTOL": 152,
+    "MB_ATT_MANDO_PISTOL": 153,
+    "MB_ATT_SPY_PISTOL": 154,
+    "MB_ATT_IMP_PISTOL": 155,
+    "MB_ATT_KNIFE": 156,
+    "MB_ATT_ELECTRO_STAFF": 157,
+    "MB_ATT_SHOTGUN": 158,
+    "MB_ATT_WESTARM5": 159,
+    "MB_ATT_DLT20A": 160,
+    "MB_ATT_FRAGS": 161,
+    "MB_ATT_EE3": 162,
+    "MB_ATT_EE4": 163,
+    "MB_ATT_AMBAN": 164,
+    "MB_ATT_BESKAR": 165,
+    "MB_ATT_WHISTLINGBIRD": 166,
+    "MB_ATT_CR2": 167,
+    "MB_ATT_DC_CARBINE": 168,
+    "MB_ATT_E_22": 169,
+    "MB_ATT_HEAVY_PISTOL": 170,
+    "MB_ATT_DLT19": 171,
+    "MB_ATT_TRAD_BOWCASTER": 172,
+    "MB_ATT_IONRIFLE": 173,
+    "MB_ATT_REPEATER": 174,
+    "MB_ATT_FLECHETTE": 175,
+    "MB_ATT_DEMP2": 176,
+    "MB_ATT_THROWER": 177,
+    "MB_ATT_DET_PACK": 178,
+    "MB_ATT_CONCUSSION": 179,
+    "MB_ATT_ROCKET_LAUNCHER": 180,
+    "MB_ATT_BRYAR_OLD": 181,
+    "MB_ATT_STUN_BATON": 182,
+    "MB_ATT_BASE_TD": 183,
+    "MB_ATT_UGL": 184,
+    "MB_ATT_UGL_BURST": 185,
+    "MB_ATT_UGL_IMPACT": 186,
+    "MB_ATT_UGL_BURST_MIXED": 187,
+    "MB_ATT_MGL": 188,
+    "MB_ATT_MGL_IMPACT": 189,
+    "MB_ATT_MGL_BURST": 190,
+    "MB_ATT_STICKY_BOMBS": 191,
+    "MB_ATT_MINIGUN": 192,
+    "MB_ATT_HULL_REPAIR": 193,
+    "MB_ATT_SECURITY_INTERFACE": 194,
+    "MB_ATT_DEKA_FIREPOWER": 195,
+    "MB_ATT_CLOAK": 196,
+    "MB_ATT_SPAWNER": 197,
+    "MB_ATT_STIMPACK": 198,
+    "MB_ATT_PSHIELD": 199,
+    "MB_ATT_BASESEEKER": 200,
+    "MB_ATT_SHOCKFIELD": 201,
+    "MB_ATT_BACTA": 202,
+    "MB_ATT_BACTA_BIG": 203,
+    "MB_ATT_BINOCULARS": 204,
+    "MB_ATT_EWEB": 205,
+    "MB_ATT_FORCEFIELD": 206,
+    "MB_ATT_MEDI_PACK": 207,
+    "MB_ATT_AMMO_PACK": 208,
+    "MB_ATT_DEFLECT": 209,
+    "MB_ATT_FORCEBLOCK": 210,
+    "MB_ATT_FORCEFOCUS": 211,
+    "MB_ATT_FORCEATTUNE": 212,
+    "MB_ATT_GUN_DEFENSE": 213,
+    "MB_ATT_SABER_FAST": 214,
+    "MB_ATT_SABER_MEDIUM": 215,
+    "MB_ATT_SABER_STRONG": 216,
+    "MB_ATT_SABER_DOUBLES": 217,
+    "MB_ATT_SABER_MASTERY": 218,
+    "MB_ATT_SABER_COMBO": 219,
+    "MB_ATT_SABER_COMBO_NONE": 220,
+    "MB_ATT_SS_YELLOWSTYLE": 221,
+    "MB_ATT_SS_BLUESTYLE": 222,
+    "MB_ATT_SS_REDSTYLE": 223,
+    "MB_ATT_SS_PURPLESTYLE": 224,
+    "MB_ATT_SS_CYANSTYLE": 225,
+    "MB_ATT_SS_GREENSTYLE": 226,
+    "MB_ATT_SS_DUALSTYLE": 227,
+    "MB_ATT_SS_STAFFSTYLE": 228,
+    "MB_ATT_SPRINT": 229,
+    "MB_ATT_FP_MIRALUKA": 230,
+    "MB_ATT_GUNBASH": 231,
+    "MB_ATT_ROSHTAUNT": 232,
+    "MB_ATT_FP_REPULSE": 233,
+    "MB_ATT_FLIPKICK": 234,
+    "MB_ATT_LIGHTS_BEACON": 235,
+    "MB_ATT_TRIP_MINES": 236,
+    "MB_ATT_MANUALSABERTHROW": 237,
+    "MB_ATT_ASTRO_JUMPJETS": 238,
+    "MB_ATT_HEAT_DUMPS": 239,
+    "MB_ATT_WELDING_LASER": 240,
+    "MB_ATT_SHOCK_ARM": 241,
+    "MB_ATT_FIRE_EXTINGUISHER": 242,
+    "MB_ATT_DATA_SPIKES": 243,
+    "MB_ATT_WATER_BREATHING": 244,
+    "MB_ATT_SBD_BATTERY": 245,
+    "MB_ATT_SBD_MODE_ARMOR": 246,
+    "MB_ATT_SBD_MODE_SPEED": 247,
+    "MB_ATT_SBD_MODE_FIREPOWER": 248,
+    "MB_ATT_SBD_MODE_STRENGTH": 249,
+    "MB_ATT_SBD_WRISTROCKET": 250,
+    "MB_ATT_SBD_DUALBLASTERS": 251,
+    "MB_ATT_WRIST_AMMO": 252,
+    "MB_RES_ENERGY": 253,
+    "MB_RES_STAMINA": 254,
+    "MB_RES_RAGE": 255,
+    "MB_RES_BATTERY": 256,
+    "MB_RES_STABILITY": 257,
+    "MB_ATT_INAIR_FORCE_REGEN": 258,
+    "MB_ATT_BUNNY_HOP": 259,
+    "MB_ATT_FLOAT_HOP": 260,
+    "MB_ATT_GRAPPLE_HOP": 261,
+    "MB_ATT_TRACKING_BEACON": 262,
+    "MB_ATT_SUPPLYDROP": 263,
+    "MB_ATT_USE_DISTANCE": 264,
+    "MB_ATT_DISP_HEALTH": 265,
+    "MB_ATT_DISP_AMMO": 266,
+    "MB_ATT_DISP_ARMOR": 267,
+    "MB_ATT_DISP_FORCE": 268,
+    "MB_ATT_DISP_BLOCK": 269,
+    "MB_ATT_DROP_HEALTH": 270,
+    "MB_ATT_DROP_AMMO": 271,
+    "MB_ATT_DROP_ARMOR": 272,
+    "MB_ATT_DROP_FORCE": 273,
+    "MB_ATT_DROP_BLOCK": 274,
+    "MB_ATT_STIM_HEALTH": 275,
+    "MB_ATT_STIM_AMMO": 276,
+    "MB_ATT_STIM_ARMOR": 277,
+    "MB_ATT_STIM_FORCE": 278,
+    "MB_ATT_STIM_BLOCK": 279,
+    "MB_ATT_THROWER_LIGHTNING": 280,
+    "MB_ATT_THROWER_ICE": 281,
+    "MB_ATT_THROWER_POISON": 282,
+    "MB_ATT_THROWER_PLASMA": 283,
+    "MB_ATT_THROWER_FLAME": 284,
+    "MB_ATT_REMOTE_DETONATE": 285,
+    "MB_ATT_GETUPS": 286,
+    "MB_ATT_ENV_PROT": 287,
+    "MB_ATT_ROUNDSPAWNER": 288,
+    "MB_ATT_REPEATER_NADES": 289,
+    "MB_ATT_FLECHETTE_NADES": 290,
+    "MB_ATT_FLECHETTE_ALT_NUM": 291,
+    "MB_ATT_DEMP2_BLASTS": 292,
+    "MB_ATT_EQUALIZER": 293,
+    "MB_ATT_SPEEDLUNGE": 294,
+    "MB_ATT_BARGE": 295,
+    "MB_ATT_SABER": 296,
+    "MB_ATT_PETCONTROL": 297,
+    "MB_ATT_SELFEXPLODE": 298,
+    "MB_ATT_ENEMYSCANNER": 299,
+    "MB_ATT_CYBERNETICS": 300,
+    "NO_OF_MB_ATTRIBUTES": 301
+  },
   "allAttributeIds": [
-    "MB_ATT_NOATTRIBUTE",
-    "MB_ATT_HEALTH",
-    "MB_ATT_ARMOR",
-    "MB_ATT_STAMINA",
-    "MB_ATT_FUEL",
-    "MB_ATT_FORCEPOOL",
-    "MB_ATT_FORCEREGEN",
-    "MB_ATT_PUSH",
-    "MB_ATT_PULL",
-    "MB_ATT_SPEED",
-    "MB_ATT_JUMP",
-    "MB_ATT_GRIP",
-    "MB_ATT_LIGHTNING",
-    "MB_ATT_MINDTRICK",
-    "MB_ATT_HEAL",
-    "MB_ATT_RAGE",
-    "MB_ATT_PROTECT",
-    "MB_ATT_ABSORB",
-    "MB_ATT_DRAIN",
-    "MB_ATT_SEEING",
-    "MB_ATT_SABERTHROW",
-    "MB_ATT_PROJECTION",
-    "MB_ATT_DESTRUCTION",
-    "MB_ATT_DEADLYSIGHT",
-    "MB_ATT_STASIS",
-    "MB_ATT_SABER_OFFENSE",
-    "MB_ATT_SABER_DEFENSE",
-    "MB_ATT_STYLE_FAST",
-    "MB_ATT_STYLE_MEDIUM",
-    "MB_ATT_STYLE_STRONG",
-    "MB_ATT_STYLE_DESANN",
-    "MB_ATT_STYLE_TAVION",
-    "MB_ATT_STYLE_DUAL",
-    "MB_ATT_STYLE_STAFF",
-    "MB_ATT_DUALWIELD",
-    "MB_ATT_SABERSTAFF",
-    "MB_ATT_PISTOL1",
-    "MB_ATT_PISTOL2",
-    "MB_ATT_PISTOL3",
-    "MB_ATT_PISTOL4",
-    "MB_ATT_PISTOL5",
-    "MB_ATT_RIFLE1",
-    "MB_ATT_RIFLE2",
-    "MB_ATT_RIFLE3",
-    "MB_ATT_RIFLE4",
-    "MB_ATT_RIFLE5",
+    "MB_ATT_FP_HEAL",
+    "MB_ATT_FP_LEVITATION",
+    "MB_ATT_FP_SPEED",
+    "MB_ATT_FP_PUSH",
+    "MB_ATT_FP_PULL",
+    "MB_ATT_FP_TELEPATHY",
+    "MB_ATT_FP_GRIP",
+    "MB_ATT_FP_LIGHTNING",
+    "MB_ATT_FP_RAGE",
+    "MB_ATT_FP_PROTECT",
+    "MB_ATT_FP_ABSORB",
+    "MB_ATT_FP_TEAM_HEAL",
+    "MB_ATT_FP_TEAM_FORCE",
+    "MB_ATT_FP_DRAIN",
+    "MB_ATT_FP_SEE",
+    "MB_ATT_FP_SABER_OFFENSE",
+    "MB_ATT_FP_SABER_DEFENSE",
+    "MB_ATT_FP_SABERTHROW",
+    "MB_ATT_FP_BLIND",
+    "MB_ATT_FP_DESTRUCTION",
+    "MB_ATT_FP_PROJECTION",
+    "MB_ATT_FP_DEADLYSIGHT",
+    "MB_ATT_FP_STASIS",
+    "MB_ATT_FP_BATTLEMED",
+    "MB_ATT_FP_DOMINATION",
+    "MB_ATT_FP_DARKRAGE",
+    "MB_ATT_PISTOL",
     "MB_ATT_BLASTER",
-    "MB_ATT_CARBINE",
-    "MB_ATT_REPEATER",
-    "MB_ATT_BOWCASTER",
     "MB_ATT_DISRUPTOR",
-    "MB_ATT_CONCUSSION",
-    "MB_ATT_FLECHETTE",
-    "MB_ATT_SHOTGUN",
-    "MB_ATT_PLX",
-    "MB_ATT_ROCKET",
-    "MB_ATT_MINIGUN",
-    "MB_ATT_DEMP2",
-    "MB_ATT_T21",
-    "MB_ATT_DLT19",
+    "MB_ATT_BOWCASTER",
+    "MB_ATT_SWORD",
+    "MB_ATT_DURABILITY",
+    "MB_ATT_SENTRY",
+    "MB_ATT_LASERCOVER",
+    "MB_ATT_ACROBACY",
+    "MB_ATT_DRONE",
+    "MB_ATT_WPFLAMETHROWER",
+    "MB_ATT_CLONERIFLE",
+    "MB_ATT_PROJECTILE_RIFLE",
     "MB_ATT_A280",
+    "MB_ATT_THERMALS",
+    "MB_ATT_HEALTH",
+    "MB_ATT_ARMOUR",
+    "MB_ATT_AMMO",
+    "MB_ATT_POWER",
+    "MB_ATT_REGEN",
+    "MB_ATT_AP_MULTIPLIER",
+    "MB_ATT_BP_MULTIPLIER",
+    "MB_ATT_CS_MULTIPLIER",
+    "MB_ATT_AS_MULTIPLIER",
+    "MB_ATT_FP_MULTIPLIER",
+    "MB_ATT_ROF_MULTIPLIER",
+    "MB_ATT_STM_MULTIPLIER",
+    "MB_ATT_HACK_MULTIPLIER",
+    "MB_ATT_KB_TAKEN_MULTIPLIER",
+    "MB_ATT_KB_GIVEN_MULTIPLIER",
+    "MB_ATT_DMG_TAKEN_MULTIPLIER",
+    "MB_ATT_DMG_GIVEN_MULTIPLIER",
+    "MB_ATT_BASESPEED",
+    "MB_ATT_SABER_DAMAGE",
+    "MB_ATT_SABERTHROW_DAMAGE",
+    "MB_ATT_SABERSPECIAL_DAMAGE",
+    "MB_ATT_SABER_MAXCHAIN",
+    "MB_ATT_MODELSCALE_MULTIPLIER",
+    "MB_ATT_ROF_MELEE_MULTIPLIER",
+    "MB_ATT_HEALTH_REGEN_CAP",
+    "MB_ATT_HEALTH_REGEN_AMOUNT",
+    "MB_ATT_HEALTH_REGEN_RATE",
+    "MB_ATT_ARMOUR_REGEN_CAP",
+    "MB_ATT_ARMOUR_REGEN_AMOUNT",
+    "MB_ATT_ARMOUR_REGEN_RATE",
+    "MB_ATT_RESOURCE_REGEN_CAP",
+    "MB_ATT_RESOURCE_REGEN_AMOUNT",
+    "MB_ATT_RESOURCE_REGEN_RATE",
+    "MB_ATT_BLOCK_REGEN_CAP",
+    "MB_ATT_BLOCK_REGEN_AMOUNT",
+    "MB_ATT_BLOCK_REGEN_RATE",
+    "MB_ATT_RESPAWNS",
+    "MB_ATT_DODGE",
+    "MB_ATT_HEALING",
+    "MB_ATT_FLAMETHROWER",
+    "MB_ATT_FUEL",
+    "MB_ATT_FUELREGEN",
+    "MB_ATT_ROCKET",
+    "MB_ATT_WOOKIE_HEALTH",
+    "MB_ATT_WOOKIE_STRENGTH",
+    "MB_ATT_HULL_STRENGTH",
+    "MB_ATT_SHIELD_PROJ",
+    "MB_ATT_DEKA_SHIELD",
+    "MB_ATT_DEKA_HULL",
+    "MB_ATT_DEKA_DEPLOY",
+    "MB_ATT_DEKA_POWER",
+    "MB_ATT_TURN_RATE",
+    "MB_ATT_FIREPOWER",
+    "MB_ATT_FIRERATE",
+    "MB_ATT_QUICKTHROW",
+    "MB_ATT_RECHARGE",
+    "MB_ATT_STAMINA",
+    "MB_ATT_DEXTERITY",
+    "MB_ATT_KNOCKDOWN_ROLL",
+    "MB_ATT_PULSE_GRENADES",
+    "MB_ATT_TRACKING_DART",
+    "MB_ATT_POISON_DART",
+    "MB_ATT_JETPACK",
+    "MB_ATT_PLX1",
+    "MB_ATT_T21",
+    "MB_ATT_CLONEBLOBS",
+    "MB_ATT_CORTOSIS",
+    "MB_ATT_BLAST_ARMOUR",
+    "MB_ATT_MAGNETIC_PLATING",
+    "MB_ATT_WOOKIE_BALANCE",
+    "MB_ATT_CCTRAINING",
+    "MB_ATT_ET_CCTRAINING",
+    "MB_ATT_MD_CCTRAINING",
+    "MB_ATT_SBD_CANNON",
+    "MB_ATT_WRISTLASER",
+    "MB_ATT_SHOCKWAVE",
+    "MB_ATT_SHIELD_RECHARGE",
+    "MB_ATT_SHIELD_RECHARGE2",
+    "MB_ATT_RALLY",
+    "MB_ATT_ASSEMBLE",
+    "MB_ATT_SPY_DISGUISE",
+    "MB_ATT_ARC_RIFLE_SCOPE",
+    "MB_ATT_ARC_RIFLE_GRENADELAUNCHER",
+    "MB_ATT_WOOKIEE_FURY",
+    "MB_ATT_WOOKIEE_AGILITY",
+    "MB_ATT_ANTI_MT",
+    "MB_ATT_ZOOM",
+    "MB_ATT_RADAR",
+    "MB_ATT_GRAPPLE_HOOK",
+    "MB_ATT_FIBERCORD_WHIP",
+    "MB_ATT_FIRE_GRENADES",
+    "MB_ATT_CRYOBAN_GRENADES",
+    "MB_ATT_SONIC_DETONATOR",
+    "MB_ATT_QUICKDRAW",
+    "MB_ATT_MICRO_GRENADES",
+    "MB_ATT_IMPACT_NADE",
+    "MB_ATT_BACTA_BOMB",
+    "MB_ATT_GAS_NADE",
+    "MB_ATT_FLASH_NADE",
+    "MB_ATT_GLOP_NADE",
+    "MB_ATT_IMPLODER_NADE",
+    "MB_ATT_SMOKE_NADE",
+    "MB_ATT_SHIELD_NADE",
+    "MB_ATT_PROTON_NADE",
+    "MB_ATT_STRONGBLOBS",
+    "MB_ATT_STEALTH",
+    "MB_ATT_BACKSTAB",
+    "MB_ATT_DASH",
+    "MB_ATT_DASH_JUMP",
+    "MB_ATT_VIEWBASEDDRAIN",
+    "MB_ATT_CLONE_PISTOL",
+    "MB_ATT_MANDO_PISTOL",
+    "MB_ATT_SPY_PISTOL",
+    "MB_ATT_IMP_PISTOL",
+    "MB_ATT_KNIFE",
+    "MB_ATT_ELECTRO_STAFF",
+    "MB_ATT_SHOTGUN",
+    "MB_ATT_WESTARM5",
+    "MB_ATT_DLT20A",
+    "MB_ATT_FRAGS",
     "MB_ATT_EE3",
     "MB_ATT_EE4",
     "MB_ATT_AMBAN",
-    "MB_ATT_PROJRIFLE",
-    "MB_ATT_THERMAL",
-    "MB_ATT_THERMALDET",
-    "MB_ATT_FRAG",
-    "MB_ATT_PULSE",
-    "MB_ATT_SONIC",
-    "MB_ATT_FIRE",
-    "MB_ATT_CRYO",
-    "MB_ATT_CONC",
-    "MB_ATT_IMPACT",
-    "MB_ATT_DETPACK",
-    "MB_ATT_TRIPMINE",
-    "MB_ATT_JETPACK",
+    "MB_ATT_BESKAR",
+    "MB_ATT_WHISTLINGBIRD",
+    "MB_ATT_CR2",
+    "MB_ATT_DC_CARBINE",
+    "MB_ATT_E_22",
+    "MB_ATT_HEAVY_PISTOL",
+    "MB_ATT_DLT19",
+    "MB_ATT_TRAD_BOWCASTER",
+    "MB_ATT_IONRIFLE",
+    "MB_ATT_REPEATER",
+    "MB_ATT_FLECHETTE",
+    "MB_ATT_DEMP2",
+    "MB_ATT_THROWER",
+    "MB_ATT_DET_PACK",
+    "MB_ATT_CONCUSSION",
+    "MB_ATT_ROCKET_LAUNCHER",
+    "MB_ATT_BRYAR_OLD",
+    "MB_ATT_STUN_BATON",
+    "MB_ATT_BASE_TD",
+    "MB_ATT_UGL",
+    "MB_ATT_UGL_BURST",
+    "MB_ATT_UGL_IMPACT",
+    "MB_ATT_UGL_BURST_MIXED",
+    "MB_ATT_MGL",
+    "MB_ATT_MGL_IMPACT",
+    "MB_ATT_MGL_BURST",
+    "MB_ATT_STICKY_BOMBS",
+    "MB_ATT_MINIGUN",
+    "MB_ATT_HULL_REPAIR",
+    "MB_ATT_SECURITY_INTERFACE",
+    "MB_ATT_DEKA_FIREPOWER",
     "MB_ATT_CLOAK",
+    "MB_ATT_SPAWNER",
+    "MB_ATT_STIMPACK",
+    "MB_ATT_PSHIELD",
+    "MB_ATT_BASESEEKER",
+    "MB_ATT_SHOCKFIELD",
     "MB_ATT_BACTA",
-    "MB_ATT_RALLY",
+    "MB_ATT_BACTA_BIG",
     "MB_ATT_BINOCULARS",
-    "MB_ATT_SENTRY",
     "MB_ATT_EWEB",
-    "MB_ATT_SEEKER",
     "MB_ATT_FORCEFIELD",
-    "MB_ATT_SHIELD",
-    "MB_ATT_FLAMETHROWER",
-    "MB_ATT_GRAPPLE",
-    "MB_ATT_CORTOSIS",
-    "MB_ATT_WRISTROCKET",
-    "MB_ATT_WRISTLASER",
-    "MB_ATT_DARTS",
-    "MB_ATT_MELEE",
-    "MB_ATT_GUNBASH",
-    "MB_ATT_DODGE",
-    "MB_ATT_DASH",
-    "MB_ATT_BLOCK",
+    "MB_ATT_MEDI_PACK",
+    "MB_ATT_AMMO_PACK",
     "MB_ATT_DEFLECT",
-    "MB_ATT_REFLECT",
-    "MB_ATT_TRACKING",
-    "MB_ATT_EMPATHY",
-    "MB_ATT_ENHANCED_VISION",
-    "MB_ATT_ROLL",
-    "MB_ATT_WALLRUN",
-    "MB_ATT_WALLGRAB",
-    "MB_ATT_WALLFLIP",
-    "MB_ATT_CARTWHEEL",
-    "MB_ATT_BUTTERFLY",
-    "MB_ATT_LONGFLIP",
-    "MB_ATT_QUICKGETUP",
-    "MB_ATT_DROIDWEAPON1",
-    "MB_ATT_DROIDWEAPON2",
-    "MB_ATT_DROIDWEAPON3",
-    "MB_ATT_DROIDSHIELD",
-    "MB_ATT_DROIDEMP",
-    "MB_ATT_SBDPUNCH",
-    "MB_ATT_SBDCHARGE",
-    "MB_ATT_DROIDROLLOUT",
-    "MB_ATT_WOOKIEEBOWCASTER",
-    "MB_ATT_WOOKIEERAGE",
-    "MB_ATT_WOOKIEESTRENGTH",
-    "MB_ATT_MANDOPISTOL",
-    "MB_ATT_MANDOFLAME",
-    "MB_ATT_MANDOROCKET",
-    "MB_ATT_MANDODART",
-    "MB_ATT_DC17",
-    "MB_ATT_DC15A",
-    "MB_ATT_DC15S",
-    "MB_ATT_Z6",
-    "MB_ATT_ELECTROSTAFF",
-    "MB_ATT_HEALING",
-    "MB_ATT_REVIVE",
-    "MB_ATT_POISON",
-    "MB_ATT_ANTIDOTE",
-    "MB_ATT_BHTRACKING",
-    "MB_ATT_BHPOISON",
-    "MB_ATT_BHFLAME",
-    "MB_ATT_FLASHBANG",
-    "MB_ATT_SMOKEBOMB",
-    "MB_ATT_AMMO",
-    "MB_ATT_POWERUP",
-    "MB_ATT_HACKING",
-    "MB_ATT_SLICING",
-    "MB_ATT_DISGUISE"
+    "MB_ATT_FORCEBLOCK",
+    "MB_ATT_FORCEFOCUS",
+    "MB_ATT_FORCEATTUNE",
+    "MB_ATT_GUN_DEFENSE",
+    "MB_ATT_SABER_FAST",
+    "MB_ATT_SABER_MEDIUM",
+    "MB_ATT_SABER_STRONG",
+    "MB_ATT_SABER_DOUBLES",
+    "MB_ATT_SABER_MASTERY",
+    "MB_ATT_SABER_COMBO",
+    "MB_ATT_SABER_COMBO_NONE",
+    "MB_ATT_SS_YELLOWSTYLE",
+    "MB_ATT_SS_BLUESTYLE",
+    "MB_ATT_SS_REDSTYLE",
+    "MB_ATT_SS_PURPLESTYLE",
+    "MB_ATT_SS_CYANSTYLE",
+    "MB_ATT_SS_GREENSTYLE",
+    "MB_ATT_SS_DUALSTYLE",
+    "MB_ATT_SS_STAFFSTYLE",
+    "MB_ATT_SPRINT",
+    "MB_ATT_FP_MIRALUKA",
+    "MB_ATT_GUNBASH",
+    "MB_ATT_ROSHTAUNT",
+    "MB_ATT_FP_REPULSE",
+    "MB_ATT_FLIPKICK",
+    "MB_ATT_LIGHTS_BEACON",
+    "MB_ATT_TRIP_MINES",
+    "MB_ATT_MANUALSABERTHROW",
+    "MB_ATT_ASTRO_JUMPJETS",
+    "MB_ATT_HEAT_DUMPS",
+    "MB_ATT_WELDING_LASER",
+    "MB_ATT_SHOCK_ARM",
+    "MB_ATT_FIRE_EXTINGUISHER",
+    "MB_ATT_DATA_SPIKES",
+    "MB_ATT_WATER_BREATHING",
+    "MB_ATT_SBD_BATTERY",
+    "MB_ATT_SBD_MODE_ARMOR",
+    "MB_ATT_SBD_MODE_SPEED",
+    "MB_ATT_SBD_MODE_FIREPOWER",
+    "MB_ATT_SBD_MODE_STRENGTH",
+    "MB_ATT_SBD_WRISTROCKET",
+    "MB_ATT_SBD_DUALBLASTERS",
+    "MB_ATT_WRIST_AMMO",
+    "MB_RES_ENERGY",
+    "MB_RES_STAMINA",
+    "MB_RES_RAGE",
+    "MB_RES_BATTERY",
+    "MB_RES_STABILITY",
+    "MB_ATT_INAIR_FORCE_REGEN",
+    "MB_ATT_BUNNY_HOP",
+    "MB_ATT_FLOAT_HOP",
+    "MB_ATT_GRAPPLE_HOP",
+    "MB_ATT_TRACKING_BEACON",
+    "MB_ATT_SUPPLYDROP",
+    "MB_ATT_USE_DISTANCE",
+    "MB_ATT_DISP_HEALTH",
+    "MB_ATT_DISP_AMMO",
+    "MB_ATT_DISP_ARMOR",
+    "MB_ATT_DISP_FORCE",
+    "MB_ATT_DISP_BLOCK",
+    "MB_ATT_DROP_HEALTH",
+    "MB_ATT_DROP_AMMO",
+    "MB_ATT_DROP_ARMOR",
+    "MB_ATT_DROP_FORCE",
+    "MB_ATT_DROP_BLOCK",
+    "MB_ATT_STIM_HEALTH",
+    "MB_ATT_STIM_AMMO",
+    "MB_ATT_STIM_ARMOR",
+    "MB_ATT_STIM_FORCE",
+    "MB_ATT_STIM_BLOCK",
+    "MB_ATT_THROWER_LIGHTNING",
+    "MB_ATT_THROWER_ICE",
+    "MB_ATT_THROWER_POISON",
+    "MB_ATT_THROWER_PLASMA",
+    "MB_ATT_THROWER_FLAME",
+    "MB_ATT_REMOTE_DETONATE",
+    "MB_ATT_GETUPS",
+    "MB_ATT_ENV_PROT",
+    "MB_ATT_ROUNDSPAWNER",
+    "MB_ATT_REPEATER_NADES",
+    "MB_ATT_FLECHETTE_NADES",
+    "MB_ATT_FLECHETTE_ALT_NUM",
+    "MB_ATT_DEMP2_BLASTS",
+    "MB_ATT_EQUALIZER",
+    "MB_ATT_SPEEDLUNGE",
+    "MB_ATT_BARGE",
+    "MB_ATT_SABER",
+    "MB_ATT_PETCONTROL",
+    "MB_ATT_SELFEXPLODE",
+    "MB_ATT_ENEMYSCANNER",
+    "MB_ATT_CYBERNETICS"
   ]
 }

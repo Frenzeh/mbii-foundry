@@ -47,22 +47,29 @@ import (
 
 const maxSkinVariants = 25
 
-// SkinVariantsEditor renders the list of variants + an "add" button.
 type SkinVariantsEditor struct {
 	editor *MBCHEditor
 
-	container *fyne.Container
-	listBox   *fyne.Container
+	container     *fyne.Container
+	listBox       *fyne.Container
+	comparisonBox *fyne.Container
+
+	// Comparison previews mapped by index so rows can update them live
+	comparisonPreviews map[int]*canvas.Image
 }
 
 func NewSkinVariantsEditor(editor *MBCHEditor) *SkinVariantsEditor {
-	sve := &SkinVariantsEditor{editor: editor}
+	sve := &SkinVariantsEditor{
+		editor:             editor,
+		comparisonPreviews: make(map[int]*canvas.Image),
+	}
 	sve.createUI()
 	return sve
 }
 
 func (sve *SkinVariantsEditor) createUI() {
 	sve.listBox = container.NewVBox()
+	sve.comparisonBox = container.NewHBox()
 
 	addBtn := widget.NewButtonWithIcon("Add skin variant", theme.ContentAddIcon(),
 		sve.addVariant)
@@ -73,6 +80,7 @@ func (sve *SkinVariantsEditor) createUI() {
 
 	sve.container = container.NewVBox(
 		container.NewPadded(note),
+		container.NewHScroll(container.NewPadded(sve.comparisonBox)),
 		container.NewPadded(addBtn),
 		sve.listBox,
 	)
@@ -86,36 +94,93 @@ func (sve *SkinVariantsEditor) GetContent() fyne.CanvasObject {
 // and after any add/remove mutation.
 func (sve *SkinVariantsEditor) Refresh() {
 	sve.listBox.Objects = nil
+	sve.comparisonBox.Objects = nil
+	for k := range sve.comparisonPreviews {
+		delete(sve.comparisonPreviews, k)
+	}
 
 	ch := sve.editor.character
 	if ch.ExtraFields == nil {
 		ch.ExtraFields = map[string]string{}
 	}
+
+	// Add base variant comparison
+	sve.comparisonBox.Add(sve.buildComparisonPortrait(0))
 
 	// Collect every variant index that has at least one field set
 	// (model_N, skin_N, uishader_N). Sorted ascending so the rows
 	// render 1, 2, 3, …
 	indices := collectVariantIndices(ch.ExtraFields)
 	for _, idx := range indices {
+		sve.comparisonBox.Add(sve.buildComparisonPortrait(idx))
 		sve.listBox.Add(sve.buildRow(idx))
 	}
 	sve.listBox.Refresh()
+	sve.comparisonBox.Refresh()
 }
 
-// addVariant appends a new row at the next free index — keeps the
-// variant list contiguous (no gaps) which matches how the game
-// iterates them. Respects the cap.
+func (sve *SkinVariantsEditor) buildComparisonPortrait(idx int) fyne.CanvasObject {
+	ch := sve.editor.character
+	var model, skin, shader, labelText string
+
+	if idx == 0 {
+		model = ch.Model
+		skin = ch.Skin
+		shader = ch.UIShader
+		labelText = "Base"
+	} else {
+		model = ch.ExtraFields[fmt.Sprintf("model_%d", idx)]
+		skin = ch.ExtraFields[fmt.Sprintf("skin_%d", idx)]
+		shader = ch.ExtraFields[fmt.Sprintf("uishader_%d", idx)]
+		labelText = fmt.Sprintf("Variant %d", idx)
+	}
+
+	preview := canvas.NewImageFromResource(theme.FileImageIcon())
+	preview.FillMode = canvas.ImageFillContain
+	preview.ScaleMode = canvas.ImageScaleSmooth
+	preview.SetMinSize(fyne.NewSize(64, 64))
+
+	if sve.editor.iconResolver != nil && sve.editor.assetBrowser != nil {
+		candidates := sve.editor.iconResolver.ResolveClassIconCandidates(model, skin, shader)
+		resolved := false
+		for _, candidate := range candidates {
+			if res := sve.editor.assetBrowser.LoadIconResource(candidate); res != nil {
+				setRasterPreview(preview, res)
+				resolved = true
+				break
+			}
+		}
+		if !resolved {
+			setRasterPreview(preview, nil)
+		}
+	} else {
+		setRasterPreview(preview, nil)
+	}
+
+	lbl := widget.NewLabelWithStyle(labelText, fyne.TextAlignCenter, fyne.TextStyle{Bold: true, Monospace: true})
+	sve.comparisonPreviews[idx] = preview
+	return container.NewVBox(preview, lbl)
+}
+
+// addVariant fills the first free slot. Existing files can contain sparse
+// indices, and filling a gap must never overwrite or renumber later variants.
 func (sve *SkinVariantsEditor) addVariant() {
 	ch := sve.editor.character
 	if ch.ExtraFields == nil {
 		ch.ExtraFields = map[string]string{}
 	}
-	indices := collectVariantIndices(ch.ExtraFields)
-	next := 1
-	if len(indices) > 0 {
-		next = indices[len(indices)-1] + 1
+	used := make(map[int]bool)
+	for _, idx := range collectVariantIndices(ch.ExtraFields) {
+		used[idx] = true
 	}
-	if next > maxSkinVariants {
+	next := 0
+	for idx := 1; idx <= maxSkinVariants; idx++ {
+		if !used[idx] {
+			next = idx
+			break
+		}
+	}
+	if next == 0 {
 		dialog.ShowInformation("Variant limit reached",
 			fmt.Sprintf("Foundry caps variants at %d. Delete one to add another.", maxSkinVariants),
 			sve.editor.app.mainWindow)
@@ -152,23 +217,26 @@ func (sve *SkinVariantsEditor) buildRow(idx int) fyne.CanvasObject {
 	preview.ScaleMode = canvas.ImageScaleSmooth
 	preview.SetMinSize(fyne.NewSize(64, 64))
 	refreshPreview := func() {
-		if sve.editor.iconResolver == nil || sve.editor.assetBrowser == nil {
-			setRasterPreview(preview, nil)
-			return
-		}
-		model := ch.ExtraFields[modelKey]
-		skin := ch.ExtraFields[skinKey]
-		shader := ch.ExtraFields[shaderKey]
+		var resolvedRes fyne.Resource
 
-		candidates := sve.editor.iconResolver.ResolveClassIconCandidates(model, skin, shader)
-		for _, candidate := range candidates {
-			if res := sve.editor.assetBrowser.LoadIconResource(candidate); res != nil {
-				setRasterPreview(preview, res)
-				return
+		if sve.editor.iconResolver != nil && sve.editor.assetBrowser != nil {
+			model := ch.ExtraFields[modelKey]
+			skin := ch.ExtraFields[skinKey]
+			shader := ch.ExtraFields[shaderKey]
+
+			candidates := sve.editor.iconResolver.ResolveClassIconCandidates(model, skin, shader)
+			for _, candidate := range candidates {
+				if res := sve.editor.assetBrowser.LoadIconResource(candidate); res != nil {
+					resolvedRes = res
+					break
+				}
 			}
 		}
 
-		setRasterPreview(preview, nil)
+		setRasterPreview(preview, resolvedRes)
+		if comp, ok := sve.comparisonPreviews[idx]; ok && comp != nil {
+			setRasterPreview(comp, resolvedRes)
+		}
 	}
 	refreshPreview()
 
@@ -257,15 +325,9 @@ func (sve *SkinVariantsEditor) buildRow(idx int) fyne.CanvasObject {
 		dialog.ShowConfirm("Remove variant",
 			fmt.Sprintf("Remove variant #%d?", idx),
 			func(ok bool) {
-				if !ok {
-					return
+				if ok {
+					sve.removeVariant(idx)
 				}
-				for _, k := range []string{modelKey, skinKey, shaderKey,
-					rgbKey, redKey, greenKey, blueKey} {
-					delete(ch.ExtraFields, k)
-				}
-				sve.editor.markDirty()
-				sve.Refresh()
 			},
 			sve.editor.app.mainWindow)
 	})
@@ -290,6 +352,18 @@ func (sve *SkinVariantsEditor) buildRow(idx int) fyne.CanvasObject {
 
 	body := container.NewVBox(header, form, rgbCheck, rgbContainer)
 	return widget.NewCard("", "", body)
+}
+
+func (sve *SkinVariantsEditor) removeVariant(idx int) {
+	suffix := strconv.Itoa(idx)
+	for _, prefix := range []string{
+		"model_", "skin_", "uishader_",
+		"userRGB_", "customred_", "customgreen_", "customblue_",
+	} {
+		delete(sve.editor.character.ExtraFields, prefix+suffix)
+	}
+	sve.editor.markDirty()
+	sve.Refresh()
 }
 
 // collectVariantIndices scans ExtraFields for model_N / skin_N /

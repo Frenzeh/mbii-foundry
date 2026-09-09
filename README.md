@@ -1,153 +1,233 @@
-```
-███╗   ███╗██████╗ ██╗██╗    ███████╗ ██████╗ ██╗   ██╗███╗   ██╗██████╗ ██████╗ ██╗   ██╗
-████╗ ████║██╔══██╗██║██║    ██╔════╝██╔═══██╗██║   ██║████╗  ██║██╔══██╗██╔══██╗╚██╗ ██╔╝
-██╔████╔██║██████╔╝██║██║    █████╗  ██║   ██║██║   ██║██╔██╗ ██║██║  ██║██████╔╝ ╚████╔╝
-██║╚██╔╝██║██╔══██╗██║██║    ██╔══╝  ██║   ██║██║   ██║██║╚██╗██║██║  ██║██╔══██╗  ╚██╔╝
-██║ ╚═╝ ██║██████╔╝██║██║    ██║     ╚██████╔╝╚██████╔╝██║ ╚████║██████╔╝██║  ██║   ██║
-╚═╝     ╚═╝╚═════╝ ╚═╝╚═╝    ╚═╝      ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚═════╝ ╚═╝  ╚═╝   ╚═╝
-
-                    W H E R E   T E X T    I S   F O R G E D
-```
+# MBII Foundry
 
 [![CI](https://github.com/Frenzeh/mbii-foundry/actions/workflows/ci.yml/badge.svg)](https://github.com/Frenzeh/mbii-foundry/actions/workflows/ci.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Go version](https://img.shields.io/github/go-mod/go-version/Frenzeh/mbii-foundry?filename=go_module%2Fgo.mod)](go_module/go.mod)
 [![Release](https://img.shields.io/github/v/release/Frenzeh/mbii-foundry?include_prereleases&label=release)](https://github.com/Frenzeh/mbii-foundry/releases)
 
-> A visual content editor for **Movie Battles II**. Shape classes, sabers, and vehicles without wrestling raw config syntax.
+MBII Foundry is a standalone desktop editor for Movie Battles II text content.
+It provides visual forms, a live source view, asset lookup, validation, and
+packaging without requiring an account or an online service for local editing.
 
-**Status:** Alpha — `.mbch` is the primary editor, with known save and round-trip safety limitations. Work on copies of important files. See the [Foundry audit](docs/FOUNDRY_AUDIT.md) for verified findings, current capabilities, and prioritized improvements.
+**Status:** alpha. Review the exact proposed output before saving and test
+authored content in the intended MBII engine revision.
 
----
+## Supported content
 
-## What it does
+| File type | Current editor surface |
+|---|---|
+| `.mbch` | Character identity, models and portraits, classes, weapons, force powers, attributes, overrides, custom skills, point-buy, and developer fields. |
+| `.sab` | Selected identity, type, first-blade, sound, combat, effect, flag, and animation fields. The form offers `SABER_SINGLE` and `SABER_STAFF`; other parsed keys remain available in Source. |
+| `.veh` | Selected identity, movement, armor, shield, and weapon fields. The form offers `VH_SPEEDER`, `VH_ANIMAL`, `VH_WALKER`, and `VH_FIGHTER`; other parsed keys remain available in Source. |
+| `.siege` | Siege teams, rounds, classes, and related parsed fields. |
 
-MBII Foundry is a standalone desktop app for visual editing of MBII's text-based content files. Open a class file, choose weapons and force powers, and adjust attribute levels. Saving regenerates the file; it does not currently preserve every original comment, field, or additional definition block.
+SAB and VEH files may contain multiple top-level definitions. Foundry exposes a
+definition selector and keeps sibling definitions in the document. The visual
+forms do not claim to expose every engine field.
 
-| File type | Editor | Notes |
-|---|---|---|
-| `.mbch` | Character / class | Primary focus. Full attribute grid, force-power picker, weapon selection, class flags, Legends point-buy simulator. |
-| `.sab`  | Saber config | Hilt, blade, style, stats. |
-| `.veh`  | Vehicle | Base stats, weapons, flags. |
-| `.siege` | Siege / FA config | Round rules, class rosters. |
+Other tools include:
 
-Plus:
+- **Source panel:** live would-save text, an editable draft mode, parse
+  diagnostics, Apply, Revert, Copy, and a pop-out mirror.
+- **Undo/redo:** form edits, valid Source applies, JSON imports, templates, and
+  definition switches participate in document history.
+- **Save review:** Save and Save As show the on-disk file beside the exact
+  candidate. A replacement requires a verified backup and checked publication;
+  a file changed after review is not overwritten.
+- **Crash recovery:** dirty `.mbch`, `.sab`, `.veh`, and `.siege` documents,
+  including unapplied Source drafts, are snapshotted under the app configuration
+  directory. Restoring a snapshot opens working state and never writes the
+  original until you explicitly save.
+- **Asset browser and diagnostics:** a merged view of installed PK3s and optional
+  loose TextAssets. Character model/skin badges distinguish found, missing,
+  unreadable, and fallback results and show the winning source.
+- **Team Composer:** creates one siege team per `.mbtc` file, with six contiguous
+  class slots and per-class subclass lists.
+- **Modpacks:** tracks ordinary folders, scaffolds common MBII paths, previews an
+  export manifest, builds PK3s, and exports a source ZIP. Removing a project from
+  Foundry does not delete its folder.
 
-- **Asset browser** — peek at models/textures/sounds directly from PK3s. (wip)
-- **Modpack packager** — bundle your edits into a loadable pk3. (wip)
-- **Validation** — checks selected character, saber, and size constraints. It is advisory and not a guarantee that a file is safe or valid for every engine revision.
-
-## Who it's for
-
-- **Content creators** building custom classes and modpacks.
-- **Balance designers** iterating on FA attribute costs and class power levels.
-- **Players** who want to tweak loadouts without learning the file format.
-
-You do not need to be a programmer. You do not need any AI assistant or backend service. The app works on its own.
+Validation is a focused authoring aid, not proof that content is accepted by
+every MBII release. `File -> Validate Folder` currently scans `.mbch` files for
+parse failures and the engine-required `name`.
 
 ## Install
 
-There are two install paths. **Most people want the Easy Path.** Only use "From Source" if you're on the bleeding edge or there's no prebuilt release for your platform yet.
+### Release archives
 
-### Easy Path — prebuilt downloads, when available
+When a release provides binaries, download the matching asset from the
+[Releases page](https://github.com/Frenzeh/mbii-foundry/releases):
 
-1. Open the [Releases page](https://github.com/Frenzeh/mbii-foundry/releases).
-2. Find the latest release → scroll to **Assets**.
-3. Download the file for your OS:
-   - macOS → `MBII.Foundry.app.zip`  → unzip → drag to **Applications**.
-   - Windows → `mbii-foundry-windows.zip` → unzip anywhere → double-click `mbii-foundry.exe`.
-   - Linux → `mbii-foundry-linux.tar.gz` → extract → `./mbii-foundry`.
-4. Launch. First run will ask for your **MBII gamedata path** (the folder with the `MBII` subfolder inside your Jedi Academy install). Point it there.
+- macOS: `mbii-foundry-macos-universal.zip` contains `MBII Foundry.app`
+  with both arm64 and x86_64 executable slices.
+- Windows: `mbii-foundry-windows-amd64.zip`.
+- Linux: `mbii-foundry-linux-amd64.tar.gz`.
 
-> **Availability note:** Check the Releases page for a prebuilt download for your platform; otherwise use "From Source" below.
+The release workflow does **not** perform Apple notarization. A macOS bundle is
+Developer ID signed only when release credentials are configured; otherwise it
+is ad-hoc signed and Gatekeeper may require explicit approval on first launch.
+Do not treat an intact ad-hoc signature as publisher identity.
 
-### From Source — for alpha testers and contributors
+### Build from source
 
-You need **Go 1.24 or newer** installed, matching the module and CI configuration.
-
-**Install Go (one-time):**
-- **macOS:** `brew install go` (or download from [go.dev/dl](https://go.dev/dl/))
-- **Windows:** download the MSI from [go.dev/dl](https://go.dev/dl/) and run it
-- **Linux (Ubuntu/Debian):** `sudo apt install golang` (Fedora/Arch users already know the drill)
-
-Verify: open a terminal and run `go version`. Confirm it reports Go 1.24 or newer.
-
-**Build and launch MBII Foundry:**
+Install Go 1.24 or newer. Fyne also needs the platform dependencies documented
+in [Fyne's setup guide](https://docs.fyne.io/started/).
 
 ```bash
 git clone https://github.com/Frenzeh/mbii-foundry.git
 cd mbii-foundry
-./setup_mbii-foundry.sh      # builds the app (first time only, takes ~1 minute)
-./run_mbii-foundry.sh        # launches the app
+./setup_mbii-foundry.sh
+./run_mbii-foundry.sh
 ```
 
-On **Windows**, use the same commands from a Git Bash or WSL terminal. If you're in PowerShell/cmd, run `cd go_module && go build -o mbii-foundry.exe` then double-click `mbii-foundry.exe`.
+The helper scripts require Bash. On native Windows PowerShell:
 
-**Want a double-clickable Mac app?** `./build_app.sh` builds the executable, then directly replaces `/Applications/MBII Foundry.app`. Preserve your existing bundle first; this script does not stage or retain a rollback copy. See the [packaging and setup audit](docs/FOUNDRY_AUDIT.md#setup-packaging-and-portability).
+```powershell
+cd go_module
+go build -ldflags="-H windowsgui" -o mbii-foundry.exe
+.\mbii-foundry.exe
+```
 
-### Update to the latest version
+WSL builds a Linux application; it is not a substitute for a native Windows
+build.
 
-Pull and rebuild:
+On macOS, `./build_app.sh` creates a universal
+`dist/MBII Foundry.app`. It stages and verifies the complete bundle before an
+atomic publish into `dist/`, and restores the prior bundle if publication fails.
+The default local signature is ad-hoc. Setting `FOUNDRY_CODESIGN_IDENTITY`
+selects a local signing identity but still does not notarize the bundle.
+
+## Local setup: GameData and TextAssets
+
+The first-run wizard is for **local asset roots**, not GitHub setup:
+
+1. **GameData** is the Jedi Academy runtime directory containing both `base/`
+   and `MBII/`. It supplies installed PK3 assets and is the recommended root for
+   portraits, skins, sounds, shaders, and in-game testing.
+2. **TextAssets** is an optional checkout or loose-asset tree. It is indexed
+   after GameData, so matching loose files override installed PK3 entries in
+   Foundry's merged view. A TextAssets checkout alone usually does not contain
+   all runtime images.
+3. You may continue without either root and edit local files. Configure paths
+   later in `Edit -> Preferences`.
+
+Paths are machine-local. Use the folder pickers or paste native paths, and
+configure each computer separately; do not copy another machine's absolute
+paths into shared project files.
+
+### Local editing versus contributing
+
+Opening, editing, validating, saving, recovering, and packaging local files
+requires no GitHub account or token. The app does perform a cached GitHub release
+check for update notices; `Help -> Check for Updates` forces a fresh check.
+
+To edit official text assets and contribute them upstream, clone
+[`MBII/TextAssets`](https://github.com/MBII/TextAssets), configure that checkout
+as TextAssets, and use the repository's normal branch and pull-request workflow.
+Foundry's optional contribution connection is separate from Local Setup.
+GitHub tokens are stored in the operating system's native credential store, not
+in `config.json`. A legacy plaintext token is retained until migration to native
+storage can be written and read back successfully.
+
+## Configuration, backups, and logs
+
+Foundry uses the operating system's user configuration directory with an
+`mbii-foundry` child:
+
+- macOS: normally `~/Library/Application Support/mbii-foundry/`
+- Windows: normally `%AppData%\mbii-foundry\`
+- Linux: normally `$XDG_CONFIG_HOME/mbii-foundry/` or
+  `~/.config/mbii-foundry/`
+
+This directory holds preferences, recent files, favorites, project metadata,
+update-check cache, backups, and crash-recovery snapshots. Existing
+`mbii-fa-creator` configuration is copied to the new location on first use and
+left in place as a safety copy. If configuration storage is unavailable, local
+file editing remains available but preferences, favorites, backups, and recovery
+cannot be persisted.
+
+The log is `mbii-foundry.log` in the operating system temporary directory. The
+in-app Debug Logs view redacts configured roots and known credentials before
+display, but still review any diagnostic text before sharing it.
+
+## Bulk editing, teams, and export
+
+- The **Bulk Edit** activity supports parsed top-level keys in `.mbch`, `.sab`,
+  `.veh`, `.siege`, and `.mbtc`; extension matching is case-insensitive.
+  **Add File…** adds one supported file, while **Add Folder…** performs an
+  uncapped recursive scan. Folder scans skip symlinks without following them,
+  canonical paths are de-duplicated, and unsupported, duplicate, or symlinked
+  paths plus read/parse failures remain visible by exact path in the scrollable
+  load report. Newly added files are selected by default; use **Select All**,
+  **Select None**, **Remove Selected**, or **Clear Batch** to adjust the in-app
+  batch without deleting source files.
+- Enter a case-insensitive field key and value, then run **Preview** and inspect
+  every current-to-new row before **Apply to Selected**. Changing the key, value,
+  or selection invalidates the preview. Apply refuses stale files, creates
+  backups, and rolls back already-written files if a later write fails without
+  overwriting newer external content.
+- `Tools -> Team Composer (.mbtc)` edits one team: required `name`, optional
+  `TimePeriod`, `EUAllowed`, `FriendlyShader`, six contiguous class slots, and
+  per-class subclasses. `ClassesAllowed` is retained as a legacy field, not
+  presented as current engine behavior. Class-reference checks use the merged
+  VFS and are warnings when unavailable or incomplete.
+- Modpack PK3/source exports omit hidden descendants and the output archive
+  itself, reject symlinks and unsafe or duplicate archive paths, refuse empty
+  output, and publish through an atomic writer. Preview Manifest shows the
+  archive paths before a PK3 build.
+
+## Updates and platform limits
+
+Foundry checks the latest GitHub release in the background and caches the result
+for six hours. Automatic installation is available only when the running build
+contains a configured Ed25519 publisher key and the downloaded manifest binds
+the requested version, platform, architecture, byte length, and SHA-256 digest.
+Missing or invalid trust data disables auto-install rather than accepting an
+unsigned payload.
+
+- macOS and Linux have automatic installers with rollback behavior.
+- Windows opens the release page instead of replacing the running executable;
+  the project has no Authenticode publisher identity to verify.
+- A verified update manifest is Foundry release integrity. It is not Apple
+  notarization, Developer ID proof, Windows Authenticode, or an operating-system
+  trust-store verdict.
+- Ordinary local `go build` and the default `build_app.sh` invocation do not
+  embed a publisher update key, so their auto-install path is disabled.
+
+## Engine metadata verification
+
+The committed engine snapshot records its source revision and file hashes. To
+verify it against an exact local engine checkout:
 
 ```bash
-cd mbii-foundry
-git pull
-./setup_mbii-foundry.sh     # rebuilds the binary with the new code
+cd go_module
+MBII_ENGINE_SRC=/absolute/path/to/moviebattles \
+  go test . -run '^TestExplicitEngineVerification$' -count=1
 ```
 
-If you're editing your own branch, `git pull` won't work — `git fetch && git merge origin/main` instead. Ask an existing contributor if you're unsure.
+`MBII_ENGINE_SRC` must be a Git checkout whose relevant `bg_public.h` and
+`bg_saga.c` bytes match its committed `HEAD`; the verifier checks the committed
+snapshot rather than silently regenerating it. This is the engine-parity check
+for snapshot-backed enum IDs and parser-key inventory, not a blanket
+certification of every definition's prose or gameplay semantics.
 
-### Where do I find `.mbch` files to edit?
+## Repository layout
 
-MBII Foundry edits files; it doesn't ship with any. The `.mbch` / `.sab` / `.veh` files you'll want to open live in the **MBII TextAssets repo**, or inside your Jedi Academy install's MBII PK3s.
-
-- **To edit official MBII content and contribute back:** clone [`MBII/TextAssets`](https://github.com/MBII/TextAssets). Edit in Foundry → commit → push → MBII's CI builds a pk3.
-- **To browse files already inside your MBII install:** point the app's "Gamedata path" setting at your `GameData` directory. Foundry's asset browser can peek into the pk3s.
-
-### Getting help
-
-- App crashes on launch? Check `mbii-foundry.log` in the operating system's temporary directory (`os.TempDir()`), not beside the binary. Remove private paths and credentials before sharing logs.
-- Build failed? Confirm `go version` reports 1.24 or newer, then file an issue with the sanitized error output.
-- Gamedata path? You're looking for the folder that contains `base/` and `MBII/` subfolders — that's your Jedi Academy `GameData` install directory.
-
-## Contributing
-
-Issues and PRs welcome. Priority areas during alpha:
-
-- **Writing / fixing enum documentation** — the highest-leverage contribution for anyone who isn't a programmer. Many `definitions/<category>/*.md` files are AI-generated stubs or placeholders. Editing them directly on GitHub (pencil icon → Propose changes) works; no git clone needed. Full walkthrough: [`docs/DEFINITIONS_GUIDE.md`](docs/DEFINITIONS_GUIDE.md).
-- **Bug reports** — especially anything that crashes the app or produces a `.mbch` that MBII won't load.
-- **UI polish** — Fyne tooltips, layout tweaks, keyboard shortcuts.
-- **Code contributions** — see [`CONTRIBUTING.md`](CONTRIBUTING.md) for the developer guide.
-
-Some MBII enums (`MB_ATT_*`, `WP_*`, etc.) are curated from the game's source — when new ones land, a maintainer regenerates the stubs and the community polishes the prose.
-
-## Layout
-
-```
+```text
 mbii-foundry/
-├── go_module/        Fyne GUI application (Go source)
-├── data/             Curated enum metadata (JSON)
-├── definitions/      Per-enum markdown documentation
-│   ├── attributes/
-│   ├── weapons/
-│   ├── mb_classes/
-│   ├── saber_styles/
-│   └── …
-├── schemas/          JSON Schemas for file validation
-├── templates/        Starter files for new creations
-├── parsers/          File-format parsers (shared library)
-├── macos/            .app bundle resources
-└── packager/         PK3 packaging
+├── go_module/        Go/Fyne application and canonical parsers
+├── data/             curated enum metadata
+├── definitions/      per-enum and per-field prose
+├── schemas/          validation schemas
+├── templates/        starter content
+├── tools/            audits and engine snapshot generator
+├── macos/            app-bundle resources
+└── packager/         Python PK3 packaging library
 ```
+
+See [USER_GUIDE.md](USER_GUIDE.md) for the editing workflow and
+[CONTRIBUTING.md](CONTRIBUTING.md) for contributor checks.
 
 ## License
 
-Apache License 2.0. See [`LICENSE`](LICENSE).
-
-## Acknowledgements
-
-- **Fyne** — the Go-native GUI toolkit doing the heavy visual lifting.
-- **The MBII dev team** — for building the game this tool serves.
-- Pipex, community testers and documentation contributors.
-
----
+Apache License 2.0. See [LICENSE](LICENSE).

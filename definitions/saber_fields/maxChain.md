@@ -2,23 +2,18 @@
 
 `maxChain`
 
-> Defines the maximum number of consecutive lightsaber swings in a combo.
+> Stores an integer SAB value exposed by the combat form.
 
-## What it does
+## Foundry support
 
-Defines the maximum number of consecutive lightsaber swings in a combo.
+Foundry parses, edits, and writes `maxChain`. The form does not impose or
+document an engine-derived range.
 
-**Default:** Varies by saber style (typically 3-5).
+## Verification status
 
-## Valid values
-
-- **Value:** Integer (e.g., `3`, `5`, `10`).
-- **Effect:** A higher value allows for longer, more fluid offensive sequences.
-- **Relation:** `MB_ATT_SABER_MAXCHAIN` attribute can override this.
-
-## Notes
-
-- A value of `0` or `1` often indicates a very slow, heavy-hitting style or a physical weapon.
+The exact effect, default, style interaction, and relationship to MBCH
+attributes are not backed here by an engine revision and source range. Treat
+existing numeric examples as content choices, not verified mechanics.
 
 ---
 

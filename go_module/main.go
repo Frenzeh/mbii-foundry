@@ -42,11 +42,18 @@ type App struct {
 	fyneApp    fyne.App
 	mainWindow fyne.Window
 
-	config     AppConfig
-	configPath string
+	config                  AppConfig
+	configPath              string
+	legacyTokenPending      string
+	configLoadError         error
+	configWarning           string
+	credentialWarning       string
+	legacyCredentialSecured bool
+	credentialBusy          bool
 
-	docTabs *container.DocTabs
-	editors map[*container.TabItem]Editor
+	docTabs         *container.DocTabs
+	editors         map[*container.TabItem]Editor
+	detachedEditors map[Editor]string // torn-out editors remain live until reattached or discarded
 
 	assetBrowser       *AssetBrowser
 	infoPanel          *InfoPanel
@@ -56,9 +63,14 @@ type App struct {
 	activityBar        *SidebarHeader  // top-of-sidebar horizontal activity switcher (legacy field name)
 	sidebarHost        *fyne.Container // swap target for the active activity's content
 
-	fileManager   *FileManager
-	githubManager *GitHubManager
+	// Session infrastructure — shared per-document draft store for the
+	// source panels, and the crash-recovery snapshot store.
+	sourceDrafts *SourceDraftStore
+	recovery     *RecoveryStore
+	bulkEditor   *BulkEditor
 
+	fileManager    *FileManager
+	githubManager  *GitHubManager
 	modpackManager *ModpackManager
 
 	statusLabel    *widget.Label
@@ -143,7 +155,7 @@ type AppConfig struct {
 	FavoritePaths []string `json:"favorite_paths"`
 
 	// GitHub Config
-	GitHubToken string `json:"github_token"`
+	GitHubToken string `json:"-"`
 	GitHubUser  string `json:"github_user"`
 }
 
@@ -233,10 +245,9 @@ func (h FoundryTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant)
 		case theme.ColorNameScrollBar:
 			return tintWithAlpha(CurrentThemeColor, 70)
 		case theme.ColorNameShadow:
-			// Light mode runs softer shadows by default since black
-			// on near-white is visually loud. Drop further from 40
-			// (16%) to 20 (8%) to match the dark-mode toning.
-			return color.NRGBA{R: 0, G: 0, B: 0, A: 20}
+			// Strong enough to separate a modal from the workspace,
+			// still softer than dark mode against the light canvas.
+			return color.NRGBA{R: 0, G: 0, B: 0, A: 70}
 		case theme.ColorNameMenuBackground:
 			return blendColors(color.RGBA{R: 246, G: 246, B: 246, A: 255}, CurrentThemeColor, 0.02)
 		case theme.ColorNameHeaderBackground:
@@ -290,13 +301,11 @@ func (h FoundryTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant)
 	case theme.ColorNameScrollBar:
 		return tintWithAlpha(CurrentThemeColor, 80)
 	case theme.ColorNameShadow:
-		// Softer than the default. Fyne paints ColorNameShadow around
-		// HSplit dividers, button borders, and popup drop-shadows;
-		// alpha 140 (55%) gave the rails a heavy-handed halo that
-		// read as UI chrome more than functional affordance. 55
-		// (22%) keeps the divider discoverable without dominating.
-		// Touch target is unchanged — this is purely visual.
-		return color.NRGBA{R: 0, G: 0, B: 0, A: 55}
+		// Modal dialogs need a clear task boundary over the dense
+		// three-pane workspace. This remains below the old heavy 55%
+		// treatment, while providing enough dimming to quiet toolbars
+		// and pane outlines behind a dialog.
+		return color.NRGBA{R: 0, G: 0, B: 0, A: 105}
 	case theme.ColorNameMenuBackground:
 		return blendColors(color.RGBA{R: 32, G: 32, B: 32, A: 255}, CurrentThemeColor, 0.05)
 	case theme.ColorNameHeaderBackground:
@@ -502,19 +511,30 @@ func main() {
 		}
 	}
 
-	appConfigDir := AppConfigDir()
-
 	application := &App{
 		editors:        make(map[*container.TabItem]Editor),
 		holocronClient: NewHolocronClient(),
-		fileManager:    NewFileManager(appConfigDir),
-		updateChecker:  NewUpdateChecker(appConfigDir),
 	}
 
 	application.fyneApp = app.NewWithID("com.frenzeh.mbii-foundry")
 	application.fyneApp.Settings().SetTheme(&FoundryTheme{})
 
 	application.loadConfig()
+	configDirectory := ""
+	if application.configPath != "" {
+		configDirectory = filepath.Dir(application.configPath)
+	}
+	application.fileManager = NewFileManager(configDirectory)
+	application.updateChecker = NewUpdateChecker(configDirectory)
+	// Crash recovery lives in an isolated directory under the config
+	// dir — never next to user documents, prefs or backups. An unavailable
+	// config directory disables persistence rather than using ./recovery.
+	recoveryDirectory := ""
+	if configDirectory != "" {
+		recoveryDirectory = filepath.Join(configDirectory, "recovery")
+	}
+	application.recovery = NewRecoveryStore(recoveryDirectory)
+	application.sourceDrafts = NewSourceDraftStore()
 
 	// Kick off the version check in the background. CheckAsync uses the
 	// 6h cache first and only hits the network when the cache is stale,
@@ -528,16 +548,6 @@ func main() {
 		}
 		fyne.Do(application.refreshWelcomeBanner)
 	})
-
-	// Initialize GitHub Manager if token exists
-	if application.config.GitHubToken != "" {
-		repoPath := application.config.TextAssetsPath
-		if repoPath == "" {
-			// Default to a subdirectory in config dir if not set?
-			// Or just nil for now until setup
-		}
-		application.githubManager = NewGitHubManager(application.config.GitHubToken, repoPath)
-	}
 
 	// Dev-only: start background check for local Holocron server.
 	// Guarded at creation via NewHolocronClient; nil for regular users so
@@ -559,6 +569,11 @@ func main() {
 	application.setupUI()
 	application.setupShortcuts()
 
+	// Offer to restore documents left unsaved by a previous crash or
+	// forced quit, then start the periodic autosave for dirty docs.
+	application.offerSessionRecovery()
+	application.startRecoveryAutosave()
+
 	// Check for first run / missing configuration
 	application.checkFirstRun()
 
@@ -570,14 +585,23 @@ func main() {
 	application.mainWindow.SetCloseIntercept(func() {
 		application.persistSplitOffsets()
 		application.persistWindowSize()
+		// Snapshot every dirty document first so even a confirmed quit
+		// is recoverable on next launch (crash recovery, not discard).
+		application.autosaveRecoveryPass()
 		dirtyTabs := []string{}
 		for tab, ed := range application.editors {
-			if ed != nil && ed.IsDirty() {
+			if ed != nil && (ed.IsDirty() || application.sourceDrafts.Has(ed)) {
 				dirtyTabs = append(dirtyTabs, tab.Text)
 			}
 		}
+		for ed, title := range application.detachedEditors {
+			if ed != nil && (ed.IsDirty() || application.sourceDrafts.Has(ed)) {
+				dirtyTabs = append(dirtyTabs, title)
+			}
+		}
 		if len(dirtyTabs) > 0 {
-			msg := fmt.Sprintf("These tabs have unsaved changes:\n\n  • %s\n\nQuit anyway?",
+			msg := fmt.Sprintf("These tabs have unsaved changes:\n\n  • %s\n\nQuit anyway?\n\n"+
+				"(A recovery snapshot of unsaved work will be kept and offered on next launch.)",
 				strings.Join(dirtyTabs, "\n  • "))
 			dialog.ShowConfirm("Unsaved Changes", msg, func(confirmed bool) {
 				if confirmed {
@@ -625,13 +649,24 @@ func (a *App) setupUI() {
 			}
 		}
 	})
+	// Shared draft store must exist before the panels are built. Preserve
+	// an existing store when setupUI is rebuilt in tests or app lifecycle.
+	if a.sourceDrafts == nil {
+		a.sourceDrafts = NewSourceDraftStore()
+	}
 	a.infoPanel = NewInfoPanel()
 	a.infoPanel.SetHolocronClient(a.holocronClient)
 	a.infoPanel.SetOnPopOut(a.popOutInfoPanel)
+	if a.sourcePanel != nil {
+		a.sourcePanel.Close()
+	}
 	a.sourcePanel = NewSourcePanel(a)
 	a.sourcePanel.SetOnPopOut(a.popOutSourcePanel)
 
 	a.modpackManager = NewModpackManager(a)
+	// Bulk editor (B): dialogs route through app.mainWindow and
+	// pre-edit backups through app.fileManager.
+	a.bulkEditor = NewBulkEditor(a)
 
 	// DocTabs setup
 	a.docTabs = container.NewDocTabs()
@@ -686,6 +721,8 @@ func (a *App) setupUI() {
 			Icon: theme.ListIcon(), Content: a.infoPanel.GetContent()},
 		{ID: "modpacks", Label: "Modpacks", Tooltip: "Bundle changes into pk3s",
 			Icon: theme.StorageIcon(), Content: a.modpackManager.GetContent()},
+		{ID: "bulkedit", Label: "Bulk Edit", Tooltip: "Batch-edit fields across many files",
+			Icon: theme.ContentPasteIcon(), Content: a.bulkEditor.GetContent()},
 	}
 
 	// Host that holds the currently-active activity's content. Swapped
@@ -795,7 +832,7 @@ func (a *App) updateMainLayout() {
 		sidebarSplit := container.NewHSplit(sidebarPanel, centerContent)
 		sidebarOff := a.config.SidebarOffset
 		if sidebarOff <= 0 || sidebarOff >= 1 {
-			sidebarOff = 0.25
+			sidebarOff = 0.30
 		}
 		sidebarSplit.SetOffset(float64(sidebarOff))
 		a.sidebarSplit = sidebarSplit
@@ -808,7 +845,7 @@ func (a *App) updateMainLayout() {
 		sourceSplit := container.NewHSplit(centerContent, a.sourcePanel.GetContent())
 		offset := a.config.SourcePanelOffset
 		if offset <= 0 || offset >= 1 {
-			offset = 0.65
+			offset = 0.70
 		}
 		sourceSplit.SetOffset(float64(offset))
 		a.sourceSplit = sourceSplit
@@ -902,18 +939,31 @@ func (a *App) clearHoverContext() {
 	}
 }
 
-// popOutCurrentTab tears the active editor tab out of docTabs and
-// rehosts it in its own window. The editor stays fully alive — its
-// AssetBrowser / Hover / Holocron wiring is preserved, the only
-// thing that changes is the parent container. On window close the
-// dirty-state guard kicks in (matches closeTab's behaviour) so the
-// user doesn't lose unsaved work, and the editor is reattached to
-// docTabs as a fresh tab if they cancel the close.
-//
-// This is the "tab tear-off" feature that pairs with the info-panel
-// + source-panel pop-outs to complete the dual-monitor workflow.
-// We can't lean on Fyne's drag-out API because DocTabs doesn't
-// expose one — a button + active-tab read is the pragmatic shape.
+func (a *App) discardDetachedEditor(ed Editor) {
+	a.sourceDrafts.Delete(ed)
+	a.removeEditorRecovery(ed)
+}
+
+func (a *App) confirmDetachedEditorClose(ed Editor, win fyne.Window, closeWindow func()) {
+	hasDraft := a.sourceDrafts.Has(ed)
+	if ed.IsDirty() || hasDraft {
+		message := "This file has unsaved changes. Close window and discard?"
+		if hasDraft && !ed.IsDirty() {
+			message = "This file has unapplied source edits. Close window and discard?"
+		}
+		dialog.ShowConfirm("Unsaved Changes", message, func(confirmed bool) {
+			if confirmed {
+				closeWindow()
+			}
+		}, win)
+		return
+	}
+	closeWindow()
+}
+
+// popOutCurrentTab tears the active editor tab out of docTabs and rehosts it
+// in its own window. Torn-out editors remain part of the live session until
+// the user explicitly reattaches or confirms discard.
 func (a *App) popOutCurrentTab() {
 	if a.fyneApp == nil || a.docTabs == nil {
 		return
@@ -924,21 +974,31 @@ func (a *App) popOutCurrentTab() {
 	}
 	ed, ok := a.editors[tab]
 	if !ok {
-		return // welcome / non-editor tab — nothing to tear off
+		return
 	}
 
 	title := tab.Text
 	a.docTabs.Remove(tab)
 	delete(a.editors, tab)
+	if a.detachedEditors == nil {
+		a.detachedEditors = make(map[Editor]string)
+	}
+	a.detachedEditors[ed] = title
 
 	win := a.fyneApp.NewWindow(title + " — MBII Foundry")
-	bar := reattachBar("Reattach tab", func() { win.Close() })
+	reattachRequested := false
+	discardRequested := false
+	closeWithoutIntercept := func() {
+		win.SetCloseIntercept(nil)
+		win.Close()
+	}
+	bar := reattachBar("Reattach tab", func() {
+		reattachRequested = true
+		closeWithoutIntercept()
+	})
 	win.SetContent(container.NewBorder(bar, nil, nil, nil, ed.GetContent()))
 	win.Resize(fyne.NewSize(1100, 800))
 
-	// Reattach helper — used both on user-cancelled close and on
-	// re-merge requests. Reuses the editor instance + its unsaved
-	// state, so the user picks up exactly where they left off.
 	reattach := func() {
 		newTab := container.NewTabItem(title, ed.GetContent())
 		a.editors[newTab] = ed
@@ -947,22 +1007,20 @@ func (a *App) popOutCurrentTab() {
 	}
 
 	win.SetCloseIntercept(func() {
-		if d, ok := ed.(interface{ IsDirty() bool }); ok && d.IsDirty() {
-			dialog.ShowConfirm("Unsaved Changes",
-				"This file has unsaved changes. Close window and discard?",
-				func(confirmed bool) {
-					if confirmed {
-						win.Close()
-					}
-				}, win)
-			return
-		}
-		win.Close()
+		a.confirmDetachedEditorClose(ed, win, func() {
+			discardRequested = true
+			closeWithoutIntercept()
+		})
 	})
 	win.SetOnClosed(func() {
-		// Reattach so the editor isn't lost — user can finish editing
-		// in the main window if they want it back.
-		reattach()
+		delete(a.detachedEditors, ed)
+		if reattachRequested {
+			reattach()
+			return
+		}
+		if discardRequested {
+			a.discardDetachedEditor(ed)
+		}
 	})
 	win.Show()
 }
@@ -1025,6 +1083,7 @@ func (a *App) popOutSourcePanel() {
 	}
 
 	win.SetOnClosed(func() {
+		mirror.Close()
 		out := a.sourcePanelMirrors[:0]
 		for _, m := range a.sourcePanelMirrors {
 			if m != mirror {
@@ -1238,6 +1297,14 @@ func (a *App) setupShortcuts() {
 		})
 	}
 
+	// Undo / redo across form edits, source applies and JSON imports.
+	add(fyne.KeyZ, mod, func() { a.undoActiveEditor() })
+	add(fyne.KeyZ, mod|fyne.KeyModifierShift, func() { a.redoActiveEditor() })
+	add(fyne.KeyY, mod, func() { a.redoActiveEditor() })
+
+	// Validate.
+	add(fyne.KeyR, mod, func() { a.validateFile() })
+
 	// macOS main menu — gives Cmd-anything a system-bar entry so the
 	// shortcuts above also show up where Mac users look for them.
 	fileMenu := fyne.NewMenu("File",
@@ -1257,6 +1324,9 @@ func (a *App) setupShortcuts() {
 		}),
 	)
 	editMenu := fyne.NewMenu("Edit",
+		fyne.NewMenuItem("Undo", func() { a.undoActiveEditor() }),
+		fyne.NewMenuItem("Redo", func() { a.redoActiveEditor() }),
+		fyne.NewMenuItemSeparator(),
 		fyne.NewMenuItem("Preferences…", func() { a.showPreferences() }),
 	)
 	devFieldsItem := fyne.NewMenuItem("Show Developer Fields", func() {
@@ -1264,8 +1334,6 @@ func (a *App) setupShortcuts() {
 	})
 	devFieldsItem.Checked = a.config.ShowDeveloperFields
 	viewMenu := fyne.NewMenu("View",
-		fyne.NewMenuItem("Toggle Sidebar", func() { a.toggleSidebar() }),
-		fyne.NewMenuItem("Toggle Source Panel", func() { a.toggleSourcePanel() }),
 		fyne.NewMenuItemSeparator(),
 		devFieldsItem,
 		fyne.NewMenuItemSeparator(),
@@ -1387,7 +1455,7 @@ func (a *App) createNewFile(title string, editor interface{}) {
 	}
 }
 
-func (a *App) openFileFromPath(filePath string) {
+func (a *App) openFileFromPath(filePath string) *container.TabItem {
 	// Earlier versions wrapped this body in fyne.Do to "defer onto
 	// the next event loop tick" hoping to avoid the spinny wheel.
 	// On Fyne v2.7.1 / macOS, fyne.Do called from the main thread
@@ -1432,7 +1500,7 @@ func (a *App) openFileFromPath(filePath string) {
 		editor = NewSiegeEditor(a)
 	default:
 		dialog.ShowInformation("Unknown File Type", "Could not determine editor for this file.", a.mainWindow)
-		return
+		return nil
 	}
 	LogInfo("openFileFromPath[%s]: ctor took %s", title, time.Since(tCtor))
 
@@ -1442,7 +1510,7 @@ func (a *App) openFileFromPath(filePath string) {
 		LogInfo("openFileFromPath[%s]: LoadFile took %s", title, time.Since(tLoad))
 		if err != nil {
 			ShowError(fmt.Errorf("Failed to load file: %v", err), a.mainWindow)
-			return
+			return nil
 		}
 		// Add to recent files centrally
 		a.fileManager.AddRecentFile(filePath)
@@ -1457,7 +1525,9 @@ func (a *App) openFileFromPath(filePath string) {
 
 		a.updateStatus(fmt.Sprintf("Opened %s", title))
 		LogInfo("openFileFromPath[%s]: TOTAL %s", title, time.Since(tStart))
+		return tab
 	}
+	return nil
 }
 
 // refreshWelcomeBanner rebuilds the Home tab so the update banner picks
@@ -1551,11 +1621,14 @@ func (a *App) openFileFromAsset(asset *AssetEntry) {
 		ShowError(fmt.Errorf("couldn't write temp file: %w", err), a.mainWindow)
 		return
 	}
-	tmp.Close()
+	if err := tmp.Close(); err != nil {
+		os.Remove(tmpPath)
+		ShowError(fmt.Errorf("couldn't finish temporary document: %w", err), a.mainWindow)
+		return
+	}
 	defer os.Remove(tmpPath)
 
-	a.openFileFromPath(tmpPath)
-	tab := a.docTabs.Selected()
+	tab := a.openFileFromPath(tmpPath)
 	if tab == nil {
 		return
 	}
@@ -1574,11 +1647,22 @@ func (a *App) openFileFromAsset(asset *AssetEntry) {
 }
 
 func (a *App) closeTab(tab *container.TabItem) {
-	// Editor interface already requires IsDirty(); the four-way type
-	// switch was a leftover from before the interface was complete.
-	if editor, ok := a.editors[tab]; ok && editor.IsDirty() {
+	editor, ok := a.editors[tab]
+	if !ok {
+		a.removeTab(tab)
+		return
+	}
+	// Dirty includes invalid unapplied source drafts: half-typed
+	// source that doesn't parse is still user work. Never implicitly
+	// discard — prompt, and keep the draft if the user cancels.
+	hasDraft := a.sourceDrafts.Has(editor)
+	if editor.IsDirty() || hasDraft {
+		msg := "This file has unsaved changes. Close anyway?"
+		if hasDraft && !editor.IsDirty() {
+			msg = "This file has unapplied edits in the source panel. Close and discard them?"
+		}
 		dialog.ShowConfirm("Unsaved Changes",
-			"This file has unsaved changes. Close anyway?",
+			msg,
 			func(confirmed bool) {
 				if confirmed {
 					a.removeTab(tab)
@@ -1590,7 +1674,17 @@ func (a *App) closeTab(tab *container.TabItem) {
 }
 
 func (a *App) removeTab(tab *container.TabItem) {
+	editor, wasEditor := a.editors[tab]
 	delete(a.editors, tab)
+	if wasEditor && editor != nil {
+		// The user explicitly closed this document — drop its retained
+		// draft and crash-recovery snapshot with it.
+		a.sourceDrafts.Delete(editor)
+		a.removeEditorRecovery(editor)
+		if se, ok := editor.(SessionEditor); ok {
+			se.Session().RecoveryID = ""
+		}
+	}
 	// Clear the live source panel — whatever was being tracked is
 	// about to be torn down (or has been), so leaving the panel
 	// pointed at it risks stale refreshes.
@@ -1686,6 +1780,43 @@ func (a *App) createToolbar() fyne.CanvasObject {
 	return container.NewHBox(items...)
 }
 
+// undoActiveEditor / redoActiveEditor route Cmd+Z / Cmd+Shift+Z (and
+// the Edit menu) to the selected document's session history. History
+// spans form edits, in-memory source applies, JSON imports and
+// definition switches; undoing past a save correctly re-marks the
+// document dirty against its saved baseline.
+func (a *App) undoActiveEditor() {
+	if se, ok := a.activeSessionEditor(); ok {
+		if !se.Undo() {
+			a.updateStatus("Nothing to undo")
+		}
+	}
+}
+
+func (a *App) redoActiveEditor() {
+	if se, ok := a.activeSessionEditor(); ok {
+		if !se.Redo() {
+			a.updateStatus("Nothing to redo")
+		}
+	}
+}
+
+func (a *App) activeSessionEditor() (SessionEditor, bool) {
+	if a.docTabs == nil {
+		return nil, false
+	}
+	tab := a.docTabs.Selected()
+	if tab == nil {
+		return nil, false
+	}
+	ed, ok := a.editors[tab]
+	if !ok {
+		return nil, false
+	}
+	se, ok := ed.(SessionEditor)
+	return se, ok
+}
+
 func (a *App) validateFile() {
 	tab := a.docTabs.Selected()
 	if tab == nil {
@@ -1705,8 +1836,8 @@ func (a *App) validateFile() {
 	var charCount int
 	if mbch, ok := editor.(*MBCHEditor); ok {
 		charCount = mbch.GetCharacterCount()
-		// R22.0.00 raised the cap from 8192 to 16384.
-		if charCount > 16384 {
+		// R22.0.00 raised the cap from 8192 to 16384. Engine rejects len >= 16384.
+		if charCount >= 16384 {
 			issues = append([]string{fmt.Sprintf("CRITICAL: File exceeds 16384 character limit (%d chars)", charCount)}, issues...)
 		} else if charCount > 15000 {
 			issues = append([]string{fmt.Sprintf("Warning: Approaching 16384 character limit (%d/16384)", charCount)}, issues...)
@@ -1795,9 +1926,29 @@ func (a *App) validateFolder() {
 	}, a.mainWindow)
 }
 
+func (a *App) diagnosticRoots() []DiagnosticRoot {
+	roots := []DiagnosticRoot{
+		{Path: a.config.GamedataPath, Label: "<GameData>"},
+		{Path: a.config.TextAssetsPath, Label: "<TextAssets>"},
+		{Path: a.config.MD3ViewPath, Label: "<MD3View>"},
+	}
+	if document := a.currentEditorPath(); document != "" {
+		roots = append(roots, DiagnosticRoot{Path: filepath.Dir(document), Label: "<DocumentRoot>"})
+	}
+	for i, project := range a.config.KnownModpacks {
+		if project != nil && project.Path != "" {
+			roots = append(roots, DiagnosticRoot{
+				Path:  project.Path,
+				Label: fmt.Sprintf("<ProjectRoot%d>", i+1),
+			})
+		}
+	}
+	return roots
+}
+
 func (a *App) showLogs() {
-	// Use platform-appropriate temp directory (works on Windows, macOS, Linux)
-	logPath := os.TempDir() + string(os.PathSeparator) + "mbii-foundry.log"
+	// Use platform-appropriate temp directory (works on Windows, macOS, Linux).
+	logPath := filepath.Join(os.TempDir(), "mbii-foundry.log")
 	content, err := os.ReadFile(logPath)
 	text := ""
 	if err != nil {
@@ -1805,6 +1956,12 @@ func (a *App) showLogs() {
 	} else {
 		text = string(content)
 	}
+	// Sanitize the fully assembled diagnostic payload at its final UI
+	// publication boundary. Raw log/config text is never placed in a
+	// copyable widget first.
+	text = SanitizeDiagnosticText(text,
+		[]string{a.config.GitHubToken, a.legacyTokenPending},
+		a.diagnosticRoots())
 
 	entry := NewMultiLineInputEntry()
 	entry.SetText(text)
@@ -1890,15 +2047,7 @@ func isTempPath(p string) bool {
 	if err != nil {
 		return false
 	}
-	tmp, err := filepath.Abs(os.TempDir())
-	if err != nil {
-		return false
-	}
-	// Normalize to lowercase on Windows where path-case differs but
-	// filesystem treats them as equivalent.
-	a := strings.ToLower(abs)
-	t := strings.ToLower(tmp)
-	return strings.HasPrefix(a, t)
+	return strings.HasPrefix(strings.ToLower(abs), strings.ToLower(os.TempDir()))
 }
 
 func (a *App) saveFile() {
@@ -1927,14 +2076,10 @@ func (a *App) saveFile() {
 		return
 	}
 
-	err := editor.SaveFile(path)
-	if err != nil {
-		ShowError(err, a.mainWindow)
-	} else {
-		tab.Text = filepath.Base(path) // Remove * indicator
-		a.docTabs.Refresh()
-		a.updateStatus("Saved " + filepath.Base(path))
-	}
+	// Review then write: the dialog shows the exact candidate bytes
+	// against the on-disk original; cancelling leaves baseline, path
+	// and draft state untouched.
+	a.saveWithReview(editor, tab, path)
 }
 
 func (a *App) saveFileAs() {
@@ -1960,42 +2105,22 @@ func (a *App) saveFileAs() {
 		expectedExt = ".siege"
 	}
 
-	dialog.ShowFileSave(func(uri fyne.URIWriteCloser, err error) {
-		if err != nil {
-			ShowError(err, a.mainWindow)
-			return
-		}
-		if uri == nil {
-			return
-		}
-
-		// Get path and close the Fyne handle immediately so we can manage the file ourselves
-		path := uri.URI().Path()
-		uri.Close()
-
-		// Auto-add extension if missing
-		if expectedExt != "" && !strings.HasSuffix(strings.ToLower(path), expectedExt) {
-			// Clean up the file Fyne created without extension
-			os.Remove(path)
-			// Update path with extension
-			path = path + expectedExt
-		}
-
-		if err := editor.SaveFile(path); err != nil {
-			ShowError(err, a.mainWindow)
-		} else {
-			// Update tab title and status
-			tab.Text = filepath.Base(path)
-			a.docTabs.Refresh()
-			a.updateStatus("Saved to " + path)
-		}
-	}, a.mainWindow)
+	defaultPath := editor.GetCurrentPath()
+	if defaultPath == "" {
+		defaultPath = "Untitled" + expectedExt
+	}
+	a.showSaveAsReviewDialog(editor, tab, defaultPath, expectedExt)
 }
 
 func (a *App) loadConfig() {
-	appConfigDir := AppConfigDir()
+	appConfigDir, directoryErr := AppConfigDir()
+	if directoryErr != nil {
+		a.configWarning = "Configuration migration could not finish: " + directoryErr.Error()
+	}
 	if appConfigDir == "" {
-		LogError("Failed to resolve app config dir")
+		a.configLoadError = fmt.Errorf("configuration directory unavailable: %v", directoryErr)
+		a.configWarning = "Preferences, favorites and crash recovery cannot be persisted. Local file editing remains available."
+		a.config.SidebarVisible = true
 		return
 	}
 	a.configPath = filepath.Join(appConfigDir, "config.json")
@@ -2005,54 +2130,32 @@ func (a *App) loadConfig() {
 
 	data, err := os.ReadFile(a.configPath)
 	if err == nil {
-		json.Unmarshal(data, &a.config)
+		var legacy struct {
+			GitHubToken string `json:"github_token"`
+		}
+		if err := json.Unmarshal(data, &a.config); err != nil {
+			a.configLoadError = fmt.Errorf("configuration is invalid; original preserved: %w", err)
+		} else if err := json.Unmarshal(data, &legacy); err != nil {
+			a.configLoadError = err
+		} else {
+			a.legacyTokenPending = legacy.GitHubToken
+		}
+	} else if !os.IsNotExist(err) {
+		a.configLoadError = err
+	}
+	if a.configLoadError != nil {
+		a.configWarning = "The saved configuration could not be read and will not be overwritten. Repair or restore it before saving Preferences."
+	}
+	if a.legacyTokenPending != "" {
+		a.credentialWarning = "A legacy credential is preserved in the original configuration. Use Connect GitHub to migrate it securely; local editing needs no account."
 	}
 
-	// Auto-heal / Auto-migrate invalid or obsolete gamedata / text assets paths:
-	if a.config.GamedataPath != "" {
-		if err := ValidateGamedataPath(a.config.GamedataPath); err != nil {
-			if detected := DetectGamedataPath(); detected != "" {
-				LogInfo("loadConfig: migrating stale gamedata_path %q -> %q", a.config.GamedataPath, detected)
-				a.config.GamedataPath = detected
-			}
-		}
-	} else {
-		if detected := DetectGamedataPath(); detected != "" {
-			a.config.GamedataPath = detected
-		}
-	}
-	if a.config.TextAssetsPath != "" {
-		if _, err := os.Stat(a.config.TextAssetsPath); err != nil && a.config.GamedataPath != "" {
-			candidates := []string{
-				filepath.Join(filepath.Dir(a.config.GamedataPath), "mbii", "TextAssets"),
-				filepath.Join(filepath.Dir(a.config.GamedataPath), "TextAssets"),
-			}
-			for _, c := range candidates {
-				if _, err := os.Stat(c); err == nil {
-					a.config.TextAssetsPath = c
-					break
-				}
-			}
-		}
-	} else if a.config.GamedataPath != "" {
-		candidates := []string{
-			filepath.Join(filepath.Dir(a.config.GamedataPath), "mbii", "TextAssets"),
-			filepath.Join(filepath.Dir(a.config.GamedataPath), "TextAssets"),
-		}
-		for _, c := range candidates {
-			if _, err := os.Stat(c); err == nil {
-				a.config.TextAssetsPath = c
-				break
-			}
-		}
-	}
-
-	// Set default sidebar offset if not configured. New activity-bar
-	// layout puts the sidebar on the left; 0.25 = quarter for sidebar,
-	// three-quarters for the editor. (Old layout used 0.8 with the
-	// sidebar on the right; we overwrite stale values from that era.)
+	// Balance the nested three-pane layout: the sidebar receives 30%
+	// of the left/editor region and the source panel takes the final
+	// 30% of the window. This keeps the editor dominant while leaving
+	// both utility panes readable.
 	if a.config.SidebarOffset == 0 || a.config.SidebarOffset >= 0.6 {
-		a.config.SidebarOffset = 0.25
+		a.config.SidebarOffset = 0.30
 	}
 
 	// Source panel defaults on for first-launch users. We default to
@@ -2060,7 +2163,7 @@ func (a *App) loadConfig() {
 	// with these keys), so existing users who turned it off keep that.
 	if a.config.SourcePanelOffset == 0 {
 		a.config.SourcePanelVisible = true
-		a.config.SourcePanelOffset = 0.65
+		a.config.SourcePanelOffset = 0.70
 	}
 
 	// Apply Theme
@@ -2077,23 +2180,28 @@ func (a *App) loadConfig() {
 // panel's Apply flow to restore the original path after reusing
 // LoadFile with a temp file.
 func (a *App) currentEditorPath() string {
+	if a == nil || a.docTabs == nil {
+		return ""
+	}
 	tab := a.docTabs.Selected()
 	if tab == nil {
 		return ""
 	}
 	editor, ok := a.editors[tab]
-	if !ok {
+	if !ok || editor == nil {
 		return ""
 	}
 	return editor.GetCurrentPath()
 }
 
 func (a *App) updateStatus(msg string) {
+	if a == nil || a.statusLabel == nil {
+		return
+	}
 	wasEmpty := a.statusLabel.Text == ""
 	a.statusLabel.SetText(fmt.Sprintf("[%s] %s", time.Now().Format("15:04:05"), msg))
-	// If the status bar was collapsed (empty text), we need to rebuild
-	// the layout so it appears. Only rebuilds on the transition — most
-	// updates just mutate the label in place.
+	// If the status bar was collapsed (empty text), rebuild once so it
+	// appears. Most updates only mutate the label.
 	if wasEmpty && a.mainWindow != nil {
 		a.updateMainLayout()
 	}
@@ -2121,10 +2229,7 @@ func (a *App) showPreferences() {
 
 	themeSelect := widget.NewSelect([]string{"Blue (Jedi)", "Red (Sith)", "Gold (Foundry)", "Green (Console)", "Orange (Rebel)", "Purple (Mace)"}, nil)
 
-	tooltipsCheck := widget.NewCheck("Show info tooltips on hover", func(on bool) {
-		a.config.HoverTooltipsDisabled = !on
-		a.saveConfig()
-	})
+	tooltipsCheck := widget.NewCheck("Show info tooltips on hover", nil)
 	tooltipsCheck.Checked = !a.config.HoverTooltipsDisabled
 	themeSelect.SetSelected(strings.Title(a.config.PrimaryColor))
 	if a.config.PrimaryColor == "blue" || a.config.PrimaryColor == "" {
@@ -2181,21 +2286,6 @@ func (a *App) showPreferences() {
 		}
 	})
 	downloadMD3Btn.Importance = widget.LowImportance
-
-	tokenEntry := NewPasswordInputEntry()
-	tokenEntry.SetText(a.config.GitHubToken)
-	tokenEntry.OnChanged = func(s string) {
-		a.config.GitHubToken = s
-		if a.config.TextAssetsPath != "" {
-			a.githubManager = NewGitHubManager(s, a.config.TextAssetsPath)
-		}
-	}
-	getTokenBtn := widget.NewButton("Get Token", func() {
-		if u, err := url.Parse("https://github.com/settings/tokens/new?scopes=repo&description=FA%20Creator"); err == nil {
-			a.fyneApp.OpenURL(u)
-		}
-	})
-	getTokenBtn.Importance = widget.LowImportance
 
 	updateEnumBtn := NewTooltipButton("Update Data from GitHub", nil, func() {
 		updateStatusLabel.SetText("Updating…")
@@ -2255,16 +2345,23 @@ func (a *App) showPreferences() {
 				dialog.ShowFileOpen(func(uri fyne.URIReadCloser, err error) {
 					if uri != nil {
 						md3viewEntry.SetText(uri.URI().Path())
+						uri.Close()
 					}
 				}, a.mainWindow)
 			}, "Select the md3view executable for model previews"), md3viewEntry)),
 	)
 
 	githubForm := widget.NewForm(
-		widget.NewFormItem("GitHub Token", container.NewBorder(nil, nil, nil, getTokenBtn, tokenEntry)),
+		widget.NewFormItem("Native credential store", widget.NewButton("Connect / manage GitHub access", func() { a.showCredentialConnect(nil) })),
 	)
 
+	configNotice := widget.NewLabel(strings.TrimSpace(a.configWarning + "\n" + a.credentialWarning))
+	configNotice.Wrapping = fyne.TextWrapWord
+	if configNotice.Text == "" {
+		configNotice.Hide()
+	}
 	form := container.NewVBox(
+		configNotice,
 		sectionHeading("GENERAL"),
 		coreForm,
 		Gap(SpaceMD),
@@ -2274,7 +2371,8 @@ func (a *App) showPreferences() {
 		container.NewPadded(downloadMD3Btn),
 		Gap(SpaceMD),
 
-		sectionHeading("GITHUB ACCESS"),
+		sectionHeading("OPTIONAL CONTRIBUTION ACCESS"),
+		widget.NewLabel("Local editing needs no account. Tokens are stored in the OS credential store."),
 		githubForm,
 		Gap(SpaceMD),
 
@@ -2282,47 +2380,66 @@ func (a *App) showPreferences() {
 		container.NewPadded(container.NewVBox(updateEnumBtn, updateStatusLabel)),
 	)
 
-	prefsDlg := dialog.NewCustomConfirm("Preferences", "Save", "Cancel", form, func(b bool) {
-		if b {
-			a.config.GamedataPath = gamedataEntry.Text
-			a.config.TextAssetsPath = textAssetsEntry.Text
-			a.config.MD3ViewPath = md3viewEntry.Text
-
-			// Save Theme
-			switch themeSelect.Selected {
-			case "Blue (Jedi)":
-				a.config.PrimaryColor = "blue"
-			case "Red (Sith)":
-				a.config.PrimaryColor = "red"
-			case "Gold (Foundry)":
-				a.config.PrimaryColor = "gold"
-			case "Green (Console)":
-				a.config.PrimaryColor = "green"
-			case "Orange (Rebel)":
-				a.config.PrimaryColor = "orange"
-			case "Purple (Mace)":
-				a.config.PrimaryColor = "purple"
-			}
-			// Color mode — applied before applyThemeColor so the
-			// single SetTheme triggered by that call picks up both.
-			switch strings.ToLower(modeSelect.Selected) {
-			case "light":
-				a.config.ColorVariant = "light"
-			default:
-				a.config.ColorVariant = "dark"
-			}
-			a.applyColorVariant(a.config.ColorVariant)
-			a.applyThemeColor(a.config.PrimaryColor)
-			a.applyDensity(strings.ToLower(densitySelect.Selected))
-
-			a.saveConfig()
-
-			// Refresh components
-			if a.assetBrowser != nil {
-				a.assetBrowser.SetPaths(a.config.GamedataPath, a.config.TextAssetsPath)
+	prefsError := widget.NewLabel("")
+	prefsError.Wrapping = fyne.TextWrapWord
+	var prefsDlg *dialog.CustomDialog
+	savePreferences := func() {
+		if gamedataEntry.Text != "" {
+			if err := ValidateGamedataPath(gamedataEntry.Text); err != nil {
+				prefsError.SetText(err.Error())
+				return
 			}
 		}
-	}, a.mainWindow)
+		previous := a.config
+		a.config.GamedataPath = gamedataEntry.Text
+		a.config.TextAssetsPath = textAssetsEntry.Text
+		a.config.MD3ViewPath = md3viewEntry.Text
+		a.config.HoverTooltipsDisabled = !tooltipsCheck.Checked
+		a.config.Density = strings.ToLower(densitySelect.Selected)
+
+		// Save Theme
+		switch themeSelect.Selected {
+		case "Blue (Jedi)":
+			a.config.PrimaryColor = "blue"
+		case "Red (Sith)":
+			a.config.PrimaryColor = "red"
+		case "Gold (Foundry)":
+			a.config.PrimaryColor = "gold"
+		case "Green (Console)":
+			a.config.PrimaryColor = "green"
+		case "Orange (Rebel)":
+			a.config.PrimaryColor = "orange"
+		case "Purple (Mace)":
+			a.config.PrimaryColor = "purple"
+		}
+		// Color mode — applied before applyThemeColor so the
+		// single SetTheme triggered by that call picks up both.
+		switch strings.ToLower(modeSelect.Selected) {
+		case "light":
+			a.config.ColorVariant = "light"
+		default:
+			a.config.ColorVariant = "dark"
+		}
+		if err := a.persistConfig(); err != nil {
+			a.config = previous
+			prefsError.SetText("Preferences were not saved: " + err.Error())
+			return
+		}
+		a.applyColorVariant(a.config.ColorVariant)
+		a.applyThemeColor(a.config.PrimaryColor)
+		a.applyDensity(a.config.Density)
+		a.githubManager = NewGitHubManager(a.config.GitHubToken, a.config.TextAssetsPath)
+
+		// Refresh components
+		if a.assetBrowser != nil {
+			a.assetBrowser.SetPaths(a.config.GamedataPath, a.config.TextAssetsPath)
+		}
+		prefsDlg.Hide()
+	}
+	saveButton := widget.NewButton("Save", savePreferences)
+	saveButton.Importance = widget.HighImportance
+	prefsDlg = dialog.NewCustom("Preferences", "Cancel", container.NewBorder(nil,
+		container.NewVBox(prefsError, saveButton), nil, nil, container.NewVScroll(form)), a.mainWindow)
 	// Resize before showing — default width crams long path fields
 	// into a sliver you can't read. 720x560 gives every form row a
 	// comfortable full-width input and leaves headroom for the theme
@@ -2331,9 +2448,15 @@ func (a *App) showPreferences() {
 	prefsDlg.Show()
 }
 
-func (a *App) saveConfig() {
-	data, _ := json.MarshalIndent(a.config, "", "  ")
-	os.WriteFile(a.configPath, data, 0644)
+func (a *App) saveConfig() bool {
+	if err := a.persistConfig(); err != nil {
+		LogError("Could not save preferences; previous configuration preserved")
+		if a.mainWindow != nil {
+			dialog.ShowError(fmt.Errorf("preferences were not saved: %w", err), a.mainWindow)
+		}
+		return false
+	}
+	return true
 }
 
 // checkForUpdatesNow is the toolbar action. Forces a fresh GitHub
@@ -2422,66 +2545,16 @@ For support, file an issue at github.com/Frenzeh/mbii-foundry or ask in the MBII
 	dialog.ShowCustom("About MBII Foundry", "Close", scroll, a.mainWindow)
 }
 
-// buildPK3 zips the contents of `source` into a .pk3 at `dest`.
-// MBII PK3 files are plain zip archives — engine-side they're just
-// renamed zips, so `archive/zip` produces a fully valid PK3 with
-// no special header massaging needed.
-//
-// Walks the source tree, preserving relative paths inside the
-// archive so `gfx/menus/...` ends up at `gfx/menus/...` in the PK3
-// (NOT `<projectname>/gfx/menus/...`). Returns an error if any
-// file fails to read/write; the dialog caller surfaces it.
+// buildPK3 publishes only a validated manifest through the transactional writer.
 func (a *App) buildPK3(source, dest string) error {
-	if source == "" || dest == "" {
-		return fmt.Errorf("buildPK3: source and dest required")
-	}
-	out, err := os.Create(dest)
-	if err != nil {
-		return fmt.Errorf("create %s: %w", dest, err)
-	}
-	defer out.Close()
-	zw := zip.NewWriter(out)
-	defer zw.Close()
-
-	walked := 0
-	err = filepath.Walk(source, func(path string, info os.FileInfo, walkErr error) error {
-		if walkErr != nil {
-			return walkErr
-		}
-		if info.IsDir() {
-			return nil
-		}
-		// Skip hidden files (.DS_Store etc.) and editor noise.
-		base := filepath.Base(path)
-		if strings.HasPrefix(base, ".") || base == "Thumbs.db" {
-			return nil
-		}
-		rel, err := filepath.Rel(source, path)
-		if err != nil {
-			return fmt.Errorf("rel path %s: %w", path, err)
-		}
-		// PK3s use forward slashes regardless of host OS.
-		rel = filepath.ToSlash(rel)
-		w, err := zw.Create(rel)
-		if err != nil {
-			return fmt.Errorf("zip create %s: %w", rel, err)
-		}
-		f, err := os.Open(path)
-		if err != nil {
-			return fmt.Errorf("open %s: %w", path, err)
-		}
-		_, err = io.Copy(w, f)
-		f.Close()
-		if err != nil {
-			return fmt.Errorf("write %s: %w", rel, err)
-		}
-		walked++
-		return nil
-	})
+	manifest, err := BuildExportManifest(source, dest)
 	if err != nil {
 		return err
 	}
-	a.updateStatus(fmt.Sprintf("Built %s (%d files)", filepath.Base(dest), walked))
+	if err := WritePK3(source, dest, manifest); err != nil {
+		return err
+	}
+	a.updateStatus(fmt.Sprintf("Built %s (%d files)", filepath.Base(dest), len(manifest)))
 	return nil
 }
 
@@ -2528,143 +2601,373 @@ func (a *App) doSync() {
 }
 
 func (a *App) checkFirstRun() {
-	// Defer the check to ensure window is visible first
-	if !a.config.SetupWizardSeen {
-		// Use lifecycle hook or simple timer to show it after startup
-		go func() {
-			time.Sleep(500 * time.Millisecond) // Give UI a moment to render
-			a.showSetupWizard()
-		}()
+	notice := strings.TrimSpace(a.configWarning + "\n" + a.credentialWarning)
+	if a.config.SetupWizardSeen && notice == "" {
+		return
 	}
+	go func() {
+		time.Sleep(500 * time.Millisecond)
+		fyne.Do(func() {
+			if a.config.SetupWizardSeen {
+				// Onboarding already completed — a warning alone is
+				// informational.
+				dialog.ShowInformation("Local editing remains available", notice, a.mainWindow)
+				return
+			}
+			// First run: onboarding must never be suppressed by the
+			// presence of a warning. The notice is embedded inline in
+			// the wizard so both surfaces appear together.
+			a.showSetupWizardWithWarning(notice)
+		})
+	}()
 }
 
 func (a *App) showSetupWizard() {
-	// Content
-	intro := widget.NewRichTextFromMarkdown(`
-# Welcome to MBII Foundry!
+	a.showSetupWizardWithWarning("")
+}
 
-To enable the **Asset Browser**, **Visual Editor**, and **Model Previews**, we need to locate your Movie Battles II installation.
+type setupPathValidation struct {
+	GameDataPath   string
+	TextAssetsPath string
+	GameDataErr    error
+	TextAssetsErr  error
+	CanUse         bool
+}
 
-1. Select your **GameData** folder.
-2. (Optional) Select **TextAssets** if you are a developer.
-3. You can configure **MD3View** later in Preferences for 3D previews.
-`)
+// validateSetupPaths evaluates both optional setup fields independently.
+// At least one path must be supplied to use the primary action, and every
+// supplied path must validate. Empty fields are not errors.
+func validateSetupPaths(gamedata, textAssets string) setupPathValidation {
+	state := setupPathValidation{
+		GameDataPath:   strings.TrimSpace(gamedata),
+		TextAssetsPath: strings.TrimSpace(textAssets),
+	}
+	if state.GameDataPath != "" {
+		state.GameDataErr = ValidateGamedataPath(state.GameDataPath)
+	}
+	if state.TextAssetsPath != "" {
+		state.TextAssetsErr = ValidateTextAssetsPath(state.TextAssetsPath)
+	}
+	hasPath := state.GameDataPath != "" || state.TextAssetsPath != ""
+	state.CanUse = hasPath && state.GameDataErr == nil && state.TextAssetsErr == nil
+	return state
+}
 
+func (s setupPathValidation) status() (fyne.Resource, string) {
+	var problems []string
+	if s.GameDataErr != nil {
+		problems = append(problems, "GameData: "+s.GameDataErr.Error())
+	}
+	if s.TextAssetsErr != nil {
+		problems = append(problems, "TextAssets: "+s.TextAssetsErr.Error())
+	}
+	if len(problems) > 0 {
+		return theme.WarningIcon(), strings.Join(problems, "  ")
+	}
+	var ready []string
+	if s.GameDataPath != "" {
+		ready = append(ready, "GameData")
+	}
+	if s.TextAssetsPath != "" {
+		ready = append(ready, "TextAssets")
+	}
+	if len(ready) == 0 {
+		return nil, ""
+	}
+	return theme.ConfirmIcon(), strings.Join(ready, " and ") + " ready."
+}
+
+// boundedSetupStatus keeps filesystem diagnostics useful without allowing a
+// deeply nested absolute path to consume the dialog and displace its footer.
+// Preserve both ends so users can identify the root and the failing leaf.
+func boundedSetupStatus(message string) string {
+	const maxRunes = 96
+	runes := []rune(message)
+	if len(runes) <= maxRunes {
+		return message
+	}
+	const suffixRunes = 28
+	return string(runes[:maxRunes-suffixRunes-1]) + "…" + string(runes[len(runes)-suffixRunes:])
+}
+
+type setupPathDetection struct {
+	GameDataPath   string
+	TextAssetsPath string
+	Notes          []string
+	FoundAny       bool
+}
+
+// detectSetupPaths applies independent detector results without making
+// GameData a prerequisite for TextAssets discovery.
+func detectSetupPaths(
+	currentGameData, currentTextAssets string,
+	findGameData func() string,
+	findTextAssets func(string) string,
+) setupPathDetection {
+	result := setupPathDetection{
+		GameDataPath:   currentGameData,
+		TextAssetsPath: currentTextAssets,
+	}
+	if found := findGameData(); found != "" {
+		result.FoundAny = true
+		if ShouldReplaceGamedataPath(result.GameDataPath, found) {
+			result.GameDataPath = found
+			result.Notes = append(result.Notes, "GameData found")
+		} else {
+			result.Notes = append(result.Notes, "existing GameData kept")
+		}
+	}
+	if found := findTextAssets(result.GameDataPath); found != "" {
+		result.FoundAny = true
+		if ShouldFillTextAssetsPath(result.TextAssetsPath, found) {
+			result.TextAssetsPath = found
+			result.Notes = append(result.Notes, "TextAssets found")
+		}
+	}
+	return result
+}
+
+// showSetupWizardWithWarning opens a compact first-run surface. Core setup
+// deliberately fits without scrolling at the supported window sizes: one
+// concise introduction, one detection action, two path rows, and a conventional
+// footer. Asset folders are optional, so dismissing the dialog is explicit.
+func (a *App) showSetupWizardWithWarning(notice string) {
 	gamedataEntry := NewInputEntry()
-	gamedataEntry.PlaceHolder = "e.g. C:\\Program Files (x86)\\LucasArts\\Star Wars Jedi Knight Jedi Academy\\GameData"
+	gamedataEntry.SetPlaceHolder("Path to the Jedi Academy GameData folder")
 	gamedataEntry.SetText(a.config.GamedataPath)
 
 	textAssetsEntry := NewInputEntry()
-	textAssetsEntry.PlaceHolder = "Optional — path to your TextAssets Git checkout"
+	textAssetsEntry.SetPlaceHolder("Optional path to a TextAssets checkout")
 	textAssetsEntry.SetText(a.config.TextAssetsPath)
 
-	// Inline validation indicator — tells the user whether the typed/
-	// detected path actually contains base/ and MBII/ subfolders.
+	var d *dialog.CustomDialog
+	var saveButton *widget.Button
+
+	statusIcon := widget.NewIcon(theme.InfoIcon())
 	statusLabel := widget.NewLabel("")
-	statusLabel.Wrapping = fyne.TextWrapWord
-	validateAndShow := func(path string) {
-		if path == "" {
-			statusLabel.SetText("")
-			return
-		}
-		if err := ValidateGamedataPath(path); err != nil {
-			statusLabel.SetText("✗ " + err.Error())
-		} else {
-			statusLabel.SetText("✓ Looks good — base/ and MBII/ both found.")
-		}
+	// Break long absolute paths inside the allocated center column. Border
+	// gives the label the full remaining row width; HBox sized to the label's
+	// minimum content width and could collapse it to a one-character column.
+	statusLabel.Wrapping = fyne.TextWrapBreak
+	statusRow := container.NewBorder(
+		nil, nil,
+		container.NewGridWrap(fyne.NewSize(20, 20), statusIcon),
+		nil,
+		statusLabel,
+	)
+	statusRow.Hide()
+
+	setStatus := func(icon fyne.Resource, message string) {
+		statusIcon.SetResource(icon)
+		statusLabel.SetText(boundedSetupStatus(message))
+		statusRow.Show()
+		statusRow.Refresh()
 	}
-	gamedataEntry.OnChanged = validateAndShow
-	validateAndShow(gamedataEntry.Text)
-
-	// Auto-Detect Button — now covers LucasArts retail, Steam, GoG,
-	// Linux, and macOS Wine/OpenJK installs via gamedata_detect.go.
-	autoDetectBtn := widget.NewButton("Auto-Detect Installation", func() {
-		if found := DetectGamedataPath(); found != "" {
-			gamedataEntry.SetText(found)
-			statusLabel.SetText("✓ Found MBII at: " + found)
+	validateAndShow := func() setupPathValidation {
+		state := validateSetupPaths(gamedataEntry.Text, textAssetsEntry.Text)
+		icon, message := state.status()
+		if message == "" {
+			statusLabel.SetText("")
+			statusRow.Hide()
 		} else {
-			statusLabel.SetText("✗ Auto-detect didn't find an MBII install. Paste the path above, or use Browse.")
+			setStatus(icon, message)
 		}
-	})
+		if saveButton != nil {
+			if state.CanUse {
+				saveButton.Enable()
+			} else {
+				saveButton.Disable()
+			}
+		}
+		return state
+	}
+	gamedataEntry.OnChanged = func(string) { validateAndShow() }
+	textAssetsEntry.OnChanged = func(string) { validateAndShow() }
 
-	// Browse button: opens Fyne's folder picker, but starts at the
-	// most likely parent directory (e.g. C:\Program Files (x86)\) so
-	// the user doesn't land in their home folder and have to drill
-	// down from scratch.
 	browseGamedata := func() {
-		d := dialog.NewFolderOpen(func(uri fyne.ListableURI, err error) {
+		picker := dialog.NewFolderOpen(func(uri fyne.ListableURI, err error) {
+			if err != nil {
+				setStatus(theme.WarningIcon(), "Could not open that folder: "+err.Error())
+				return
+			}
 			if uri != nil {
 				gamedataEntry.SetText(uri.Path())
 			}
 		}, a.mainWindow)
 		if parents := CommonGamedataParents(); len(parents) > 0 {
 			if lister, err := storage.ListerForURI(storage.NewFileURI(parents[0])); err == nil {
-				d.SetLocation(lister)
+				picker.SetLocation(lister)
 			}
 		}
-		d.Show()
+		picker.SetConfirmText("Choose GameData")
+		picker.Show()
 	}
 
 	browseTextAssets := func() {
-		dialog.ShowFolderOpen(func(uri fyne.ListableURI, err error) {
+		picker := dialog.NewFolderOpen(func(uri fyne.ListableURI, err error) {
+			if err != nil {
+				setStatus(theme.WarningIcon(), "Could not open that folder: "+err.Error())
+				return
+			}
 			if uri != nil {
 				textAssetsEntry.SetText(uri.Path())
 			}
 		}, a.mainWindow)
+		picker.SetConfirmText("Choose TextAssets")
+		picker.Show()
 	}
 
-	form := widget.NewForm(
-		widget.NewFormItem("GameData", a.NewPathEntryWithFavorites(gamedataEntry, browseGamedata)),
-		widget.NewFormItem("TextAssets", a.NewPathEntryWithFavorites(textAssetsEntry, browseTextAssets)),
+	pathRow := func(label string, entry *widget.Entry, browse func()) fyne.CanvasObject {
+		title := widget.NewLabelWithStyle(label, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+		browseButton := widget.NewButtonWithIcon("Browse", theme.FolderOpenIcon(), browse)
+		browseButton.Importance = widget.LowImportance
+		field := container.NewBorder(nil, nil, nil, browseButton, entry)
+		return container.NewVBox(title, field)
+	}
+
+	autoDetectBtn := widget.NewButtonWithIcon("Find installation", theme.SearchIcon(), func() {
+		detected := detectSetupPaths(
+			gamedataEntry.Text,
+			textAssetsEntry.Text,
+			DetectGamedataPath,
+			func(effectiveGameData string) string {
+				if effectiveGameData != "" {
+					if paired := DetectTextAssetsPath(effectiveGameData); paired != "" {
+						return paired
+					}
+				}
+				return DetectTextAssetsStandalone(effectiveGameData)
+			},
+		)
+		if detected.GameDataPath != gamedataEntry.Text {
+			gamedataEntry.SetText(detected.GameDataPath)
+		}
+		if detected.TextAssetsPath != textAssetsEntry.Text {
+			textAssetsEntry.SetText(detected.TextAssetsPath)
+		}
+
+		state := validateAndShow()
+		if !detected.FoundAny && !state.CanUse {
+			setStatus(theme.InfoIcon(), "Nothing was found automatically. Choose either folder below, or skip setup.")
+			return
+		}
+		if len(detected.Notes) > 0 && state.CanUse {
+			setStatus(theme.ConfirmIcon(), strings.Join(detected.Notes, "; ")+".")
+		}
+	})
+
+	heading := canvas.NewText("Connect local assets", theme.ForegroundColor())
+	heading.TextSize = SizeHeading
+	heading.TextStyle = fyne.TextStyle{Bold: true}
+
+	intro := widget.NewLabel("Foundry edits local files without an account. Add GameData for portraits and asset browsing, or skip setup and start editing now.")
+	intro.Wrapping = fyne.TextWrapWord
+
+	detectHint := widget.NewLabelWithStyle(
+		"Search common Steam, retail, GOG, Wine, and OpenJK locations.",
+		fyne.TextAlignLeading,
+		fyne.TextStyle{Italic: true},
+	)
+	detectHint.Wrapping = fyne.TextWrapWord
+	detectRow := container.NewBorder(nil, nil, nil, autoDetectBtn, detectHint)
+
+	fields := container.NewVBox(
+		pathRow("GameData — portraits and asset browsing", gamedataEntry, browseGamedata),
+		Gap(SpaceXS),
+		pathRow("TextAssets — optional loose-file overrides", textAssetsEntry, browseTextAssets),
 	)
 
-	hint := widget.NewLabel("💡 Tip: paste a full path directly, or ★-pin a folder once and pick it from the dropdown next time.")
-	hint.Wrapping = fyne.TextWrapWord
+	contentObjects := []fyne.CanvasObject{heading, intro, Gap(SpaceSM)}
+	if notice != "" {
+		warningIcon := widget.NewIcon(theme.WarningIcon())
+		warningText := widget.NewLabel(notice)
+		warningText.Wrapping = fyne.TextWrapWord
+		warning := NewTilePanel(
+			container.NewBorder(nil, nil, warningIcon, nil, warningText),
+			TileOpts{AccentColor: color.NRGBA{R: 220, G: 160, B: 70, A: 255}, FillAlpha: 16, StrokeAlpha: 60, Padded: true},
+		)
+		contentObjects = append(contentObjects, warning, Gap(SpaceSM))
+	}
+	contentObjects = append(contentObjects,
+		detectRow,
+		NewAccentRule(),
+		fields,
+		Gap(SpaceSM),
+		statusRow,
+	)
+	content := container.NewVBox(contentObjects...)
 
-	content := container.NewVBox(intro, autoDetectBtn, widget.NewSeparator(), form, statusLabel, hint)
-
-	// Custom Dialog that forces a choice (mostly)
-	d := dialog.NewCustomConfirm("Initial Setup", "Save & Continue", "Skip (Limited Features)", content, func(save bool) {
-		if save {
-			// Validate
-			path := gamedataEntry.Text
-			if path == "" {
-				dialog.ShowError(fmt.Errorf("GameData path cannot be empty."), a.mainWindow)
-				// Re-show? Complicated with async. Ideally loop or check before closing.
-				// For now, if they click Save with empty, we assume they messed up but save empty (or check).
-				// Better: don't close if invalid? Fyne dialogs close on callback.
-				// We'll warn them.
-			} else {
-				// Save config
-				a.config.GamedataPath = path
-				a.config.TextAssetsPath = textAssetsEntry.Text
-				a.config.SetupWizardSeen = true // Mark as seen
-				a.saveConfig()
-
-				// Auto-pin successfully-saved paths so they're one-click in
-				// future dialogs. Does nothing on re-save of an already-pinned
-				// path (move-to-front only).
-				a.PinFavorite(path)
-				if ta := textAssetsEntry.Text; ta != "" {
-					a.PinFavorite(ta)
-				}
-
-				// Update components
-				if a.assetBrowser != nil {
-					a.assetBrowser.SetPaths(a.config.GamedataPath, a.config.TextAssetsPath)
-				}
-				dialog.ShowInformation("Setup Complete", "Configuration saved! You can change this later in Preferences.", a.mainWindow)
-			}
-		} else {
-			a.config.SetupWizardSeen = true // Mark as seen even if skipped to avoid loop
-			a.saveConfig()
-			dialog.ShowInformation("Skipped", "Asset features will be limited. You can configure paths later in Preferences.", a.mainWindow)
+	saveSetup := func() {
+		state := validateAndShow()
+		if !state.CanUse {
+			return
 		}
-	}, a.mainWindow)
+		previous := a.config
+		a.config.GamedataPath = state.GameDataPath
+		a.config.TextAssetsPath = state.TextAssetsPath
+		a.config.SetupWizardSeen = true
+		if err := a.persistConfig(); err != nil {
+			a.config = previous
+			setStatus(theme.WarningIcon(), "Configuration was not saved: "+err.Error())
+			return
+		}
+		if a.assetBrowser != nil {
+			a.assetBrowser.SetPaths(a.config.GamedataPath, a.config.TextAssetsPath)
+		}
+		d.Hide()
+		a.updateStatus("Local asset folders configured")
+	}
+	continueWithoutAssets := func() {
+		previous := a.config.SetupWizardSeen
+		a.config.SetupWizardSeen = true
+		if err := a.persistConfig(); err != nil {
+			a.config.SetupWizardSeen = previous
+			setStatus(theme.WarningIcon(), "Configuration was not saved: "+err.Error())
+			return
+		}
+		d.Hide()
+		a.updateStatus("Local editing ready; asset folders can be configured in Preferences")
+	}
 
-	// Resize dialog to be readable
-	d.Resize(fyne.NewSize(600, 400))
+	skipButton := widget.NewButton("Skip for now", continueWithoutAssets)
+	skipButton.Importance = widget.LowImportance
+	saveButton = widget.NewButtonWithIcon("Use these folders", theme.ConfirmIcon(), saveSetup)
+	saveButton.Importance = widget.HighImportance
+	validateAndShow()
+
+	d = dialog.NewCustomWithoutButtons("Local Setup", container.NewPadded(content), a.mainWindow)
+	actions := container.NewBorder(nil, nil, layout.NewSpacer(), nil, container.NewHBox(skipButton, saveButton))
+	d.SetButtons([]fyne.CanvasObject{actions})
+	d.Resize(a.boundedDialogSize(fyne.NewSize(760, 520)))
 	d.Show()
+}
+
+// boundedDialogSize clamps a desired dialog size to the parent
+// window's canvas minus chrome margins.
+func (a *App) boundedDialogSize(want fyne.Size) fyne.Size {
+	if a == nil || a.mainWindow == nil {
+		return want
+	}
+	c := a.mainWindow.Canvas()
+	if c == nil {
+		return want
+	}
+	maxW := c.Size().Width - 48
+	maxH := c.Size().Height - 48
+	if maxW < 320 {
+		maxW = 320
+	}
+	if maxH < 240 {
+		maxH = 240
+	}
+	w, h := want.Width, want.Height
+	if w > maxW {
+		w = maxW
+	}
+	if h > maxH {
+		h = maxH
+	}
+	return fyne.NewSize(w, h)
 }
 
 // showFilePickerForEntry opens a file picker for an Entry widget.

@@ -412,3 +412,22 @@ func NewPasswordInputEntry() *widget.Entry {
 	e.TextStyle = fyne.TextStyle{Monospace: true}
 	return e
 }
+
+// NewFormSection groups a related editor form in the same restrained surface
+// used throughout Foundry. It replaces Fyne's generic Card chrome so editors
+// share spacing, typography, and accent behavior.
+func NewFormSection(title, hint string, content fyne.CanvasObject) fyne.CanvasObject {
+	heading := widget.NewLabelWithStyle(title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	objects := []fyne.CanvasObject{heading}
+	if hint != "" {
+		subtitle := widget.NewLabelWithStyle(hint, fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
+		subtitle.Wrapping = fyne.TextWrapWord
+		objects = append(objects, subtitle)
+	}
+	objects = append(objects, content)
+	return NewTilePanel(container.NewVBox(objects...), TileOpts{
+		FillAlpha:   9,
+		StrokeAlpha: 38,
+		Padded:      true,
+	})
+}

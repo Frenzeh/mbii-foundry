@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"runtime/debug"
 	"time"
 
@@ -15,18 +16,60 @@ import (
 var LogFile *os.File
 
 func InitLogger() {
-	// Use platform-appropriate temp directory (works on Windows, macOS, Linux)
-	logPath := os.TempDir() + string(os.PathSeparator) + "mbii-foundry.log"
-
-	f, err := os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		fmt.Println("Failed to open log file:", err)
+	tempDir := os.TempDir()
+	if tempDir == "" {
+		fmt.Fprintln(os.Stderr, "Failed to open log file: temporary directory is unavailable")
 		return
 	}
+	if err := initLoggerAt(filepath.Join(tempDir, "mbii-foundry.log")); err != nil {
+		fmt.Fprintln(os.Stderr, "Failed to open log file:", err)
+	}
+}
+
+func initLoggerAt(logPath string) error {
+	if logPath == "" {
+		return fmt.Errorf("log path is empty")
+	}
+	if info, err := os.Lstat(logPath); err == nil {
+		if !info.Mode().IsRegular() {
+			return fmt.Errorf("log path is not a regular file: %s", logPath)
+		}
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+
+	f, err := os.OpenFile(logPath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
+	if err != nil {
+		return err
+	}
+	closeWithError := func(err error) error {
+		_ = f.Close()
+		return err
+	}
+	pathInfo, err := os.Lstat(logPath)
+	if err != nil {
+		return closeWithError(err)
+	}
+	fileInfo, err := f.Stat()
+	if err != nil {
+		return closeWithError(err)
+	}
+	if !pathInfo.Mode().IsRegular() || !os.SameFile(pathInfo, fileInfo) {
+		return closeWithError(fmt.Errorf("log path changed while opening: %s", logPath))
+	}
+	if err := f.Chmod(0600); err != nil {
+		return closeWithError(err)
+	}
+
+	previous := LogFile
 	LogFile = f
 	log.SetOutput(f)
+	if previous != nil {
+		_ = previous.Close()
+	}
 	log.Println("------------------------------------------------")
 	log.Printf("MBII Foundry Started at %s", time.Now().Format(time.RFC3339))
+	return nil
 }
 
 func LogInfo(format string, v ...interface{}) {

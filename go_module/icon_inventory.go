@@ -168,11 +168,7 @@ func buildIconInventoryTile(basename, dir string) fyne.CanvasObject {
 	default:
 		status = "✓"
 		res := fyne.NewStaticResource(basename+".png", data)
-		ci := canvas.NewImageFromResource(res)
-		ci.FillMode = canvas.ImageFillContain
-		ci.ScaleMode = canvas.ImageScaleSmooth
-		ci.SetMinSize(fyne.NewSize(64, 64))
-		img = ci
+		img = NewRasterIconFromResource(res, 64, 64)
 	}
 
 	label := canvas.NewText(basename, theme.ForegroundColor())

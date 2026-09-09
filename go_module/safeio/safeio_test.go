@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -69,8 +70,18 @@ func TestAtomicWrite_PreservesMode(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to stat file: %v", err)
 	}
-	if info.Mode().Perm() != 0755 {
+	if !info.Mode().IsRegular() {
+		t.Fatalf("atomic replacement is not a regular file: %v", info.Mode())
+	}
+	if runtime.GOOS != "windows" && info.Mode().Perm() != 0755 {
 		t.Errorf("expected mode 0755, got %v", info.Mode().Perm())
+	}
+	content, err := os.ReadFile(target)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(content) != "new" {
+		t.Fatalf("atomic replacement content = %q, want %q", content, "new")
 	}
 }
 

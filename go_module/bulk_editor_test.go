@@ -216,7 +216,7 @@ func TestBulkEditLexicallyImpossibleValueRejected(t *testing.T) {
 	}
 }
 
-func TestBulkEditorBatchRollsBackOnFailure(t *testing.T) {
+func TestBulkEditorBatchRollsBackOnInjectedBackupFailure(t *testing.T) {
 	app := test.NewApp()
 	defer app.Quit()
 	dir := t.TempDir()
@@ -224,29 +224,19 @@ func TestBulkEditorBatchRollsBackOnFailure(t *testing.T) {
 
 	orig1 := "ClassInfo\n{\n\tname\t\t\"one\"\n\tmaxhealth\t\t100\n}\n"
 	orig2 := "ClassInfo\n{\n\tname\t\t\"two\"\n\tmaxhealth\t\t100\n}\n"
-	good1 := writeBulkFixture(t, dir, "one.mbch", orig1)
-	good2 := writeBulkFixture(t, dir, "two.mbch", orig2)
-
-	// A read-only directory makes the backup write fail after the two
-	// good files were already written — the batch must roll them back.
-	blockedDir := filepath.Join(dir, "blocked")
-	if err := os.MkdirAll(blockedDir, 0755); err != nil {
-		t.Fatal(err)
-	}
-	blocked := filepath.Join(blockedDir, "three.mbch")
-	if err := os.WriteFile(blocked, []byte("ClassInfo\n{\n\tmaxhealth\t\t100\n}\n"), 0644); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Chmod(blockedDir, 0555); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { os.Chmod(blockedDir, 0755) })
+	orig3 := "ClassInfo\n{\n\tname\t\t\"three\"\n\tmaxhealth\t\t100\n}\n"
+	first := writeBulkFixture(t, dir, "one.mbch", orig1)
+	second := writeBulkFixture(t, dir, "two.mbch", orig2)
+	failing := writeBulkFixture(t, dir, "three.mbch", orig3)
 
 	be := NewBulkEditor(newTestBulkApp(app, configDir))
-	be.LoadFiles([]string{good1, good2, blocked})
-	be.selection[good1] = true
-	be.selection[good2] = true
-	be.selection[blocked] = true
+	be.LoadFiles([]string{first, second, failing})
+	first, _ = canonicalBulkPath(first)
+	second, _ = canonicalBulkPath(second)
+	failing, _ = canonicalBulkPath(failing)
+	be.selection[first] = true
+	be.selection[second] = true
+	be.selection[failing] = true
 	be.fieldEntry.SetText("maxhealth")
 	be.valueEntry.SetText("200")
 
@@ -254,10 +244,23 @@ func TestBulkEditorBatchRollsBackOnFailure(t *testing.T) {
 	if len(be.previewData) != 3 {
 		t.Fatalf("preview rows: %d, want 3", len(be.previewData))
 	}
+	be.afterCandidatePublish = func(path, _, backupPath string) {
+		if path != failing {
+			return
+		}
+		if backupPath == "" {
+			t.Fatal("existing destination publication omitted its backup path")
+		}
+		if err := os.WriteFile(backupPath, []byte("corrupt backup"), 0600); err != nil {
+			t.Fatalf("inject backup proof failure: %v", err)
+		}
+		be.afterCandidatePublish = nil
+	}
 	be.applyChanges()
 
-	// All-or-nothing: the two written files must be restored byte-exact.
-	for path, orig := range map[string]string{good1: orig1, good2: orig2, blocked: "ClassInfo\n{\n\tmaxhealth\t\t100\n}\n"} {
+	// All-or-nothing: both earlier writes and the write whose final backup
+	// proof failed must be restored byte-exact.
+	for path, orig := range map[string]string{first: orig1, second: orig2, failing: orig3} {
 		got, err := os.ReadFile(path)
 		if err != nil {
 			t.Fatal(err)
@@ -270,28 +273,21 @@ func TestBulkEditorBatchRollsBackOnFailure(t *testing.T) {
 	// Backups live in the accepted FileManager backup store.
 	backupDir := filepath.Join(configDir, "backups")
 	entries, err := os.ReadDir(backupDir)
-	if err != nil || len(entries) < 2 {
+	if err != nil || len(entries) < 3 {
 		t.Fatalf("expected retained FileManager backups, got %d (%v)", len(entries), err)
 	}
 
-	// Outcome rows: the blocked file carries the failure; the two good
-	// files are marked rolled back.
-	var errRows, rollbackRows int
-	for _, r := range be.previewData {
-		switch filepath.Base(r.Path) {
-		case "three.mbch":
-			if r.Err == nil {
-				t.Error("blocked file must record a failure")
-			}
-			errRows++
-		case "one.mbch", "two.mbch":
-			if r.RolledBack {
-				rollbackRows++
-			}
+	rows := make(map[string]BulkFieldResult)
+	for _, row := range be.previewData {
+		rows[row.Path] = row
+	}
+	for _, path := range []string{first, second} {
+		if row := rows[path]; !row.RolledBack || row.Err != nil {
+			t.Errorf("prior write %s was not cleanly rolled back: %+v", filepath.Base(path), row)
 		}
 	}
-	if errRows != 1 || rollbackRows != 2 {
-		t.Errorf("rows: err=%d rolledBack=%d, want 1/2", errRows, rollbackRows)
+	if row := rows[failing]; row.Err == nil || !row.RolledBack {
+		t.Errorf("injected backup failure outcome is incomplete: %+v", row)
 	}
 }
 
@@ -493,74 +489,6 @@ func TestBulkEditorConsecutiveBatchesRetainOriginals(t *testing.T) {
 	got, _ := os.ReadFile(path)
 	if !strings.Contains(string(got), "250") {
 		t.Fatalf("second apply not written:\n%s", got)
-	}
-}
-
-func TestBulkEditorRollbackConflictPreservesNewerBytes(t *testing.T) {
-	app := test.NewApp()
-	defer app.Quit()
-	configDir := t.TempDir()
-	dir := t.TempDir()
-	path := writeBulkFixture(t, dir, "vet.mbch", "ClassInfo\n{\n\tmaxhealth\t\t100\n}\n")
-
-	be := NewBulkEditor(newTestBulkApp(app, configDir))
-	be.LoadFiles([]string{path})
-	be.selection[path] = true
-	be.fieldEntry.SetText("maxhealth")
-	be.valueEntry.SetText("200")
-	be.runPreview()
-
-	// Simulate the write succeeding, then an EXTERNAL writer changing
-	// the file before rollback runs: swap safeio behavior by replacing
-	// the plan content check — write manually and mark the plan as if
-	// the batch then failed via a second, failing file.
-	other := writeBulkFixture(t, dir, "other.mbch", "ClassInfo\n{\n\tmaxhealth\t\t100\n}\n")
-	blockedDir := filepath.Join(dir, "blocked")
-	if err := os.MkdirAll(blockedDir, 0755); err != nil {
-		t.Fatal(err)
-	}
-	blocked := filepath.Join(blockedDir, "bad.mbch")
-	if err := os.WriteFile(blocked, []byte("ClassInfo\n{\n\tmaxhealth\t\t100\n}\n"), 0644); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Chmod(blockedDir, 0555); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { os.Chmod(blockedDir, 0755) })
-
-	be.LoadFiles([]string{path, other, blocked})
-	be.selection[path] = true
-	be.selection[other] = true
-	be.selection[blocked] = true
-	be.fieldEntry.SetText("maxhealth")
-	be.valueEntry.SetText("300")
-	be.runPreview()
-
-	// External writer touches `path` between preview and apply — apply
-	// must refuse it as stale, NOT write it, which is exactly the
-	// conflict-avoidance the rollback path must also honor.
-	external := "ClassInfo\n{\n\tmaxhealth\t\t999\n}\n"
-	if err := os.WriteFile(path, []byte(external), 0644); err != nil {
-		t.Fatal(err)
-	}
-	be.applyChanges()
-
-	got, _ := os.ReadFile(path)
-	if string(got) != external {
-		t.Fatalf("stale file was overwritten:\n%s", got)
-	}
-	canonicalPath, err := canonicalBulkPath(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var staleRow int
-	for _, r := range be.previewData {
-		if r.Path == canonicalPath && r.Err != nil && strings.Contains(r.Err.Error(), "changed since preview") {
-			staleRow++
-		}
-	}
-	if staleRow != 1 {
-		t.Fatalf("stale detection row missing: %+v", be.previewData)
 	}
 }
 

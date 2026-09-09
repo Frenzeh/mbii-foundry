@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -36,7 +37,10 @@ func TestInitLoggerAtCreatesPrivateAppendOnlyLog(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if info.Mode().Perm() != 0600 {
+	if !info.Mode().IsRegular() {
+		t.Fatalf("log path is not a regular file: %v", info.Mode())
+	}
+	if runtime.GOOS != "windows" && info.Mode().Perm() != 0600 {
 		t.Fatalf("log permissions are %o, want 600", info.Mode().Perm())
 	}
 	contents, err := os.ReadFile(path)

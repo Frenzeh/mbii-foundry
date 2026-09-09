@@ -220,7 +220,7 @@ func publishEditorCandidateReviewedWithHooks(fileManager *FileManager, path, can
 			return result, fmt.Errorf("backup failed, save aborted: no backup was created")
 		}
 		if err := verifyExactSaveSnapshot(result.BackupPath, reviewed); err != nil {
-			return result, fmt.Errorf("verify backup %q: %w", result.BackupPath, err)
+			return result, fmt.Errorf("verify backup %s: %w", result.BackupPath, err)
 		}
 	}
 
@@ -237,9 +237,9 @@ func publishEditorCandidateReviewedWithHooks(fileManager *FileManager, path, can
 		}
 		if err := renameNoReplace(tmp, path); err != nil {
 			if os.IsExist(err) {
-				return result, fmt.Errorf("publish candidate to %q: destination was created after final review and was preserved", path)
+				return result, fmt.Errorf("publish candidate to %s: destination was created after final review and was preserved", path)
 			}
-			return result, fmt.Errorf("publish candidate to %q with atomic no-replace rename: %w", path, err)
+			return result, fmt.Errorf("publish candidate to %s with atomic no-replace rename: %w", path, err)
 		}
 		result.Published = true
 		if hooks.afterCandidatePublish != nil {
@@ -250,14 +250,14 @@ func publishEditorCandidateReviewedWithHooks(fileManager *FileManager, path, can
 
 	holdPath, err := moveSaveDestinationToHold(path)
 	if err != nil {
-		return result, fmt.Errorf("secure reviewed destination %q before publication: %w", path, err)
+		return result, fmt.Errorf("secure reviewed destination %s before publication: %w", path, err)
 	}
 
 	// From this point a crash leaves the reviewed file in holdPath and its
 	// verified backup in result.BackupPath. Never defer removal of the hold: it
 	// is recovery data until publication and the final backup proof both succeed.
 	if err := verifyExactSaveSnapshot(holdPath, reviewed); err != nil {
-		cause := fmt.Errorf("destination changed before publication: moved destination %q does not match review: %w", holdPath, err)
+		cause := fmt.Errorf("destination changed before publication: moved destination %s does not match review: %w", holdPath, err)
 		return result, restoreSaveHoldAfterFailure(path, holdPath, result.BackupPath, cause)
 	}
 
@@ -265,7 +265,7 @@ func publishEditorCandidateReviewedWithHooks(fileManager *FileManager, path, can
 		hooks.beforeCandidatePublish(holdPath, result.BackupPath)
 	}
 	if err := renameNoReplace(tmp, path); err != nil {
-		cause := fmt.Errorf("publish candidate to %q with atomic no-replace rename: %w", path, err)
+		cause := fmt.Errorf("publish candidate to %s with atomic no-replace rename: %w", path, err)
 		return result, restoreSaveHoldAfterFailure(path, holdPath, result.BackupPath, cause)
 	}
 	result.Published = true
@@ -275,13 +275,13 @@ func publishEditorCandidateReviewedWithHooks(fileManager *FileManager, path, can
 	}
 	if err := verifyExactSaveSnapshot(result.BackupPath, reviewed); err != nil {
 		return result, fmt.Errorf(
-			"candidate was published to %q, but backup proof failed: %w; reviewed original retained at %q; inspect backup %q",
+			"candidate was published to %s, but backup proof failed: %w; reviewed original retained at %s; inspect backup %s",
 			path, err, holdPath, result.BackupPath,
 		)
 	}
 	if err := os.Remove(holdPath); err != nil {
 		return result, fmt.Errorf(
-			"candidate was published to %q and backup verified at %q, but reviewed hold cleanup failed: %w; remove hold %q after inspection",
+			"candidate was published to %s and backup verified at %s, but reviewed hold cleanup failed: %w; remove hold %s after inspection",
 			path, result.BackupPath, err, holdPath,
 		)
 	}
@@ -328,15 +328,15 @@ func moveSaveDestinationToHold(path string) (string, error) {
 
 func restoreSaveHoldAfterFailure(path, holdPath, backupPath string, cause error) error {
 	if err := renameNoReplace(holdPath, path); err == nil {
-		return fmt.Errorf("%w; moved destination restored to %q; verified backup retained at %q", cause, path, backupPath)
+		return fmt.Errorf("%w; moved destination restored to %s; verified backup retained at %s", cause, path, backupPath)
 	} else if os.IsExist(err) {
 		return fmt.Errorf(
-			"%w; another writer's destination at %q was preserved; moved destination retained at %q; verified backup retained at %q",
+			"%w; another writer's destination at %s was preserved; moved destination retained at %s; verified backup retained at %s",
 			cause, path, holdPath, backupPath,
 		)
 	} else {
 		return fmt.Errorf(
-			"%w; automatic restore to %q failed: %v; moved destination retained at %q; verified backup retained at %q",
+			"%w; automatic restore to %s failed: %v; moved destination retained at %s; verified backup retained at %s",
 			cause, path, err, holdPath, backupPath,
 		)
 	}

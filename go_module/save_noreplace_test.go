@@ -66,6 +66,24 @@ func TestReviewedSaveFailureReportsPublicationOutcome(t *testing.T) {
 	}
 }
 
+func TestRecoveryDiagnosticsUseUnescapedPathsAndPreserveCause(t *testing.T) {
+	root := t.TempDir()
+	path := filepath.Join(root, `document\reviewed.sab`)
+	holdPath := filepath.Join(root, `.document\reviewed.sab.reviewed-hold-test`)
+	backupPath := filepath.Join(root, `backups\reviewed.sab`)
+	cause := errors.New("publication failed")
+
+	err := restoreSaveHoldAfterFailure(path, holdPath, backupPath, cause)
+	if !errors.Is(err, cause) {
+		t.Fatalf("recovery diagnostic lost the publication failure: %v", err)
+	}
+	for _, recoveryPath := range []string{path, holdPath, backupPath} {
+		if !strings.Contains(err.Error(), recoveryPath) {
+			t.Fatalf("recovery diagnostic escaped path %q: %v", recoveryPath, err)
+		}
+	}
+}
+
 func TestReviewedPublicationPreservesWriterAfterDestinationMove(t *testing.T) {
 	root := t.TempDir()
 	path := filepath.Join(root, "reviewed.sab")

@@ -26,11 +26,11 @@ package main
 //
 // Trust reality: a successful install proves (a) the artifact matches
 // the publisher-signed manifest and (b) the new bundle is internally
-// consistent. It does NOT confer Apple Developer ID trust or
-// notarization — Gatekeeper still governs the relaunch, and releases
-// built without Apple signing credentials are ad-hoc signed. Every
-// structural failure (broken signature, missing architecture slice,
-// truncated payload) fails closed and restores the previous bundle.
+// consistent. The v0.16.0-alpha workflow intentionally applies only an
+// ad-hoc signature; it has no Apple Developer ID identity or notarization.
+// Gatekeeper still governs the relaunch. Every structural failure (broken
+// signature, missing architecture slice, truncated payload) fails closed
+// and restores the previous bundle.
 
 import (
 	"archive/zip"
@@ -101,11 +101,10 @@ func installUpdatePlatform(asset *ReleaseAsset, manifest UpdateManifest, progres
 		return fmt.Errorf("no .app bundle found in archive")
 	}
 
-	// Structural integrity: codesign --verify proves the bundle's
-	// signature — applied by CI as Developer ID when credentials exist,
-	// ad-hoc otherwise — is intact after extraction. This is integrity,
-	// NOT Apple trust: passing implies nothing about notarization or a
-	// Gatekeeper assessment.
+	// Structural integrity: codesign --verify proves the ad-hoc signature
+	// applied by the v0.16.0-alpha release workflow is intact after
+	// extraction. This is integrity, NOT Apple trust: passing implies
+	// nothing about Developer ID, notarization, or Gatekeeper assessment.
 	if out, err := exec.Command("codesign", "--verify", "--deep", "--strict", newAppPath).CombinedOutput(); err != nil {
 		return fmt.Errorf("new app code signature invalid (structural check only — implies no Apple Developer ID trust and no notarization): %s: %w", strings.TrimSpace(string(out)), err)
 	}

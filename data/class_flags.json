@@ -219,5 +219,111 @@
     "stats": {},
     "tags": [],
     "description": "Master slicer proficiency."
+  },
+  {
+    "id": "CFL_BLOODYMELEE",
+    "name": "\ud83e\ude78 Bloody Melee",
+    "overview": "Cosmetic blood effect on unarmed melee impacts.\n\n** Mechanics**\n* **Trigger:** Unarmed punch, kick, or strike hit.\n* **Visual:** Generates arterial blood spray on contact.",
+    "tips": [
+      "Purely cosmetic enhancement for brutal martial artists and brawlers."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "cosmetic",
+      "melee"
+    ],
+    "description": "Cosmetic blood effect on unarmed melee impacts."
+  },
+  {
+    "id": "CFL_BUBBLESHIELD",
+    "name": "\u26a1 Bubble Shield (Shockfield)",
+    "overview": "Surrounds the player with an electrified energy barrier (similar to Galak in Jedi Outcast).\n\n** Mechanics**\n* **Contact:** Electrocutes and pushes away enemy players who make contact.\n* **Sustain:** Remains active as long as the user has Armor Points remaining.",
+    "tips": [
+      "Can be sustained indefinitely when paired with passive Armor Regeneration.",
+      "Extremely strong defensive deterrent against saberists and melee rushers."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "defense",
+      "shield"
+    ],
+    "description": "Passive Galak-style electrocution and push barrier."
+  },
+  {
+    "id": "CFL_DISMEMBERFRAGILE",
+    "name": "\ud83e\uddb4 Fragile Dismemberment",
+    "overview": "Forces full skeletal dismemberment on player death regardless of weapon type or damage source.\n\n** Mechanics**\n* **Trigger:** Player death from any damage.\n* **Effect:** Severe dismemberment physics applied to character limbs.",
+    "tips": [
+      "Often applied to brittle battle droids, zombies, or glass-cannon characters."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "cosmetic",
+      "death"
+    ],
+    "description": "Forces full skeletal dismemberment on player death."
+  },
+  {
+    "id": "CFL_HASQ3",
+    "name": "\u2694\ufe0f Quad 3 (Q3 Saber Deflect)",
+    "overview": "Historically known as Quad 3 in Open Mode. Allows a saber user to deflect and block incoming blaster projectiles while in active swing animations.\n\n** Mechanics**\n* **Condition:** Active attack swing animation.\n* **Resource:** Drains Block Points (BP) as normal.\n* **Benefit:** Eliminates vulnerability during offensive saber swings.",
+    "tips": [
+      "Essential flag for offensive lightsaber duelists seeking immunity to blaster crossfire."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "saber",
+      "defense"
+    ],
+    "description": "Allows a saberist to block incoming blaster shots during attack swings."
+  },
+  {
+    "id": "CFL_INSTAGIB",
+    "name": "\ud83c\udfaf Instagib Disruptor",
+    "overview": "Converts the Tenloss Disruptor Rifle into an instant-kill sniper weapon.\n\n** Mechanics**\n* **Trigger:** Any landed shot with WP_DISRUPTOR.\n* **Effect:** Instantly eliminates the target on hit, disintegrating their body.",
+    "tips": [
+      "Designed for competitive Instagib game modes or custom boss encounters."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "lethal",
+      "sniper"
+    ],
+    "description": "Converts the Tenloss Disruptor Rifle into an instant-kill sniper."
+  },
+  {
+    "id": "CFL_NO_FUEL_USE",
+    "name": "\ud83d\ude80 Infinite Jetpack Fuel",
+    "overview": "Removes all fuel consumption from Jetpack flight.\n\n** Mechanics**\n* **Flight:** Continuous jetpack boost without depleting the fuel / resource pool.\n* **Requirement:** Character must have MB_ATT_JETPACK equipped.",
+    "tips": [
+      "Pairs with CFL_NO_JETPACK_OVERHEAT for completely unrestricted aerial mobility."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "jetpack",
+      "mobility"
+    ],
+    "description": "Removes all fuel consumption from Jetpack flight."
+  },
+  {
+    "id": "CFL_NO_JETPACK_OVERHEAT",
+    "name": "\u2744\ufe0f No Jetpack Overheat",
+    "overview": "Prevents the Jetpack thrusters from overheating during prolonged burns.\n\n** Mechanics**\n* **Thermals:** Disables thermal shutdown thresholds during sustained flight.\n* **Requirement:** Character must have MB_ATT_JETPACK equipped.",
+    "tips": [
+      "Allows prolonged sustained hovering without forced cooldown lockouts."
+    ],
+    "levels": {},
+    "stats": {},
+    "tags": [
+      "jetpack",
+      "mobility"
+    ],
+    "description": "Prevents Jetpack from overheating during prolonged burns."
   }
 ]

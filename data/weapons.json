@@ -780,5 +780,322 @@
     ],
     "description": "Micro Grenade Launcher (MGL)",
     "category": "Heavy"
+  },
+  {
+    "id": "WP_BACTA_BOMB",
+    "name": "Bacta Bomb",
+    "overview": "Deployed medical canister dispersing pressurized restorative bacta mist to heal allies in its blast radius.",
+    "tips": [
+      "Deploys an aerated cloud that rapidly restores friendly health.",
+      "Crucial utility for fireteam sustain during CQB pushes."
+    ],
+    "levels": {},
+    "stats": {
+      "Role": "Tactical Support / Area Sustain",
+      "Effect": "Sustained health restoration for friendly fireteams"
+    },
+    "tags": [
+      "support",
+      "medical",
+      "utility"
+    ],
+    "description": "Deployed medical canister dispersing pressurized restorative bacta mist.",
+    "category": "Nades"
+  },
+  {
+    "id": "WP_CYCLER",
+    "name": "Tusken Cycler Rifle",
+    "overview": "Heavy, single-shot ballistic slugthrower favored by Tusken Raiders, firing solid kinetic slugs that bypass lightsaber deflection.",
+    "tips": [
+      "Fires solid physical slugs that cannot be deflected by lightsabers.",
+      "Secondary fire toggles an optical zoom scope for precision long-range sniping.",
+      "Paired with `MB_ATT_CYCLER`."
+    ],
+    "levels": {},
+    "stats": {
+      "Role": "Kinetic Marksman / Anti-Saber Sniper",
+      "Projectile": "Solid ballistic slug (ignores lightsaber deflection)",
+      "Alt-Fire": "Optical zoom scope targeting",
+      "Ammunition": "Projectile ammunition pool"
+    },
+    "tags": [
+      "sniper",
+      "kinetic",
+      "tusken"
+    ],
+    "description": "Primitive projectile firearm firing solid kinetic slugs.",
+    "category": "Snipers"
+  },
+  {
+    "id": "WP_DLT19",
+    "name": "DLT-19 Heavy Blaster",
+    "overview": "Heavy repeating blaster rifle featuring high-velocity primary fire and a high-damage optical marksman alt-fire mode.",
+    "tips": [
+      "Pairs with `MB_ATT_DLT19`.",
+      "Primary fire offers steady suppression; secondary scoped fire delivers 35 damage at 9500 units/sec."
+    ],
+    "levels": {},
+    "stats": {
+      "Damage": "26 (Primary) / 35 (Secondary)",
+      "Velocity": "4500 (Primary) / 9500 (Secondary)",
+      "Ammo Cost": "4 (Primary) / 10 (Secondary)",
+      "Fire Rate": "220ms (Primary) / 900ms (Secondary)"
+    },
+    "tags": [
+      "heavy",
+      "imperial",
+      "repeater"
+    ],
+    "description": "Heavy repeating blaster rifle with marksman optics.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_EMPLACED_GUN",
+    "name": "Emplaced Gun",
+    "overview": "Static map-mounted heavy blaster turret that players mount with +use to unleash a fixed 100ms firing cadence.",
+    "tips": [
+      "Entity-spawned map turret with dedicated ammunition pool.",
+      "Dismount with +use or by receiving sufficient incoming damage."
+    ],
+    "levels": {},
+    "stats": {
+      "Fire Rate": "100ms sustained",
+      "Mount": "+use key trigger",
+      "Attribute": "MB_ATT_INVALID (Map Geometry)"
+    },
+    "tags": [
+      "map-mounted",
+      "static",
+      "heavy"
+    ],
+    "description": "Static map-mounted heavy blaster turret.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_EQUALIZER",
+    "name": "Equalizer Rocket Launcher",
+    "overview": "Specialized heavy rocket ordnance launcher with modified ballistic trajectories and severe explosive contact force.",
+    "tips": [
+      "Paired with `MB_ATT_EQUALIZER` and `WP_EqualizerFlags`.",
+      "Engineered for high-damage anti-armor and breaching operations."
+    ],
+    "levels": {},
+    "stats": {
+      "Role": "Heavy Ordnance / Anti-Armor",
+      "Asset Base": "WEAPONDATA_UI_ARCROCKET -> equalizer",
+      "Ordnance": "Modified trajectory ballistic rockets"
+    },
+    "tags": [
+      "explosive",
+      "heavy",
+      "ordnance"
+    ],
+    "description": "Specialized heavy rocket launcher with custom ballistic properties.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_FA3_FLECHETTE",
+    "name": "Golan Arms FA3 Flechette",
+    "overview": "Combat shotgun variant firing multi-pellet razor flechette spreads and explosive bouncing canister alternate fire.",
+    "tips": [
+      "Paired with `MB_ATT_FA3_FLECHETE`.",
+      "Devastating in close-quarters corridor breaches against light shields.",
+      "Standard loadout for Clone Flechette Specialists and Imperial EVO Troopers."
+    ],
+    "levels": {},
+    "stats": {
+      "Role": "Close-Quarters Breach / Shrapnel Spread",
+      "Primary Fire": "Dense multi-pellet flechette spread",
+      "Alt-Fire": "Bouncing canister anti-personnel explosive"
+    },
+    "tags": [
+      "shotgun",
+      "cqb",
+      "clone",
+      "imperial"
+    ],
+    "description": "Heavy anti-infantry flechette shotgun firing razor canisters.",
+    "category": "Rifles"
+  },
+  {
+    "id": "WP_FLASH_NADE",
+    "name": "Flash Grenade",
+    "overview": "Tactical disorientation grenade producing a violet concussive burst that blinds and disorients targets across a 200-unit AoE.",
+    "tips": [
+      "Tuned to 200/200 units AoE radius in R22.4.",
+      "Blinds both infantry and Force users upon detonation."
+    ],
+    "levels": {},
+    "stats": {
+      "Role": "Tactical Breach / Crowd Disorientation",
+      "Blast Radius": "200 units AoE",
+      "Visual Effect": "Violet photonic flash"
+    },
+    "tags": [
+      "grenade",
+      "tactical",
+      "disorient"
+    ],
+    "description": "Tactical disorientation grenade with concussive blinding burst.",
+    "category": "Nades"
+  },
+  {
+    "id": "WP_GAS_NADE",
+    "name": "Dioxis Gas Grenade",
+    "overview": "Chemical warfare canister dispersing caustic dioxis vapor that bypasses shields to inflict damage over time on organic targets.",
+    "tips": [
+      "Bypasses conventional shields to directly damage organic vitality.",
+      "Ideal for denial of narrow doorways, elevators, and objective terminals."
+    ],
+    "levels": {},
+    "stats": {
+      "Role": "Chemical Denial / Damage Over Time",
+      "Damage Type": "Shield-bypassing caustic vapor",
+      "Targeting": "Organic combatants"
+    },
+    "tags": [
+      "chemical",
+      "area-denial",
+      "dot"
+    ],
+    "description": "Chemical warfare canister dispersing caustic dioxis vapor.",
+    "category": "Nades"
+  },
+  {
+    "id": "WP_IMPACT_NADE",
+    "name": "Impact Grenade",
+    "overview": "Instant-detonation contact explosive grenade with zero fuse timer that explodes on contact with surfaces or enemies.",
+    "tips": [
+      "Zero cooking time required \u2014 detonates on contact.",
+      "Excellent counter against aggressive saberists and rushers."
+    ],
+    "levels": {},
+    "stats": {
+      "Role": "Instant Ordnance / Anti-Rush",
+      "Detonation": "Instant surface contact (zero cook timer)",
+      "Model Base": "models/weapons2/oldfraggrenade/thermal_w.glm"
+    },
+    "tags": [
+      "grenade",
+      "explosive",
+      "impact"
+    ],
+    "description": "Instant-detonation contact explosive grenade.",
+    "category": "Nades"
+  },
+  {
+    "id": "WP_MIRV",
+    "name": "MIRV Rocket Launcher",
+    "overview": "Multi-warhead rocket system sharing ammunition with PLX-1, firing a cluster volley scaled by MB_ATT_MIRV rank.",
+    "tips": [
+      "Fires 1 + Rank rockets per volley (up to 4 rockets at Rank 3).",
+      "Shares ammo reserves with PLX-1 and Rocket Launcher."
+    ],
+    "levels": {},
+    "stats": {
+      "Role": "Multi-Warhead Heavy Ordnance",
+      "Volley Scaling": "1 + MB_ATT_MIRV Level rockets",
+      "Ammo Pool": "Shared PLX-1 ammo",
+      "HUD Element": "HUD_PLX1ROCKETS"
+    },
+    "tags": [
+      "explosive",
+      "heavy",
+      "cluster"
+    ],
+    "description": "Multi-warhead portable rocket system sharing ammo with PLX-1.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_ROCK_NADE",
+    "name": "Rock Grenade",
+    "overview": "Primitive thrown stone dealing impact and splash damage; sits in the 4th Quick-Throw grenade queue slot.",
+    "tips": [
+      "Base damage: 2 damage, 2 unit splash radius.",
+      "Primary fire is an immediate impact detonation; secondary is a physics bounce.",
+      "Each rank of `MB_ATT_ROCK_NADE` grants +1 Rock."
+    ],
+    "levels": {},
+    "stats": {
+      "Damage": "2 base damage (2 unit splash)",
+      "Quick-Throw Slot": "4th position in queue",
+      "Primary Fire": "Direct impact detonation",
+      "Secondary Fire": "Physics bounce"
+    },
+    "tags": [
+      "grenade",
+      "explosive",
+      "template"
+    ],
+    "description": "Primitive thrown projectile and customizable grenade template.",
+    "category": "Nades"
+  },
+  {
+    "id": "WP_SMOKE_NADE",
+    "name": "Smoke Grenade",
+    "overview": "Tactical obscuration canister deploying dense thermal smoke to obscure sniper sightlines and disrupt automated turret locks.",
+    "tips": [
+      "Blocks thermal and optical line of sight for safe lane crossing.",
+      "Disables automatic turret targeting while inside the smoke cloud."
+    ],
+    "levels": {},
+    "stats": {
+      "Role": "Tactical Obscuration / Visual Concealment",
+      "Turret Disruption": "Breaks automated lock-on",
+      "Effect": "Dense non-toxic smoke veil"
+    },
+    "tags": [
+      "tactical",
+      "smoke",
+      "obscuration"
+    ],
+    "description": "Tactical obscuration canister deploying dense thermal smoke.",
+    "category": "Nades"
+  },
+  {
+    "id": "WP_TURRET",
+    "name": "Turret Gun",
+    "overview": "Entity-spawned automated turret weapon driven by map AI or remote control triggers rather than player loadouts.",
+    "tips": [
+      "Entity-controlled firing rate without manual player reload.",
+      "Attribute is MB_ATT_INVALID; governed by g_turret.c entity code."
+    ],
+    "levels": {},
+    "stats": {
+      "Role": "Automated Defensive Emplacement",
+      "Control": "AI / entity script driven",
+      "Attribute": "MB_ATT_INVALID"
+    },
+    "tags": [
+      "turret",
+      "entity",
+      "automated"
+    ],
+    "description": "Map-mounted automated turret weapon.",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_WELDER",
+    "name": "Welder / Fusioncutter",
+    "overview": "Versatile close-range repair and cutting tool with thermal cutting arc primary and armor/droid repair secondary fire.",
+    "tips": [
+      "Primary fire inflicts continuous thermal arc damage and ignites targets at Rank 2+.",
+      "Secondary fire restores ally armor and droid health.",
+      "Repair effectiveness is reduced against Beskar and SBD heavy plating."
+    ],
+    "levels": {},
+    "stats": {
+      "Role": "Utility / Support / Repair",
+      "Primary Fire": "Thermal cutting arc (burns at Rank 2+)",
+      "Secondary Fire": "Armor and droid HP restoration",
+      "Resistance Scaling": "Reduced effectiveness against Beskar/SBD plating"
+    },
+    "tags": [
+      "support",
+      "utility",
+      "repair"
+    ],
+    "description": "Short-range repair tool and cutting torch.",
+    "category": "Sidearms"
   }
 ]

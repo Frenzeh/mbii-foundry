@@ -198,11 +198,15 @@
     "name": "Pet Control (Special)",
     "overview": "Toggles control of the user's deployed pet.\n\n** Mechanics**\n* **Trigger:** Press Special Key.\n* **Effect:** Opens / dispatches pet command (follow / hold / attack-target).\n* **Requirement:** `MB_ATT_PETCONTROL`.",
     "tips": [
-      "Bind to special1 or special2 — drain/cooldown lives in the attribute, not the binding."
+      "Bind to special1 or special2 \u2014 drain/cooldown lives in the attribute, not the binding."
     ],
     "levels": {},
     "stats": {},
-    "tags": ["r22", "pet", "summon"],
+    "tags": [
+      "r22",
+      "pet",
+      "summon"
+    ],
     "description": "Toggles pet control."
   },
   {
@@ -214,31 +218,43 @@
     ],
     "levels": {},
     "stats": {},
-    "tags": ["r22", "defense", "shield"],
+    "tags": [
+      "r22",
+      "defense",
+      "shield"
+    ],
     "description": "Personal energy shield toggle."
   },
   {
     "id": "EAS_FP_DARKRAGE",
     "name": "Dark Rage (Special)",
-    "overview": "Activates the Dark Rage force ability.\n\n** Mechanics**\n* **Trigger:** Press Special Key.\n* **Effect:** Dark-aligned Rage variant — damage/movement boost with harsher post-drain.\n* **Requirement:** matching dark-rage attribute on the class.",
+    "overview": "Activates the Dark Rage force ability.\n\n** Mechanics**\n* **Trigger:** Press Special Key.\n* **Effect:** Dark-aligned Rage variant \u2014 damage/movement boost with harsher post-drain.\n* **Requirement:** matching dark-rage attribute on the class.",
     "tips": [
-      "Distinct from generic Force Rage — may conflict with light-aligned passives."
+      "Distinct from generic Force Rage \u2014 may conflict with light-aligned passives."
     ],
     "levels": {},
     "stats": {},
-    "tags": ["r22", "force", "dark"],
+    "tags": [
+      "r22",
+      "force",
+      "dark"
+    ],
     "description": "Dark Rage activation."
   },
   {
     "id": "EAS_FP_STASIS",
     "name": "Stasis (Special)",
-    "overview": "Freezes a target in place using the Force.\n\n** Mechanics**\n* **Trigger:** Press Special Key.\n* **Effect:** Locks target — no movement, attack, or abilities for the duration.\n* **Requirement:** matching stasis attribute on the class.",
+    "overview": "Freezes a target in place using the Force.\n\n** Mechanics**\n* **Trigger:** Press Special Key.\n* **Effect:** Locks target \u2014 no movement, attack, or abilities for the duration.\n* **Requirement:** matching stasis attribute on the class.",
     "tips": [
-      "Pure CC — no built-in damage. Often configured to break early on damage taken."
+      "Pure CC \u2014 no built-in damage. Often configured to break early on damage taken."
     ],
     "levels": {},
     "stats": {},
-    "tags": ["r22", "force", "cc"],
+    "tags": [
+      "r22",
+      "force",
+      "cc"
+    ],
     "description": "Force Stasis activation."
   },
   {
@@ -5312,5 +5328,172 @@
     "tags": [
       "stub"
     ]
+  },
+  {
+    "id": "MB_ATT_CYCLER",
+    "name": "Tusken Cycler Tuning",
+    "overview": "Controls damage, ammunition capacity, and optical scoping accuracy for the Tusken Cycler rifle (WP_CYCLER).\n\n** Mechanics**\n* **Rank 1:** Standard kinetic slugthrower rifle with optical zoom targeting scope.",
+    "tips": [
+      "Solid ballistic slugs cannot be deflected by lightsabers.",
+      "Equip on Tusken Raiders or bounty hunter sniper variants."
+    ],
+    "levels": {
+      "1": "Standard kinetic slugthrower rifle with optical zoom targeting scope."
+    },
+    "stats": {
+      "Weapon": "WP_CYCLER",
+      "Flags": "WP_CyclerFlags"
+    },
+    "tags": [
+      "sniper",
+      "tusken",
+      "kinetic"
+    ],
+    "description": "Ammo reserves and scoping accuracy for the Tusken Cycler rifle."
+  },
+  {
+    "id": "MB_ATT_FA3_FLECHETE",
+    "name": "FA3 Flechette Mastery",
+    "overview": "Controls pellet density, alternate fire explosive canister capacity, and cycling speed for WP_FA3_FLECHETTE.\n\n** Mechanics**\n* **Rank 1:** Base shotgun issue with standard flechette spread.\n* **Rank 2:** Tightened choke with increased reserve ammunition.\n* **Rank 3:** Maximum pellet discharge, explosive alt-fire canister capability, and rapid cycling.",
+    "tips": [
+      "Devastating in close-quarters corridor breaches.",
+      "Rank 3 unlocks explosive bouncing canisters on alt-fire."
+    ],
+    "levels": {
+      "1": "Base shotgun issue with standard flechette spread.",
+      "2": "Tightened choke with increased reserve ammunition.",
+      "3": "Maximum pellet discharge, explosive alt-fire canister capability, and rapid cycling."
+    },
+    "stats": {
+      "Weapon": "WP_FA3_FLECHETTE",
+      "Max Level": "3"
+    },
+    "tags": [
+      "shotgun",
+      "cqb",
+      "shrapnel"
+    ],
+    "description": "Ranks and ammunition capacity for the Golan Arms FA3 Flechette."
+  },
+  {
+    "id": "MB_ATT_FAKE_WOOKIEE",
+    "name": "Wookalike (Fake Wookiee)",
+    "overview": "Allows a character of any class to inherit signature Wookiee mechanics including animations, secondary melee slap, and Fury.\n\n** Mechanics**\n* **Skeleton:** Wookiee animation skeleton and stances.\n* **Melee:** Wookiee Slap secondary melee attack.\n* **Fury:** Enables Wookiee Fury mechanics on non-Wookiee classes.",
+    "tips": [
+      "Ideal for creating hybrid melee brawlers or custom alien mercenaries.",
+      "Pairs with MB_ATT_WOOKIE_STRENGTH and MB_ATT_FURY."
+    ],
+    "levels": {
+      "1": "Inherit Wookiee animation skeleton, slap attack, and fury mechanics."
+    },
+    "stats": {
+      "Skeleton": "Wookiee",
+      "Special": "Melee slap & Fury inheritance"
+    },
+    "tags": [
+      "hybrid",
+      "animation",
+      "brawler"
+    ],
+    "description": "Inherits Wookiee animations, melee slap, and fury onto non-Wookiee classes."
+  },
+  {
+    "id": "MB_ATT_MIRV",
+    "name": "MIRV Cluster Volley",
+    "overview": "Increases the number of rockets fired in a single volley from the MIRV launcher: 1 + Rank.\n\n** Mechanics**\n* **Rank 1:** 2 rockets per volley.\n* **Rank 2:** 3 rockets per volley.\n* **Rank 3:** 4 rockets per volley.",
+    "tips": [
+      "Shares ammo pool with PLX-1 / Rocket Launcher.",
+      "Massive burst damage against groups of clustered enemies."
+    ],
+    "levels": {
+      "1": "2 rockets per volley.",
+      "2": "3 rockets per volley.",
+      "3": "4 rockets per volley."
+    },
+    "stats": {
+      "Weapon": "WP_MIRV",
+      "HUD": "HUD_PLX1ROCKETS",
+      "Formula": "1 + Rank rockets"
+    },
+    "tags": [
+      "explosive",
+      "heavy",
+      "volley"
+    ],
+    "description": "Controls volley payload count for the MIRV Launcher."
+  },
+  {
+    "id": "MB_ATT_ROCK_NADE",
+    "name": "Rock Ammo Capacity",
+    "overview": "Ammo capacity and grant count for WP_ROCK_NADE thrown stone projectiles.\n\n** Mechanics**\n* **Per Rank:** Grants +1 Rock projectile to the user's reserve pool.\n* **Slot:** Placed in the 4th Quick-Throw queue slot.",
+    "tips": [
+      "Primary fire detonates on direct impact; secondary fire offers physics bounce.",
+      "Frequently used as a template weapon for custom explosives."
+    ],
+    "levels": {
+      "1": "1 Rock projectile.",
+      "2": "2 Rock projectiles.",
+      "3": "3 Rock projectiles."
+    },
+    "stats": {
+      "Weapon": "WP_ROCK_NADE",
+      "HUD": "HUD_ROCKNADE",
+      "Base Damage": "2"
+    },
+    "tags": [
+      "grenade",
+      "ammo",
+      "primitive"
+    ],
+    "description": "Ammo capacity and grant count for WP_ROCK_NADE."
+  },
+  {
+    "id": "MB_ATT_THERMAL",
+    "name": "Thermal Detonator (Alias)",
+    "overview": "Defensive alias of MB_ATT_THERMALS maintained for backwards compatibility across legacy and custom character sheets.\n\n** Mechanics**\n* **Level 1:** Same as MB_ATT_THERMALS level 1.\n* **Level 2:** Same as MB_ATT_THERMALS level 2.\n* **Level 3:** Same as MB_ATT_THERMALS level 3.",
+    "tips": [
+      "Prefer MB_ATT_THERMALS (plural) for modern character sheets.",
+      "Both alias to WP_REAL_TD (the canon-accurate thermal detonator)."
+    ],
+    "levels": {
+      "1": "1 Thermal Detonator (WP_REAL_TD).",
+      "2": "2 Thermal Detonators.",
+      "3": "3 Thermal Detonators."
+    },
+    "stats": {
+      "Canonical": "MB_ATT_THERMALS",
+      "Weapon": "WP_REAL_TD"
+    },
+    "tags": [
+      "grenade",
+      "thermal",
+      "alias"
+    ],
+    "description": "Thermal detonator alias attribute. Defensive alias of MB_ATT_THERMALS."
+  },
+  {
+    "id": "MB_ATT_WELDER",
+    "name": "Welder / Repair Tool",
+    "overview": "Controls damage, burn effects, and armor/droid repair efficiency for WP_WELDER.\n\n** Mechanics**\n* **Rank 1:** Base cutting damage; secondary fire repairs ally armor and droid health.\n* **Rank 2:** High thermal output; primary fire lights victims on fire.\n* **Rank 3:** Maximum cutting speed and highest repair transfer rate.",
+    "tips": [
+      "Ally repair efficiency scales down against targets with heavy Beskar or SBD plating.",
+      "Rank 2+ allows offensive fire application in close quarters."
+    ],
+    "levels": {
+      "1": "Base cutting damage; secondary fire repairs ally armor and droid health.",
+      "2": "High thermal output; primary fire ignites targets on fire.",
+      "3": "Maximum cutting speed and highest armor/health repair transfer rate."
+    },
+    "stats": {
+      "Weapon": "WP_WELDER",
+      "Flags": "WP_WelderFlags",
+      "Burn Status": "HELD_FLAME at Rank 2+"
+    },
+    "tags": [
+      "support",
+      "repair",
+      "utility"
+    ],
+    "description": "Ranks and thermal properties for the Welder / Fusioncutter."
   }
 ]

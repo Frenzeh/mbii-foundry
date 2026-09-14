@@ -1162,5 +1162,65 @@
     "target": "MB_ATT_EQUALIZER",
     "type": "wield_skill",
     "note": ""
+  },
+  {
+    "source": "WP_WELDER",
+    "target": "MB_ATT_WELDER",
+    "type": "weapon_attribute",
+    "note": "Controls welder ranks and heating/burn rates."
+  },
+  {
+    "source": "WP_MIRV",
+    "target": "MB_ATT_MIRV",
+    "type": "weapon_attribute",
+    "note": "Controls number of rockets in volley."
+  },
+  {
+    "source": "WP_ROCK_NADE",
+    "target": "MB_ATT_ROCK_NADE",
+    "type": "weapon_attribute",
+    "note": "Controls rock ammo count."
+  },
+  {
+    "source": "HELD_TRACKING",
+    "target": "MB_ATT_TRACKING_BEACON",
+    "type": "flag_interaction",
+    "note": "Enables ally HUD visibility of tracked targets."
+  },
+  {
+    "source": "CFL_BUBBLESHIELD",
+    "target": "MB_ATT_SHOCKFIELD",
+    "type": "flag_interaction",
+    "note": "Continuous shield variant of shockfield."
+  },
+  {
+    "source": "CFL_HASQ3",
+    "target": "MB_ATT_DEFLECT",
+    "type": "flag_interaction",
+    "note": "Permits blaster deflection while swinging saber."
+  },
+  {
+    "source": "CFL_INSTAGIB",
+    "target": "WP_DISRUPTOR",
+    "type": "weapon_flag",
+    "note": "Makes disruptor sniper instant-kill."
+  },
+  {
+    "source": "MB_ATT_FAKE_WOOKIEE",
+    "target": "MB_CLASS_WOOKIE",
+    "type": "class_interaction",
+    "note": "Inherits Wookiee skeleton, slap, and fury."
+  },
+  {
+    "source": "WP_CYCLER",
+    "target": "MB_ATT_CYCLER",
+    "type": "weapon_attribute",
+    "note": "Controls Tusken cycler rifle ammo and scoping."
+  },
+  {
+    "source": "WP_FA3_FLECHETTE",
+    "target": "MB_ATT_FA3_FLECHETE",
+    "type": "weapon_attribute",
+    "note": "Controls Golan Arms FA3 flechette spread and alt-fire."
   }
 ]

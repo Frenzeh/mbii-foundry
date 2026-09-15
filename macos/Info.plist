@@ -9,9 +9,9 @@
     <key>CFBundleIdentifier</key>
     <string>com.frenzeh.mbii-foundry</string>
     <key>CFBundleVersion</key>
-    <string>16</string>
+    <string>17</string>
     <key>CFBundleShortVersionString</key>
-    <string>0.16.0</string>
+    <string>0.16.1</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleExecutable</key>

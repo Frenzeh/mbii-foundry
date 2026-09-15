@@ -7,6 +7,14 @@ pre-release suffixes until the project stabilizes.
 
 ## [Unreleased]
 
+## [0.16.1-alpha] — 2026-09-15
+
+### Added
+- Synchronized R22.4 weapons, attributes, and class flags with definitions.
+- Added catalog definitions for R22.4 attributes (`MB_ATT_CYCLER`, `MB_ATT_FA3_FLECHETE`, `MB_ATT_FAKE_WOOKIEE`, `MB_ATT_MIRV`, `MB_ATT_ROCK_NADE`, `MB_ATT_WELDER`).
+- Added class flag definitions (`CFL_BLOODYMELEE`, `CFL_BUBBLESHIELD`, `CFL_DISMEMBERFRAGILE`, `CFL_HASQ3`, `CFL_INSTAGIB`, `CFL_NO_FUEL_USE`, `CFL_NO_JETPACK_OVERHEAT`).
+- Added weapon definitions (`WP_CYCLER`, `WP_FA3_FLECHETTE`, `WP_WELDER`, `WP_MIRV`, `WP_ROCK_NADE`, `WP_BACTA_BOMB`, `WP_EQUALIZER`, `WP_FLASH_NADE`, `WP_GAS_NADE`, `WP_IMPACT_NADE`, `WP_SMOKE_NADE`).
+
 ## [0.16.0-alpha] — 2026-09-09
 
 ### Added

@@ -7,6 +7,36 @@ pre-release suffixes until the project stabilizes.
 
 ## [Unreleased]
 
+## [0.16.2-alpha] — 2026-10-21
+
+### Added
+- Current-source class, weapon, attribute, force-power and special-action choices,
+  including Shock Trooper, Operative and the classes enabled by the engine's
+  source-default `GCJ_ALLOW_NEW_CLASSES` configuration.
+- Engine snapshot generation for ten enum domains and eight schema catalogs,
+  using the native C preprocessor and verified committed source bytes.
+
+### Changed
+- Refreshed engine metadata against local engine revision
+  `3108edc0f9934c1918012eff5712f9f5e790c96d` (`buildTest/R22.5.01`).
+  This records source defaults, not a deployed server's build configuration.
+- Attribute editing preserves unrelated bare, zero-level and unknown entries;
+  unknown gameplay limits use raw parser bounds rather than invented rank rules.
+- Corrected the selectable `MB_ATT_FA3_FLECHETTE` identifier and its definition
+  links, repaired legacy attribute descriptions, and retained unknown loaded
+  identifiers and weapon override fields during edits.
+- Refreshed embedded artwork from current public PK3s, including the new class,
+  weapon and consumable icons. Class and attribute aliases follow engine/menu
+  bindings; smoke-grenade model artwork has a collision-free embedded name.
+- Fixed Force Mods base-power artwork resolution without an indexed GameData
+  root, while preserving explicit icon overrides.
+- Icon extraction now decodes JPEG artwork, uses engine archive ordering, and
+  reports archive/image failures instead of silently producing incomplete output.
+- Preserved shared weapon ranks when removing one of several equipped weapons
+  that use the same attribute; the rank is cleared only after its final owner.
+- Shortened the main README around downloads and first-time editing, with
+  technical procedures retained in the developer documentation.
+
 ## [0.16.1-alpha] — 2026-09-15
 
 ### Added

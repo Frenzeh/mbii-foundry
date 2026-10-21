@@ -1,141 +1,278 @@
 {
+  "$id": "class_flags.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "MBII Class Flags Enum",
-  "description": "All class flag types from bg_saga.h siegeClassFlags_t enum",
-  "version": "1.0.0",
-  "source_file": "game/bg_saga.h",
   "class_flags": {
-    "CFL_STRONGAGAINSTPHYSICAL": {
-      "value": 0,
-      "description": "Resistant to physical damage (melee, knockback)"
-    },
-    "CFL_STATVIEWER": {
-      "value": 1,
-      "description": "Can view enemy stats/information"
-    },
-    "CFL_HEAVYMELEE": {
-      "value": 2,
-      "description": "Enhanced melee attacks (more damage/knockback)"
-    },
-    "CFL_REALTD": {
-      "value": 3,
-      "description": "Uses real thermal detonators (class 3 explosives)"
-    },
-    "CFL_HASQ3": {
-      "value": 4,
-      "description": "Has Q3 movement mode available"
-    },
-    "CFL_FASTHACKING": {
-      "value": 5,
-      "description": "Faster objective hacking speed"
-    },
-    "CFL_NOPICKUPS": {
-      "value": 6,
-      "description": "Cannot pick up items from ground"
-    },
-    "CFL_BPFREEJUMPS": {
-      "value": 7,
-      "description": "Jumps don't cost BP (block points)"
-    },
-    "CFL_SEEING_STEALTH": {
-      "value": 8,
-      "description": "Force Seeing reveals cloaked enemies"
+    "CFL_ACIDBLOOD": {
+      "value": 12,
+      "evidence_status": "SourceDefaultsVerified"
     },
     "CFL_AKIMBOPISTOL3": {
       "value": 9,
-      "description": "Can use third akimbo pistol style"
-    },
-    "CFL_THERMALROCKETS": {
-      "value": 10,
-      "description": "Rockets explode with thermal effect"
-    },
-    "CFL_INSTAGIB": {
-      "value": 11,
-      "description": "One-hit kill attacks",
-      "conditional": "INSTAGIB"
-    },
-    "CFL_ACIDBLOOD": {
-      "value": 12,
-      "description": "Bleeds acid that damages attackers",
-      "conditional": "ACIDBLOOD"
-    },
-    "CFL_DISMEMBERFRAGILE": {
-      "value": 13,
-      "description": "More easily dismembered by saber attacks"
+      "evidence_status": "SourceDefaultsVerified"
     },
     "CFL_BLOODYMELEE": {
       "value": 14,
-      "description": "Melee attacks cause blood effects (GORECONFIG)"
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "CFL_BPFREEJUMPS": {
+      "value": 7,
+      "evidence_status": "SourceDefaultsVerified"
     },
     "CFL_BUBBLESHIELD": {
       "value": 15,
-      "description": "Has Galak Mech style bubble shield"
+      "evidence_status": "SourceDefaultsVerified"
     },
-    "CFL_NO_FUEL_USE": {
-      "value": 16,
-      "description": "Jetpack doesn't consume fuel"
-    },
-    "CFL_NO_JETPACK_OVERHEAT": {
-      "value": 17,
-      "description": "Jetpack never overheats"
-    },
-    "CFL_NO_JETPACK_COOLDOWN": {
-      "value": 18,
-      "description": "Jetpack has no cooldown between uses"
+    "CFL_DISMEMBERFRAGILE": {
+      "value": 13,
+      "evidence_status": "SourceDefaultsVerified"
     },
     "CFL_DISRUPTOR_WALLS": {
       "value": 19,
-      "description": "Disruptor shots penetrate walls"
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "CFL_FASTHACKING": {
+      "value": 5,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "CFL_HASQ3": {
+      "value": 4,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "CFL_HEAVYMELEE": {
+      "value": 2,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "CFL_INSTAGIB": {
+      "value": 11,
+      "evidence_status": "SourceDefaultsVerified"
     },
     "CFL_KILLTEAMONDEATH": {
       "value": 20,
-      "description": "Death kills entire team (VIP mode)"
-    },
-    "CFL_NOLOCATIONALDAMAGE": {
-      "value": 21,
-      "description": "No headshot/location-based damage multipliers"
-    },
-    "CFL_RUNFASTMELEE": {
-      "value": 22,
-      "description": "Move faster while in melee stance",
-      "conditional": "NEW_CLASSFLAGS"
+      "evidence_status": "SourceDefaultsVerified"
     },
     "CFL_NODISMEMBER": {
       "value": 23,
-      "description": "Cannot be dismembered"
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "CFL_NOLOCATIONALDAMAGE": {
+      "value": 21,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "CFL_NOPICKUPS": {
+      "value": 6,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "CFL_NO_FUEL_USE": {
+      "value": 16,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "CFL_NO_JETPACK_COOLDOWN": {
+      "value": 18,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "CFL_NO_JETPACK_OVERHEAT": {
+      "value": 17,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "CFL_REALTD": {
+      "value": 3,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "CFL_RUNFASTMELEE": {
+      "value": 22,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "CFL_SEEING_STEALTH": {
+      "value": 8,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "CFL_STATVIEWER": {
+      "value": 1,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "CFL_STRONGAGAINSTPHYSICAL": {
+      "value": 0,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "CFL_THERMALROCKETS": {
+      "value": 10,
+      "evidence_status": "SourceDefaultsVerified"
     }
   },
-  "weapon_held_flags": {
-    "_description": "These are weapon-specific flags",
-    "HELD_HEAL": "Weapon heals user on hit",
-    "HELD_AMMOREGEN": "Weapon regenerates ammo",
-    "HELD_SPEED": "Weapon grants speed boost",
-    "HELD_SLOW": "Weapon slows targets",
-    "HELD_HIGHDAMAGE": "Increased missile/grenade damage",
-    "HELD_LOWDAMAGE": "Decreased missile/grenade damage",
-    "HELD_KNOCKDOWN": "Missiles cause knockdown",
-    "HELD_SOFTKNOCKDOWN": "Missiles cause soft knockdown",
-    "HELD_POISON": "Missiles apply poison",
-    "HELD_FLAME": "Missiles apply fire effect",
-    "HELD_PULSE": "Missiles apply pulse/EMP effect",
-    "HELD_EXPLOSIVE": "Enhanced explosive effect",
-    "HELD_KNOCKBACK": "Enhanced knockback on missiles",
-    "HELD_KNOCKDOWNRESISTANCE": "Resistance to knockdown",
-    "HELD_DAMAGERESISTANCE": "Resistance to damage",
-    "HELD_DAMAGEVULNERABLE": "Increased vulnerability to damage",
-    "HELD_FORCEREGEN": "Force point regeneration",
-    "HELD_FORCEEATER": "Drains Force on hit",
-    "HELD_ALTRELOAD": "Alternative reload animation",
-    "HELD_SLOWPROJ": "Slower projectiles",
-    "HELD_DISRUPTIFY": "Kills cause disintegration",
-    "HELD_SONIC": "Causes sonic stagger/screen effect",
-    "HELD_STUN": "Causes short blocking stagger",
-    "HELD_FREEZE": "Causes short freeze on hit",
-    "HELD_IGNOREBLOCK": "Ignores saber blocking"
+  "description": "Mechanically derived active enum identifiers and integer values, including sentinel/count markers, under the recorded source-default configuration. Parser acceptance, gameplay mechanics, rank bounds, and deployed feature configuration are not established by an enum declaration.",
+  "engine": {
+    "revision": "3108edc0f9934c1918012eff5712f9f5e790c96d",
+    "source_path": "game/bg_saga.h",
+    "source_sha256": "1d833e25793c90c367f4d507b05ff36122ab186b977c60c755c88160968c8a22",
+    "source_ranges": [
+      {
+        "declaration": "siegeClassFlags_t",
+        "path": "game/bg_saga.h",
+        "start_line": 32,
+        "end_line": 78
+      },
+      {
+        "declaration": "siegeWeaponFlags_t",
+        "path": "game/bg_saga.h",
+        "start_line": 80,
+        "end_line": 125
+      }
+    ],
+    "configuration": {
+      "defines_path": "game/mb_defines.h",
+      "defines_sha256": "3f6d201bc774e5fba4d09684dbc95b0df28c1f132147712ae246dcb67556e9f0",
+      "preprocessor": "cc -std=c99 -E -P -undef -nostdinc -x c -",
+      "scope": "Isolated enum declarations with mb_defines.h source defaults only; no other includes or build flags. Not evidence of a compiled or deployed configuration, parser acceptance, or gameplay behavior."
+    }
   },
-  "usage": {
-    "single_flag": "classflags CFL_HASQ3",
-    "multiple_flags": "classflags CFL_HASQ3|CFL_HEAVYMELEE|CFL_REALTD",
-    "notes": "Flags are combined using bitwise OR (|) operator"
+  "evidence_status": "SourceDefaultsEnumValuesVerified",
+  "title": "MBII Class and Held Flag Enum Catalog",
+  "value_semantics": "Enum bit indices, not scalar masks. HELD indices address the engine's two-word held-flag storage; indices at or above 32 belong to the second word.",
+  "version": "3.0.0",
+  "weapon_held_flags": {
+    "HELD_ALTRELOAD": {
+      "value": 18,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_AMMOREGEN": {
+      "value": 1,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_BACTA": {
+      "value": 34,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_CRIPPLE": {
+      "value": 30,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_DAMAGERESISTANCE": {
+      "value": 14,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_DAMAGEVULNERABLE": {
+      "value": 15,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_DISARM": {
+      "value": 28,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_DISRUPTIFY": {
+      "value": 20,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_EXPLOSIVE": {
+      "value": 11,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_FLAME": {
+      "value": 9,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_FLASH": {
+      "value": 33,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_FORCEEATER": {
+      "value": 17,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_FORCEFOCUS": {
+      "value": 31,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_FORCEREGEN": {
+      "value": 16,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_FREEZE": {
+      "value": 23,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_HEAL": {
+      "value": 0,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_HIGHDAMAGE": {
+      "value": 4,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_IGNOREBLOCK": {
+      "value": 24,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_KNOCKBACK": {
+      "value": 12,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_KNOCKDOWN": {
+      "value": 6,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_KNOCKDOWNRESISTANCE": {
+      "value": 13,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_LIFESTEAL": {
+      "value": 32,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_LIFT": {
+      "value": 26,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_LOWDAMAGE": {
+      "value": 5,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_NODISARM": {
+      "value": 35,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_POISON": {
+      "value": 8,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_PULL": {
+      "value": 29,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_PULSE": {
+      "value": 10,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_SLIPPERY": {
+      "value": 27,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_SLOW": {
+      "value": 3,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_SLOWPROJ": {
+      "value": 19,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_SOFTKNOCKDOWN": {
+      "value": 7,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_SONIC": {
+      "value": 21,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_SPEED": {
+      "value": 2,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_STUN": {
+      "value": 22,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HELD_TRACKING": {
+      "value": 25,
+      "evidence_status": "SourceDefaultsVerified"
+    }
   }
 }

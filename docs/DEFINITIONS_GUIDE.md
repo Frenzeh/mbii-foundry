@@ -167,10 +167,13 @@ Use the source that matches the kind of claim:
      go test . -run '^TestExplicitEngineVerification$' -count=1
    ```
 
-   `MBII_ENGINE_SRC` must be a Git checkout whose relevant `bg_public.h` and
-   `bg_saga.c` bytes match its committed `HEAD`. The verifier accepts those
-   files at the checkout root, under `game/`, or under `codemp/game/`, and fails
-   on drift instead of rewriting the snapshot.
+   `MBII_ENGINE_SRC` must be a Git checkout whose `mb_defines.h`, `bg_public.h`,
+   `bg_weapons.h`, `q_shared.h`, `bg_saga.h`, and `bg_saga.c` bytes match committed
+   `HEAD`. A native `cc` preprocessor is required. Files may be at the checkout
+   root, under `game/`, or under `codemp/game/`; drift fails verification rather
+   than rewriting the snapshot. Conditional enum values reflect `mb_defines.h`
+   source defaults, not deployed build flags. A catalog entry alone does not
+   establish that every parser accepts it or that a server enables its feature.
 
 2. **Gameplay mechanics:** cite the exact engine revision and source range that
    implements the behavior. The snapshot alone does not contain those

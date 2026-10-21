@@ -36,7 +36,20 @@ var KnownForcePowerTargets = []string{
 	"FP_DEADLYSIGHT",
 	"FP_BLIND",
 	"FP_STASIS",
-	"FP_REPULSE",
+	"FP_SUMMON",
+	"FP_BATTLEMED",
+	"FP_DOMINATION",
+	"FP_DARKRAGE",
+}
+
+func forcePowerOptions() []string {
+	options := make([]string, 0, len(KnownForcePowerTargets))
+	for _, id := range KnownForcePowerTargets {
+		if !hiddenAttributeIDs[id] {
+			options = append(options, id)
+		}
+	}
+	return options
 }
 
 type ForceInfoUI struct {
@@ -55,6 +68,7 @@ type ForceInfoUI struct {
 	loopSoundEntry       *widget.Entry
 
 	currentForceIndex int
+	loading           bool
 }
 
 func NewForceInfoUI(editor *MBCHEditor) *ForceInfoUI {
@@ -144,7 +158,7 @@ func (ui *ForceInfoUI) createUI() {
 	)
 
 	// --- Right pane: detail form ---
-	ui.forceToReplaceSelect = widget.NewSelect(KnownForcePowerTargets, func(s string) {
+	ui.forceToReplaceSelect = widget.NewSelect(forcePowerOptions(), func(s string) {
 		ui.refreshIconPreview(ui.iconEntry.Text)
 		ui.onDetailChanged(s)
 	})
@@ -242,10 +256,11 @@ func (ui *ForceInfoUI) resolveRowIcon(fi parsers.ForceInfo) fyne.Resource {
 
 	// 2. Base ForceToReplace
 	if fi.ForceToReplace != "" && ui.editor.iconResolver != nil {
-		path := ui.editor.iconResolver.ResolveAttributeIcon(fi.ForceToReplace)
-		if path == "" || strings.HasPrefix(path, "gfx/menus/alpha/") {
-			path = ui.editor.iconResolver.ResolveAttributeIcon("MB_ATT_" + fi.ForceToReplace)
+		attID := fi.ForceToReplace
+		if strings.HasPrefix(attID, "FP_") {
+			attID = "MB_ATT_" + attID
 		}
+		path := ui.editor.iconResolver.ResolveAttributeIcon(attID)
 		if ui.editor.assetBrowser != nil && path != "" {
 			if res := ui.editor.assetBrowser.LoadIconResource(path); res != nil {
 				return res
@@ -375,8 +390,11 @@ func (ui *ForceInfoUI) loadForceDetails(index int) {
 		return
 	}
 
+	ui.loading = true
+	defer func() { ui.loading = false }()
+
 	fi := ui.editor.character.ForceOverrides[index]
-	ui.forceToReplaceSelect.SetSelected(fi.ForceToReplace)
+	setLoadedCatalogSelection(ui.forceToReplaceSelect, forcePowerOptions(), fi.ForceToReplace)
 	ui.iconEntry.SetText(fi.Icon)
 	ui.forcePowerNameEntry.SetText(fi.ForcePowerName)
 	ui.startSoundEntry.SetText(fi.StartSound)
@@ -396,7 +414,7 @@ func (ui *ForceInfoUI) clearDetails() {
 
 func (ui *ForceInfoUI) onDetailChanged(s string) {
 	_ = s
-	if ui.currentForceIndex == -1 || ui.currentForceIndex >= len(ui.editor.character.ForceOverrides) {
+	if ui.loading || ui.currentForceIndex == -1 || ui.currentForceIndex >= len(ui.editor.character.ForceOverrides) {
 		return
 	}
 

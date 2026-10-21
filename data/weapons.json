@@ -898,7 +898,7 @@
     "name": "Golan Arms FA3 Flechette",
     "overview": "Combat shotgun variant firing multi-pellet razor flechette spreads and explosive bouncing canister alternate fire.",
     "tips": [
-      "Paired with `MB_ATT_FA3_FLECHETE`.",
+      "Paired with `MB_ATT_FA3_FLECHETTE`.",
       "Devastating in close-quarters corridor breaches against light shields.",
       "Standard loadout for Clone Flechette Specialists and Imperial EVO Troopers."
     ],
@@ -1097,5 +1097,31 @@
     ],
     "description": "Short-range repair tool and cutting torch.",
     "category": "Sidearms"
+  },
+  {
+    "id": "WP_WELD_PULSE",
+    "name": "Weld Pulse",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_WELD_BEAM",
+    "name": "Weld Beam",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_PROTON_NADE",
+    "name": "Proton Grenade",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_GLOP_NADE",
+    "name": "Glop Grenade",
+    "category": "Heavy"
+  },
+  {
+    "id": "WP_BLASTER_PISTOL",
+    "name": "DL-44 Blaster Pistol",
+    "category": "Sidearms",
+    "description": "Standard semi-automatic blaster pistol. High accuracy and moderate damage."
   }
 ]

@@ -82,6 +82,27 @@ var MBIIWeapons = []WeaponDef{
 	{ID: "WP_CONC_NADE", Name: "Concussion Grenade", Category: "Heavy", Description: "Shockwave grenade delivering concussive force to stagger and knockdown opponents."},
 	{ID: "WP_TRIP_MINE", Name: "Trip Mine", Category: "Heavy", Description: "Laser-tripped stationary explosive that detonates upon beam interruption."},
 	{ID: "WP_DET_PACK", Name: "Detonation Pack", Category: "Heavy", Description: "Plantable explosive charge triggered remotely with a radio detonator."},
+
+	// Current player-usable identifiers accepted by WPTable.
+	{ID: "WP_DC_CARBINE", Name: "DC-15 Carbine", Category: "Rifles"},
+	{ID: "WP_WELD_PULSE", Name: "Weld Pulse", Category: "Heavy"},
+	{ID: "WP_WELD_BEAM", Name: "Weld Beam", Category: "Heavy"},
+	{ID: "WP_BACTA_BOMB", Name: "Bacta Bomb", Category: "Heavy"},
+	{ID: "WP_SMOKE_NADE", Name: "Smoke Grenade", Category: "Heavy"},
+	{ID: "WP_GAS_NADE", Name: "Gas Grenade", Category: "Heavy"},
+	{ID: "WP_ROCK_NADE", Name: "Thrown Rock", Category: "Heavy"},
+	{ID: "WP_FLASH_NADE", Name: "Flash Grenade", Category: "Heavy"},
+	{ID: "WP_IMPACT_NADE", Name: "Impact Grenade", Category: "Heavy"},
+	{ID: "WP_PROTON_NADE", Name: "Proton Grenade", Category: "Heavy"},
+	{ID: "WP_GLOP_NADE", Name: "Glop Grenade", Category: "Heavy"},
+	{ID: "WP_WELDER", Name: "Welder", Category: "Melee/Force", Description: "Melee weapon and repair tool."},
+	{ID: "WP_MIRV", Name: "MIRV", Category: "Heavy", Description: "Volley rocket launcher."},
+	{ID: "WP_CYCLER", Name: "Cycler Rifle", Category: "Rifles"},
+	{ID: "WP_FA3_FLECHETTE", Name: "FA3 Flechette", Category: "Rifles"},
+
+	// Parser-accepted, but outside FIRST_USEABLE_WEAPON..LAST_USEABLE_WEAPON.
+	{ID: "WP_EMPLACED_GUN", Name: "Emplaced Gun", Category: "Heavy", Hidden: true},
+	{ID: "WP_TURRET", Name: "Turret", Category: "Heavy", Hidden: true},
 }
 
 // AccentColor returns the per-category accent for tile chrome.

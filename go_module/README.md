@@ -7,7 +7,17 @@ parsers. User installation and workflows are documented in
 ## Run from source
 
 Install Go 1.24 or newer and the platform prerequisites from
-[Fyne's setup guide](https://docs.fyne.io/started/), then:
+[Fyne's setup guide](https://docs.fyne.io/started/). The repository's Bash
+helpers build and launch from the correct directory:
+
+```bash
+git clone https://github.com/Frenzeh/mbii-foundry.git
+cd mbii-foundry
+./setup_mbii-foundry.sh
+./run_mbii-foundry.sh
+```
+
+For the direct Go commands below, work from `go_module/`:
 
 ```bash
 go run .
@@ -27,15 +37,44 @@ go build -ldflags="-H windowsgui" -o mbii-foundry.exe
 .\mbii-foundry.exe
 ```
 
+WSL builds a Linux application, not a native Windows executable.
+
 Run from this directory so development builds can discover the repository's
 `data/`, `definitions/`, `schemas/`, and `templates/` resources. Generated
 executables are ignored build artifacts and must not be committed.
 
-For a macOS application bundle, run `../build_app.sh` from either the repository
-root or this directory's parent. It creates
-`../dist/MBII Foundry.app`, verifies both arm64 and x86_64 slices, stages the
-complete bundle on the destination filesystem, and atomically publishes it.
-The default signature is ad-hoc and the script does not notarize the bundle.
+For a macOS application bundle, run `./build_app.sh` from the repository root
+(or `../build_app.sh` from this directory). It creates `dist/MBII Foundry.app`
+under the repository root, verifies both arm64 and x86_64 slices, stages the
+complete bundle on the destination filesystem, and atomically publishes it,
+restoring the prior bundle if publication fails. The default signature is
+ad-hoc. Setting `FOUNDRY_CODESIGN_IDENTITY` selects a local signing identity;
+the script does not notarize the bundle.
+
+## Refresh embedded game artwork
+
+Use the current installed public PK3s, with cloud placeholders downloaded first.
+Stage extraction outside the working tree, from the repository root:
+
+```bash
+go -C tools/extract-icons run . \
+  -pk3-dir "<GameData>/MBII" \
+  -out "<scratch>/foundry-icons"
+```
+
+Use a fresh output directory. Extraction follows the engine's case-insensitive
+archive ordering and fails on unreadable archives or selected images. Review the
+output and merge its category directories into `go_module/assets/icons/`, backing
+up changed files first. Do not replace the whole directory: base-game artwork
+not present in the mod PK3s is still needed. New catalog aliases must follow
+actual engine or menu bindings, not similarly named substitute pictures.
+
+Rebuild afterward; these images are embedded, not loaded from the source tree.
+From the repository root:
+
+```bash
+go -C go_module build -o mbii-foundry .
+```
 
 ## Architecture
 
@@ -82,10 +121,11 @@ MBII_ENGINE_SRC=/absolute/path/to/moviebattles \
   go test . -run '^TestExplicitEngineVerification$' -count=1
 ```
 
-The checkout must be a Git repository whose relevant `bg_public.h` and
-`bg_saga.c` bytes match its committed `HEAD`. The generator accepts those files
-at the checkout root, under `game/`, or under `codemp/game/`. A mismatch fails
-instead of rewriting committed metadata.
+The checkout must be a Git repository whose `mb_defines.h`, `bg_public.h`,
+`bg_weapons.h`, `q_shared.h`, `bg_saga.h`, and `bg_saga.c` bytes match its committed
+`HEAD`. The generator accepts these at the checkout root, under `game/`, or under
+`codemp/game/`. A native `cc` C preprocessor must be available. Missing inputs,
+unsupported expressions, and source drift fail instead of guessing values.
 
 To intentionally generate a candidate snapshot for review:
 
@@ -93,12 +133,21 @@ To intentionally generate a candidate snapshot for review:
 MBII_ENGINE_SRC=/absolute/path/to/moviebattles \
   go run ../tools/generate_snapshot.go \
   -snapshot testdata/engine_snapshot.json \
-  -schema ../schemas/mbch_schema.json
+  -schema ../schemas/mbch_schema.json \
+  -update-schemas
 ```
 
-Generation records the engine revision, source hashes, enum ranges, enum
-numeric values, and parser-key inventory. It does not copy C source text and
-does not certify definition prose or gameplay behavior.
+`-update-schemas` also regenerates the eight enum catalogs and the main schema's
+`MBClass` constraint; omit it to generate only the snapshot. Generation records
+the engine revision, six source hashes, source-default preprocessor configuration,
+enum ranges and values, and parser-key inventory. Ten enum domains cover classes,
+attributes, weapons, force powers, saber styles, holdables, special actions,
+powerups, class flags, and held flags.
+
+Conditional declarations use `mb_defines.h` defaults, without external includes
+or deployed build flags. The snapshot does not prove a server's enabled classes,
+parser acceptance of every catalog value, or gameplay behavior, and does not
+certify definition prose. It contains metadata, not copied engine source.
 
 ## Release trust boundary
 

@@ -72,6 +72,7 @@ type WeaponInfoUI struct {
 	detailPane *fyne.Container
 
 	currentWeaponIndex int
+	loading            bool
 }
 
 func NewWeaponInfoUI(editor *MBCHEditor) *WeaponInfoUI {
@@ -86,27 +87,14 @@ func (ui *WeaponInfoUI) browseAsset(entry *widget.Entry, assetType AssetType) {
 	}
 }
 
-// weaponPickOptions builds the WP_* dropdown list for WeaponToReplace
-// and WeaponBasedOff. Sourced from MBIIWeapons (the canonical weapon
-// catalog) unioned with weaponIconAliases — earlier the list was
-// built only from weaponIconAliases (a subset), so weapons in
-// MBIIWeapons that lacked a custom HUD icon (e.g. WP_BLASTER_PISTOL)
-// were silently missing from the override target picker. Filtered to
-// live weapons only — no sentinels, no #ifdef-guarded entries — so
-// authors don't accidentally override a weapon that doesn't ship.
+// weaponPickOptions uses the effective visible catalog, not icon availability.
 func weaponPickOptions() []string {
 	seen := map[string]bool{}
-	for _, w := range MBIIWeapons {
-		if w.ID == "" || w.ID == "WP_NONE" || w.Hidden {
+	for _, w := range GetWeapons() {
+		if w.ID == "" || w.ID == "WP_NONE" {
 			continue
 		}
 		seen[w.ID] = true
-	}
-	for id := range weaponIconAliases {
-		if id == "" || id == "WP_NONE" {
-			continue
-		}
-		seen[id] = true
 	}
 	out := make([]string, 0, len(seen))
 	for id := range seen {
@@ -508,9 +496,13 @@ func (ui *WeaponInfoUI) loadWeaponDetails(index int) {
 		return
 	}
 
+	ui.loading = true
+	defer func() { ui.loading = false }()
+
 	wi := ui.editor.character.WeaponOverrides[index]
-	ui.weaponToReplaceSelect.SetSelected(wi.WeaponToReplace)
-	ui.weaponBasedOffSelect.SetSelected(wi.WeaponBasedOff)
+	options := weaponPickOptions()
+	setLoadedCatalogSelection(ui.weaponToReplaceSelect, options, wi.WeaponToReplace)
+	setLoadedCatalogSelection(ui.weaponBasedOffSelect, options, wi.WeaponBasedOff)
 	ui.newWorldModelEntry.SetText(wi.NewWorldModel)
 	ui.newViewModelEntry.SetText(wi.NewViewModel)
 	ui.iconEntry.SetText(wi.Icon)
@@ -568,7 +560,7 @@ func (ui *WeaponInfoUI) clearDetails() {
 // signatures. Rereading is cheap and keeps a single code path.
 func (ui *WeaponInfoUI) onDetailChanged(s string) {
 	_ = s
-	if ui.currentWeaponIndex == -1 ||
+	if ui.loading || ui.currentWeaponIndex == -1 ||
 		ui.currentWeaponIndex >= len(ui.editor.character.WeaponOverrides) {
 		return
 	}

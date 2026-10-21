@@ -1,121 +1,125 @@
 {
+  "$id": "powerups.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "MBII Powerups Enum",
-  "description": "All powerup types from bg_public.h powerup_t enum",
-  "version": "1.0.0",
-  "source_file": "game/bg_public.h",
-
+  "description": "Mechanically derived active enum identifiers and integer values, including sentinel/count markers, under the recorded source-default configuration. Parser acceptance, gameplay mechanics, rank bounds, and deployed feature configuration are not established by an enum declaration.",
+  "engine": {
+    "revision": "3108edc0f9934c1918012eff5712f9f5e790c96d",
+    "source_path": "game/bg_public.h",
+    "source_sha256": "e1fb920a4632dc8399584fe61e1ea364726f68e1c418375b8ca1fe47abc59e35",
+    "source_ranges": [
+      {
+        "declaration": "powerup_t",
+        "path": "game/bg_public.h",
+        "start_line": 2108,
+        "end_line": 2152
+      }
+    ],
+    "configuration": {
+      "defines_path": "game/mb_defines.h",
+      "defines_sha256": "3f6d201bc774e5fba4d09684dbc95b0df28c1f132147712ae246dcb67556e9f0",
+      "preprocessor": "cc -std=c99 -E -P -undef -nostdinc -x c -",
+      "scope": "Isolated enum declarations with mb_defines.h source defaults only; no other includes or build flags. Not evidence of a compiled or deployed configuration, parser acceptance, or gameplay behavior."
+    }
+  },
+  "evidence_status": "SourceDefaultsEnumValuesVerified",
   "powerups": {
-    "PW_NONE": {
-      "value": 0,
-      "description": "No powerup"
-    },
-    "PW_QUAD": {
-      "value": 1,
-      "description": "Hijacked for cleaner flameburning effects",
-      "note": "Original Q3 quad damage, repurposed in MBII"
-    },
     "PW_BATTLESUIT": {
       "value": 2,
-      "description": "Hijacked for cleaner plasma flameburning effects",
-      "note": "Original Q3 battlesuit, repurposed in MBII"
-    },
-    "PW_PULL": {
-      "value": 3,
-      "description": "Force Pull active state"
-    },
-    "PW_REDFLAG": {
-      "value": 4,
-      "description": "Carrying red team flag (CTF)"
+      "evidence_status": "SourceDefaultsVerified"
     },
     "PW_BLUEFLAG": {
       "value": 5,
-      "description": "Carrying blue team flag (CTF)"
-    },
-    "PW_NEUTRALFLAG": {
-      "value": 6,
-      "description": "Carrying neutral flag"
-    },
-    "PW_SHIELDHIT": {
-      "value": 7,
-      "description": "Hijacked for bubble shield effect",
-      "note": "Used for deployable bubble shield visual"
-    },
-    "PW_SPEEDBURST": {
-      "value": 8,
-      "description": "Speed burst active (was used for base dodge)",
-      "note": "Could be removed according to source comments"
-    },
-    "PW_DISINT_4": {
-      "value": 9,
-      "description": "Disintegration effect state"
-    },
-    "PW_SPEED": {
-      "value": 10,
-      "description": "Force Speed active state",
-      "note": "Could be removed - can check FP_SPEED directly"
+      "evidence_status": "SourceDefaultsVerified"
     },
     "PW_CLOAKED": {
       "value": 11,
-      "description": "Cloaking device active"
+      "evidence_status": "SourceDefaultsVerified"
     },
-    "PW_FORCE_ENLIGHTENED_LIGHT": {
-      "value": 12,
-      "description": "Light side Force enlightenment active"
-    },
-    "PW_FORCE_ENLIGHTENED_DARK": {
-      "value": 13,
-      "description": "Dark side Force enlightenment active"
-    },
-    "PW_FORCE_BOON": {
-      "value": 14,
-      "description": "Force Boon bonus active"
-    },
-    "PW_YSALAMIRI": {
-      "value": 15,
-      "description": "Ysalamiri effect - nullifies Force powers"
-    },
-    "PW_POISON": {
-      "value": 16,
-      "description": "Poisoned state - taking damage over time"
-    },
-    "PW_TRACKED_R": {
-      "value": 17,
-      "description": "Tracked by Red Team (visible on radar)"
-    },
-    "PW_TRACKED_B": {
-      "value": 18,
-      "description": "Tracked by Blue Team (visible on radar)"
+    "PW_DISINT_4": {
+      "value": 9,
+      "evidence_status": "SourceDefaultsVerified"
     },
     "PW_ELECTRIFY": {
       "value": 19,
-      "description": "Electrified/shocked state (PW_SHOCKED)"
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "PW_FORCE_BOON": {
+      "value": 14,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "PW_FORCE_ENLIGHTENED_DARK": {
+      "value": 13,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "PW_FORCE_ENLIGHTENED_LIGHT": {
+      "value": 12,
+      "evidence_status": "SourceDefaultsVerified"
     },
     "PW_FREEZE": {
       "value": 20,
-      "description": "Frozen state from ice thrower"
+      "evidence_status": "SourceDefaultsVerified"
     },
     "PW_GALAKMECHSHIELD": {
       "value": 21,
-      "description": "Galak Mech style bubble shield active"
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "PW_NEUTRALFLAG": {
+      "value": 6,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "PW_NONE": {
+      "value": 0,
+      "evidence_status": "SourceDefaultsVerified"
     },
     "PW_NUM_POWERUPS": {
+      "value": 23,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "PW_POISON": {
+      "value": 16,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "PW_PSHIELD": {
       "value": 22,
-      "description": "Total powerup count marker"
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "PW_PULL": {
+      "value": 3,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "PW_QUAD": {
+      "value": 1,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "PW_REDFLAG": {
+      "value": 4,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "PW_SHIELDHIT": {
+      "value": 7,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "PW_SPEED": {
+      "value": 10,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "PW_SPEEDBURST": {
+      "value": 8,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "PW_TRACKED_B": {
+      "value": 18,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "PW_TRACKED_R": {
+      "value": 17,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "PW_YSALAMIRI": {
+      "value": 15,
+      "evidence_status": "SourceDefaultsVerified"
     }
   },
-
-  "categories": {
-    "force_related": ["PW_PULL", "PW_SPEED", "PW_FORCE_ENLIGHTENED_LIGHT", "PW_FORCE_ENLIGHTENED_DARK", "PW_FORCE_BOON", "PW_YSALAMIRI"],
-    "ctf_flags": ["PW_REDFLAG", "PW_BLUEFLAG", "PW_NEUTRALFLAG"],
-    "debuffs": ["PW_POISON", "PW_ELECTRIFY", "PW_FREEZE"],
-    "tracking": ["PW_TRACKED_R", "PW_TRACKED_B"],
-    "shields": ["PW_SHIELDHIT", "PW_GALAKMECHSHIELD"],
-    "stealth": ["PW_CLOAKED"]
-  },
-
-  "notes": {
-    "usage": "Powerups are temporary states that affect gameplay. Many are applied automatically by Force powers or abilities.",
-    "legacy": "Several powerups are repurposed from Quake 3/JKA base code for MBII-specific effects."
-  }
+  "title": "MBII Powerups Enum Catalog",
+  "version": "3.0.0"
 }

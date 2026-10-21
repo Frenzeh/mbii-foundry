@@ -296,8 +296,6 @@ func LoadExternalData(dataPath string) error {
 		if LoadedAttributes[i].MaxLevel <= 0 {
 			if fb, ok := fallbackMap[LoadedAttributes[i].ID]; ok && fb.MaxLevel > 0 {
 				LoadedAttributes[i].MaxLevel = fb.MaxLevel
-			} else {
-				LoadedAttributes[i].MaxLevel = 3
 			}
 		}
 	}

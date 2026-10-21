@@ -21,10 +21,8 @@
           "maxLength": 64
         },
         "MBClass": {
-          "type": "string",
-          "description": "Base class identifier accepted by the verified engine enum",
-          "evidenceStatus": "EnumMembershipVerified",
-          "engineRevision": "f5c3271b92fc6e610713f10193bc443e1cc3a0e6",
+          "description": "Base class identifier in the recorded source-default enum; does not establish deployed availability or gameplay behavior.",
+          "engineRevision": "3108edc0f9934c1918012eff5712f9f5e790c96d",
           "enum": [
             "MB_CLASS_SOLDIER",
             "MB_CLASS_TROOPER",
@@ -40,6 +38,8 @@
             "MB_CLASS_CLONETROOPER",
             "MB_CLASS_MANDALORIAN",
             "MB_CLASS_ARCTROOPER",
+            "MB_CLASS_SHOCKTROOPER",
+            "MB_CLASS_OPERATIVE",
             "MB_CLASS_ENFORCER",
             "MB_CLASS_SPY",
             "MB_CLASS_ASTRODROID",
@@ -48,10 +48,16 @@
             "MB_CLASS_JETTROOPER",
             "MB_CLASS_ASSASSINDROID",
             "MB_CLASS_PATROLIAN",
-            "MB_CLASS_SHOCKTROOPER",
-            "MB_CLASS_REBMEDIC",
             "MB_CLASS_OBSERVER"
-          ]
+          ],
+          "evidenceStatus": "SourceDefaultsEnumMembershipVerified",
+          "sourceConfiguration": {
+            "defines_path": "game/mb_defines.h",
+            "defines_sha256": "3f6d201bc774e5fba4d09684dbc95b0df28c1f132147712ae246dcb67556e9f0",
+            "preprocessor": "cc -std=c99 -E -P -undef -nostdinc -x c -",
+            "scope": "Isolated enum declarations with mb_defines.h source defaults only; no other includes or build flags. Not evidence of a compiled or deployed configuration, parser acceptance, or gameplay behavior."
+          },
+          "type": "string"
         },
         "_section_model": {
           "type": "null",
@@ -860,19 +866,23 @@
         },
         "special1": {
           "type": "string",
-          "description": "Special ability slot 1"
+          "description": "Special action bound to class special 1",
+          "dev": true
         },
         "special2": {
           "type": "string",
-          "description": "Special ability slot 2"
+          "description": "Special action bound to class special 2",
+          "dev": true
         },
         "special3": {
           "type": "string",
-          "description": "Special ability slot 3"
+          "description": "Special action bound to class special 3",
+          "dev": true
         },
         "special4": {
           "type": "string",
-          "description": "Special ability slot 4"
+          "description": "Special action bound to class special 4",
+          "dev": true
         },
         "meleeSpecial1": {
           "type": "string",

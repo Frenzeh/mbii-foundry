@@ -3,6 +3,7 @@ package main
 import (
 	"sort"
 
+	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -22,6 +23,8 @@ type DevField struct {
 	Label string
 	// Description is the tooltip + entry placeholder text.
 	Description string
+	// Options provides parser-accepted choices while still permitting raw text.
+	Options []string
 }
 
 // devFieldsRegistry is every ClassInfo-level field marked `"dev": true`
@@ -44,6 +47,10 @@ var devFieldsRegistry = []DevField{
 	{Key: "jetpackJetOffset", Label: "jetpackJetOffset", Description: "Primary jet position offset 'x, y, z'"},
 	{Key: "jetpackJetTag", Label: "jetpackJetTag", Description: "Model tag for primary jet (e.g. *jet1)"},
 	{Key: "saberDamageStyle", Label: "saberDamageStyle", Description: "Per-style saber damage overrides (consumed by BG_TranslateSaberDamageStyles)"},
+	{Key: "special1", Label: "Special 1", Description: "Special action bound to class special 1", Options: KnownSpecialActions},
+	{Key: "special2", Label: "Special 2", Description: "Special action bound to class special 2", Options: KnownSpecialActions},
+	{Key: "special3", Label: "Special 3", Description: "Special action bound to class special 3", Options: KnownSpecialActions},
+	{Key: "special4", Label: "Special 4", Description: "Special action bound to class special 4", Options: KnownSpecialActions},
 }
 
 // devFieldKeysSorted returns the list as a sorted []string for diff
@@ -72,7 +79,22 @@ func (e *MBCHEditor) buildDevFieldsCard() *widget.Card {
 	items := make([]*widget.FormItem, 0, len(devFieldsRegistry))
 	for _, df := range devFieldsRegistry {
 		df := df // capture per-iteration
-		entry := NewInputEntry()
+		var entry *widget.Entry
+		var input fyne.CanvasObject
+		if len(df.Options) > 0 {
+			options := make([]string, 0, len(df.Options))
+			for _, id := range df.Options {
+				if !hiddenAttributeIDs[id] {
+					options = append(options, id)
+				}
+			}
+			selectEntry := widget.NewSelectEntry(options)
+			entry = &selectEntry.Entry
+			input = selectEntry
+		} else {
+			entry = NewInputEntry()
+			input = entry
+		}
 		entry.SetPlaceHolder(df.Description)
 		entry.OnChanged = func(s string) {
 			if e.character == nil {
@@ -88,7 +110,7 @@ func (e *MBCHEditor) buildDevFieldsCard() *widget.Card {
 			}
 			e.markDirty()
 		}
-		item := widget.NewFormItem(df.Label, entry)
+		item := widget.NewFormItem(df.Label, input)
 		item.HintText = df.Description
 		items = append(items, item)
 		e.devFieldEntries[df.Key] = entry
@@ -96,7 +118,7 @@ func (e *MBCHEditor) buildDevFieldsCard() *widget.Card {
 	form := widget.NewForm(items...)
 	return widget.NewCard(
 		"Advanced (Developer) Fields",
-		"Engine-internal fields (bitmasks, jetpack rig, saber damage style). Hidden by default; toggle via View → Show Developer Fields.",
+		"Engine fields and special actions. Hidden by default; toggle via View → Show Developer Fields.",
 		form,
 	)
 }

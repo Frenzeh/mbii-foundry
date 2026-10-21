@@ -1,29 +1,100 @@
 {
-  "format_version": 1,
+  "format_version": 2,
   "evidence_status": "Verified",
-  "revision": "f5c3271b92fc6e610713f10193bc443e1cc3a0e6",
+  "revision": "3108edc0f9934c1918012eff5712f9f5e790c96d",
   "sources": [
     {
       "path": "game/bg_public.h",
-      "sha256": "5b68539243e49887037b09bc1b318c5760a1da0600c3a33556971b4481f5c6ea"
+      "sha256": "e1fb920a4632dc8399584fe61e1ea364726f68e1c418375b8ca1fe47abc59e35"
     },
     {
       "path": "game/bg_saga.c",
-      "sha256": "81d7d14f9f1ed996c56f0c4c07615b2a18f2aa0a45cb19bfccf9e92092f77b4b"
+      "sha256": "6e4935a3299d36123ab2b37da317a908aedbdf1e12b47c15990a80e2f1ef3383"
+    },
+    {
+      "path": "game/bg_saga.h",
+      "sha256": "1d833e25793c90c367f4d507b05ff36122ab186b977c60c755c88160968c8a22"
+    },
+    {
+      "path": "game/bg_weapons.h",
+      "sha256": "62e58cb03103116c160cc8d3070427919b1bb6e584274612a829fc3384838966"
+    },
+    {
+      "path": "game/mb_defines.h",
+      "sha256": "3f6d201bc774e5fba4d09684dbc95b0df28c1f132147712ae246dcb67556e9f0"
+    },
+    {
+      "path": "game/q_shared.h",
+      "sha256": "31aab11e37a6313fd159fbc8c9a14157696082f9231f5d1b0d0b8a06374ddf68"
     }
   ],
+  "configuration": {
+    "defines_path": "game/mb_defines.h",
+    "defines_sha256": "3f6d201bc774e5fba4d09684dbc95b0df28c1f132147712ae246dcb67556e9f0",
+    "preprocessor": "cc -std=c99 -E -P -undef -nostdinc -x c -",
+    "scope": "Isolated enum declarations with mb_defines.h source defaults only; no other includes or build flags. Not evidence of a compiled or deployed configuration, parser acceptance, or gameplay behavior."
+  },
+  "fields_scope": "Parser-key occurrences before preprocessing; inactive branches may be present. Types, defaults, and bounds are unverified editor annotations.",
   "source_ranges": [
     {
       "declaration": "classes_t",
       "path": "game/bg_public.h",
-      "start_line": 260,
-      "end_line": 294
+      "start_line": 269,
+      "end_line": 303
     },
     {
       "declaration": "MBAttribute_t",
       "path": "game/bg_public.h",
-      "start_line": 552,
-      "end_line": 907
+      "start_line": 563,
+      "end_line": 929
+    },
+    {
+      "declaration": "weapon_t",
+      "path": "game/bg_weapons.h",
+      "start_line": 7,
+      "end_line": 92
+    },
+    {
+      "declaration": "forcePowers_t",
+      "path": "game/q_shared.h",
+      "start_line": 601,
+      "end_line": 633
+    },
+    {
+      "declaration": "saber_styles_t",
+      "path": "game/q_shared.h",
+      "start_line": 699,
+      "end_line": 710
+    },
+    {
+      "declaration": "holdable_t",
+      "path": "game/bg_public.h",
+      "start_line": 2154,
+      "end_line": 2172
+    },
+    {
+      "declaration": "gEntityActionSkill_t",
+      "path": "game/bg_public.h",
+      "start_line": 3804,
+      "end_line": 3907
+    },
+    {
+      "declaration": "powerup_t",
+      "path": "game/bg_public.h",
+      "start_line": 2108,
+      "end_line": 2152
+    },
+    {
+      "declaration": "siegeClassFlags_t",
+      "path": "game/bg_saga.h",
+      "start_line": 32,
+      "end_line": 78
+    },
+    {
+      "declaration": "siegeWeaponFlags_t",
+      "path": "game/bg_saga.h",
+      "start_line": 80,
+      "end_line": 125
     }
   ],
   "enums": [
@@ -91,43 +162,43 @@
           "value": 14
         },
         {
-          "name": "MB_CLASS_ENFORCER",
+          "name": "MB_CLASS_SHOCKTROOPER",
           "value": 15
         },
         {
-          "name": "MB_CLASS_SPY",
+          "name": "MB_CLASS_OPERATIVE",
           "value": 16
         },
         {
-          "name": "MB_CLASS_ASTRODROID",
+          "name": "MB_CLASS_ENFORCER",
           "value": 17
         },
         {
-          "name": "MB_CLASS_ASTROMECH",
+          "name": "MB_CLASS_SPY",
           "value": 18
         },
         {
-          "name": "MB_CLASS_BATTLEDROID",
+          "name": "MB_CLASS_ASTRODROID",
           "value": 19
         },
         {
-          "name": "MB_CLASS_JETTROOPER",
+          "name": "MB_CLASS_ASTROMECH",
           "value": 20
         },
         {
-          "name": "MB_CLASS_ASSASSINDROID",
+          "name": "MB_CLASS_BATTLEDROID",
           "value": 21
         },
         {
-          "name": "MB_CLASS_PATROLIAN",
+          "name": "MB_CLASS_JETTROOPER",
           "value": 22
         },
         {
-          "name": "MB_CLASS_SHOCKTROOPER",
+          "name": "MB_CLASS_ASSASSINDROID",
           "value": 23
         },
         {
-          "name": "MB_CLASS_REBMEDIC",
+          "name": "MB_CLASS_PATROLIAN",
           "value": 24
         },
         {
@@ -228,7 +299,7 @@
           "value": 20
         },
         {
-          "name": "MB_ATT_FP_PROJECTION",
+          "name": "MB_ATT_FP_SUMMON",
           "value": 21
         },
         {
@@ -280,1076 +351,2320 @@
           "value": 33
         },
         {
-          "name": "MB_ATT_LASERCOVER",
+          "name": "MB_ATT_ACROBACY",
           "value": 34
         },
         {
-          "name": "MB_ATT_ACROBACY",
+          "name": "MB_ATT_DRONE",
           "value": 35
         },
         {
-          "name": "MB_ATT_DRONE",
+          "name": "MB_ATT_WPFLAMETHROWER",
           "value": 36
         },
         {
-          "name": "MB_ATT_WPFLAMETHROWER",
+          "name": "MB_ATT_CLONERIFLE",
           "value": 37
         },
         {
-          "name": "MB_ATT_CLONERIFLE",
+          "name": "MB_ATT_PROJECTILE_RIFLE",
           "value": 38
         },
         {
-          "name": "MB_ATT_PROJECTILE_RIFLE",
+          "name": "MB_ATT_A280",
           "value": 39
         },
         {
-          "name": "MB_ATT_A280",
+          "name": "MB_ATT_THERMALS",
           "value": 40
         },
         {
-          "name": "MB_ATT_THERMALS",
+          "name": "MB_ATT_HEALTH",
           "value": 41
         },
         {
-          "name": "MB_ATT_HEALTH",
+          "name": "MB_ATT_ARMOUR",
           "value": 42
         },
         {
-          "name": "MB_ATT_ARMOUR",
+          "name": "MB_ATT_AMMO",
           "value": 43
         },
         {
-          "name": "MB_ATT_AMMO",
+          "name": "MB_ATT_POWER",
           "value": 44
         },
         {
-          "name": "MB_ATT_POWER",
+          "name": "MB_ATT_REGEN",
           "value": 45
         },
         {
-          "name": "MB_ATT_REGEN",
+          "name": "MB_ATT_AP_MULTIPLIER",
           "value": 46
         },
         {
-          "name": "MB_ATT_AP_MULTIPLIER",
+          "name": "MB_ATT_BP_MULTIPLIER",
           "value": 47
         },
         {
-          "name": "MB_ATT_BP_MULTIPLIER",
+          "name": "MB_ATT_CS_MULTIPLIER",
           "value": 48
         },
         {
-          "name": "MB_ATT_CS_MULTIPLIER",
+          "name": "MB_ATT_AS_MULTIPLIER",
           "value": 49
         },
         {
-          "name": "MB_ATT_AS_MULTIPLIER",
+          "name": "MB_ATT_FP_MULTIPLIER",
           "value": 50
         },
         {
-          "name": "MB_ATT_FP_MULTIPLIER",
+          "name": "MB_ATT_ROF_MULTIPLIER",
           "value": 51
         },
         {
-          "name": "MB_ATT_ROF_MULTIPLIER",
+          "name": "MB_ATT_STM_MULTIPLIER",
           "value": 52
         },
         {
-          "name": "MB_ATT_STM_MULTIPLIER",
+          "name": "MB_ATT_HACK_MULTIPLIER",
           "value": 53
         },
         {
-          "name": "MB_ATT_HACK_MULTIPLIER",
+          "name": "MB_ATT_KB_TAKEN_MULTIPLIER",
           "value": 54
         },
         {
-          "name": "MB_ATT_KB_TAKEN_MULTIPLIER",
+          "name": "MB_ATT_KB_GIVEN_MULTIPLIER",
           "value": 55
         },
         {
-          "name": "MB_ATT_KB_GIVEN_MULTIPLIER",
+          "name": "MB_ATT_DMG_TAKEN_MULTIPLIER",
           "value": 56
         },
         {
-          "name": "MB_ATT_DMG_TAKEN_MULTIPLIER",
+          "name": "MB_ATT_DMG_GIVEN_MULTIPLIER",
           "value": 57
         },
         {
-          "name": "MB_ATT_DMG_GIVEN_MULTIPLIER",
+          "name": "MB_ATT_BASESPEED",
           "value": 58
         },
         {
-          "name": "MB_ATT_BASESPEED",
+          "name": "MB_ATT_SABER_DAMAGE",
           "value": 59
         },
         {
-          "name": "MB_ATT_SABER_DAMAGE",
+          "name": "MB_ATT_SABERTHROW_DAMAGE",
           "value": 60
         },
         {
-          "name": "MB_ATT_SABERTHROW_DAMAGE",
+          "name": "MB_ATT_SABERSPECIAL_DAMAGE",
           "value": 61
         },
         {
-          "name": "MB_ATT_SABERSPECIAL_DAMAGE",
+          "name": "MB_ATT_SABER_MAXCHAIN",
           "value": 62
         },
         {
-          "name": "MB_ATT_SABER_MAXCHAIN",
+          "name": "MB_ATT_MODELSCALE_MULTIPLIER",
           "value": 63
         },
         {
-          "name": "MB_ATT_MODELSCALE_MULTIPLIER",
+          "name": "MB_ATT_ROF_MELEE_MULTIPLIER",
           "value": 64
         },
         {
-          "name": "MB_ATT_ROF_MELEE_MULTIPLIER",
+          "name": "MB_ATT_HEALTH_REGEN_CAP",
           "value": 65
         },
         {
-          "name": "MB_ATT_HEALTH_REGEN_CAP",
+          "name": "MB_ATT_HEALTH_REGEN_AMOUNT",
           "value": 66
         },
         {
-          "name": "MB_ATT_HEALTH_REGEN_AMOUNT",
+          "name": "MB_ATT_HEALTH_REGEN_RATE",
           "value": 67
         },
         {
-          "name": "MB_ATT_HEALTH_REGEN_RATE",
+          "name": "MB_ATT_ARMOUR_REGEN_CAP",
           "value": 68
         },
         {
-          "name": "MB_ATT_ARMOUR_REGEN_CAP",
+          "name": "MB_ATT_ARMOUR_REGEN_AMOUNT",
           "value": 69
         },
         {
-          "name": "MB_ATT_ARMOUR_REGEN_AMOUNT",
+          "name": "MB_ATT_ARMOUR_REGEN_RATE",
           "value": 70
         },
         {
-          "name": "MB_ATT_ARMOUR_REGEN_RATE",
+          "name": "MB_ATT_RESOURCE_REGEN_CAP",
           "value": 71
         },
         {
-          "name": "MB_ATT_RESOURCE_REGEN_CAP",
+          "name": "MB_ATT_RESOURCE_REGEN_AMOUNT",
           "value": 72
         },
         {
-          "name": "MB_ATT_RESOURCE_REGEN_AMOUNT",
+          "name": "MB_ATT_RESOURCE_REGEN_RATE",
           "value": 73
         },
         {
-          "name": "MB_ATT_RESOURCE_REGEN_RATE",
+          "name": "MB_ATT_BLOCK_REGEN_CAP",
           "value": 74
         },
         {
-          "name": "MB_ATT_BLOCK_REGEN_CAP",
+          "name": "MB_ATT_BLOCK_REGEN_AMOUNT",
           "value": 75
         },
         {
-          "name": "MB_ATT_BLOCK_REGEN_AMOUNT",
+          "name": "MB_ATT_BLOCK_REGEN_RATE",
           "value": 76
         },
         {
-          "name": "MB_ATT_BLOCK_REGEN_RATE",
+          "name": "MB_ATT_RESPAWNS",
           "value": 77
         },
         {
-          "name": "MB_ATT_RESPAWNS",
+          "name": "MB_ATT_DODGE",
           "value": 78
         },
         {
-          "name": "MB_ATT_DODGE",
+          "name": "MB_ATT_HEALING",
           "value": 79
         },
         {
-          "name": "MB_ATT_HEALING",
+          "name": "MB_ATT_FLAMETHROWER",
           "value": 80
         },
         {
-          "name": "MB_ATT_FLAMETHROWER",
+          "name": "MB_ATT_FUEL",
           "value": 81
         },
         {
-          "name": "MB_ATT_FUEL",
+          "name": "MB_ATT_FUELREGEN",
           "value": 82
         },
         {
-          "name": "MB_ATT_FUELREGEN",
+          "name": "MB_ATT_ROCKET",
           "value": 83
         },
         {
-          "name": "MB_ATT_ROCKET",
+          "name": "MB_ATT_WOOKIE_HEALTH",
           "value": 84
         },
         {
-          "name": "MB_ATT_WOOKIE_HEALTH",
+          "name": "MB_ATT_WOOKIE_STRENGTH",
           "value": 85
         },
         {
-          "name": "MB_ATT_WOOKIE_STRENGTH",
+          "name": "MB_ATT_HULL_STRENGTH",
           "value": 86
         },
         {
-          "name": "MB_ATT_HULL_STRENGTH",
+          "name": "MB_ATT_SHIELD_PROJ",
           "value": 87
         },
         {
-          "name": "MB_ATT_SHIELD_PROJ",
+          "name": "MB_ATT_DEKA_SHIELD",
           "value": 88
         },
         {
-          "name": "MB_ATT_DEKA_SHIELD",
+          "name": "MB_ATT_DEKA_HULL",
           "value": 89
         },
         {
-          "name": "MB_ATT_DEKA_HULL",
+          "name": "MB_ATT_DEKA_DEPLOY",
           "value": 90
         },
         {
-          "name": "MB_ATT_DEKA_DEPLOY",
+          "name": "MB_ATT_DEKA_POWER",
           "value": 91
         },
         {
-          "name": "MB_ATT_DEKA_POWER",
+          "name": "MB_ATT_TURN_RATE",
           "value": 92
         },
         {
-          "name": "MB_ATT_TURN_RATE",
+          "name": "MB_ATT_FIREPOWER",
           "value": 93
         },
         {
-          "name": "MB_ATT_FIREPOWER",
+          "name": "MB_ATT_FIRERATE",
           "value": 94
         },
         {
-          "name": "MB_ATT_FIRERATE",
+          "name": "MB_ATT_QUICKTHROW",
           "value": 95
         },
         {
-          "name": "MB_ATT_QUICKTHROW",
+          "name": "MB_ATT_RECHARGE",
           "value": 96
         },
         {
-          "name": "MB_ATT_RECHARGE",
+          "name": "MB_ATT_STAMINA",
           "value": 97
         },
         {
-          "name": "MB_ATT_STAMINA",
+          "name": "MB_ATT_DEXTERITY",
           "value": 98
         },
         {
-          "name": "MB_ATT_DEXTERITY",
+          "name": "MB_ATT_KNOCKDOWN_ROLL",
           "value": 99
         },
         {
-          "name": "MB_ATT_KNOCKDOWN_ROLL",
+          "name": "MB_ATT_PULSE_GRENADES",
           "value": 100
         },
         {
-          "name": "MB_ATT_PULSE_GRENADES",
+          "name": "MB_ATT_TRACKING_DART",
           "value": 101
         },
         {
-          "name": "MB_ATT_TRACKING_DART",
+          "name": "MB_ATT_POISON_DART",
           "value": 102
         },
         {
-          "name": "MB_ATT_POISON_DART",
+          "name": "MB_ATT_JETPACK",
           "value": 103
         },
         {
-          "name": "MB_ATT_JETPACK",
+          "name": "MB_ATT_PLX1",
           "value": 104
         },
         {
-          "name": "MB_ATT_PLX1",
+          "name": "MB_ATT_T21",
           "value": 105
         },
         {
-          "name": "MB_ATT_T21",
+          "name": "MB_ATT_CLONEBLOBS",
           "value": 106
         },
         {
-          "name": "MB_ATT_CLONEBLOBS",
+          "name": "MB_ATT_CORTOSIS",
           "value": 107
         },
         {
-          "name": "MB_ATT_CORTOSIS",
+          "name": "MB_ATT_BLAST_ARMOUR",
           "value": 108
         },
         {
-          "name": "MB_ATT_BLAST_ARMOUR",
+          "name": "MB_ATT_MAGNETIC_PLATING",
           "value": 109
         },
         {
-          "name": "MB_ATT_MAGNETIC_PLATING",
+          "name": "MB_ATT_WOOKIE_BALANCE",
           "value": 110
         },
         {
-          "name": "MB_ATT_WOOKIE_BALANCE",
+          "name": "MB_ATT_CCTRAINING",
           "value": 111
         },
         {
-          "name": "MB_ATT_CCTRAINING",
+          "name": "MB_ATT_ET_CCTRAINING",
           "value": 112
         },
         {
-          "name": "MB_ATT_ET_CCTRAINING",
+          "name": "MB_ATT_SBD_CANNON",
           "value": 113
         },
         {
-          "name": "MB_ATT_MD_CCTRAINING",
+          "name": "MB_ATT_WRISTLASER",
           "value": 114
         },
         {
-          "name": "MB_ATT_SBD_CANNON",
+          "name": "MB_ATT_SHOCKWAVE",
           "value": 115
         },
         {
-          "name": "MB_ATT_WRISTLASER",
+          "name": "MB_ATT_SHIELD_RECHARGE",
           "value": 116
         },
         {
-          "name": "MB_ATT_SHOCKWAVE",
+          "name": "MB_ATT_SHIELD_RECHARGE2",
           "value": 117
         },
         {
-          "name": "MB_ATT_SHIELD_RECHARGE",
+          "name": "MB_ATT_RALLY",
           "value": 118
         },
         {
-          "name": "MB_ATT_SHIELD_RECHARGE2",
+          "name": "MB_ATT_ASSEMBLE",
           "value": 119
         },
         {
-          "name": "MB_ATT_RALLY",
+          "name": "MB_ATT_SPY_DISGUISE",
           "value": 120
         },
         {
-          "name": "MB_ATT_ASSEMBLE",
+          "name": "MB_ATT_ARC_RIFLE_SCOPE",
           "value": 121
         },
         {
-          "name": "MB_ATT_SPY_DISGUISE",
+          "name": "MB_ATT_ARC_RIFLE_GRENADELAUNCHER",
           "value": 122
         },
         {
-          "name": "MB_ATT_ARC_RIFLE_SCOPE",
+          "name": "MB_ATT_WOOKIEE_FURY",
           "value": 123
         },
         {
-          "name": "MB_ATT_ARC_RIFLE_GRENADELAUNCHER",
+          "name": "MB_ATT_WOOKIEE_AGILITY",
           "value": 124
         },
         {
-          "name": "MB_ATT_WOOKIEE_FURY",
+          "name": "MB_ATT_ANTI_MT",
           "value": 125
         },
         {
-          "name": "MB_ATT_WOOKIEE_AGILITY",
+          "name": "MB_ATT_ZOOM",
           "value": 126
         },
         {
-          "name": "MB_ATT_ANTI_MT",
+          "name": "MB_ATT_RADAR",
           "value": 127
         },
         {
-          "name": "MB_ATT_ZOOM",
+          "name": "MB_ATT_GRAPPLE_HOOK",
           "value": 128
         },
         {
-          "name": "MB_ATT_RADAR",
+          "name": "MB_ATT_FIBERCORD_WHIP",
           "value": 129
         },
         {
-          "name": "MB_ATT_GRAPPLE_HOOK",
+          "name": "MB_ATT_FIRE_GRENADES",
           "value": 130
         },
         {
-          "name": "MB_ATT_FIBERCORD_WHIP",
+          "name": "MB_ATT_CRYOBAN_GRENADES",
           "value": 131
         },
         {
-          "name": "MB_ATT_FIRE_GRENADES",
+          "name": "MB_ATT_SONIC_DETONATOR",
           "value": 132
         },
         {
-          "name": "MB_ATT_CRYOBAN_GRENADES",
+          "name": "MB_ATT_QUICKDRAW",
           "value": 133
         },
         {
-          "name": "MB_ATT_SONIC_DETONATOR",
+          "name": "MB_ATT_MICRO_GRENADES",
           "value": 134
         },
         {
-          "name": "MB_ATT_QUICKDRAW",
+          "name": "MB_ATT_IMPACT_NADE",
           "value": 135
         },
         {
-          "name": "MB_ATT_MICRO_GRENADES",
+          "name": "MB_ATT_BACTA_BOMB",
           "value": 136
         },
         {
-          "name": "MB_ATT_IMPACT_NADE",
+          "name": "MB_ATT_GAS_NADE",
           "value": 137
         },
         {
-          "name": "MB_ATT_BACTA_BOMB",
+          "name": "MB_ATT_FLASH_NADE",
           "value": 138
         },
         {
-          "name": "MB_ATT_GAS_NADE",
+          "name": "MB_ATT_GLOP_NADE",
           "value": 139
         },
         {
-          "name": "MB_ATT_FLASH_NADE",
+          "name": "MB_ATT_IMPLODER_NADE",
           "value": 140
         },
         {
-          "name": "MB_ATT_GLOP_NADE",
+          "name": "MB_ATT_SMOKE_NADE",
           "value": 141
         },
         {
-          "name": "MB_ATT_IMPLODER_NADE",
+          "name": "MB_ATT_SHIELD_NADE",
           "value": 142
         },
         {
-          "name": "MB_ATT_SMOKE_NADE",
+          "name": "MB_ATT_PROTON_NADE",
           "value": 143
         },
         {
-          "name": "MB_ATT_SHIELD_NADE",
+          "name": "MB_ATT_STRONGBLOBS",
           "value": 144
         },
         {
-          "name": "MB_ATT_PROTON_NADE",
+          "name": "MB_ATT_STEALTH",
           "value": 145
         },
         {
-          "name": "MB_ATT_STRONGBLOBS",
+          "name": "MB_ATT_BACKSTAB",
           "value": 146
         },
         {
-          "name": "MB_ATT_STEALTH",
+          "name": "MB_ATT_DASH",
           "value": 147
         },
         {
-          "name": "MB_ATT_BACKSTAB",
+          "name": "MB_ATT_DASH_JUMP",
           "value": 148
         },
         {
-          "name": "MB_ATT_DASH",
+          "name": "MB_ATT_VIEWBASEDDRAIN",
           "value": 149
         },
         {
-          "name": "MB_ATT_DASH_JUMP",
+          "name": "MB_ATT_CLONE_PISTOL",
           "value": 150
         },
         {
-          "name": "MB_ATT_VIEWBASEDDRAIN",
+          "name": "MB_ATT_MANDO_PISTOL",
           "value": 151
         },
         {
-          "name": "MB_ATT_CLONE_PISTOL",
+          "name": "MB_ATT_KNIFE",
           "value": 152
         },
         {
-          "name": "MB_ATT_MANDO_PISTOL",
+          "name": "MB_ATT_ELECTRO_STAFF",
           "value": 153
         },
         {
-          "name": "MB_ATT_SPY_PISTOL",
+          "name": "MB_ATT_SHOTGUN",
           "value": 154
         },
         {
-          "name": "MB_ATT_IMP_PISTOL",
+          "name": "MB_ATT_WESTARM5",
           "value": 155
         },
         {
-          "name": "MB_ATT_KNIFE",
+          "name": "MB_ATT_DLT20A",
           "value": 156
         },
         {
-          "name": "MB_ATT_ELECTRO_STAFF",
+          "name": "MB_ATT_FRAGS",
           "value": 157
         },
         {
-          "name": "MB_ATT_SHOTGUN",
+          "name": "MB_ATT_EE3",
           "value": 158
         },
         {
-          "name": "MB_ATT_WESTARM5",
+          "name": "MB_ATT_EE4",
           "value": 159
         },
         {
-          "name": "MB_ATT_DLT20A",
+          "name": "MB_ATT_AMBAN",
           "value": 160
         },
         {
-          "name": "MB_ATT_FRAGS",
+          "name": "MB_ATT_BESKAR",
           "value": 161
         },
         {
-          "name": "MB_ATT_EE3",
+          "name": "MB_ATT_WHISTLINGBIRD",
           "value": 162
         },
         {
-          "name": "MB_ATT_EE4",
+          "name": "MB_ATT_CR2",
           "value": 163
         },
         {
-          "name": "MB_ATT_AMBAN",
+          "name": "MB_ATT_DC_CARBINE",
           "value": 164
         },
         {
-          "name": "MB_ATT_BESKAR",
+          "name": "MB_ATT_E_22",
           "value": 165
         },
         {
-          "name": "MB_ATT_WHISTLINGBIRD",
+          "name": "MB_ATT_HEAVY_PISTOL",
           "value": 166
         },
         {
-          "name": "MB_ATT_CR2",
+          "name": "MB_ATT_DLT19",
           "value": 167
         },
         {
-          "name": "MB_ATT_DC_CARBINE",
+          "name": "MB_ATT_TRAD_BOWCASTER",
           "value": 168
         },
         {
-          "name": "MB_ATT_E_22",
+          "name": "MB_ATT_IONRIFLE",
           "value": 169
         },
         {
-          "name": "MB_ATT_HEAVY_PISTOL",
+          "name": "MB_ATT_REPEATER",
           "value": 170
         },
         {
-          "name": "MB_ATT_DLT19",
+          "name": "MB_ATT_FLECHETTE",
           "value": 171
         },
         {
-          "name": "MB_ATT_TRAD_BOWCASTER",
+          "name": "MB_ATT_DEMP2",
           "value": 172
         },
         {
-          "name": "MB_ATT_IONRIFLE",
+          "name": "MB_ATT_THROWER",
           "value": 173
         },
         {
-          "name": "MB_ATT_REPEATER",
+          "name": "MB_ATT_DET_PACK",
           "value": 174
         },
         {
-          "name": "MB_ATT_FLECHETTE",
+          "name": "MB_ATT_CONCUSSION",
           "value": 175
         },
         {
-          "name": "MB_ATT_DEMP2",
+          "name": "MB_ATT_ROCKET_LAUNCHER",
           "value": 176
         },
         {
-          "name": "MB_ATT_THROWER",
+          "name": "MB_ATT_BRYAR_OLD",
           "value": 177
         },
         {
-          "name": "MB_ATT_DET_PACK",
+          "name": "MB_ATT_STUN_BATON",
           "value": 178
         },
         {
-          "name": "MB_ATT_CONCUSSION",
+          "name": "MB_ATT_BASE_TD",
           "value": 179
         },
         {
-          "name": "MB_ATT_ROCKET_LAUNCHER",
+          "name": "MB_ATT_UGL",
           "value": 180
         },
         {
-          "name": "MB_ATT_BRYAR_OLD",
+          "name": "MB_ATT_UGL_BURST",
           "value": 181
         },
         {
-          "name": "MB_ATT_STUN_BATON",
+          "name": "MB_ATT_UGL_IMPACT",
           "value": 182
         },
         {
-          "name": "MB_ATT_BASE_TD",
+          "name": "MB_ATT_UGL_BURST_MIXED",
           "value": 183
         },
         {
-          "name": "MB_ATT_UGL",
+          "name": "MB_ATT_MGL",
           "value": 184
         },
         {
-          "name": "MB_ATT_UGL_BURST",
+          "name": "MB_ATT_MGL_IMPACT",
           "value": 185
         },
         {
-          "name": "MB_ATT_UGL_IMPACT",
+          "name": "MB_ATT_MGL_BURST",
           "value": 186
         },
         {
-          "name": "MB_ATT_UGL_BURST_MIXED",
+          "name": "MB_ATT_STICKY_BOMBS",
           "value": 187
         },
         {
-          "name": "MB_ATT_MGL",
+          "name": "MB_ATT_MINIGUN",
           "value": 188
         },
         {
-          "name": "MB_ATT_MGL_IMPACT",
+          "name": "MB_ATT_HULL_REPAIR",
           "value": 189
         },
         {
-          "name": "MB_ATT_MGL_BURST",
+          "name": "MB_ATT_SECURITY_INTERFACE",
           "value": 190
         },
         {
-          "name": "MB_ATT_STICKY_BOMBS",
+          "name": "MB_ATT_DEKA_FIREPOWER",
           "value": 191
         },
         {
-          "name": "MB_ATT_MINIGUN",
+          "name": "MB_ATT_CLOAK",
           "value": 192
         },
         {
-          "name": "MB_ATT_HULL_REPAIR",
+          "name": "MB_ATT_SPAWNER",
           "value": 193
         },
         {
-          "name": "MB_ATT_SECURITY_INTERFACE",
+          "name": "MB_ATT_STIMPACK",
           "value": 194
         },
         {
-          "name": "MB_ATT_DEKA_FIREPOWER",
+          "name": "MB_ATT_PSHIELD",
           "value": 195
         },
         {
-          "name": "MB_ATT_CLOAK",
+          "name": "MB_ATT_BASESEEKER",
           "value": 196
         },
         {
-          "name": "MB_ATT_SPAWNER",
+          "name": "MB_ATT_SHOCKFIELD",
           "value": 197
         },
         {
-          "name": "MB_ATT_STIMPACK",
+          "name": "MB_ATT_BACTA",
           "value": 198
         },
         {
-          "name": "MB_ATT_PSHIELD",
+          "name": "MB_ATT_BACTA_BIG",
           "value": 199
         },
         {
-          "name": "MB_ATT_BASESEEKER",
+          "name": "MB_ATT_BINOCULARS",
           "value": 200
         },
         {
-          "name": "MB_ATT_SHOCKFIELD",
+          "name": "MB_ATT_EWEB",
           "value": 201
         },
         {
-          "name": "MB_ATT_BACTA",
+          "name": "MB_ATT_FORCEFIELD",
           "value": 202
         },
         {
-          "name": "MB_ATT_BACTA_BIG",
+          "name": "MB_ATT_MEDI_PACK",
           "value": 203
         },
         {
-          "name": "MB_ATT_BINOCULARS",
+          "name": "MB_ATT_AMMO_PACK",
           "value": 204
         },
         {
-          "name": "MB_ATT_EWEB",
+          "name": "MB_ATT_DEFLECT",
           "value": 205
         },
         {
-          "name": "MB_ATT_FORCEFIELD",
+          "name": "MB_ATT_FORCEBLOCK",
           "value": 206
         },
         {
-          "name": "MB_ATT_MEDI_PACK",
+          "name": "MB_ATT_FORCEFOCUS",
           "value": 207
         },
         {
-          "name": "MB_ATT_AMMO_PACK",
+          "name": "MB_ATT_FORCEATTUNE",
           "value": 208
         },
         {
-          "name": "MB_ATT_DEFLECT",
+          "name": "MB_ATT_GUN_DEFENSE",
           "value": 209
         },
         {
-          "name": "MB_ATT_FORCEBLOCK",
+          "name": "MB_ATT_SABER_FAST",
           "value": 210
         },
         {
-          "name": "MB_ATT_FORCEFOCUS",
+          "name": "MB_ATT_SABER_MEDIUM",
           "value": 211
         },
         {
-          "name": "MB_ATT_FORCEATTUNE",
+          "name": "MB_ATT_SABER_STRONG",
           "value": 212
         },
         {
-          "name": "MB_ATT_GUN_DEFENSE",
+          "name": "MB_ATT_SABER_DOUBLES",
           "value": 213
         },
         {
-          "name": "MB_ATT_SABER_FAST",
+          "name": "MB_ATT_SABER_MASTERY",
           "value": 214
         },
         {
-          "name": "MB_ATT_SABER_MEDIUM",
+          "name": "MB_ATT_SABER_COMBO",
           "value": 215
         },
         {
-          "name": "MB_ATT_SABER_STRONG",
+          "name": "MB_ATT_SABER_COMBO_NONE",
           "value": 216
         },
         {
-          "name": "MB_ATT_SABER_DOUBLES",
+          "name": "MB_ATT_SS_YELLOWSTYLE",
           "value": 217
         },
         {
-          "name": "MB_ATT_SABER_MASTERY",
+          "name": "MB_ATT_SS_BLUESTYLE",
           "value": 218
         },
         {
-          "name": "MB_ATT_SABER_COMBO",
+          "name": "MB_ATT_SS_REDSTYLE",
           "value": 219
         },
         {
-          "name": "MB_ATT_SABER_COMBO_NONE",
+          "name": "MB_ATT_SS_PURPLESTYLE",
           "value": 220
         },
         {
-          "name": "MB_ATT_SS_YELLOWSTYLE",
+          "name": "MB_ATT_SS_CYANSTYLE",
           "value": 221
         },
         {
-          "name": "MB_ATT_SS_BLUESTYLE",
+          "name": "MB_ATT_SS_GREENSTYLE",
           "value": 222
         },
         {
-          "name": "MB_ATT_SS_REDSTYLE",
+          "name": "MB_ATT_SS_DUALSTYLE",
           "value": 223
         },
         {
-          "name": "MB_ATT_SS_PURPLESTYLE",
+          "name": "MB_ATT_SS_STAFFSTYLE",
           "value": 224
         },
         {
-          "name": "MB_ATT_SS_CYANSTYLE",
+          "name": "MB_ATT_SPRINT",
           "value": 225
         },
         {
-          "name": "MB_ATT_SS_GREENSTYLE",
+          "name": "MB_ATT_FP_MIRALUKA",
           "value": 226
         },
         {
-          "name": "MB_ATT_SS_DUALSTYLE",
+          "name": "MB_ATT_GUNBASH",
           "value": 227
         },
         {
-          "name": "MB_ATT_SS_STAFFSTYLE",
+          "name": "MB_ATT_ROSHTAUNT",
           "value": 228
         },
         {
-          "name": "MB_ATT_SPRINT",
+          "name": "MB_ATT_FP_REPULSE",
           "value": 229
         },
         {
-          "name": "MB_ATT_FP_MIRALUKA",
+          "name": "MB_ATT_FLIPKICK",
           "value": 230
         },
         {
-          "name": "MB_ATT_GUNBASH",
+          "name": "MB_ATT_LIGHTS_BEACON",
           "value": 231
         },
         {
-          "name": "MB_ATT_ROSHTAUNT",
+          "name": "MB_ATT_TRIP_MINES",
           "value": 232
         },
         {
-          "name": "MB_ATT_FP_REPULSE",
+          "name": "MB_ATT_MANUALSABERTHROW",
           "value": 233
         },
         {
-          "name": "MB_ATT_FLIPKICK",
+          "name": "MB_ATT_ASTRO_JUMPJETS",
           "value": 234
         },
         {
-          "name": "MB_ATT_LIGHTS_BEACON",
+          "name": "MB_ATT_HEAT_DUMPS",
           "value": 235
         },
         {
-          "name": "MB_ATT_TRIP_MINES",
+          "name": "MB_ATT_WELDING_LASER",
           "value": 236
         },
         {
-          "name": "MB_ATT_MANUALSABERTHROW",
+          "name": "MB_ATT_SHOCK_ARM",
           "value": 237
         },
         {
-          "name": "MB_ATT_ASTRO_JUMPJETS",
+          "name": "MB_ATT_FIRE_EXTINGUISHER",
           "value": 238
         },
         {
-          "name": "MB_ATT_HEAT_DUMPS",
+          "name": "MB_ATT_DATA_SPIKES",
           "value": 239
         },
         {
-          "name": "MB_ATT_WELDING_LASER",
+          "name": "MB_ATT_WATER_BREATHING",
           "value": 240
         },
         {
-          "name": "MB_ATT_SHOCK_ARM",
+          "name": "MB_ATT_WRIST_AMMO",
           "value": 241
         },
         {
-          "name": "MB_ATT_FIRE_EXTINGUISHER",
+          "name": "MB_RES_ENERGY",
           "value": 242
         },
         {
-          "name": "MB_ATT_DATA_SPIKES",
+          "name": "MB_RES_STAMINA",
           "value": 243
         },
         {
-          "name": "MB_ATT_WATER_BREATHING",
+          "name": "MB_RES_RAGE",
           "value": 244
         },
         {
-          "name": "MB_ATT_SBD_BATTERY",
+          "name": "MB_RES_BATTERY",
           "value": 245
         },
         {
-          "name": "MB_ATT_SBD_MODE_ARMOR",
+          "name": "MB_RES_STABILITY",
           "value": 246
         },
         {
-          "name": "MB_ATT_SBD_MODE_SPEED",
+          "name": "MB_ATT_INAIR_FORCE_REGEN",
           "value": 247
         },
         {
-          "name": "MB_ATT_SBD_MODE_FIREPOWER",
+          "name": "MB_ATT_BUNNY_HOP",
           "value": 248
         },
         {
-          "name": "MB_ATT_SBD_MODE_STRENGTH",
+          "name": "MB_ATT_FLOAT_HOP",
           "value": 249
         },
         {
-          "name": "MB_ATT_SBD_WRISTROCKET",
+          "name": "MB_ATT_GRAPPLE_HOP",
           "value": 250
         },
         {
-          "name": "MB_ATT_SBD_DUALBLASTERS",
+          "name": "MB_ATT_TRACKING_BEACON",
           "value": 251
         },
         {
-          "name": "MB_ATT_WRIST_AMMO",
+          "name": "MB_ATT_SUPPLYDROP",
           "value": 252
         },
         {
-          "name": "MB_RES_ENERGY",
+          "name": "MB_ATT_USE_DISTANCE",
           "value": 253
         },
         {
-          "name": "MB_RES_STAMINA",
+          "name": "MB_ATT_DISP_HEALTH",
           "value": 254
         },
         {
-          "name": "MB_RES_RAGE",
+          "name": "MB_ATT_DISP_AMMO",
           "value": 255
         },
         {
-          "name": "MB_RES_BATTERY",
+          "name": "MB_ATT_DISP_ARMOR",
           "value": 256
         },
         {
-          "name": "MB_RES_STABILITY",
+          "name": "MB_ATT_DISP_FORCE",
           "value": 257
         },
         {
-          "name": "MB_ATT_INAIR_FORCE_REGEN",
+          "name": "MB_ATT_DISP_BLOCK",
           "value": 258
         },
         {
-          "name": "MB_ATT_BUNNY_HOP",
+          "name": "MB_ATT_DROP_HEALTH",
           "value": 259
         },
         {
-          "name": "MB_ATT_FLOAT_HOP",
+          "name": "MB_ATT_DROP_AMMO",
           "value": 260
         },
         {
-          "name": "MB_ATT_GRAPPLE_HOP",
+          "name": "MB_ATT_DROP_ARMOR",
           "value": 261
         },
         {
-          "name": "MB_ATT_TRACKING_BEACON",
+          "name": "MB_ATT_DROP_FORCE",
           "value": 262
         },
         {
-          "name": "MB_ATT_SUPPLYDROP",
+          "name": "MB_ATT_DROP_BLOCK",
           "value": 263
         },
         {
-          "name": "MB_ATT_USE_DISTANCE",
+          "name": "MB_ATT_STIM_HEALTH",
           "value": 264
         },
         {
-          "name": "MB_ATT_DISP_HEALTH",
+          "name": "MB_ATT_STIM_AMMO",
           "value": 265
         },
         {
-          "name": "MB_ATT_DISP_AMMO",
+          "name": "MB_ATT_STIM_ARMOR",
           "value": 266
         },
         {
-          "name": "MB_ATT_DISP_ARMOR",
+          "name": "MB_ATT_STIM_FORCE",
           "value": 267
         },
         {
-          "name": "MB_ATT_DISP_FORCE",
+          "name": "MB_ATT_STIM_BLOCK",
           "value": 268
         },
         {
-          "name": "MB_ATT_DISP_BLOCK",
+          "name": "MB_ATT_THROWER_LIGHTNING",
           "value": 269
         },
         {
-          "name": "MB_ATT_DROP_HEALTH",
+          "name": "MB_ATT_THROWER_ICE",
           "value": 270
         },
         {
-          "name": "MB_ATT_DROP_AMMO",
+          "name": "MB_ATT_THROWER_POISON",
           "value": 271
         },
         {
-          "name": "MB_ATT_DROP_ARMOR",
+          "name": "MB_ATT_THROWER_PLASMA",
           "value": 272
         },
         {
-          "name": "MB_ATT_DROP_FORCE",
+          "name": "MB_ATT_THROWER_FLAME",
           "value": 273
         },
         {
-          "name": "MB_ATT_DROP_BLOCK",
+          "name": "MB_ATT_REMOTE_DETONATE",
           "value": 274
         },
         {
-          "name": "MB_ATT_STIM_HEALTH",
+          "name": "MB_ATT_GETUPS",
           "value": 275
         },
         {
-          "name": "MB_ATT_STIM_AMMO",
+          "name": "MB_ATT_ENV_PROT",
           "value": 276
         },
         {
-          "name": "MB_ATT_STIM_ARMOR",
+          "name": "MB_ATT_ROUNDSPAWNER",
           "value": 277
         },
         {
-          "name": "MB_ATT_STIM_FORCE",
+          "name": "MB_ATT_REPEATER_NADES",
           "value": 278
         },
         {
-          "name": "MB_ATT_STIM_BLOCK",
+          "name": "MB_ATT_FLECHETTE_NADES",
           "value": 279
         },
         {
-          "name": "MB_ATT_THROWER_LIGHTNING",
+          "name": "MB_ATT_FLECHETTE_ALT_NUM",
           "value": 280
         },
         {
-          "name": "MB_ATT_THROWER_ICE",
+          "name": "MB_ATT_DEMP2_BLASTS",
           "value": 281
         },
         {
-          "name": "MB_ATT_THROWER_POISON",
+          "name": "MB_ATT_EQUALIZER",
           "value": 282
         },
         {
-          "name": "MB_ATT_THROWER_PLASMA",
+          "name": "MB_ATT_SPEEDLUNGE",
           "value": 283
         },
         {
-          "name": "MB_ATT_THROWER_FLAME",
+          "name": "MB_ATT_BARGE",
           "value": 284
         },
         {
-          "name": "MB_ATT_REMOTE_DETONATE",
+          "name": "MB_ATT_SABER",
           "value": 285
         },
         {
-          "name": "MB_ATT_GETUPS",
+          "name": "MB_ATT_PETCONTROL",
           "value": 286
         },
         {
-          "name": "MB_ATT_ENV_PROT",
+          "name": "MB_ATT_SELFEXPLODE",
           "value": 287
         },
         {
-          "name": "MB_ATT_ROUNDSPAWNER",
+          "name": "MB_ATT_ENEMYSCANNER",
           "value": 288
         },
         {
-          "name": "MB_ATT_REPEATER_NADES",
+          "name": "MB_ATT_CYBERNETICS",
           "value": 289
         },
         {
-          "name": "MB_ATT_FLECHETTE_NADES",
+          "name": "MB_ATT_SLAVE",
           "value": 290
         },
         {
-          "name": "MB_ATT_FLECHETTE_ALT_NUM",
+          "name": "MB_ATT_TEMP_CLOAK",
           "value": 291
         },
         {
-          "name": "MB_ATT_DEMP2_BLASTS",
+          "name": "MB_ATT_TEMP_PSHIELD",
           "value": 292
         },
         {
-          "name": "MB_ATT_EQUALIZER",
+          "name": "MB_ATT_TEMP_GRAP_HOOKS",
           "value": 293
         },
         {
-          "name": "MB_ATT_SPEEDLUNGE",
+          "name": "MB_ATT_WELDER",
           "value": 294
         },
         {
-          "name": "MB_ATT_BARGE",
+          "name": "MB_ATT_MIRV",
           "value": 295
         },
         {
-          "name": "MB_ATT_SABER",
+          "name": "MB_ATT_ROCK_NADE",
           "value": 296
         },
         {
-          "name": "MB_ATT_PETCONTROL",
+          "name": "MB_ATT_FAKE_WOOKIEE",
           "value": 297
         },
         {
-          "name": "MB_ATT_SELFEXPLODE",
+          "name": "MB_ATT_CYCLER",
           "value": 298
         },
         {
-          "name": "MB_ATT_ENEMYSCANNER",
+          "name": "MB_ATT_FA3_FLECHETTE",
           "value": 299
         },
         {
-          "name": "MB_ATT_CYBERNETICS",
+          "name": "NO_OF_MB_ATTRIBUTES",
           "value": 300
+        }
+      ]
+    },
+    {
+      "name": "weapon_t",
+      "values": [
+        {
+          "name": "WP_NONE",
+          "value": 0
         },
         {
-          "name": "NO_OF_MB_ATTRIBUTES",
-          "value": 301
+          "name": "WP_STUN_BATON",
+          "value": 1
+        },
+        {
+          "name": "WP_MELEE",
+          "value": 2
+        },
+        {
+          "name": "WP_SABER",
+          "value": 3
+        },
+        {
+          "name": "WP_BRYAR_PISTOL",
+          "value": 4
+        },
+        {
+          "name": "WP_CLONE_PISTOL",
+          "value": 5
+        },
+        {
+          "name": "WP_MANDO_PISTOL",
+          "value": 6
+        },
+        {
+          "name": "WP_BLASTER",
+          "value": 7
+        },
+        {
+          "name": "WP_DC_CARBINE",
+          "value": 8
+        },
+        {
+          "name": "WP_CR2",
+          "value": 9
+        },
+        {
+          "name": "WP_E_22",
+          "value": 10
+        },
+        {
+          "name": "WP_HEAVY_PISTOL",
+          "value": 11
+        },
+        {
+          "name": "WP_DLT19",
+          "value": 12
+        },
+        {
+          "name": "WP_TRAD_BOWCASTER",
+          "value": 13
+        },
+        {
+          "name": "WP_DISRUPTOR",
+          "value": 14
+        },
+        {
+          "name": "WP_BOWCASTER",
+          "value": 15
+        },
+        {
+          "name": "WP_REPEATER",
+          "value": 16
+        },
+        {
+          "name": "WP_CLONE_RIFLE",
+          "value": 17
+        },
+        {
+          "name": "WP_THROWER",
+          "value": 18
+        },
+        {
+          "name": "WP_MINIGUN",
+          "value": 19
+        },
+        {
+          "name": "WP_DEMP2",
+          "value": 20
+        },
+        {
+          "name": "WP_SHOTGUN",
+          "value": 21
+        },
+        {
+          "name": "WP_FLECHETTE",
+          "value": 22
+        },
+        {
+          "name": "WP_A280",
+          "value": 23
+        },
+        {
+          "name": "WP_DLT20A",
+          "value": 24
+        },
+        {
+          "name": "WP_M5",
+          "value": 25
+        },
+        {
+          "name": "WP_T21",
+          "value": 26
+        },
+        {
+          "name": "WP_ROCKET_LAUNCHER",
+          "value": 27
+        },
+        {
+          "name": "WP_PLX1",
+          "value": 28
+        },
+        {
+          "name": "WP_THERMAL",
+          "value": 29
+        },
+        {
+          "name": "WP_FRAG_NADE",
+          "value": 30
+        },
+        {
+          "name": "WP_REAL_TD",
+          "value": 31
+        },
+        {
+          "name": "WP_TRIP_MINE",
+          "value": 32
+        },
+        {
+          "name": "WP_PULSE_NADE",
+          "value": 33
+        },
+        {
+          "name": "WP_FIRE_NADE",
+          "value": 34
+        },
+        {
+          "name": "WP_SONIC_NADE",
+          "value": 35
+        },
+        {
+          "name": "WP_CRYO_NADE",
+          "value": 36
+        },
+        {
+          "name": "WP_CONC_NADE",
+          "value": 37
+        },
+        {
+          "name": "WP_DET_PACK",
+          "value": 38
+        },
+        {
+          "name": "WP_BACTA_BOMB",
+          "value": 39
+        },
+        {
+          "name": "WP_SMOKE_NADE",
+          "value": 40
+        },
+        {
+          "name": "WP_GAS_NADE",
+          "value": 41
+        },
+        {
+          "name": "WP_ROCK_NADE",
+          "value": 42
+        },
+        {
+          "name": "WP_FLASH_NADE",
+          "value": 43
+        },
+        {
+          "name": "WP_IMPACT_NADE",
+          "value": 44
+        },
+        {
+          "name": "WP_PROTON_NADE",
+          "value": 45
+        },
+        {
+          "name": "WP_GLOP_NADE",
+          "value": 46
+        },
+        {
+          "name": "WP_CONCUSSION",
+          "value": 47
+        },
+        {
+          "name": "WP_SBD",
+          "value": 48
+        },
+        {
+          "name": "WP_WELD_PULSE",
+          "value": 49
+        },
+        {
+          "name": "WP_WELD_BEAM",
+          "value": 50
+        },
+        {
+          "name": "WP_BRYAR_OLD",
+          "value": 51
+        },
+        {
+          "name": "WP_EE3",
+          "value": 52
+        },
+        {
+          "name": "WP_EE4",
+          "value": 53
+        },
+        {
+          "name": "WP_AMBAN",
+          "value": 54
+        },
+        {
+          "name": "WP_PROJ",
+          "value": 55
+        },
+        {
+          "name": "WP_UGL",
+          "value": 56
+        },
+        {
+          "name": "WP_MGL",
+          "value": 57
+        },
+        {
+          "name": "WP_EQUALIZER",
+          "value": 58
+        },
+        {
+          "name": "WP_WELDER",
+          "value": 59
+        },
+        {
+          "name": "WP_MIRV",
+          "value": 60
+        },
+        {
+          "name": "WP_CYCLER",
+          "value": 61
+        },
+        {
+          "name": "WP_FA3_FLECHETTE",
+          "value": 62
+        },
+        {
+          "name": "WP_EMPLACED_GUN",
+          "value": 63
+        },
+        {
+          "name": "WP_TURRET",
+          "value": 64
+        },
+        {
+          "name": "WP_NUM_WEAPONS",
+          "value": 65
+        }
+      ]
+    },
+    {
+      "name": "forcePowers_t",
+      "values": [
+        {
+          "name": "FP_INVALID",
+          "value": -1
+        },
+        {
+          "name": "FP_FIRST",
+          "value": 0
+        },
+        {
+          "name": "FP_HEAL",
+          "value": 0
+        },
+        {
+          "name": "FP_LEVITATION",
+          "value": 1
+        },
+        {
+          "name": "FP_SPEED",
+          "value": 2
+        },
+        {
+          "name": "FP_PUSH",
+          "value": 3
+        },
+        {
+          "name": "FP_PULL",
+          "value": 4
+        },
+        {
+          "name": "FP_TELEPATHY",
+          "value": 5
+        },
+        {
+          "name": "FP_GRIP",
+          "value": 6
+        },
+        {
+          "name": "FP_LIGHTNING",
+          "value": 7
+        },
+        {
+          "name": "FP_RAGE",
+          "value": 8
+        },
+        {
+          "name": "FP_PROTECT",
+          "value": 9
+        },
+        {
+          "name": "FP_ABSORB",
+          "value": 10
+        },
+        {
+          "name": "FP_TEAM_HEAL",
+          "value": 11
+        },
+        {
+          "name": "FP_TEAM_FORCE",
+          "value": 12
+        },
+        {
+          "name": "FP_DRAIN",
+          "value": 13
+        },
+        {
+          "name": "FP_SEE",
+          "value": 14
+        },
+        {
+          "name": "FP_SABER_OFFENSE",
+          "value": 15
+        },
+        {
+          "name": "FP_SABER_DEFENSE",
+          "value": 16
+        },
+        {
+          "name": "FP_SABERTHROW",
+          "value": 17
+        },
+        {
+          "name": "FP_BLIND",
+          "value": 18
+        },
+        {
+          "name": "FP_DESTRUCTION",
+          "value": 19
+        },
+        {
+          "name": "FP_SUMMON",
+          "value": 20
+        },
+        {
+          "name": "FP_DEADLYSIGHT",
+          "value": 21
+        },
+        {
+          "name": "FP_STASIS",
+          "value": 22
+        },
+        {
+          "name": "FP_BATTLEMED",
+          "value": 23
+        },
+        {
+          "name": "FP_DOMINATION",
+          "value": 24
+        },
+        {
+          "name": "FP_DARKRAGE",
+          "value": 25
+        },
+        {
+          "name": "NUM_FORCE_POWERS",
+          "value": 26
+        }
+      ]
+    },
+    {
+      "name": "saber_styles_t",
+      "values": [
+        {
+          "name": "SS_NONE",
+          "value": 0
+        },
+        {
+          "name": "SS_FAST",
+          "value": 1
+        },
+        {
+          "name": "SS_MEDIUM",
+          "value": 2
+        },
+        {
+          "name": "SS_STRONG",
+          "value": 3
+        },
+        {
+          "name": "SS_DESANN",
+          "value": 4
+        },
+        {
+          "name": "SS_TAVION",
+          "value": 5
+        },
+        {
+          "name": "SS_DUAL",
+          "value": 6
+        },
+        {
+          "name": "SS_STAFF",
+          "value": 7
+        },
+        {
+          "name": "SS_SINGLE",
+          "value": 8
+        },
+        {
+          "name": "SS_NUM_SABER_STYLES",
+          "value": 9
+        }
+      ]
+    },
+    {
+      "name": "holdable_t",
+      "values": [
+        {
+          "name": "HI_NONE",
+          "value": 0
+        },
+        {
+          "name": "HI_SEEKER",
+          "value": 1
+        },
+        {
+          "name": "HI_SHIELD",
+          "value": 2
+        },
+        {
+          "name": "HI_MEDPAC",
+          "value": 3
+        },
+        {
+          "name": "HI_MEDPAC_BIG",
+          "value": 4
+        },
+        {
+          "name": "HI_BINOCULARS",
+          "value": 5
+        },
+        {
+          "name": "HI_SENTRY_GUN",
+          "value": 6
+        },
+        {
+          "name": "HI_JETPACK",
+          "value": 7
+        },
+        {
+          "name": "HI_EWEB",
+          "value": 8
+        },
+        {
+          "name": "HI_CLOAK",
+          "value": 9
+        },
+        {
+          "name": "HI_SPAWNER",
+          "value": 10
+        },
+        {
+          "name": "HI_STIMPACK",
+          "value": 11
+        },
+        {
+          "name": "HI_PSHIELD",
+          "value": 12
+        },
+        {
+          "name": "HI_BASESEEKER",
+          "value": 13
+        },
+        {
+          "name": "HI_SHOCKFIELD",
+          "value": 14
+        },
+        {
+          "name": "HI_NUM_HOLDABLE",
+          "value": 15
+        }
+      ]
+    },
+    {
+      "name": "gEntityActionSkill_t",
+      "values": [
+        {
+          "name": "EAS_NONE",
+          "value": 0
+        },
+        {
+          "name": "EAS_FP_HEAL",
+          "value": 1
+        },
+        {
+          "name": "EAS_FP_LEVITATION",
+          "value": 2
+        },
+        {
+          "name": "EAS_FP_SPEED",
+          "value": 3
+        },
+        {
+          "name": "EAS_FP_PUSH",
+          "value": 4
+        },
+        {
+          "name": "EAS_FP_PULL",
+          "value": 5
+        },
+        {
+          "name": "EAS_FP_TELEPATHY",
+          "value": 6
+        },
+        {
+          "name": "EAS_FP_GRIP",
+          "value": 7
+        },
+        {
+          "name": "EAS_FP_LIGHTNING",
+          "value": 8
+        },
+        {
+          "name": "EAS_FP_RAGE",
+          "value": 9
+        },
+        {
+          "name": "EAS_FP_PROTECT",
+          "value": 10
+        },
+        {
+          "name": "EAS_FP_ABSORB",
+          "value": 11
+        },
+        {
+          "name": "EAS_FP_TEAM_HEAL",
+          "value": 12
+        },
+        {
+          "name": "EAS_FP_TEAM_FORCE",
+          "value": 13
+        },
+        {
+          "name": "EAS_FP_DRAIN",
+          "value": 14
+        },
+        {
+          "name": "EAS_FP_SEE",
+          "value": 15
+        },
+        {
+          "name": "EAS_FP_SABER_OFFENSE",
+          "value": 16
+        },
+        {
+          "name": "EAS_FP_SABER_DEFENSE",
+          "value": 17
+        },
+        {
+          "name": "EAS_FP_SABERTHROW",
+          "value": 18
+        },
+        {
+          "name": "EAS_FP_BLIND",
+          "value": 19
+        },
+        {
+          "name": "EAS_FP_DESTRUCTION",
+          "value": 20
+        },
+        {
+          "name": "EAS_FP_SUMMON",
+          "value": 21
+        },
+        {
+          "name": "EAS_FP_DEADLYSIGHT",
+          "value": 22
+        },
+        {
+          "name": "EAS_FP_STASIS",
+          "value": 23
+        },
+        {
+          "name": "EAS_FP_BATTLEMED",
+          "value": 24
+        },
+        {
+          "name": "EAS_FP_DOMINATION",
+          "value": 25
+        },
+        {
+          "name": "EAS_FP_DARKRAGE",
+          "value": 26
+        },
+        {
+          "name": "EAS_FP_REPULSE",
+          "value": 27
+        },
+        {
+          "name": "EAS_FP_MANIPULATE",
+          "value": 28
+        },
+        {
+          "name": "EAS_FP_KINETIC",
+          "value": 29
+        },
+        {
+          "name": "EAS_FP_MIRALUKA",
+          "value": 30
+        },
+        {
+          "name": "EAS_FP_SLAM",
+          "value": 31
+        },
+        {
+          "name": "EAS_FP_SLOW",
+          "value": 32
+        },
+        {
+          "name": "EAS_FP_CHOKE",
+          "value": 33
+        },
+        {
+          "name": "EAS_FP_ARCLIGHTNING",
+          "value": 34
+        },
+        {
+          "name": "EAS_FP_ARCDRAIN",
+          "value": 35
+        },
+        {
+          "name": "EAS_FP_SCREAM",
+          "value": 36
+        },
+        {
+          "name": "EAS_FP_SERENITY",
+          "value": 37
+        },
+        {
+          "name": "EAS_FP_REVITALIZE",
+          "value": 38
+        },
+        {
+          "name": "EAS_FP_ARMOR",
+          "value": 39
+        },
+        {
+          "name": "EAS_FP_LIFT",
+          "value": 40
+        },
+        {
+          "name": "EAS_FP_EMERALDLIGHTNING",
+          "value": 41
+        },
+        {
+          "name": "EAS_HI_SEEKER",
+          "value": 42
+        },
+        {
+          "name": "EAS_HI_SHIELD",
+          "value": 43
+        },
+        {
+          "name": "EAS_HI_MEDPAC",
+          "value": 44
+        },
+        {
+          "name": "EAS_HI_MEDPAC_BIG",
+          "value": 45
+        },
+        {
+          "name": "EAS_HI_BINOCULARS",
+          "value": 46
+        },
+        {
+          "name": "EAS_HI_SENTRY_GUN",
+          "value": 47
+        },
+        {
+          "name": "EAS_HI_JETPACK",
+          "value": 48
+        },
+        {
+          "name": "EAS_HI_HEALTHDISP",
+          "value": 49
+        },
+        {
+          "name": "EAS_HI_AMMODISP",
+          "value": 50
+        },
+        {
+          "name": "EAS_HI_ARMORDISP",
+          "value": 51
+        },
+        {
+          "name": "EAS_HI_FORCEDISP",
+          "value": 52
+        },
+        {
+          "name": "EAS_HI_EWEB",
+          "value": 53
+        },
+        {
+          "name": "EAS_HI_CLOAK",
+          "value": 54
+        },
+        {
+          "name": "EAS_HI_SPAWNER",
+          "value": 55
+        },
+        {
+          "name": "EAS_HI_STIMPACK",
+          "value": 56
+        },
+        {
+          "name": "EAS_HI_PSHIELD",
+          "value": 57
+        },
+        {
+          "name": "EAS_HI_BASESEEKER",
+          "value": 58
+        },
+        {
+          "name": "EAS_HI_SHOCKFIELD",
+          "value": 59
+        },
+        {
+          "name": "EAS_HI_DASH",
+          "value": 60
+        },
+        {
+          "name": "EAS_HI_SPRINT",
+          "value": 61
+        },
+        {
+          "name": "EAS_HI_DEX",
+          "value": 62
+        },
+        {
+          "name": "EAS_HI_FURY",
+          "value": 63
+        },
+        {
+          "name": "EAS_HI_QUICKTHROW",
+          "value": 64
+        },
+        {
+          "name": "EAS_HI_QUICKTOSS",
+          "value": 65
+        },
+        {
+          "name": "EAS_HI_RECHARGE",
+          "value": 66
+        },
+        {
+          "name": "EAS_HI_SBD_PM",
+          "value": 67
+        },
+        {
+          "name": "EAS_HI_SBD_ZOOM",
+          "value": 68
+        },
+        {
+          "name": "EAS_HI_SHOCKWAVE",
+          "value": 69
+        },
+        {
+          "name": "EAS_HI_ROCKET",
+          "value": 70
+        },
+        {
+          "name": "EAS_HI_WRIST",
+          "value": 71
+        },
+        {
+          "name": "EAS_HI_FLAME",
+          "value": 72
+        },
+        {
+          "name": "EAS_HI_PLASMA",
+          "value": 73
+        },
+        {
+          "name": "EAS_HI_POISONTHROWER",
+          "value": 74
+        },
+        {
+          "name": "EAS_HI_ICE",
+          "value": 75
+        },
+        {
+          "name": "EAS_HI_POISON",
+          "value": 76
+        },
+        {
+          "name": "EAS_HI_TRACKER",
+          "value": 77
+        },
+        {
+          "name": "EAS_HI_KICK",
+          "value": 78
+        },
+        {
+          "name": "EAS_HI_BARGE",
+          "value": 79
+        },
+        {
+          "name": "EAS_HI_DODGE",
+          "value": 80
+        },
+        {
+          "name": "EAS_HI_HEATDUMP",
+          "value": 81
+        },
+        {
+          "name": "EAS_HI_EXTINGUISHER",
+          "value": 82
+        },
+        {
+          "name": "EAS_HI_WRIST_ROCKET",
+          "value": 83
+        },
+        {
+          "name": "EAS_HI_WRIST_REPULSOR",
+          "value": 84
+        },
+        {
+          "name": "EAS_HI_WHISTLING_BIRDS",
+          "value": 85
+        },
+        {
+          "name": "EAS_HI_FIBROCORD",
+          "value": 86
+        },
+        {
+          "name": "EAS_HI_GRAPPLEHOOK",
+          "value": 87
+        },
+        {
+          "name": "EAS_HI_PETCONTROL",
+          "value": 88
+        },
+        {
+          "name": "EAS_HI_SELFEXPLODE",
+          "value": 89
+        },
+        {
+          "name": "EAS_HI_ENEMYSCANNER",
+          "value": 90
+        },
+        {
+          "name": "EAS_HI_OVERCLOCK",
+          "value": 91
+        },
+        {
+          "name": "EAS_HI_TEMP_CLOAK",
+          "value": 92
+        },
+        {
+          "name": "EAS_HI_TEMP_PSHIELD",
+          "value": 93
+        },
+        {
+          "name": "EAS_HI_TEMP_GRAPPLEHOOK",
+          "value": 94
+        },
+        {
+          "name": "EAS_MELEE",
+          "value": 95
+        },
+        {
+          "name": "EAS_MAX",
+          "value": 96
+        }
+      ]
+    },
+    {
+      "name": "powerup_t",
+      "values": [
+        {
+          "name": "PW_NONE",
+          "value": 0
+        },
+        {
+          "name": "PW_QUAD",
+          "value": 1
+        },
+        {
+          "name": "PW_BATTLESUIT",
+          "value": 2
+        },
+        {
+          "name": "PW_PULL",
+          "value": 3
+        },
+        {
+          "name": "PW_REDFLAG",
+          "value": 4
+        },
+        {
+          "name": "PW_BLUEFLAG",
+          "value": 5
+        },
+        {
+          "name": "PW_NEUTRALFLAG",
+          "value": 6
+        },
+        {
+          "name": "PW_SHIELDHIT",
+          "value": 7
+        },
+        {
+          "name": "PW_SPEEDBURST",
+          "value": 8
+        },
+        {
+          "name": "PW_DISINT_4",
+          "value": 9
+        },
+        {
+          "name": "PW_SPEED",
+          "value": 10
+        },
+        {
+          "name": "PW_CLOAKED",
+          "value": 11
+        },
+        {
+          "name": "PW_FORCE_ENLIGHTENED_LIGHT",
+          "value": 12
+        },
+        {
+          "name": "PW_FORCE_ENLIGHTENED_DARK",
+          "value": 13
+        },
+        {
+          "name": "PW_FORCE_BOON",
+          "value": 14
+        },
+        {
+          "name": "PW_YSALAMIRI",
+          "value": 15
+        },
+        {
+          "name": "PW_POISON",
+          "value": 16
+        },
+        {
+          "name": "PW_TRACKED_R",
+          "value": 17
+        },
+        {
+          "name": "PW_TRACKED_B",
+          "value": 18
+        },
+        {
+          "name": "PW_ELECTRIFY",
+          "value": 19
+        },
+        {
+          "name": "PW_FREEZE",
+          "value": 20
+        },
+        {
+          "name": "PW_GALAKMECHSHIELD",
+          "value": 21
+        },
+        {
+          "name": "PW_PSHIELD",
+          "value": 22
+        },
+        {
+          "name": "PW_NUM_POWERUPS",
+          "value": 23
+        }
+      ]
+    },
+    {
+      "name": "siegeClassFlags_t",
+      "values": [
+        {
+          "name": "CFL_STRONGAGAINSTPHYSICAL",
+          "value": 0
+        },
+        {
+          "name": "CFL_STATVIEWER",
+          "value": 1
+        },
+        {
+          "name": "CFL_HEAVYMELEE",
+          "value": 2
+        },
+        {
+          "name": "CFL_REALTD",
+          "value": 3
+        },
+        {
+          "name": "CFL_HASQ3",
+          "value": 4
+        },
+        {
+          "name": "CFL_FASTHACKING",
+          "value": 5
+        },
+        {
+          "name": "CFL_NOPICKUPS",
+          "value": 6
+        },
+        {
+          "name": "CFL_BPFREEJUMPS",
+          "value": 7
+        },
+        {
+          "name": "CFL_SEEING_STEALTH",
+          "value": 8
+        },
+        {
+          "name": "CFL_AKIMBOPISTOL3",
+          "value": 9
+        },
+        {
+          "name": "CFL_THERMALROCKETS",
+          "value": 10
+        },
+        {
+          "name": "CFL_INSTAGIB",
+          "value": 11
+        },
+        {
+          "name": "CFL_ACIDBLOOD",
+          "value": 12
+        },
+        {
+          "name": "CFL_DISMEMBERFRAGILE",
+          "value": 13
+        },
+        {
+          "name": "CFL_BLOODYMELEE",
+          "value": 14
+        },
+        {
+          "name": "CFL_BUBBLESHIELD",
+          "value": 15
+        },
+        {
+          "name": "CFL_NO_FUEL_USE",
+          "value": 16
+        },
+        {
+          "name": "CFL_NO_JETPACK_OVERHEAT",
+          "value": 17
+        },
+        {
+          "name": "CFL_NO_JETPACK_COOLDOWN",
+          "value": 18
+        },
+        {
+          "name": "CFL_DISRUPTOR_WALLS",
+          "value": 19
+        },
+        {
+          "name": "CFL_KILLTEAMONDEATH",
+          "value": 20
+        },
+        {
+          "name": "CFL_NOLOCATIONALDAMAGE",
+          "value": 21
+        },
+        {
+          "name": "CFL_RUNFASTMELEE",
+          "value": 22
+        },
+        {
+          "name": "CFL_NODISMEMBER",
+          "value": 23
+        }
+      ]
+    },
+    {
+      "name": "siegeWeaponFlags_t",
+      "values": [
+        {
+          "name": "HELD_HEAL",
+          "value": 0
+        },
+        {
+          "name": "HELD_AMMOREGEN",
+          "value": 1
+        },
+        {
+          "name": "HELD_SPEED",
+          "value": 2
+        },
+        {
+          "name": "HELD_SLOW",
+          "value": 3
+        },
+        {
+          "name": "HELD_HIGHDAMAGE",
+          "value": 4
+        },
+        {
+          "name": "HELD_LOWDAMAGE",
+          "value": 5
+        },
+        {
+          "name": "HELD_KNOCKDOWN",
+          "value": 6
+        },
+        {
+          "name": "HELD_SOFTKNOCKDOWN",
+          "value": 7
+        },
+        {
+          "name": "HELD_POISON",
+          "value": 8
+        },
+        {
+          "name": "HELD_FLAME",
+          "value": 9
+        },
+        {
+          "name": "HELD_PULSE",
+          "value": 10
+        },
+        {
+          "name": "HELD_EXPLOSIVE",
+          "value": 11
+        },
+        {
+          "name": "HELD_KNOCKBACK",
+          "value": 12
+        },
+        {
+          "name": "HELD_KNOCKDOWNRESISTANCE",
+          "value": 13
+        },
+        {
+          "name": "HELD_DAMAGERESISTANCE",
+          "value": 14
+        },
+        {
+          "name": "HELD_DAMAGEVULNERABLE",
+          "value": 15
+        },
+        {
+          "name": "HELD_FORCEREGEN",
+          "value": 16
+        },
+        {
+          "name": "HELD_FORCEEATER",
+          "value": 17
+        },
+        {
+          "name": "HELD_ALTRELOAD",
+          "value": 18
+        },
+        {
+          "name": "HELD_SLOWPROJ",
+          "value": 19
+        },
+        {
+          "name": "HELD_DISRUPTIFY",
+          "value": 20
+        },
+        {
+          "name": "HELD_SONIC",
+          "value": 21
+        },
+        {
+          "name": "HELD_STUN",
+          "value": 22
+        },
+        {
+          "name": "HELD_FREEZE",
+          "value": 23
+        },
+        {
+          "name": "HELD_IGNOREBLOCK",
+          "value": 24
+        },
+        {
+          "name": "HELD_TRACKING",
+          "value": 25
+        },
+        {
+          "name": "HELD_LIFT",
+          "value": 26
+        },
+        {
+          "name": "HELD_SLIPPERY",
+          "value": 27
+        },
+        {
+          "name": "HELD_DISARM",
+          "value": 28
+        },
+        {
+          "name": "HELD_PULL",
+          "value": 29
+        },
+        {
+          "name": "HELD_CRIPPLE",
+          "value": 30
+        },
+        {
+          "name": "HELD_FORCEFOCUS",
+          "value": 31
+        },
+        {
+          "name": "HELD_LIFESTEAL",
+          "value": 32
+        },
+        {
+          "name": "HELD_FLASH",
+          "value": 33
+        },
+        {
+          "name": "HELD_BACTA",
+          "value": 34
+        },
+        {
+          "name": "HELD_NODISARM",
+          "value": 35
         }
       ]
     }
@@ -1359,639 +2674,639 @@
       "key": "APmultiplier",
       "type": "number",
       "default": 1,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "ASmultiplier",
       "type": "number",
       "default": 1,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "AltFlashSound0",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "AltFlashSound1",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "AltFlashSound2",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "AltFlashSound3",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "AltMuzzleEffect",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "AltmissileEffect",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "BPmultiplier",
       "type": "number",
       "default": 1,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "CSmultiplier",
       "type": "number",
       "default": 1,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "ChargeEffect",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "ChargeSound",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "ConeEffect",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "CorrectedWorldModel",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "EUAllowed",
       "type": "unknown",
-      "evidence_status": "KeyVerified"
+      "evidence_status": "SourceKeyVerified"
     },
     {
       "key": "FPBlockMaxMult",
       "type": "number",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "FPBlockMinMult",
       "type": "number",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "FPChargeMult",
       "type": "number",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "FPMult",
       "type": "number",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "FPNoBlockMaxMult",
       "type": "number",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "FPNoBlockMinMult",
       "type": "number",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "FPmultiplier",
       "type": "number",
       "default": 1,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "FlashSound0",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "FlashSound1",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "FlashSound2",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "FlashSound3",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "ForcePowerName",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "ForceToReplace",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "FriendlyShader",
       "type": "unknown",
-      "evidence_status": "KeyVerified"
+      "evidence_status": "SourceKeyVerified"
     },
     {
       "key": "HandShader",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "HandShader2",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "HandShader2Blue",
       "type": "number",
       "default": 255,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "HandShader2Green",
       "type": "number",
       "default": 255,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "HandShader2Red",
       "type": "number",
       "default": 255,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "HandShaderBlue",
       "type": "number",
       "default": 255,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "HandShaderGreen",
       "type": "number",
       "default": 255,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "HandShaderRed",
       "type": "number",
       "default": 255,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "HitSound",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "Icon",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "LoopSound",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "MBClass",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "MuzzleEffect",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "NewBarrelModel",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "NewHandModel",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "NewHandsModel",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "NewViewModel",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "NewWorldModel",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "PowerupShotEffect",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "ReloadTimeModifier",
       "type": "number",
       "default": -1,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "SelectSound",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "StartSound",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "TimePeriod",
       "type": "unknown",
-      "evidence_status": "KeyVerified"
+      "evidence_status": "SourceKeyVerified"
     },
     {
       "key": "UseTeam",
       "type": "unknown",
-      "evidence_status": "KeyVerified"
+      "evidence_status": "SourceKeyVerified"
     },
     {
       "key": "WeaponBasedOff",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "WeaponName",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "WeaponToReplace",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "altChargeSound",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "altFireAnim",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "altFireEnabled",
       "type": "integer",
       "default": 1,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "altGore",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "altHitscanShot",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "altHitscanTracer",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "altMissileHitDroidEffect",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "altMissileHitHumanEffect",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "altMissileMissEffect",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "altMissileMissEffectEnhanced",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "altMissileModel",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "altMissileSound",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "animAttack",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "animAttackRun",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "animAttackWalk",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "animAttackZoom",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "animAttackZoomRun",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "animCharge",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "animReady",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "animReadyNoAmmo",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "animReadyRun",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "animReadyWalk",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "animReadyZoom",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "animReadyZoomRun",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "animRunAttackL",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "animRunAttackR",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "animStand",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "animWalkAttackL",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "animWalkAttackR",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "armourRegenAmount",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "armourRegenCap",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "armourRegenRate",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "attributes",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "bargeAnim",
       "type": "unknown",
-      "evidence_status": "KeyVerified"
+      "evidence_status": "SourceKeyVerified"
     },
     {
       "key": "bargeSoundOverride",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "baseSpeed",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "blockAnim",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "blockRegenAmount",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "blockRegenCap",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "blockRegenRate",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "bowAnim",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "c_att_descs_%i",
       "type": "unknown",
-      "evidence_status": "KeyVerified"
+      "evidence_status": "SourceKeyVerified"
     },
     {
       "key": "c_att_names_%i",
       "type": "unknown",
-      "evidence_status": "KeyVerified"
+      "evidence_status": "SourceKeyVerified"
     },
     {
       "key": "c_att_ranks_%i",
       "type": "unknown",
-      "evidence_status": "KeyVerified"
+      "evidence_status": "SourceKeyVerified"
     },
     {
       "key": "c_att_skill_%i",
       "type": "unknown",
-      "evidence_status": "KeyVerified"
+      "evidence_status": "SourceKeyVerified"
     },
     {
       "key": "classNumberLimit",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "classflags",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "clipSize",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "crouchAnim",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "customAmmo",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "customSpecDesc_%i",
       "type": "unknown",
-      "evidence_status": "KeyVerified"
+      "evidence_status": "SourceKeyVerified"
     },
     {
       "key": "customSpecIcon_%i",
       "type": "unknown",
-      "evidence_status": "KeyVerified"
+      "evidence_status": "SourceKeyVerified"
     },
     {
       "key": "customSpecName_%i",
       "type": "unknown",
-      "evidence_status": "KeyVerified"
+      "evidence_status": "SourceKeyVerified"
     },
     {
       "key": "customblue",
       "type": "number",
       "default": 1,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "customblue_%i",
       "type": "unknown",
-      "evidence_status": "KeyVerified"
+      "evidence_status": "SourceKeyVerified"
     },
     {
       "key": "customgreen",
       "type": "number",
       "default": 1,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "customgreen_%i",
       "type": "unknown",
-      "evidence_status": "KeyVerified"
+      "evidence_status": "SourceKeyVerified"
     },
     {
       "key": "customred",
       "type": "number",
       "default": 1,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "customred_%i",
       "type": "unknown",
-      "evidence_status": "KeyVerified"
+      "evidence_status": "SourceKeyVerified"
     },
     {
       "key": "customveh",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "damageGiven",
       "type": "number",
       "default": 1,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "damageMod",
       "type": "number",
       "default": 1,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "damageTaken",
       "type": "number",
       "default": 1,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "deathAnim",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "defaultSpec",
@@ -2001,104 +3316,104 @@
         "minimum": 0,
         "maximum": 3
       },
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "description",
       "type": "unknown",
-      "evidence_status": "KeyVerified"
+      "evidence_status": "SourceKeyVerified"
     },
     {
       "key": "disableGunBash",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "disruptorBeam1",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "disruptorBeam2",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "extralives",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "flourishAnim",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "forcepool",
       "type": "integer",
       "default": 100,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "forcepowers",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "forceregen",
       "type": "number",
       "default": 1,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "getupAnim",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "getupAnimBack",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "getupAnimCrouch",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "getupAnimFront",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "gloatAnim",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "gripDamage",
       "type": "integer",
       "default": -1000,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "gunbashAnim",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "hackRate",
       "type": "number",
       "default": 1,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "hasAnimOverrides",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "hasCustomSpec",
@@ -2108,610 +3423,615 @@
         "minimum": 0,
         "maximum": 3
       },
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "headSwapModel",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "headSwapSkin",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "healthRegenAmount",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "healthRegenCap",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "healthRegenRate",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
+    },
+    {
+      "key": "held_freeze_stacks",
+      "type": "unknown",
+      "evidence_status": "SourceKeyVerified"
     },
     {
       "key": "holdables",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "humanoidSkeleton",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "isCustomBuild",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "isMinigun",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "isOnlyOneSpec",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "jetpackFinishSound",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "jetpackIdleEffect",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "jetpackIdleSound",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "jetpackJet2Angles",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "jetpackJet2Offset",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "jetpackJet2Tag",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "jetpackJetAngles",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "jetpackJetOffset",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "jetpackJetTag",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "jetpackStartSound",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "jetpackThrustEffect",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "jetpackThrustSound",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "jumpAnim",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "kickAnim",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "knockbackGiven",
       "type": "number",
       "default": 1,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "knockbackTaken",
       "type": "number",
       "default": 1,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "landAnim",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "maxarmor",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "maxhealth",
       "type": "integer",
       "default": 100,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "mbPoints",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "meditateAnim",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "meleeMoves",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "meleeSpecial1",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "meleeSpecial2",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "meleeSpecial3",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "meleeSpecial4",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "meleeknockback",
       "type": "number",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "meleeknockback_flat",
       "type": "number",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "meleeknockback_mult",
       "type": "number",
       "default": 1,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "missile3Effect",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "missileEffect",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "missileHitDroidEffect",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "missileHitHumanEffect",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "missileMissEffect",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "missileMissEffectEnhanced",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "missileModel",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "missileSound",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "model",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "model_%i",
       "type": "unknown",
-      "evidence_status": "KeyVerified"
+      "evidence_status": "SourceKeyVerified"
     },
     {
       "key": "modelscale",
       "type": "number",
       "default": 1,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "name",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "painAnim",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "petCamShader",
       "type": "unknown",
-      "evidence_status": "KeyVerified"
+      "evidence_status": "SourceKeyVerified"
     },
     {
       "key": "petCamTint",
       "type": "unknown",
-      "evidence_status": "KeyVerified"
+      "evidence_status": "SourceKeyVerified"
     },
     {
       "key": "powerups",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "primChargeSound",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "primFireEnabled",
       "type": "integer",
       "default": 1,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "primGore",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "primHitscanShot",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "primHitscanTracer",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "punchAnim",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rageSoundOverride",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankAP",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankAS",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankArmor",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankArmourRegenAmount",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankArmourRegenCap",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankArmourRegenRate",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankBP",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankBaseSpeed",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankBlockRegenAmount",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankBlockRegenCap",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankBlockRegenRate",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankCS",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankDmgGiven",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankDmgTaken",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankFP",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankForcePool",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankForceRegen",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankHack",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankHealth",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankHealthRegenAmount",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankHealthRegenCap",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankHealthRegenRate",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankKbGiven",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankKbTaken",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankModelScale",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankROF",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankROFMelee",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankResourceRegenAmount",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankResourceRegenCap",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankResourceRegenRate",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankSTM",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankSaberDamage",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankSaberMaxChain",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankSaberSpecialDamage",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rankSaberThrowDamage",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rateMod",
       "type": "number",
       "default": 1,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rateOfFire",
       "type": "number",
       "default": 1,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "rateOfFire_Melee",
       "type": "number",
       "default": 1,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "resource",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "resourceRegenAmount",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "resourceRegenCap",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "resourceRegenRate",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "respawnCustomTime",
       "type": "integer",
       "default": -1,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "respawnWait",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "roundNPC",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "runBackward",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "runForward",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "runLeft",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "runRight",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "saber1",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "saber1_%i",
       "type": "unknown",
-      "evidence_status": "KeyVerified"
+      "evidence_status": "SourceKeyVerified"
     },
     {
       "key": "saber2",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "saber2_%i",
       "type": "unknown",
-      "evidence_status": "KeyVerified"
+      "evidence_status": "SourceKeyVerified"
     },
     {
       "key": "saber2color",
@@ -2719,46 +4039,46 @@
         "integer",
         "string"
       ],
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "saber2color_%i",
       "type": "unknown",
-      "evidence_status": "KeyVerified"
+      "evidence_status": "SourceKeyVerified"
     },
     {
       "key": "saberDamage",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "saberDamageStyle",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "saberMaxChain",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "saberSpecialDamage",
       "type": "number",
       "default": 1,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "saberStanceAnim",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "saberThrowDamage",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "sabercolor",
@@ -2766,217 +4086,217 @@
         "integer",
         "string"
       ],
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "sabercolor_%i",
       "type": "unknown",
-      "evidence_status": "KeyVerified"
+      "evidence_status": "SourceKeyVerified"
     },
     {
       "key": "saberstyle",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "saberstyle_%i",
       "type": "unknown",
-      "evidence_status": "KeyVerified"
+      "evidence_status": "SourceKeyVerified"
     },
     {
       "key": "skillTimerMod",
       "type": "number",
       "default": 1,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "skin",
       "type": "string",
       "default": "default",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "skin_%i",
       "type": "unknown",
-      "evidence_status": "KeyVerified"
+      "evidence_status": "SourceKeyVerified"
     },
     {
       "key": "spawnerNPC",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "special1",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "special1HUD",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "special2",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "special2HUD",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "special3",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "special4",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "speed",
       "type": "number",
       "default": 1,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "spinEnabled",
       "type": "unknown",
-      "evidence_status": "KeyVerified"
+      "evidence_status": "SourceKeyVerified"
     },
     {
       "key": "splashDamage",
       "type": "integer",
       "default": -1,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "splashRadius",
       "type": "integer",
       "default": -1,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "startarmor",
       "type": "integer",
       "default": -1,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "starthealth",
       "type": "integer",
       "default": -1,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "tauntAnim",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "team1",
       "type": "unknown",
-      "evidence_status": "KeyVerified"
+      "evidence_status": "SourceKeyVerified"
     },
     {
       "key": "team2",
       "type": "unknown",
-      "evidence_status": "KeyVerified"
+      "evidence_status": "SourceKeyVerified"
     },
     {
       "key": "throwAnim",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "throwAnimReleaseFrame",
       "type": "integer",
       "default": 15,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "typeCharge",
       "type": "integer",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "uiglobal",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "uioverlay",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "uioverlay_c",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "uioverlay_l",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "uioverlay_r",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "uishader",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "uishader_%i",
       "type": "unknown",
-      "evidence_status": "KeyVerified"
+      "evidence_status": "SourceKeyVerified"
     },
     {
       "key": "userRGB",
       "type": "integer",
       "default": 0,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "userRGB_%i",
       "type": "unknown",
-      "evidence_status": "KeyVerified"
+      "evidence_status": "SourceKeyVerified"
     },
     {
       "key": "velocityMod",
       "type": "number",
       "default": 1,
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "walkBackward",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "walkForward",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "walkLeft",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "walkRight",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     },
     {
       "key": "weapons",
       "type": "string",
-      "evidence_status": "KeyVerified_MetadataUnverified"
+      "evidence_status": "SourceKeyVerified_MetadataUnverified"
     }
   ]
 }

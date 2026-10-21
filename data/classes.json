@@ -141,5 +141,60 @@
     "tags": [
       "stub"
     ]
+  },
+  {
+    "id": "MB_CLASS_SHOCKTROOPER",
+    "name": "Shock Trooper",
+    "description": "Shock Trooper class."
+  },
+  {
+    "id": "MB_CLASS_OPERATIVE",
+    "name": "Operative",
+    "description": "Operative class."
+  },
+  {
+    "id": "MB_CLASS_ENFORCER",
+    "name": "Enforcer",
+    "description": "Enforcer class."
+  },
+  {
+    "id": "MB_CLASS_SPY",
+    "name": "Spy",
+    "description": "Spy class."
+  },
+  {
+    "id": "MB_CLASS_ASTRODROID",
+    "name": "Astrodroid",
+    "description": "Astrodroid class."
+  },
+  {
+    "id": "MB_CLASS_ASTROMECH",
+    "name": "Astromech",
+    "description": "Astromech class."
+  },
+  {
+    "id": "MB_CLASS_JETTROOPER",
+    "name": "Jet Trooper",
+    "description": "Jet Trooper class."
+  },
+  {
+    "id": "MB_CLASS_ASSASSINDROID",
+    "name": "Assassin Droid",
+    "description": "Assassin Droid class."
+  },
+  {
+    "id": "MB_CLASS_PATROLIAN",
+    "name": "Patrolian",
+    "description": "Patrolian class."
+  },
+  {
+    "id": "MB_CLASS_BATTLEDROID",
+    "name": "Battle Droid",
+    "description": "Battle Droid class."
+  },
+  {
+    "id": "MB_CLASS_OBSERVER",
+    "name": "Observer",
+    "description": "Observer class."
   }
 ]

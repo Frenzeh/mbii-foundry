@@ -16,7 +16,7 @@ The FA3 Flechette is a combat shotgun variant engineered by Golan Arms for CQB b
 
 ## Related
 
-- `MB_ATT_FA3_FLECHETE`
+- `MB_ATT_FA3_FLECHETTE`
 - `WP_FLECHETTE`
 
 ---

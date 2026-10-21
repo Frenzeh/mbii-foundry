@@ -67,17 +67,32 @@ var weaponIconAliases = map[string]string{
 	"WP_SONIC_NADE":      "w_icon_sonic_det",
 	"WP_CRYO_NADE":       "w_icon_cryobangrenade",
 	"WP_CONC_NADE":       "w_icon_v-59_conc",
+	"WP_BACTA_BOMB":      "w_icon_swrc_pprg",
+	"WP_GAS_NADE":        "w_icon_kotor_fraggrenade",
+	"WP_ROCK_NADE":       "w_icon_stone",
+	"WP_FLASH_NADE":      "w_icon_stungrenade",
+	"WP_IMPACT_NADE":     "w_icon_oldfraggrenade",
+	"WP_PROTON_NADE":     "w_icon_polarity",
+	"WP_GLOP_NADE":       "w_icon_polarity",
 	"WP_DET_PACK":        "w_icon_detpack",
 	"WP_CONCUSSION":      "w_icon_c_rifle",
 	"WP_SBD":             "w_icon_sbdarm",
+	"WP_WELD_PULSE":      "w_icon_blaster_pistol",
+	"WP_WELD_BEAM":       "w_icon_blaster_pistol",
 	"WP_BRYAR_OLD":       "w_icon_briar",
 	"WP_EE3":             "w_icon_ee-3",
 	"WP_EE4":             "w_icon_ee-4",
 	"WP_AMBAN":           "w_icon_mandorifle",
 	"WP_PROJ":            "w_icon_proj_rifle",
+	"WP_EMPLACED_GUN":    "i_icon_eweb",
+	"WP_TURRET":          "i_icon_eweb",
 	"WP_UGL":             "w_icon_upl",
 	"WP_MGL":             "w_icon_relby_v10",
 	"WP_EQUALIZER":       "w_icon_minimag",
+	"WP_WELDER":          "w_icon_fc_f187_all",
+	"WP_MIRV":            "w_icon_minimag",
+	"WP_CYCLER":          "w_icon_tuskensniper",
+	"WP_FA3_FLECHETTE":   "w_icon_FA3Flechette",
 }
 
 // ResolveWeaponIcon finds the HUD icon path for a WP_ ID. Looks up
@@ -86,6 +101,10 @@ var weaponIconAliases = map[string]string{
 // pattern for IDs that aren't in the table yet (new custom weapons,
 // experimental enums).
 func (ir *IconResolver) ResolveWeaponIcon(wpID string) string {
+	// bg_misc.c stores the smoke icon with its model, not in gfx/hud.
+	if wpID == "WP_SMOKE_NADE" {
+		return "models/weapons2/smokenade/icon"
+	}
 	if alias, ok := weaponIconAliases[wpID]; ok {
 		return "gfx/hud/" + alias
 	}
@@ -210,12 +229,25 @@ var attributeIconAliases = map[string]string{
 	"MB_ATT_BACTA":                   "i_icon_bacta",
 	"MB_ATT_BACTA_BIG":               "i_icon_big_bacta",
 	"MB_ATT_BIG_BACTA":               "i_icon_big_bacta",
-	"MB_ATT_BACTA_BOMB":              "i_icon_bacta",
+	"MB_ATT_BACTA_BOMB":              "icon_stats_bacta",
 	"MB_ATT_PSD":                     "i_icon_psd",
 	"MB_ATT_PERSONAL_DEFENSE_SHIELD": "i_icon_psd",
 	"MB_ATT_GOODIE_KEY":              "i_icon_goodie_key",
 	"MB_ATT_SECURITY_KEY":            "i_icon_security_key",
 	"MB_ATT_SECURITY_INTERFACE":      "i_icon_security_key",
+
+	// Public MBAssets3 HUD backgrounds, paired with attribute counters by
+	// HudClassAmountsMappings in moviebattles/cgame/cg_draw.c.
+	"MB_ATT_WRISTLASER":      "icon_stats_wlaser",
+	"MB_ATT_WRIST_AMMO":      "icon_stats_wlaser",
+	"MB_ATT_GAS_NADE":        "icon_stats_dioxis",
+	"MB_ATT_FLASH_NADE":      "icon_stats_flash",
+	"MB_ATT_IMPACT_NADE":     "icon_stats_impact",
+	"MB_ATT_ROCK_NADE":       "icon_stats_rock",
+	"MB_ATT_SMOKE_NADE":      "icon_stats_smoke",
+	"MB_ATT_TEMP_PSHIELD":    "icon_stats_shield",
+	"MB_ATT_TEMP_CLOAK":      "icon_stats_cloak",
+	"MB_ATT_TEMP_GRAP_HOOKS": "icon_stats_grapplehook",
 
 	// HI_* holdables direct icon aliases
 	"HI_MEDPAC":         "i_icon_bacta",

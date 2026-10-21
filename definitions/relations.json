@@ -1219,8 +1219,8 @@
   },
   {
     "source": "WP_FA3_FLECHETTE",
-    "target": "MB_ATT_FA3_FLECHETE",
+    "target": "MB_ATT_FA3_FLECHETTE",
     "type": "weapon_attribute",
-    "note": "Controls Golan Arms FA3 flechette spread and alt-fire."
+    "note": "Canonical FA3 flechette attribute; per-level gameplay effects are not verified by enum metadata."
   }
 ]

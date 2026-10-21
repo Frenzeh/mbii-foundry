@@ -709,12 +709,7 @@ func (e *MBCHEditor) createUI() {
 			if e.attrGrid == nil {
 				return
 			}
-			if n == 0 {
-				delete(e.attrGrid.values, attID)
-			} else {
-				e.attrGrid.values[attID] = n
-			}
-			e.attrGrid.TriggerChange()
+			e.attrGrid.updateValue(attID, n)
 			e.attrGrid.Refresh()
 			e.markDirty()
 		},
@@ -726,7 +721,7 @@ func (e *MBCHEditor) createUI() {
 			if e.character == nil || e.character.ExtraFields == nil {
 				return 0
 			}
-			val := e.character.ExtraFields[wpID+"Flags"]
+			val := e.character.ExtraFields[WeaponFlagKeyForWeapon(wpID)]
 			if val == "" {
 				return 0
 			}
@@ -799,7 +794,7 @@ func (e *MBCHEditor) createUI() {
 				e.interact(key, context)
 			}
 		}
-		e.attrGrid.values = parseAttributesString(s)
+		e.attrGrid.setRaw(s)
 		e.markDirty()
 	}
 
@@ -1652,7 +1647,7 @@ func (e *MBCHEditor) updateUI() {
 	// IS the caller. Sample dump confirmed every thread parked in
 	// __psynch_cvwait. Heavy widget rebuild on the click stack is
 	// slow but won't hang.
-	e.attrGrid.values = parseAttributesString(e.character.Attributes)
+	e.attrGrid.setRaw(e.character.Attributes)
 	e.weaponGrid.parseString(e.character.Weapons)
 	if e.holdableGrid != nil {
 		e.holdableGrid.values = parseHoldablesString(e.character.Attributes)
@@ -1736,6 +1731,24 @@ func (e *MBCHEditor) updateCharacterFromUI() {
 	if e.summary != nil {
 		e.summary.Refresh()
 	}
+}
+
+// setLoadedCatalogSelection keeps authored identifiers, including unknown ones,
+// without firing the user-edit callback during form population.
+func setLoadedCatalogSelection(selectWidget *widget.Select, options []string, current string) {
+	selectWidget.Options = options
+	found := current == ""
+	for _, option := range options {
+		if option == current {
+			found = true
+			break
+		}
+	}
+	if !found {
+		selectWidget.Options = append(append([]string(nil), options...), current)
+	}
+	selectWidget.Selected = current
+	selectWidget.Refresh()
 }
 
 // NewValidatedEntry creates a new Entry with a custom validation function.
@@ -1880,7 +1893,7 @@ func (e *MBCHEditor) resolveIconResource(id string) fyne.Resource {
 	// (heart for health, shield for defense, etc.) so the eye can
 	// still scan the grid quickly.
 	displayName := ""
-	for _, a := range MBIIAttributes {
+	for _, a := range GetAllAttributes() {
 		if a.ID == id {
 			displayName = a.Name
 			break

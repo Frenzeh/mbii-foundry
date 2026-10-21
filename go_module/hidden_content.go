@@ -357,7 +357,7 @@ var weaponAttributeIDs = map[string]bool{
 func filterVisibleClasses(in []ClassDef) []ClassDef {
 	out := make([]ClassDef, 0, len(in))
 	for _, c := range in {
-		if !c.Hidden {
+		if !c.Hidden && !hiddenClassIDs[c.ID] {
 			out = append(out, c)
 		}
 	}
@@ -367,7 +367,7 @@ func filterVisibleClasses(in []ClassDef) []ClassDef {
 func filterVisibleWeapons(in []WeaponDef) []WeaponDef {
 	out := make([]WeaponDef, 0, len(in))
 	for _, w := range in {
-		if !w.Hidden {
+		if !w.Hidden && !hiddenWeaponIDs[w.ID] {
 			out = append(out, w)
 		}
 	}
@@ -377,7 +377,7 @@ func filterVisibleWeapons(in []WeaponDef) []WeaponDef {
 func filterVisibleAttributes(in []AttributeDef) []AttributeDef {
 	out := make([]AttributeDef, 0, len(in))
 	for _, a := range in {
-		if !a.Hidden {
+		if !a.Hidden && !hiddenAttributeIDs[a.ID] {
 			out = append(out, a)
 		}
 	}

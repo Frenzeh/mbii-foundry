@@ -268,16 +268,6 @@
     "description": "Force Absorb"
   },
   {
-    "id": "FP_ATTUNEMENT",
-    "name": "FP_ATTUNEMENT",
-    "overview": "Force Attunement\nIncreases Force Pool above level 1 to 120 and 140, decreases to 80 at Level 0, Level 1 is 100. Deprecated?",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [],
-    "description": "Force Attunement"
-  },
-  {
     "id": "FP_BLIND",
     "name": "FP_BLIND",
     "overview": "Force Blinding\nEAS_FP_BLIND\n1:\n2:\n3:\nCauses Temporary \"Blindness\" to the target, requires direct aim. Force Sense can partially counter.",
@@ -358,16 +348,6 @@
     "description": "Force Lightning"
   },
   {
-    "id": "FP_MINDTRICK",
-    "name": "FP_MINDTRICK",
-    "overview": "Description needed.\n## Level 1\n**Cost:** 50\nCost: 50\n## Level 2\n**Cost:** 30\nCost: 30\n## Level 3\n**Cost:** 30\nCost: 30",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [],
-    "description": "Description needed."
-  },
-  {
     "id": "FP_PROTECT",
     "name": "FP_PROTECT",
     "overview": "Force Protect\nEAS_FP_PROTECT\n1:\n2:\n3:\nProvides 50% damage? reduction while active.\nYes",
@@ -436,16 +416,6 @@
     "stats": {},
     "tags": [],
     "description": "Saber Offense"
-  },
-  {
-    "id": "FP_SABER_THROW",
-    "name": "FP_SABER_THROW",
-    "overview": "Description needed.\n## Level 1\n**Cost:** 20\nCost: 20\n## Level 2\n**Cost:** 20\nCost: 20\n## Level 3\n**Cost:** 20\nCost: 20",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [],
-    "description": "Description needed."
   },
   {
     "id": "FP_SEE",
@@ -3238,19 +3208,6 @@
     "description": "Ability to throw grenades instantly without switching weapons."
   },
   {
-    "id": "MB_ATT_QUICKTOSS",
-    "name": "MB_ATT_QUICKTOSS",
-    "overview": "Quick-Toss\nEAS_HI_QUICKTOSS\nQuickthrow secondary fire Frags or Pulse Grenades when they are not the active weapon.\n(Hold 'Use' to Quickthrow primaries)",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "orphan"
-    ],
-    "description": "Quick-Toss",
-    "orphan": true
-  },
-  {
     "id": "MB_ATT_RADAR",
     "name": "Radar",
     "overview": "Advanced sensor array that detects nearby enemies.\n> **Default:** None.",
@@ -4096,17 +4053,6 @@
     ]
   },
   {
-    "id": "MB_ATT_LASERCOVER",
-    "name": "MB_ATT_LASERCOVER",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
     "id": "MB_ATT_ACROBACY",
     "name": "MB_ATT_ACROBACY",
     "overview": "",
@@ -4547,17 +4493,6 @@
     ]
   },
   {
-    "id": "MB_ATT_IMP_PISTOL",
-    "name": "MB_ATT_IMP_PISTOL",
-    "overview": "",
-    "tips": [],
-    "levels": {},
-    "stats": {},
-    "tags": [
-      "stub"
-    ]
-  },
-  {
     "id": "MB_ATT_KNIFE",
     "name": "MB_ATT_KNIFE",
     "overview": "",
@@ -4661,7 +4596,7 @@
   {
     "id": "MB_ATT_UGL_BURST",
     "name": "UGL Burst",
-    "max_level": 3,
+    "max_level": 21,
     "overview": "Modifies UGL to fire a multi-grenade burst volley for area saturation.",
     "tips": [],
     "levels": {},
@@ -5338,7 +5273,7 @@
       "Equip on Tusken Raiders or bounty hunter sniper variants."
     ],
     "levels": {
-      "1": "Standard kinetic slugthrower rifle with optical zoom targeting scope."
+      "1": {"effect": "Standard kinetic slugthrower rifle with optical zoom targeting scope."}
     },
     "stats": {
       "Weapon": "WP_CYCLER",
@@ -5352,7 +5287,7 @@
     "description": "Ammo reserves and scoping accuracy for the Tusken Cycler rifle."
   },
   {
-    "id": "MB_ATT_FA3_FLECHETE",
+    "id": "MB_ATT_FA3_FLECHETTE",
     "name": "FA3 Flechette Mastery",
     "overview": "Controls pellet density, alternate fire explosive canister capacity, and cycling speed for WP_FA3_FLECHETTE.\n\n** Mechanics**\n* **Rank 1:** Base shotgun issue with standard flechette spread.\n* **Rank 2:** Tightened choke with increased reserve ammunition.\n* **Rank 3:** Maximum pellet discharge, explosive alt-fire canister capability, and rapid cycling.",
     "tips": [
@@ -5360,9 +5295,9 @@
       "Rank 3 unlocks explosive bouncing canisters on alt-fire."
     ],
     "levels": {
-      "1": "Base shotgun issue with standard flechette spread.",
-      "2": "Tightened choke with increased reserve ammunition.",
-      "3": "Maximum pellet discharge, explosive alt-fire canister capability, and rapid cycling."
+      "1": {"effect": "Base shotgun issue with standard flechette spread."},
+      "2": {"effect": "Tightened choke with increased reserve ammunition."},
+      "3": {"effect": "Maximum pellet discharge, explosive alt-fire canister capability, and rapid cycling."}
     },
     "stats": {
       "Weapon": "WP_FA3_FLECHETTE",
@@ -5384,7 +5319,7 @@
       "Pairs with MB_ATT_WOOKIE_STRENGTH and MB_ATT_FURY."
     ],
     "levels": {
-      "1": "Inherit Wookiee animation skeleton, slap attack, and fury mechanics."
+      "1": {"effect": "Inherit Wookiee animation skeleton, slap attack, and fury mechanics."}
     },
     "stats": {
       "Skeleton": "Wookiee",
@@ -5406,9 +5341,9 @@
       "Massive burst damage against groups of clustered enemies."
     ],
     "levels": {
-      "1": "2 rockets per volley.",
-      "2": "3 rockets per volley.",
-      "3": "4 rockets per volley."
+      "1": {"effect": "2 rockets per volley."},
+      "2": {"effect": "3 rockets per volley."},
+      "3": {"effect": "4 rockets per volley."}
     },
     "stats": {
       "Weapon": "WP_MIRV",
@@ -5431,9 +5366,9 @@
       "Frequently used as a template weapon for custom explosives."
     ],
     "levels": {
-      "1": "1 Rock projectile.",
-      "2": "2 Rock projectiles.",
-      "3": "3 Rock projectiles."
+      "1": {"effect": "1 Rock projectile."},
+      "2": {"effect": "2 Rock projectiles."},
+      "3": {"effect": "3 Rock projectiles."}
     },
     "stats": {
       "Weapon": "WP_ROCK_NADE",
@@ -5448,30 +5383,6 @@
     "description": "Ammo capacity and grant count for WP_ROCK_NADE."
   },
   {
-    "id": "MB_ATT_THERMAL",
-    "name": "Thermal Detonator (Alias)",
-    "overview": "Defensive alias of MB_ATT_THERMALS maintained for backwards compatibility across legacy and custom character sheets.\n\n** Mechanics**\n* **Level 1:** Same as MB_ATT_THERMALS level 1.\n* **Level 2:** Same as MB_ATT_THERMALS level 2.\n* **Level 3:** Same as MB_ATT_THERMALS level 3.",
-    "tips": [
-      "Prefer MB_ATT_THERMALS (plural) for modern character sheets.",
-      "Both alias to WP_REAL_TD (the canon-accurate thermal detonator)."
-    ],
-    "levels": {
-      "1": "1 Thermal Detonator (WP_REAL_TD).",
-      "2": "2 Thermal Detonators.",
-      "3": "3 Thermal Detonators."
-    },
-    "stats": {
-      "Canonical": "MB_ATT_THERMALS",
-      "Weapon": "WP_REAL_TD"
-    },
-    "tags": [
-      "grenade",
-      "thermal",
-      "alias"
-    ],
-    "description": "Thermal detonator alias attribute. Defensive alias of MB_ATT_THERMALS."
-  },
-  {
     "id": "MB_ATT_WELDER",
     "name": "Welder / Repair Tool",
     "overview": "Controls damage, burn effects, and armor/droid repair efficiency for WP_WELDER.\n\n** Mechanics**\n* **Rank 1:** Base cutting damage; secondary fire repairs ally armor and droid health.\n* **Rank 2:** High thermal output; primary fire lights victims on fire.\n* **Rank 3:** Maximum cutting speed and highest repair transfer rate.",
@@ -5480,9 +5391,9 @@
       "Rank 2+ allows offensive fire application in close quarters."
     ],
     "levels": {
-      "1": "Base cutting damage; secondary fire repairs ally armor and droid health.",
-      "2": "High thermal output; primary fire ignites targets on fire.",
-      "3": "Maximum cutting speed and highest armor/health repair transfer rate."
+      "1": {"effect": "Base cutting damage; secondary fire repairs ally armor and droid health."},
+      "2": {"effect": "High thermal output; primary fire ignites targets on fire."},
+      "3": {"effect": "Maximum cutting speed and highest armor/health repair transfer rate."}
     },
     "stats": {
       "Weapon": "WP_WELDER",
@@ -5495,5 +5406,649 @@
       "utility"
     ],
     "description": "Ranks and thermal properties for the Welder / Fusioncutter."
+  },
+  {
+    "id": "MB_ATT_PETCONTROL",
+    "name": "Pet Control",
+    "max_level": 1,
+    "category": "General",
+    "description": "Lets the class control NPCs spawned via MB_ATT_SPAWNER."
+  },
+  {
+    "id": "MB_ATT_PSHIELD",
+    "name": "Personal Energy Shield",
+    "max_level": 1,
+    "category": "General",
+    "description": "Activates a 20-second 50% damage-reduction shield."
+  },
+  {
+    "id": "MB_ATT_DEMP2_BLASTS",
+    "name": "DEMP2 Ion Blasts",
+    "max_level": 3,
+    "category": "Weapons",
+    "description": "Separate ammo pool for DEMP2 alt-fire ion blasts (2/level)."
+  },
+  {
+    "id": "MB_ATT_FLECHETTE_ALT_NUM",
+    "name": "Flechette Alt Count",
+    "max_level": 5,
+    "category": "Weapons",
+    "description": "Number of grenades fired by Flechette alt-fire (default 2, max 5)."
+  },
+  {
+    "id": "MB_ATT_FP_SUMMON",
+    "name": "Force Summon",
+    "max_level": 0,
+    "category": "Force"
+  },
+  {
+    "id": "MB_ATT_FP_BATTLEMED",
+    "name": "Battle Meditation",
+    "max_level": 0,
+    "category": "Force",
+    "description": "Accepted by the engine parser; marked unimplemented in bg_public.h."
+  },
+  {
+    "id": "MB_ATT_FP_DOMINATION",
+    "name": "Force Domination",
+    "max_level": 0,
+    "category": "Force",
+    "description": "Charms NPCs into switching teams."
+  },
+  {
+    "id": "MB_ATT_FP_DARKRAGE",
+    "name": "Dark Rage",
+    "max_level": 0,
+    "category": "Force"
+  },
+  {
+    "id": "MB_ATT_SHIELD_PROJ",
+    "name": "Shield Projector",
+    "max_level": 0,
+    "category": "Class Specific"
+  },
+  {
+    "id": "MB_ATT_SPY_DISGUISE",
+    "name": "Spy Disguise",
+    "max_level": 0,
+    "category": "Class Specific"
+  },
+  {
+    "id": "MB_ATT_FIBERCORD_WHIP",
+    "name": "Fibercord Whip",
+    "max_level": 0,
+    "category": "General",
+    "description": "Accepted by the engine parser; marked unimplemented in bg_public.h."
+  },
+  {
+    "id": "MB_ATT_IMPACT_NADE",
+    "name": "Impact Grenade",
+    "max_level": 0,
+    "category": "Weapons"
+  },
+  {
+    "id": "MB_ATT_BACTA_BOMB",
+    "name": "Bacta Bomb",
+    "max_level": 0,
+    "category": "Weapons"
+  },
+  {
+    "id": "MB_ATT_GAS_NADE",
+    "name": "Gas Grenade",
+    "max_level": 0,
+    "category": "Weapons"
+  },
+  {
+    "id": "MB_ATT_FLASH_NADE",
+    "name": "Flash Grenade",
+    "max_level": 0,
+    "category": "Weapons"
+  },
+  {
+    "id": "MB_ATT_GLOP_NADE",
+    "name": "Glop Grenade",
+    "max_level": 0,
+    "category": "Weapons",
+    "description": "Accepted by the engine parser; marked unimplemented in bg_public.h."
+  },
+  {
+    "id": "MB_ATT_IMPLODER_NADE",
+    "name": "Imploder Grenade",
+    "max_level": 0,
+    "category": "Weapons",
+    "description": "Accepted attribute; marked unimplemented in bg_public.h. The corresponding weapon is disabled in the current source configuration."
+  },
+  {
+    "id": "MB_ATT_SMOKE_NADE",
+    "name": "Smoke Grenade",
+    "max_level": 0,
+    "category": "Weapons"
+  },
+  {
+    "id": "MB_ATT_SHIELD_NADE",
+    "name": "Shield Grenade",
+    "max_level": 0,
+    "category": "Weapons",
+    "description": "Accepted attribute; marked unimplemented in bg_public.h. The corresponding weapon is disabled in the current source configuration."
+  },
+  {
+    "id": "MB_ATT_PROTON_NADE",
+    "name": "Proton Grenade",
+    "max_level": 0,
+    "category": "Weapons"
+  },
+  {
+    "id": "MB_ATT_HULL_REPAIR",
+    "name": "Hull Repair",
+    "max_level": 0,
+    "category": "Class Specific"
+  },
+  {
+    "id": "MB_ATT_SECURITY_INTERFACE",
+    "name": "Security Interface",
+    "max_level": 0,
+    "category": "Class Specific"
+  },
+  {
+    "id": "MB_ATT_SPRINT",
+    "name": "Sprint",
+    "max_level": 0,
+    "category": "General"
+  },
+  {
+    "id": "MB_ATT_MANUALSABERTHROW",
+    "name": "Manual Saber Throw",
+    "max_level": 0,
+    "category": "Saber",
+    "description": "Accepted by the engine parser; marked unimplemented in bg_public.h."
+  },
+  {
+    "id": "MB_ATT_ASTRO_JUMPJETS",
+    "name": "Astro Jump Jets",
+    "max_level": 0,
+    "category": "Class Specific"
+  },
+  {
+    "id": "MB_ATT_HEAT_DUMPS",
+    "name": "Heat Dumps",
+    "max_level": 0,
+    "category": "Class Specific",
+    "description": "Accepted by the engine parser; bg_public.h notes incomplete class/weapon resource synchronization."
+  },
+  {
+    "id": "MB_ATT_WELDING_LASER",
+    "name": "Welding Laser",
+    "max_level": 0,
+    "category": "Class Specific"
+  },
+  {
+    "id": "MB_ATT_SHOCK_ARM",
+    "name": "Shock Arm",
+    "max_level": 0,
+    "category": "Class Specific"
+  },
+  {
+    "id": "MB_ATT_FIRE_EXTINGUISHER",
+    "name": "Fire Extinguisher",
+    "max_level": 0,
+    "category": "Class Specific",
+    "description": "Accepted by the engine parser; bg_public.h notes implementation issues."
+  },
+  {
+    "id": "MB_ATT_DATA_SPIKES",
+    "name": "Data Spikes",
+    "max_level": 0,
+    "category": "Class Specific",
+    "description": "Accepted by the engine parser; marked nonfunctional in bg_public.h."
+  },
+  {
+    "id": "MB_ATT_WATER_BREATHING",
+    "name": "Water Breathing",
+    "max_level": 0,
+    "category": "General"
+  },
+  {
+    "id": "MB_ATT_EQUALIZER",
+    "name": "Equalizer",
+    "max_level": 0,
+    "category": "Weapons",
+    "description": "Equalizer Ion Launcher."
+  },
+  {
+    "id": "MB_ATT_SELFEXPLODE",
+    "name": "Self Explode",
+    "max_level": 0,
+    "category": "General"
+  },
+  {
+    "id": "MB_ATT_ENEMYSCANNER",
+    "name": "Enemy Scanner",
+    "max_level": 0,
+    "category": "General"
+  },
+  {
+    "id": "MB_ATT_CYBERNETICS",
+    "name": "Cybernetics",
+    "max_level": 0,
+    "category": "Class Specific",
+    "description": "Shock Trooper attribute used by the Overclock special action."
+  },
+  {
+    "id": "MB_ATT_SLAVE",
+    "name": "Pet Control Target",
+    "max_level": 0,
+    "category": "General",
+    "description": "Attribute for controlling NPC pets."
+  },
+  {
+    "id": "MB_ATT_TEMP_CLOAK",
+    "name": "Single-use Cloaking Devices",
+    "max_level": 0,
+    "category": "General",
+    "description": "Number of single-use cloaking devices."
+  },
+  {
+    "id": "MB_ATT_TEMP_PSHIELD",
+    "name": "Single-use Personal Shields",
+    "max_level": 0,
+    "category": "General",
+    "description": "Number of single-use personal shields."
+  },
+  {
+    "id": "MB_ATT_TEMP_GRAP_HOOKS",
+    "name": "Single-use Grappling Hooks",
+    "max_level": 0,
+    "category": "General",
+    "description": "Number of single-use grappling hooks."
+  },
+  {
+    "id": "FP_STASIS",
+    "name": "FP_STASIS",
+    "category": "Force"
+  },
+  {
+    "id": "FP_SUMMON",
+    "name": "FP_SUMMON",
+    "category": "Force"
+  },
+  {
+    "id": "FP_BATTLEMED",
+    "name": "FP_BATTLEMED",
+    "category": "Force"
+  },
+  {
+    "id": "FP_DOMINATION",
+    "name": "FP_DOMINATION",
+    "category": "Force"
+  },
+  {
+    "id": "FP_DARKRAGE",
+    "name": "FP_DARKRAGE",
+    "category": "Force"
+  },
+  {
+    "id": "EAS_NONE",
+    "name": "EAS_NONE",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_HEAL",
+    "name": "EAS_FP_HEAL",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_LEVITATION",
+    "name": "EAS_FP_LEVITATION",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_SPEED",
+    "name": "EAS_FP_SPEED",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_PUSH",
+    "name": "EAS_FP_PUSH",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_PULL",
+    "name": "EAS_FP_PULL",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_TELEPATHY",
+    "name": "EAS_FP_TELEPATHY",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_GRIP",
+    "name": "EAS_FP_GRIP",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_LIGHTNING",
+    "name": "EAS_FP_LIGHTNING",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_RAGE",
+    "name": "EAS_FP_RAGE",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_PROTECT",
+    "name": "EAS_FP_PROTECT",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_ABSORB",
+    "name": "EAS_FP_ABSORB",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_TEAM_HEAL",
+    "name": "EAS_FP_TEAM_HEAL",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_TEAM_FORCE",
+    "name": "EAS_FP_TEAM_FORCE",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_DRAIN",
+    "name": "EAS_FP_DRAIN",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_SEE",
+    "name": "EAS_FP_SEE",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_SABER_OFFENSE",
+    "name": "EAS_FP_SABER_OFFENSE",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_SABER_DEFENSE",
+    "name": "EAS_FP_SABER_DEFENSE",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_SABERTHROW",
+    "name": "EAS_FP_SABERTHROW",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_BLIND",
+    "name": "EAS_FP_BLIND",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_DESTRUCTION",
+    "name": "EAS_FP_DESTRUCTION",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_SUMMON",
+    "name": "EAS_FP_SUMMON",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_DEADLYSIGHT",
+    "name": "EAS_FP_DEADLYSIGHT",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_BATTLEMED",
+    "name": "EAS_FP_BATTLEMED",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_DOMINATION",
+    "name": "EAS_FP_DOMINATION",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_MANIPULATE",
+    "name": "EAS_FP_MANIPULATE",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_KINETIC",
+    "name": "EAS_FP_KINETIC",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_MIRALUKA",
+    "name": "EAS_FP_MIRALUKA",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_SLAM",
+    "name": "EAS_FP_SLAM",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_SLOW",
+    "name": "EAS_FP_SLOW",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_CHOKE",
+    "name": "EAS_FP_CHOKE",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_ARCLIGHTNING",
+    "name": "EAS_FP_ARCLIGHTNING",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_ARCDRAIN",
+    "name": "EAS_FP_ARCDRAIN",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_SCREAM",
+    "name": "EAS_FP_SCREAM",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_SERENITY",
+    "name": "EAS_FP_SERENITY",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_REVITALIZE",
+    "name": "EAS_FP_REVITALIZE",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_ARMOR",
+    "name": "EAS_FP_ARMOR",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_LIFT",
+    "name": "EAS_FP_LIFT",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_FP_EMERALDLIGHTNING",
+    "name": "EAS_FP_EMERALDLIGHTNING",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_SHIELD",
+    "name": "EAS_HI_SHIELD",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_MEDPAC_BIG",
+    "name": "EAS_HI_MEDPAC_BIG",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_BINOCULARS",
+    "name": "EAS_HI_BINOCULARS",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_JETPACK",
+    "name": "EAS_HI_JETPACK",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_HEALTHDISP",
+    "name": "EAS_HI_HEALTHDISP",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_AMMODISP",
+    "name": "EAS_HI_AMMODISP",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_ARMORDISP",
+    "name": "EAS_HI_ARMORDISP",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_FORCEDISP",
+    "name": "EAS_HI_FORCEDISP",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_EWEB",
+    "name": "EAS_HI_EWEB",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_CLOAK",
+    "name": "EAS_HI_CLOAK",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_SPAWNER",
+    "name": "EAS_HI_SPAWNER",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_STIMPACK",
+    "name": "EAS_HI_STIMPACK",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_BASESEEKER",
+    "name": "EAS_HI_BASESEEKER",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_SHOCKFIELD",
+    "name": "EAS_HI_SHOCKFIELD",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_SPRINT",
+    "name": "EAS_HI_SPRINT",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_DEX",
+    "name": "EAS_HI_DEX",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_QUICKTOSS",
+    "name": "EAS_HI_QUICKTOSS",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_SBD_PM",
+    "name": "EAS_HI_SBD_PM",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_SHOCKWAVE",
+    "name": "EAS_HI_SHOCKWAVE",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_PLASMA",
+    "name": "EAS_HI_PLASMA",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_POISONTHROWER",
+    "name": "EAS_HI_POISONTHROWER",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_ICE",
+    "name": "EAS_HI_ICE",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_BARGE",
+    "name": "EAS_HI_BARGE",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_HEATDUMP",
+    "name": "EAS_HI_HEATDUMP",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_EXTINGUISHER",
+    "name": "EAS_HI_EXTINGUISHER",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_WRIST_ROCKET",
+    "name": "EAS_HI_WRIST_ROCKET",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_WRIST_REPULSOR",
+    "name": "EAS_HI_WRIST_REPULSOR",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_FIBROCORD",
+    "name": "EAS_HI_FIBROCORD",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_SELFEXPLODE",
+    "name": "EAS_HI_SELFEXPLODE",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_ENEMYSCANNER",
+    "name": "EAS_HI_ENEMYSCANNER",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_OVERCLOCK",
+    "name": "EAS_HI_OVERCLOCK",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_TEMP_CLOAK",
+    "name": "EAS_HI_TEMP_CLOAK",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_TEMP_PSHIELD",
+    "name": "EAS_HI_TEMP_PSHIELD",
+    "category": "Special Actions"
+  },
+  {
+    "id": "EAS_HI_TEMP_GRAPPLEHOOK",
+    "name": "EAS_HI_TEMP_GRAPPLEHOOK",
+    "category": "Special Actions"
   }
 ]

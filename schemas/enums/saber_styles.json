@@ -1,87 +1,69 @@
 {
+  "$id": "saber_styles.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "MBII Saber Styles Enum",
-  "description": "All saber style types from q_shared.h saber_styles_t enum",
-  "version": "1.0.0",
-  "source_file": "game/q_shared.h",
-
+  "description": "Mechanically derived active enum identifiers and integer values, including sentinel/count markers, under the recorded source-default configuration. Parser acceptance, gameplay mechanics, rank bounds, and deployed feature configuration are not established by an enum declaration.",
+  "engine": {
+    "revision": "3108edc0f9934c1918012eff5712f9f5e790c96d",
+    "source_path": "game/q_shared.h",
+    "source_sha256": "31aab11e37a6313fd159fbc8c9a14157696082f9231f5d1b0d0b8a06374ddf68",
+    "source_ranges": [
+      {
+        "declaration": "saber_styles_t",
+        "path": "game/q_shared.h",
+        "start_line": 699,
+        "end_line": 710
+      }
+    ],
+    "configuration": {
+      "defines_path": "game/mb_defines.h",
+      "defines_sha256": "3f6d201bc774e5fba4d09684dbc95b0df28c1f132147712ae246dcb67556e9f0",
+      "preprocessor": "cc -std=c99 -E -P -undef -nostdinc -x c -",
+      "scope": "Isolated enum declarations with mb_defines.h source defaults only; no other includes or build flags. Not evidence of a compiled or deployed configuration, parser acceptance, or gameplay behavior."
+    }
+  },
+  "evidence_status": "SourceDefaultsEnumValuesVerified",
   "saber_styles": {
-    "SS_NONE": {
-      "value": 0,
-      "description": "No saber style",
-      "hands": 0
-    },
-    "SS_FAST": {
-      "value": 1,
-      "description": "Blue/Fast style - quick attacks, low damage",
-      "hands": 1,
-      "color": "blue",
-      "speed": "fast",
-      "damage": "low"
-    },
-    "SS_MEDIUM": {
-      "value": 2,
-      "description": "Yellow/Medium style - balanced attacks",
-      "hands": 1,
-      "color": "yellow",
-      "speed": "medium",
-      "damage": "medium"
-    },
-    "SS_STRONG": {
-      "value": 3,
-      "description": "Red/Strong style - slow attacks, high damage",
-      "hands": 1,
-      "color": "red",
-      "speed": "slow",
-      "damage": "high"
-    },
     "SS_DESANN": {
       "value": 4,
-      "description": "Desann style - powerful NPC style",
-      "hands": 1,
-      "special": true
-    },
-    "SS_TAVION": {
-      "value": 5,
-      "description": "Tavion style - acrobatic NPC style",
-      "hands": 1,
-      "special": true
+      "evidence_status": "SourceDefaultsVerified"
     },
     "SS_DUAL": {
       "value": 6,
-      "description": "Dual sabers style - two lightsabers",
-      "hands": 2,
-      "requires_second_saber": true
+      "evidence_status": "SourceDefaultsVerified"
     },
-    "SS_STAFF": {
-      "value": 7,
-      "description": "Staff/Saberstaff style - double-bladed lightsaber",
-      "hands": 2,
-      "requires_staff_saber": true
+    "SS_FAST": {
+      "value": 1,
+      "evidence_status": "SourceDefaultsVerified"
     },
-    "SS_SINGLE": {
-      "value": 8,
-      "description": "Single saber (generic marker)",
-      "hands": 1
+    "SS_MEDIUM": {
+      "value": 2,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "SS_NONE": {
+      "value": 0,
+      "evidence_status": "SourceDefaultsVerified"
     },
     "SS_NUM_SABER_STYLES": {
       "value": 9,
-      "description": "Total saber style count marker"
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "SS_SINGLE": {
+      "value": 8,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "SS_STAFF": {
+      "value": 7,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "SS_STRONG": {
+      "value": 3,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "SS_TAVION": {
+      "value": 5,
+      "evidence_status": "SourceDefaultsVerified"
     }
   },
-
-  "categories": {
-    "single_saber": ["SS_FAST", "SS_MEDIUM", "SS_STRONG"],
-    "special_single": ["SS_DESANN", "SS_TAVION"],
-    "dual_wield": ["SS_DUAL"],
-    "staff": ["SS_STAFF"]
-  },
-
-  "notes": {
-    "usage": "Saber styles are used with the 'saberstyle' field as a bitmask: SS_FAST|SS_MEDIUM|SS_STRONG",
-    "requirements": {
-      "SS_DUAL": "Requires saber2 to be defined",
-      "SS_STAFF": "Requires a staff-type saber (SABER_STAFF)"
-    }
-  }
+  "title": "MBII Saber Styles Enum Catalog",
+  "version": "3.0.0"
 }

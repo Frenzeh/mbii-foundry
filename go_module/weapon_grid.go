@@ -357,14 +357,13 @@ func (wg *WeaponGrid) buildCard(w WeaponDef) fyne.CanvasObject {
 }
 
 // buildLevelPills draws the 0..N pill row that controls both weapon
-// ownership and the paired attribute level. Pill 0 = "Off" (weapon
-// removed + attribute deleted); pills 1..N = own + set attribute level.
-// MaxLevel comes from the AttributeDef when known, defaulting to 3
-// (the common case for most weapon attributes).
+// ownership and the paired attribute level. Off removes the weapon and
+// deletes the attribute only when its final owner is removed.
+// Known gameplay ranks use pills; undocumented ranks use a raw numeric entry.
 func (wg *WeaponGrid) buildLevelPills(weaponID, attID string, w WeaponDef) fyne.CanvasObject {
-	maxLevel := 3
-	for _, a := range MBIIAttributes {
-		if a.ID == attID && a.MaxLevel > 0 {
+	maxLevel := 0
+	for _, a := range GetAllAttributes() {
+		if a.ID == attID {
 			maxLevel = a.MaxLevel
 			break
 		}
@@ -373,6 +372,19 @@ func (wg *WeaponGrid) buildLevelPills(weaponID, attID string, w WeaponDef) fyne.
 	owned := wg.selected[weaponID]
 	if !owned {
 		current = 0
+	}
+	if maxLevel <= 0 || maxLevel > 5 {
+		entry := newAttributeLevelEntry(current, maxLevel, func(level int) {
+			wg.setWeaponLevel(weaponID, attID, level)
+		})
+		label := "Level"
+		if maxLevel <= 0 {
+			label = "Raw 0–255"
+		}
+		caption := widget.NewLabelWithStyle("paired: "+attID,
+			fyne.TextAlignCenter, fyne.TextStyle{Italic: true, Monospace: true})
+		return container.NewVBox(container.NewHBox(widget.NewLabel(label),
+			container.NewGridWrap(fyne.NewSize(64, 32), entry)), caption)
 	}
 
 	pills := []fyne.CanvasObject{}
@@ -383,8 +395,7 @@ func (wg *WeaponGrid) buildLevelPills(weaponID, attID string, w WeaponDef) fyne.
 	// dispatch fine in practice; the previously-feared crash was
 	// theoretical, the deadlock is real and observed.
 	off := widget.NewButton("Off", func() {
-		wg.toggleWeapon(weaponID, false)
-		wg.attrLevelSetter(attID, 0)
+		wg.setWeaponLevel(weaponID, attID, 0)
 		wg.Refresh()
 	})
 	if current == 0 {
@@ -395,8 +406,7 @@ func (wg *WeaponGrid) buildLevelPills(weaponID, attID string, w WeaponDef) fyne.
 	for i := 1; i <= maxLevel; i++ {
 		level := i
 		pill := widget.NewButton(fmt.Sprintf("%d", level), func() {
-			wg.toggleWeapon(weaponID, true)
-			wg.attrLevelSetter(attID, level)
+			wg.setWeaponLevel(weaponID, attID, level)
 			wg.Refresh()
 		})
 		if current == level {
@@ -408,6 +418,18 @@ func (wg *WeaponGrid) buildLevelPills(weaponID, attID string, w WeaponDef) fyne.
 	caption := widget.NewLabelWithStyle("paired: "+attID,
 		fyne.TextAlignCenter, fyne.TextStyle{Italic: true, Monospace: true})
 	return container.NewVBox(row, caption)
+}
+
+func (wg *WeaponGrid) setWeaponLevel(weaponID, attID string, level int) {
+	wg.toggleWeapon(weaponID, level != 0)
+	if level == 0 {
+		for id := range wg.selected {
+			if CanonicalAttributeFor(id) == attID {
+				return
+			}
+		}
+	}
+	wg.attrLevelSetter(attID, level)
 }
 
 func (wg *WeaponGrid) toggleWeapon(id string, on bool) {

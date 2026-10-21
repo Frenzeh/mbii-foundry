@@ -37,16 +37,15 @@ import (
 // GridWithColumns — re-enters use if we swap back.
 var _ = layout.NewSpacer
 
-// classIconAliases maps MB_CLASS_* enum values to the basename of
-// their embedded class icon. Sourced by inspecting
-// assets/icons/classes/ after extraction from MBAssets2.pk3's
-// gfx/menus/classes/ directory.
+// classIconAliases maps MB_CLASS_* enum values to embedded class icons.
+// Paths come from classData in moviebattles/game/bg_misc.c; the public
+// MBAssets2.pk3 ships these basenames under gfx/menus/classes/.
 var classIconAliases = map[string]string{
-	"MB_CLASS_SOLDIER":       "reb", // Rebel soldier
-	"MB_CLASS_TROOPER":       "imp", // Imperial trooper
+	"MB_CLASS_SOLDIER":       "imp",
+	"MB_CLASS_TROOPER":       "reb",
 	"MB_CLASS_COMMANDER":     "com",
-	"MB_CLASS_ELITETROOPER":  "imp",  // reuse imp; no dedicated ET icon shipped
-	"MB_CLASS_SITH":          "jedi", // no dedicated sith icon; jedi/sith share the "user" art
+	"MB_CLASS_ELITETROOPER":  "com",
+	"MB_CLASS_SITH":          "jedi",
 	"MB_CLASS_JEDI":          "jedi",
 	"MB_CLASS_BOUNTY_HUNTER": "bh",
 	"MB_CLASS_HERO":          "hero",
@@ -56,6 +55,11 @@ var classIconAliases = map[string]string{
 	"MB_CLASS_CLONETROOPER":  "clone",
 	"MB_CLASS_MANDALORIAN":   "manda",
 	"MB_CLASS_ARCTROOPER":    "arc",
+	"MB_CLASS_SHOCKTROOPER":  "shock",
+	"MB_CLASS_OPERATIVE":     "oper",
+	"MB_CLASS_ASTRODROID":    "astro",
+	"MB_CLASS_ASTROMECH":     "astro",
+	"MB_CLASS_BATTLEDROID":   "bdroid",
 }
 
 // ClassIconPicker is the composite widget that mbch_editor embeds in

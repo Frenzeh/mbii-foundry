@@ -79,61 +79,16 @@ var KnownHeldFlags = []HeldFlag{
 	{"HELD_BACTA", "Bacta heal", "R22.0.00: hit allies (or self) receive bacta-style heal-over-time", "Utility"},
 }
 
-// WeaponFlagTargets is the list of WP_* IDs that accept flags in
-// practice — the live weapon enum minus sentinels + level objects.
-// Sourced from MBIIWeapons (the canonical weapon catalog), unioned
-// with weaponIconAliases (catches any WP_* that has an icon mapping
-// but isn't yet in MBIIWeapons). Earlier this list was built only
-// from weaponIconAliases — a subset — so weapons present in MBIIWeapons
-// but lacking a custom HUD icon (e.g. WP_BLASTER_PISTOL) were silently
-// missing from the Flags and Weapon Mods pickers.
-var WeaponFlagTargets = func() []string {
-	seen := map[string]bool{}
-	for _, w := range MBIIWeapons {
-		if w.ID == "" || w.ID == "WP_NONE" || w.Hidden {
-			continue
+// weaponFlagTargets follows the effective catalog and runtime visibility rules.
+func weaponFlagTargets() []string {
+	var out []string
+	for _, weapon := range GetWeapons() {
+		if WeaponFlagKeyForWeapon(weapon.ID) != "" {
+			out = append(out, weapon.ID)
 		}
-		seen[w.ID] = true
-	}
-	for id := range weaponIconAliases {
-		if id == "" || id == "WP_NONE" {
-			continue
-		}
-		seen[id] = true
-	}
-	out := make([]string, 0, len(seen))
-	for id := range seen {
-		out = append(out, id)
 	}
 	sort.Strings(out)
 	return out
-}()
-
-// wpFlagsFieldName returns the canonical ExtraFields key for a
-// weapon's flag field — the MBCH format uses "WP_NameFlags" where
-// Name is title-cased with underscores preserved (the wiki's
-// convention, e.g. WP_T21 → WP_T21Flags, WP_CLONE_PISTOL →
-// WP_ClonePistolFlags). We don't normalize case at save time — the
-// parser is case-insensitive on the key anyway — so feed the wiki's
-// canonical form so diffs stay clean.
-func wpFlagsFieldName(wpID string) string {
-	suffix := strings.TrimPrefix(wpID, "WP_")
-	return "WP_" + titleCaseFlagSuffix(suffix) + "Flags"
-}
-
-// titleCaseFlagSuffix turns "CLONE_PISTOL" into "ClonePistol" —
-// matches MBII's wiki convention for WP_*Flags field names. Kept
-// separate from general string.Title because we need underscore-
-// separated-words collapsed, which Title doesn't do.
-func titleCaseFlagSuffix(s string) string {
-	words := strings.Split(strings.ToLower(s), "_")
-	for i, w := range words {
-		if w == "" {
-			continue
-		}
-		words[i] = strings.ToUpper(w[:1]) + w[1:]
-	}
-	return strings.Join(words, "")
 }
 
 // parseFlags parses the pipe-separated CSV ("HELD_STUN|HELD_FLAME")
@@ -531,7 +486,7 @@ func (wfe *WeaponFlagsEditor) showAddDialog() {
 		}
 	}
 	var options []string
-	for _, wp := range WeaponFlagTargets {
+	for _, wp := range weaponFlagTargets() {
 		if !existing[wp] {
 			options = append(options, wp)
 		}
@@ -544,7 +499,7 @@ func (wfe *WeaponFlagsEditor) showAddDialog() {
 	}
 
 	wpNames := map[string]string{}
-	for _, w := range MBIIWeapons {
+	for _, w := range GetAllWeapons() {
 		wpNames[w.ID] = w.Name
 	}
 
@@ -598,7 +553,7 @@ func (wfe *WeaponFlagsEditor) showAddDialog() {
 
 			targetWP := wp
 			clickable := newClickableCell(container.NewStack(cardBg, container.NewPadded(cardContent)), func() {
-				key := wpFlagsFieldName(targetWP)
+				key := WeaponFlagKeyForWeapon(targetWP)
 				if wfe.editor.character.ExtraFields == nil {
 					wfe.editor.character.ExtraFields = map[string]string{}
 				}
@@ -657,25 +612,13 @@ func weaponIDFromFlagsKey(key string) string {
 	if !isWeaponFlagsField(key) {
 		return key
 	}
-	stripped := key[:len(key)-len("Flags")]
-	// The MBCH convention is "WP_<TitleCasedName>Flags". We don't
-	// reliably recover the original UPPER_UNDERSCORE enum from the
-	// title-cased form (WP_ClonePistol → WP_CLONE_PISTOL needs
-	// knowledge of where words split). Cross-reference against
-	// weaponIconAliases so we pick the canonical enum form when
-	// possible; fall back to the title-cased id upcase for display.
-	for id := range weaponIconAliases {
-		if strings.EqualFold(stripped, idToFlagsStem(id)) {
+	for id, field := range weaponFlagKeys {
+		// Both accepted pistol spellings share one engine weapon.
+		if id != "WP_BLASTER_PISTOL" && strings.EqualFold(key, field) {
 			return id
 		}
 	}
-	return strings.ToUpper(stripped)
-}
-
-// idToFlagsStem turns "WP_CLONE_PISTOL" → "WP_ClonePistol" so we can
-// match WP_ClonePistolFlags back to the canonical enum ID.
-func idToFlagsStem(id string) string {
-	return "WP_" + titleCaseFlagSuffix(strings.TrimPrefix(id, "WP_"))
+	return key
 }
 
 // layout_newSpacer is a tiny helper so buildRow stays readable —

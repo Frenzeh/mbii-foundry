@@ -634,7 +634,9 @@ func pointBuyAttrOptions() []string {
 	attrs := GetAttributes()
 	ids := make([]string, 0, len(attrs))
 	for _, a := range attrs {
-		ids = append(ids, a.ID)
+		if isAttributeProper(a.ID) && a.ID != "MB_ATT_INVALID" {
+			ids = append(ids, a.ID)
+		}
 	}
 	sort.Strings(ids)
 	opts = append(opts, ids...)
@@ -776,6 +778,7 @@ func (p *PointBuyUI) UpdateUI() {
 	// fromUser=false so loading a file doesn't mark it dirty.
 	p.selectArchetypeCount(archetypeCount, false)
 
+	attrOptions := pointBuyAttrOptions()
 	for i := 0; i < parsers.PointbuyMaxTotalSlots; i++ {
 		skill := p.editor.character.CustomSkills[i]
 		name := p.editor.character.CustomNames[i]
@@ -784,7 +787,7 @@ func (p *PointBuyUI) UpdateUI() {
 
 		mode := detectSlotMode(skill, ranks)
 		p.slotModes[i].SetSelected(mode)
-		p.slotSkills[i].SetSelected(skill)
+		setLoadedCatalogSelection(p.slotSkills[i], attrOptions, skill)
 		p.slotNames[i].SetText(name)
 		p.slotRanks[i].SetText(ranks)
 		p.slotDescs[i].SetText(descs)

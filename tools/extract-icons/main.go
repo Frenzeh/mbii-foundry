@@ -2,20 +2,21 @@ package main
 
 // One-shot extractor that pulls HUD/attribute/force icons out of the
 // user's MBII PK3s, resizes them to a uniform thumbnail size, encodes
-// as PNG, and writes them into go_module/assets/icons/ under a name
-// that matches the ID the live app will look up (see game_icon.go).
+// as PNG, and stages them under names the live app will look up
+// (see game_icon.go). Review before copying into go_module/assets/icons/.
 //
 // Run this from a machine that has the full MBII install checked out
 // or synced. The resulting PNGs are committed into the Foundry repo
 // and embedded into the binary via //go:embed — testers then get the
 // icons without needing to have the game's PK3s available.
 //
-// Usage:
-//   go run ./tools/extract-icons \
-//     -pk3-dir=/Users/pj/Library/CloudStorage/SynologyDrive-mcp5/MBII_GameData/MBII \
-//     -out=/Users/pj/mbii-foundry/go_module/assets/icons
+// Usage from the repository root, with MBII_PK3_DIR set to the hydrated
+// public-release archive directory:
+//   scratch="$(mktemp -d "${TMPDIR:-/tmp}/mbii-icons.XXXXXX")"
+//   (cd tools/extract-icons && go run . \
+//     -pk3-dir="$MBII_PK3_DIR" -out="$scratch/icons")
 //
-// Idempotent — rerun anytime the source PK3s change.
+// Use a fresh scratch directory for each refresh; integrate reviewed PNGs only.
 
 import (
 	"archive/zip"
@@ -23,6 +24,7 @@ import (
 	"flag"
 	"fmt"
 	"image"
+	"image/jpeg"
 	"image/png"
 	"io"
 	"log"
@@ -37,7 +39,7 @@ import (
 
 // prefixRules maps a source prefix inside PK3s to the output
 // subdirectory we want the resulting PNGs dropped into. The extractor
-// writes the filename as filepath.Base(source) with .png extension.
+// writes filepath.Base(source) with .png extension, except the smoke grenade alias.
 var prefixRules = []struct {
 	src, dst string
 }{
@@ -61,6 +63,26 @@ var prefixRules = []struct {
 }
 
 const thumbMax = 96 // px — small enough to keep binary size modest
+const smokeNadeIcon = "models/weapons2/smokenade/icon"
+
+func pk3PathLess(a, b string) bool {
+	fold := func(c byte) byte {
+		if c >= 'a' && c <= 'z' {
+			return c - ('a' - 'A')
+		}
+		if c == '\\' || c == ':' {
+			return '/'
+		}
+		return c
+	}
+	for i := 0; i < len(a) && i < len(b); i++ {
+		ac, bc := fold(a[i]), fold(b[i])
+		if ac != bc {
+			return ac < bc
+		}
+	}
+	return len(a) < len(b)
+}
 
 func main() {
 	pk3Dir := flag.String("pk3-dir", "", "directory of MBII .pk3 files to scan")
@@ -72,12 +94,23 @@ func main() {
 		log.Fatal("both -pk3-dir and -out are required")
 	}
 
-	pk3s, err := filepath.Glob(filepath.Join(*pk3Dir, "*.pk3"))
+	entries, err := os.ReadDir(*pk3Dir)
 	if err != nil {
-		log.Fatalf("glob %s: %v", *pk3Dir, err)
+		log.Fatalf("read %s: %v", *pk3Dir, err)
 	}
-	// Engine load order: alphabetical. Later PK3s override earlier.
-	sort.Strings(pk3s)
+	var pk3s []string
+	for _, entry := range entries {
+		if !entry.IsDir() && strings.EqualFold(filepath.Ext(entry.Name()), ".pk3") {
+			pk3s = append(pk3s, filepath.Join(*pk3Dir, entry.Name()))
+		}
+	}
+	if len(pk3s) == 0 {
+		log.Fatalf("no PK3 files found in %s", *pk3Dir)
+	}
+	// Match OpenJK FS_PathCmp, including uppercase folding and separator aliases.
+	sort.Slice(pk3s, func(i, j int) bool {
+		return pk3PathLess(filepath.Base(pk3s[i]), filepath.Base(pk3s[j]))
+	})
 
 	// Extracted filenames so we know what we already wrote. Later
 	// PK3s override earlier ones per engine rules, so walk in order
@@ -86,15 +119,19 @@ func main() {
 
 	for _, pk3 := range pk3s {
 		if err := scanPK3(pk3, *outDir, extracted, *verbose); err != nil {
-			log.Printf("skip %s: %v", pk3, err)
+			log.Fatalf("extract %s: %v", pk3, err)
 		}
 	}
-
-	writeManifest(*outDir, extracted)
 
 	total := 0
 	for _, n := range extracted {
 		total += n
+	}
+	if total == 0 {
+		log.Fatal("no matching icons extracted; check the PK3 directory")
+	}
+	if err := writeManifest(*outDir, extracted); err != nil {
+		log.Fatalf("write manifest: %v", err)
 	}
 	log.Printf("Extracted %d icons across %d PK3s → %s", total, len(extracted), *outDir)
 }
@@ -117,10 +154,7 @@ func scanPK3(path, outDir string, extracted map[string]int, verbose bool) error 
 			continue
 		}
 		if err := extractOne(f, rule.dst, outDir); err != nil {
-			if verbose {
-				log.Printf("  skip %s: %v", f.Name, err)
-			}
-			continue
+			return fmt.Errorf("%s: %w", f.Name, err)
 		}
 		count++
 	}
@@ -132,6 +166,9 @@ func scanPK3(path, outDir string, extracted map[string]int, verbose bool) error 
 }
 
 func matchRule(lowerName string) (struct{ src, dst string }, bool) {
+	if strings.TrimSuffix(lowerName, filepath.Ext(lowerName)) == smokeNadeIcon {
+		return struct{ src, dst string }{smokeNadeIcon, "weapons"}, true
+	}
 	for _, rule := range prefixRules {
 		if strings.HasPrefix(lowerName, rule.src) {
 			return rule, true
@@ -167,7 +204,11 @@ func extractOne(f *zip.File, dstSubdir, outRoot string) error {
 	// across weapon and attribute grids regardless of source resolution.
 	img = resize.Thumbnail(thumbMax, thumbMax, img, resize.Lanczos3)
 
-	baseName := strings.TrimSuffix(filepath.Base(f.Name), filepath.Ext(f.Name))
+	name := strings.ReplaceAll(f.Name, "\\", "/")
+	baseName := strings.TrimSuffix(filepath.Base(name), filepath.Ext(name))
+	if strings.EqualFold(strings.TrimSuffix(name, filepath.Ext(name)), smokeNadeIcon) {
+		baseName = "w_icon_smoke_nade"
+	}
 	outPath := filepath.Join(outRoot, dstSubdir, strings.ToLower(baseName)+".png")
 	if err := os.MkdirAll(filepath.Dir(outPath), 0755); err != nil {
 		return err
@@ -187,7 +228,7 @@ func decode(name string, data []byte) (image.Image, error) {
 		img, err := png.Decode(bytes.NewReader(data))
 		return img, err
 	case ".jpg", ".jpeg":
-		img, _, err := image.Decode(bytes.NewReader(data))
+		img, err := jpeg.Decode(bytes.NewReader(data))
 		return img, err
 	}
 	return nil, fmt.Errorf("unknown ext")
@@ -196,7 +237,7 @@ func decode(name string, data []byte) (image.Image, error) {
 // writeManifest dumps a list of source → filename mappings so future
 // devs can tell which PK3 contributed which icon. Debug aid only;
 // the runtime loader just uses filename-to-ID matching.
-func writeManifest(outDir string, byPK3 map[string]int) {
+func writeManifest(outDir string, byPK3 map[string]int) error {
 	var lines []string
 	keys := make([]string, 0, len(byPK3))
 	for k := range byPK3 {
@@ -206,6 +247,6 @@ func writeManifest(outDir string, byPK3 map[string]int) {
 	for _, k := range keys {
 		lines = append(lines, fmt.Sprintf("%s: %d icons", k, byPK3[k]))
 	}
-	_ = os.WriteFile(filepath.Join(outDir, "EXTRACTION_LOG.txt"),
+	return os.WriteFile(filepath.Join(outDir, "EXTRACTION_LOG.txt"),
 		[]byte(strings.Join(lines, "\n")+"\n"), 0644)
 }

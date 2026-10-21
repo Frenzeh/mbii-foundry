@@ -1,101 +1,489 @@
 {
+  "$id": "holdables.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "MBII Holdable Items Enum",
-  "description": "All holdable item types from bg_public.h holdable_t enum and EAS_HI_* values",
-  "version": "1.0.0",
-  "source_file": "game/bg_public.h",
-
-  "holdables": {
-    "HI_NONE": {
-      "value": 0,
-      "description": "No holdable item"
+  "description": "Mechanically derived active enum identifiers and integer values, including sentinel/count markers, under the recorded source-default configuration. Parser acceptance, gameplay mechanics, rank bounds, and deployed feature configuration are not established by an enum declaration.",
+  "engine": {
+    "revision": "3108edc0f9934c1918012eff5712f9f5e790c96d",
+    "source_path": "game/bg_public.h",
+    "source_sha256": "e1fb920a4632dc8399584fe61e1ea364726f68e1c418375b8ca1fe47abc59e35",
+    "source_ranges": [
+      {
+        "declaration": "holdable_t",
+        "path": "game/bg_public.h",
+        "start_line": 2154,
+        "end_line": 2172
+      },
+      {
+        "declaration": "gEntityActionSkill_t",
+        "path": "game/bg_public.h",
+        "start_line": 3804,
+        "end_line": 3907
+      }
+    ],
+    "configuration": {
+      "defines_path": "game/mb_defines.h",
+      "defines_sha256": "3f6d201bc774e5fba4d09684dbc95b0df28c1f132147712ae246dcb67556e9f0",
+      "preprocessor": "cc -std=c99 -E -P -undef -nostdinc -x c -",
+      "scope": "Isolated enum declarations with mb_defines.h source defaults only; no other includes or build flags. Not evidence of a compiled or deployed configuration, parser acceptance, or gameplay behavior."
+    }
+  },
+  "evidence_status": "SourceDefaultsEnumValuesVerified",
+  "extended_abilities": {
+    "EAS_FP_ABSORB": {
+      "value": 11,
+      "evidence_status": "SourceDefaultsVerified"
     },
-    "HI_SEEKER": {
+    "EAS_FP_ARCDRAIN": {
+      "value": 35,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_ARCLIGHTNING": {
+      "value": 34,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_ARMOR": {
+      "value": 39,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_BATTLEMED": {
+      "value": 24,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_BLIND": {
+      "value": 19,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_CHOKE": {
+      "value": 33,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_DARKRAGE": {
+      "value": 26,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_DEADLYSIGHT": {
+      "value": 22,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_DESTRUCTION": {
+      "value": 20,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_DOMINATION": {
+      "value": 25,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_DRAIN": {
+      "value": 14,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_EMERALDLIGHTNING": {
+      "value": 41,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_GRIP": {
+      "value": 7,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_HEAL": {
       "value": 1,
-      "description": "Seeker drone - autonomous attack droid"
+      "evidence_status": "SourceDefaultsVerified"
     },
-    "HI_SHIELD": {
+    "EAS_FP_KINETIC": {
+      "value": 29,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_LEVITATION": {
       "value": 2,
-      "description": "Portable shield generator"
+      "evidence_status": "SourceDefaultsVerified"
     },
-    "HI_MEDPAC": {
-      "value": 3,
-      "description": "Small medpac - heal self"
+    "EAS_FP_LIFT": {
+      "value": 40,
+      "evidence_status": "SourceDefaultsVerified"
     },
-    "HI_MEDPAC_BIG": {
+    "EAS_FP_LIGHTNING": {
+      "value": 8,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_MANIPULATE": {
+      "value": 28,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_MIRALUKA": {
+      "value": 30,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_PROTECT": {
+      "value": 10,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_PULL": {
+      "value": 5,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_PUSH": {
       "value": 4,
-      "description": "Large bacta tank - full heal"
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_RAGE": {
+      "value": 9,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_REPULSE": {
+      "value": 27,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_REVITALIZE": {
+      "value": 38,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_SABERTHROW": {
+      "value": 18,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_SABER_DEFENSE": {
+      "value": 17,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_SABER_OFFENSE": {
+      "value": 16,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_SCREAM": {
+      "value": 36,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_SEE": {
+      "value": 15,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_SERENITY": {
+      "value": 37,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_SLAM": {
+      "value": 31,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_SLOW": {
+      "value": 32,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_SPEED": {
+      "value": 3,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_STASIS": {
+      "value": 23,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_SUMMON": {
+      "value": 21,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_TEAM_FORCE": {
+      "value": 13,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_TEAM_HEAL": {
+      "value": 12,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_FP_TELEPATHY": {
+      "value": 6,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_AMMODISP": {
+      "value": 50,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_ARMORDISP": {
+      "value": 51,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_BARGE": {
+      "value": 79,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_BASESEEKER": {
+      "value": 58,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_BINOCULARS": {
+      "value": 46,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_CLOAK": {
+      "value": 54,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_DASH": {
+      "value": 60,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_DEX": {
+      "value": 62,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_DODGE": {
+      "value": 80,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_ENEMYSCANNER": {
+      "value": 90,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_EWEB": {
+      "value": 53,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_EXTINGUISHER": {
+      "value": 82,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_FIBROCORD": {
+      "value": 86,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_FLAME": {
+      "value": 72,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_FORCEDISP": {
+      "value": 52,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_FURY": {
+      "value": 63,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_GRAPPLEHOOK": {
+      "value": 87,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_HEALTHDISP": {
+      "value": 49,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_HEATDUMP": {
+      "value": 81,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_ICE": {
+      "value": 75,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_JETPACK": {
+      "value": 48,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_KICK": {
+      "value": 78,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_MEDPAC": {
+      "value": 44,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_MEDPAC_BIG": {
+      "value": 45,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_OVERCLOCK": {
+      "value": 91,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_PETCONTROL": {
+      "value": 88,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_PLASMA": {
+      "value": 73,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_POISON": {
+      "value": 76,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_POISONTHROWER": {
+      "value": 74,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_PSHIELD": {
+      "value": 57,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_QUICKTHROW": {
+      "value": 64,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_QUICKTOSS": {
+      "value": 65,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_RECHARGE": {
+      "value": 66,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_ROCKET": {
+      "value": 70,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_SBD_PM": {
+      "value": 67,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_SBD_ZOOM": {
+      "value": 68,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_SEEKER": {
+      "value": 42,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_SELFEXPLODE": {
+      "value": 89,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_SENTRY_GUN": {
+      "value": 47,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_SHIELD": {
+      "value": 43,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_SHOCKFIELD": {
+      "value": 59,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_SHOCKWAVE": {
+      "value": 69,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_SPAWNER": {
+      "value": 55,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_SPRINT": {
+      "value": 61,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_STIMPACK": {
+      "value": 56,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_TEMP_CLOAK": {
+      "value": 92,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_TEMP_GRAPPLEHOOK": {
+      "value": 94,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_TEMP_PSHIELD": {
+      "value": 93,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_TRACKER": {
+      "value": 77,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_WHISTLING_BIRDS": {
+      "value": 85,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_WRIST": {
+      "value": 71,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_WRIST_REPULSOR": {
+      "value": 84,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_HI_WRIST_ROCKET": {
+      "value": 83,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_MAX": {
+      "value": 96,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_MELEE": {
+      "value": 95,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "EAS_NONE": {
+      "value": 0,
+      "evidence_status": "SourceDefaultsVerified"
+    }
+  },
+  "holdables": {
+    "HI_BASESEEKER": {
+      "value": 13,
+      "evidence_status": "SourceDefaultsVerified"
     },
     "HI_BINOCULARS": {
       "value": 5,
-      "description": "Electrobinoculars - zoom vision"
-    },
-    "HI_SENTRY_GUN": {
-      "value": 6,
-      "description": "Deployable sentry turret"
-    },
-    "HI_JETPACK": {
-      "value": 7,
-      "description": "Jetpack - flight capability"
-    },
-    "HI_EWEB": {
-      "value": 8,
-      "description": "E-Web heavy repeating blaster (deployable)"
+      "evidence_status": "SourceDefaultsVerified"
     },
     "HI_CLOAK": {
       "value": 9,
-      "description": "Cloaking device - invisibility"
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HI_EWEB": {
+      "value": 8,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HI_JETPACK": {
+      "value": 7,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HI_MEDPAC": {
+      "value": 3,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HI_MEDPAC_BIG": {
+      "value": 4,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HI_NONE": {
+      "value": 0,
+      "evidence_status": "SourceDefaultsVerified"
     },
     "HI_NUM_HOLDABLE": {
+      "value": 15,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HI_PSHIELD": {
+      "value": 12,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HI_SEEKER": {
+      "value": 1,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HI_SENTRY_GUN": {
+      "value": 6,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HI_SHIELD": {
+      "value": 2,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HI_SHOCKFIELD": {
+      "value": 14,
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HI_SPAWNER": {
       "value": 10,
-      "description": "Total holdable count marker"
+      "evidence_status": "SourceDefaultsVerified"
+    },
+    "HI_STIMPACK": {
+      "value": 11,
+      "evidence_status": "SourceDefaultsVerified"
     }
   },
-
-  "extended_abilities": {
-    "EAS_HI_SEEKER": "Seeker drone ability",
-    "EAS_HI_SHIELD": "Shield ability",
-    "EAS_HI_MEDPAC": "Small medpac ability",
-    "EAS_HI_MEDPAC_BIG": "Large medpac ability",
-    "EAS_HI_BINOCULARS": "Binoculars ability",
-    "EAS_HI_SENTRY_GUN": "Sentry gun ability",
-    "EAS_HI_JETPACK": "Jetpack ability",
-    "EAS_HI_HEALTHDISP": "Health dispenser ability",
-    "EAS_HI_AMMODISP": "Ammo dispenser ability",
-    "EAS_HI_ARMORDISP": "Armor dispenser ability",
-    "EAS_HI_FORCEDISP": "Force dispenser ability",
-    "EAS_HI_EWEB": "E-Web ability",
-    "EAS_HI_CLOAK": "Cloak ability",
-    "EAS_HI_DASH": "Dash ability (quick movement burst)",
-    "EAS_HI_SPRINT": "Sprint ability (sustained speed)",
-    "EAS_HI_DEX": "Dexterity ability",
-    "EAS_HI_FURY": "Fury ability (damage boost)",
-    "EAS_HI_QUICKTHROW": "Quick throw ability",
-    "EAS_HI_QUICKTOSS": "Quick toss ability",
-    "EAS_HI_RECHARGE": "Recharge ability",
-    "EAS_HI_SBD_PM": "SBD power mode",
-    "EAS_HI_SBD_ZOOM": "SBD zoom",
-    "EAS_HI_ROCKET": "Rocket ability (wrist rocket)",
-    "EAS_HI_WRIST": "Wrist weapon ability",
-    "EAS_HI_FLAME": "Flamethrower ability",
-    "EAS_HI_PLASMA": "Plasma thrower ability",
-    "EAS_HI_ICE": "Ice thrower ability",
-    "EAS_HI_POISON": "Poison dart ability",
-    "EAS_HI_TRACKER": "Tracking dart ability",
-    "EAS_HI_KICK": "Kick ability",
-    "EAS_HI_BARGE": "Barge/shoulder charge ability",
-    "EAS_HI_DODGE": "Dodge ability",
-    "EAS_HI_HEATDUMP": "Heat dump ability (cooldown weapon)",
-    "EAS_HI_EXTINGUISHER": "Fire extinguisher ability",
-    "EAS_HI_WRIST_ROCKET": "Wrist-mounted rocket",
-    "EAS_HI_WRIST_REPULSOR": "Wrist-mounted repulsor",
-    "EAS_HI_WHISTLING_BIRDS": "Whistling Birds (Mandalorian projectiles)",
-    "EAS_HI_FIBROCORD": "Fibrocord whip",
-    "EAS_HI_GRAPPLEHOOK": "Grappling hook"
-  },
-
-  "notes": {
-    "usage": "Holdables are assigned using the 'holdables' field, often with levels like HI_JETPACK,3",
-    "extended": "EAS_HI_* values represent extended ability skills used in class customization"
-  }
+  "title": "MBII Holdables and Special Actions Enum Catalog",
+  "version": "3.0.0"
 }

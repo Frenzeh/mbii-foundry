@@ -94,6 +94,7 @@ type AttributeGrid struct {
 	container   *fyne.Container
 	content     *fyne.Container
 	values      map[string]int
+	raw         string
 	onChange    func(string)
 	onHover     func(string, string)
 	onUnhover   func()
@@ -118,6 +119,7 @@ func NewAttributeGrid(initialStr string, onChange func(string), onHover func(str
 	InitDefinitions()
 	ag := &AttributeGrid{
 		values:      parseAttributesString(initialStr),
+		raw:         initialStr,
 		onChange:    onChange,
 		onHover:     onHover,
 		resolveIcon: resolveIcon,
@@ -143,11 +145,16 @@ func parseAttributesString(s string) map[string]int {
 	}
 	parts := strings.Split(s, "|")
 	for _, part := range parts {
-		kv := strings.Split(part, ",")
-		if len(kv) == 2 {
-			val, _ := strconv.Atoi(kv[1])
-			res[strings.TrimSpace(kv[0])] = val
+		id, level, explicit := strings.Cut(part, ",")
+		id = strings.ToUpper(strings.TrimSpace(id))
+		if id == "" {
+			continue
 		}
+		val := 3 // BG_SiegeTranslateAttributes defaults bare identifiers to level 3.
+		if explicit {
+			val, _ = strconv.Atoi(strings.TrimSpace(level))
+		}
+		res[id] = val
 	}
 	return res
 }
@@ -210,7 +217,7 @@ func classifyAttributeToTopCategory(a AttributeDef) string {
 		id == "MB_ATT_SUPPLYDROP" || id == "MB_ATT_BACTA" || id == "MB_ATT_BACTA_BIG" ||
 		id == "MB_ATT_MEDI_PACK" || id == "MB_ATT_AMMO_PACK" || id == "MB_ATT_STIMPACK" ||
 		id == "MB_ATT_SPAWNER" || id == "MB_ATT_FORCEFIELD" || id == "MB_ATT_EWEB" ||
-		id == "MB_ATT_SENTRY" || id == "MB_ATT_LASERCOVER" || id == "MB_ATT_STEALTH" ||
+		id == "MB_ATT_SENTRY" || id == "MB_ATT_STEALTH" ||
 		id == "MB_ATT_CLOAK" || id == "MB_ATT_USE_DISTANCE" || id == "MB_ATT_GOODIE_KEY" || id == "MB_ATT_SECURITY_KEY" {
 		return "Supplies & Tactical Gear"
 	}
@@ -354,25 +361,38 @@ func (ag *AttributeGrid) createAttributeItem(attr AttributeDef) fyne.CanvasObjec
 	return w
 }
 
+// setRaw refreshes the view without normalizing or discarding authored tokens.
+func (ag *AttributeGrid) setRaw(s string) {
+	ag.raw = s
+	ag.values = parseAttributesString(s)
+}
+
 func (ag *AttributeGrid) updateValue(id string, val int) {
-	if val == 0 {
-		delete(ag.values, id)
-	} else {
-		ag.values[id] = val
+	var parts []string
+	replaced := false
+	if ag.raw != "" {
+		for _, token := range strings.Split(ag.raw, "|") {
+			key, _, _ := strings.Cut(token, ",")
+			if !strings.EqualFold(strings.TrimSpace(key), id) {
+				parts = append(parts, token)
+				continue
+			}
+			if !replaced && val != 0 {
+				parts = append(parts, fmt.Sprintf("%s,%d", id, val))
+			}
+			replaced = true
+		}
 	}
+	if !replaced && val != 0 {
+		parts = append(parts, fmt.Sprintf("%s,%d", id, val))
+	}
+	ag.setRaw(strings.Join(parts, "|"))
 	ag.TriggerChange()
 }
 
 func (ag *AttributeGrid) TriggerChange() {
 	if ag.onChange != nil {
-		var parts []string
-		for k, v := range ag.values {
-			if v > 0 {
-				parts = append(parts, fmt.Sprintf("%s,%d", k, v))
-			}
-		}
-		sort.Strings(parts)
-		ag.onChange(strings.Join(parts, "|"))
+		ag.onChange(ag.raw)
 	}
 }
 

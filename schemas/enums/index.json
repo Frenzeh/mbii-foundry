@@ -1,42 +1,42 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "MBII FA Creator Enums Index",
-  "description": "Index of editor enum catalogs. Each catalog states its own evidence status; only classes_t and MBAttribute_t are tied to the recorded engine revision.",
-  "version": "1.1.0",
-  "evidence_status": "Mixed",
+  "description": "Index of mechanically derived enum catalogs under the recorded mb_defines.h source-default configuration. Catalogs include sentinel/count markers; enum membership does not establish parser acceptance, gameplay mechanics, or compiled/deployed feature availability.",
+  "version": "2.0.0",
+  "evidence_status": "SourceDefaultsEnumValuesVerified",
 
   "enums": {
     "attributes": {
       "file": "attributes.json",
-      "description": "Verified MBAttribute_t declaration (302 ordered numeric values; 300 selectable MB_ATT_* identifiers)"
+      "description": "Source-default MBAttribute_t declaration: active ordered numeric values and selectable identifiers"
     },
     "weapons": {
       "file": "weapons.json",
-      "description": "WP_* weapon types from bg_weapons.h (58 entries)"
+      "description": "Source-default weapon_t declaration, including inactive-gate exclusion and count markers"
     },
     "force_powers": {
       "file": "force_powers.json",
-      "description": "FP_* force power types from q_shared.h (24 entries)"
+      "description": "Source-default forcePowers_t declaration; separate from special-action EAS_FP_* identifiers"
     },
     "saber_styles": {
       "file": "saber_styles.json",
-      "description": "SS_* saber style types from q_shared.h (9 entries)"
+      "description": "Source-default saber_styles_t declaration; parser availability is a separate contract"
     },
     "holdables": {
       "file": "holdables.json",
-      "description": "HI_* holdable items and EAS_HI_* extended abilities (50+ entries)"
+      "description": "Source-default holdable_t and gEntityActionSkill_t declarations in separate holdables and extended_abilities domains"
     },
     "powerups": {
       "file": "powerups.json",
-      "description": "PW_* powerup/status effect types (22 entries)"
+      "description": "Source-default powerup_t declaration, including the count marker"
     },
     "class_flags": {
       "file": "class_flags.json",
-      "description": "CFL_* class flags and HELD_* weapon flags (40+ entries)"
+      "description": "Source-default siegeClassFlags_t and siegeWeaponFlags_t enum bit indices, not scalar masks"
     },
     "classes": {
       "file": "classes.json",
-      "description": "Verified classes_t declaration (27 ordered numeric values; 25 selectable MB_CLASS_* identifiers)"
+      "description": "Source-default classes_t declaration: active ordered numeric values and selectable identifiers"
     }
   },
 
@@ -48,7 +48,12 @@
       "saberstyle": "saber_styles.json",
       "holdables": "holdables.json",
       "attributes": "attributes.json",
-      "classflags": "class_flags.json"
+      "classflags": "class_flags.json",
+      "powerups": "powerups.json",
+      "special1": "holdables.json#/extended_abilities",
+      "special2": "holdables.json#/extended_abilities",
+      "special3": "holdables.json#/extended_abilities",
+      "special4": "holdables.json#/extended_abilities"
     },
     "weaponinfo_fields": {
       "WeaponToReplace": "weapons.json",
@@ -60,9 +65,10 @@
   },
 
   "source_files": {
-    "bg_public.h": ["attributes", "classes"],
+    "bg_public.h": ["attributes", "classes", "holdables", "powerups"],
     "bg_weapons.h": ["weapons"],
     "bg_saga.h": ["class_flags"],
-    "q_shared.h": ["force_powers", "saber_styles"]
+    "q_shared.h": ["force_powers", "saber_styles"],
+    "mb_defines.h": ["attributes", "classes", "weapons", "force_powers", "saber_styles", "holdables", "powerups", "class_flags"]
   }
 }

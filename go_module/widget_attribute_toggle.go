@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image/color"
 	"strconv"
 	"strings"
@@ -73,13 +74,14 @@ type AttributeToggleWidget struct {
 	OnInfoClick func(string, string)
 
 	// UI Components
-	titleText *canvas.Text
-	idText    *canvas.Text
-	buttons   []*HoverButton
-	infoBtn   *TooltipButton
-	tile      *TilePanelWidget
-	catColor  color.Color
-	container fyne.CanvasObject
+	titleText  *canvas.Text
+	idText     *canvas.Text
+	buttons    []*HoverButton
+	levelEntry *widget.Entry
+	infoBtn    *TooltipButton
+	tile       *TilePanelWidget
+	catColor   color.Color
+	container  fyne.CanvasObject
 }
 
 func NewAttributeToggleWidget(attr AttributeDef, currentVal int, onChange func(int), onInfo func(string, string), icon fyne.Resource) *AttributeToggleWidget {
@@ -113,9 +115,6 @@ func (w *AttributeToggleWidget) SetOnInfoLeave(f func()) {
 }
 
 func (w *AttributeToggleWidget) createUI(onInfo func(string, string), iconRes fyne.Resource) {
-	if w.MaxLevel <= 0 {
-		w.MaxLevel = 3
-	}
 
 	// Primary label: display name (with auto-derived fallback when the
 	// data doesn't carry one). Secondary: monospace enum ID caption
@@ -160,20 +159,30 @@ func (w *AttributeToggleWidget) createUI(onInfo func(string, string), iconRes fy
 		iconObj = container.NewGridWrap(fyne.NewSize(24, 24), w.infoBtn)
 	}
 
-	// Create toggle buttons
-	w.buttons = make([]*HoverButton, w.MaxLevel+1)
-
-	// Level 0 (Off)
-	w.buttons[0] = w.createLevelButton(0, "Off", onInfo)
-
-	// Levels 1..Max
-	for i := 1; i <= w.MaxLevel; i++ {
-		w.buttons[i] = w.createLevelButton(i, strconv.Itoa(i), onInfo)
-	}
-
 	btnBox := container.NewHBox()
-	for _, btn := range w.buttons {
-		btnBox.Add(btn)
+	if w.MaxLevel <= 0 || w.MaxLevel > 5 {
+		w.levelEntry = newAttributeLevelEntry(w.CurrentVal, w.MaxLevel, func(level int) {
+			w.CurrentVal = level
+			w.refreshButtons()
+			if w.OnChange != nil {
+				w.OnChange(level)
+			}
+		})
+		label := "Level"
+		if w.MaxLevel <= 0 {
+			label = "Raw 0–255"
+		}
+		btnBox.Add(widget.NewLabel(label))
+		btnBox.Add(container.NewGridWrap(fyne.NewSize(64, 32), w.levelEntry))
+	} else {
+		w.buttons = make([]*HoverButton, w.MaxLevel+1)
+		w.buttons[0] = w.createLevelButton(0, "Off", onInfo)
+		for i := 1; i <= w.MaxLevel; i++ {
+			w.buttons[i] = w.createLevelButton(i, strconv.Itoa(i), onInfo)
+		}
+		for _, btn := range w.buttons {
+			btnBox.Add(btn)
+		}
 	}
 
 	w.catColor = attributeColor(w.ID, w.Category)
@@ -211,6 +220,31 @@ func (w *AttributeToggleWidget) createUI(onInfo func(string, string), iconRes fy
 	w.container = hover
 
 	w.refreshButtons()
+}
+
+// newAttributeLevelEntry uses the parser's byte range when no gameplay rank
+// ceiling is documented. Loading a value never clamps or rewrites it.
+func newAttributeLevelEntry(current, maxLevel int, onChange func(int)) *widget.Entry {
+	if maxLevel <= 0 {
+		maxLevel = 255 // BG_SiegeTranslateAttributes in bg_saga.c.
+	}
+	entry := NewInputEntry()
+	entry.SetPlaceHolder(fmt.Sprintf("0–%d", maxLevel))
+	entry.Validator = func(s string) error {
+		n, err := strconv.Atoi(s)
+		if err != nil || n < 0 || n > maxLevel {
+			return fmt.Errorf("enter an integer from 0 to %d", maxLevel)
+		}
+		return nil
+	}
+	entry.SetText(strconv.Itoa(current))
+	entry.OnChanged = func(s string) {
+		if entry.Validator(s) == nil {
+			n, _ := strconv.Atoi(s)
+			onChange(n)
+		}
+	}
+	return entry
 }
 
 func (w *AttributeToggleWidget) createLevelButton(level int, text string, onInfo func(string, string)) *HoverButton {

@@ -45,7 +45,29 @@ else
     OUTPUT="mbii-foundry"
 fi
 
-go build -o "$OUTPUT"
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    export MACOSX_DEPLOYMENT_TARGET=13.0
+    if [ "$(/usr/libexec/PlistBuddy -c 'Print :LSMinimumSystemVersion' "$SCRIPT_DIR/macos/Info.plist")" != "$MACOSX_DEPLOYMENT_TARGET" ]; then
+        echo "ERROR: Info.plist minimum must match macOS $MACOSX_DEPLOYMENT_TARGET" >&2
+        exit 1
+    fi
+    export CGO_CFLAGS="${CGO_CFLAGS:-} -mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET"
+    export CGO_CXXFLAGS="${CGO_CXXFLAGS:-} -mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET"
+    export CGO_LDFLAGS="${CGO_LDFLAGS:-} -mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET"
+    BUILD_STAGE="$(mktemp -d "${TMPDIR:-/tmp}/foundry-setup-XXXXXX")"
+    trap 'rm -rf "$BUILD_STAGE"' EXIT
+    export GOCACHE="$BUILD_STAGE/go-cache"
+    CGO_ENABLED=1 go build -o "$OUTPUT" -ldflags="-linkmode=external -extldflags=-mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET"
+    buildInfo="$(xcrun vtool -show-build "$OUTPUT")"
+    printf '%s\n' "$buildInfo"
+    minos="$(printf '%s\n' "$buildInfo" | awk '$1 == "minos" {print $2}')"
+    if [ "$minos" != "$MACOSX_DEPLOYMENT_TARGET" ] && [ "$minos" != "$MACOSX_DEPLOYMENT_TARGET.0" ]; then
+        echo "ERROR: Binary minos is '$minos', expected $MACOSX_DEPLOYMENT_TARGET" >&2
+        exit 1
+    fi
+else
+    go build -o "$OUTPUT"
+fi
 
 if [ $? -eq 0 ]; then
     echo ""

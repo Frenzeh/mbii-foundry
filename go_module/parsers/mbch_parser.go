@@ -225,7 +225,9 @@ func GenerateMBCH(char *MBCHCharacter) (string, error) {
 	// surviving unchanged.
 	extras := make(map[string]string, len(char.ExtraFields))
 	for k, v := range char.ExtraFields {
-		extras[k] = v
+		if !isRankAttribute(k) {
+			extras[k] = v
+		}
 	}
 
 	fmt.Fprintf(&sb, "// %s\n\nClassInfo\n{\n", char.Name)
@@ -380,15 +382,9 @@ func GenerateMBCH(char *MBCHCharacter) (string, error) {
 			}
 		}
 
-		// Sorted iteration — same determinism reason as writeExtraFields.
-		rankKeys := make([]string, 0, len(char.RankAttributes))
-		for k := range char.RankAttributes {
-			rankKeys = append(rankKeys, k)
-		}
-		sort.Strings(rankKeys)
-		for _, k := range rankKeys {
-			fmt.Fprintf(&sb, "\t%s\t\t%s\n", k, char.RankAttributes[k])
-		}
+	}
+	for _, k := range sortedKeys(char.RankAttributes) {
+		fmt.Fprintf(&sb, "\t%s\t\t%s\n", k, char.RankAttributes[k])
 	}
 
 	writeExtraFields(&sb, extras)
@@ -631,6 +627,12 @@ func diagnoseOverrideGaps(char *MBCHCharacter) {
 	check("forceinfo", fNames)
 }
 
+// Rank modifiers use both the supported rankHealth-style names and
+// authored rank_* extensions. They belong only to RankAttributes.
+func isRankAttribute(key string) bool {
+	return strings.HasPrefix(strings.ToLower(key), "rank")
+}
+
 func populateClassInfo(b *ASTBlock, char *MBCHCharacter) {
 	char.ExtraFields = make(map[string]string)
 	char.RankAttributes = make(map[string]string)
@@ -684,7 +686,7 @@ func populateClassInfo(b *ASTBlock, char *MBCHCharacter) {
 		markTyped(fmt.Sprintf("c_att_ranks_%d", i))
 		markTyped(fmt.Sprintf("c_att_descs_%d", i))
 	}
-	// RankAttributes are populated below and dynamically typed, so they don't need marking here yet.
+	// Rank attributes are classified dynamically in the paired-value pass.
 
 	if val, ok := getFieldValueSGPV(b, "name"); ok {
 		char.Name = val
@@ -819,10 +821,9 @@ func populateClassInfo(b *ASTBlock, char *MBCHCharacter) {
 	walkSGPVPairs(b.Children, func(_ int, key string, _ int, val string, hasVal bool) bool {
 		lowerKey := strings.ToLower(key)
 		if hasVal && !typedKeys[lowerKey] {
-			if strings.HasPrefix(lowerKey, "rank_") {
-				if _, exists := char.RankAttributes[key]; !exists {
-					char.RankAttributes[key] = val
-				}
+			if isRankAttribute(key) {
+				char.RankAttributes[key] = val
+				markTyped(key) // First occurrence wins, including case variants.
 			} else {
 				if _, exists := char.ExtraFields[key]; !exists {
 					char.ExtraFields[key] = val
@@ -832,9 +833,6 @@ func populateClassInfo(b *ASTBlock, char *MBCHCharacter) {
 		return true
 	})
 
-	for k := range char.RankAttributes {
-		markTyped(k)
-	}
 }
 
 func parseWeaponInfo(b *ASTBlock, char *MBCHCharacter, astName string) {

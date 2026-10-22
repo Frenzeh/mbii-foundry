@@ -75,14 +75,13 @@ func (a *App) showIconInventory() {
 			container.NewVScroll(grid))
 		tabs.Append(container.NewTabItem(fmt.Sprintf("%s (%d)", cat.dir, len(names)), body))
 
-		// Populate tiles
-		go func(g *fyne.Container, nList []string, d string) {
-			for _, basename := range nList {
-				tile := buildIconInventoryTile(basename, d)
-				g.Add(tile)
+		// Construct and publish graphics on Fyne's event thread.
+		fyne.Do(func() {
+			for _, basename := range names {
+				grid.Add(buildIconInventoryTile(basename, cat.dir))
 			}
-			g.Refresh()
-		}(grid, names, cat.dir)
+			grid.Refresh()
+		})
 	}
 
 	// Boxicons tab — the SVG fallback set
@@ -103,13 +102,12 @@ func (a *App) showIconInventory() {
 			container.NewVScroll(grid))
 		tabs.Append(container.NewTabItem(fmt.Sprintf("boxicons (%d)", len(names)), body))
 
-		go func(g *fyne.Container, nList []string) {
-			for _, basename := range nList {
-				tile := buildBoxiconInventoryTile(basename)
-				g.Add(tile)
+		fyne.Do(func() {
+			for _, basename := range names {
+				grid.Add(buildBoxiconInventoryTile(basename))
 			}
-			g.Refresh()
-		}(grid, names)
+			grid.Refresh()
+		})
 	}
 
 	intro := widget.NewLabelWithStyle(

@@ -1,8 +1,19 @@
-# Wails Migration Plan
+# Wails Migration — Historical, Unimplemented Proposal
 
 ## Overview
 
-Migrating MBII Foundry from Fyne (Go-native GUI) to Wails (Go backend + Web frontend) to enable richer visual design with WebGL effects, custom fonts, and modern CSS styling. **Status: on hold** until Fyne-version UX features stabilize.
+This document preserves a proposal to migrate MBII Foundry from Fyne
+(Go-native GUI) to Wails (Go backend + web frontend), motivated by richer visual
+design with WebGL effects, custom fonts, and CSS styling. It was recorded as
+**on hold**; the migration and the APIs/features below are **unimplemented
+proposals**, not current setup instructions or supported application behavior.
+
+The current desktop implementation is Go 1.27.3/Fyne 2.8.2; see
+[Current Architecture](ARCHITECTURE.md) for its real components and state
+boundaries. Retaining this proposal neither commits to a migration nor declares
+a permanent product direction. The body is preserved for historical discussion;
+its file-copy assumptions, dependency commands, and API sketches require fresh
+design review before use.
 
 ---
 

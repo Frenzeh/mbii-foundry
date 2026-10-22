@@ -2,6 +2,7 @@ package parsers
 
 import (
 	"fmt"
+	"math"
 	"sort"
 	"strconv"
 	"strings"
@@ -93,6 +94,15 @@ func setVehicleField(veh *VehicleData, key, value string) {
 	}
 }
 
+// Keep the existing integral .0 spelling without rounding fractional values.
+func formatVehicleFloat(value float64) string {
+	precision := -1
+	if value == math.Trunc(value) {
+		precision = 1
+	}
+	return strconv.FormatFloat(value, 'f', precision, 64)
+}
+
 func GenerateVEH(veh *VehicleData) (string, error) {
 	if veh.ctx != nil && veh.ctx.doc != nil {
 		// Sync into a deep clone — the caller's retained parse baseline
@@ -104,7 +114,11 @@ func GenerateVEH(veh *VehicleData) (string, error) {
 
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "%s\n{\n", veh.Name)
-	fmt.Fprintf(&sb, "\tname\t\t%s\n", veh.Name)
+	if veh.Name == "" {
+		fmt.Fprintln(&sb, "\tname\t\t\"\"")
+	} else {
+		fmt.Fprintf(&sb, "\tname\t\t%s\n", veh.Name)
+	}
 	fmt.Fprintf(&sb, "\ttype\t\t%s\n", veh.Type)
 	if veh.Model != "" {
 		fmt.Fprintf(&sb, "\tmodel\t\t%s\n", veh.Model)
@@ -114,40 +128,40 @@ func GenerateVEH(veh *VehicleData) (string, error) {
 	}
 
 	if veh.SpeedMax != 0 {
-		fmt.Fprintf(&sb, "\tspeedMax\t%.1f\n", veh.SpeedMax)
+		fmt.Fprintf(&sb, "\tspeedMax\t%s\n", formatVehicleFloat(veh.SpeedMax))
 	}
 	if veh.TurboSpeed != 0 {
-		fmt.Fprintf(&sb, "\tturboSpeed\t%.1f\n", veh.TurboSpeed)
+		fmt.Fprintf(&sb, "\tturboSpeed\t%s\n", formatVehicleFloat(veh.TurboSpeed))
 	}
 	if veh.Accel != 0 {
-		fmt.Fprintf(&sb, "\tacceleration\t%.1f\n", veh.Accel)
+		fmt.Fprintf(&sb, "\tacceleration\t%s\n", formatVehicleFloat(veh.Accel))
 	}
 	if veh.Decel != 0 {
-		fmt.Fprintf(&sb, "\tdecelIdle\t%.1f\n", veh.Decel)
+		fmt.Fprintf(&sb, "\tdecelIdle\t%s\n", formatVehicleFloat(veh.Decel))
 	}
 	if veh.StrafePerc != 0 {
-		fmt.Fprintf(&sb, "\tstrafePerc\t%.1f\n", veh.StrafePerc)
+		fmt.Fprintf(&sb, "\tstrafePerc\t%s\n", formatVehicleFloat(veh.StrafePerc))
 	}
 	if veh.BankingSpeed != 0 {
-		fmt.Fprintf(&sb, "\tbankingSpeed\t%.1f\n", veh.BankingSpeed)
+		fmt.Fprintf(&sb, "\tbankingSpeed\t%s\n", formatVehicleFloat(veh.BankingSpeed))
 	}
 	if veh.RollLimit != 0 {
-		fmt.Fprintf(&sb, "\trollLimit\t%.1f\n", veh.RollLimit)
+		fmt.Fprintf(&sb, "\trollLimit\t%s\n", formatVehicleFloat(veh.RollLimit))
 	}
 	if veh.PitchLimit != 0 {
-		fmt.Fprintf(&sb, "\tpitchLimit\t%.1f\n", veh.PitchLimit)
+		fmt.Fprintf(&sb, "\tpitchLimit\t%s\n", formatVehicleFloat(veh.PitchLimit))
 	}
 	if veh.Braking != 0 {
-		fmt.Fprintf(&sb, "\tbraking\t\t%.1f\n", veh.Braking)
+		fmt.Fprintf(&sb, "\tbraking\t\t%s\n", formatVehicleFloat(veh.Braking))
 	}
 	if veh.MouseYaw != 0 {
-		fmt.Fprintf(&sb, "\tmouseYaw\t%.1f\n", veh.MouseYaw)
+		fmt.Fprintf(&sb, "\tmouseYaw\t%s\n", formatVehicleFloat(veh.MouseYaw))
 	}
 	if veh.MousePitch != 0 {
-		fmt.Fprintf(&sb, "\tmousePitch\t%.1f\n", veh.MousePitch)
+		fmt.Fprintf(&sb, "\tmousePitch\t%s\n", formatVehicleFloat(veh.MousePitch))
 	}
 	if veh.CustomGravity != 0 {
-		fmt.Fprintf(&sb, "\tcustomGravity\t%.1f\n", veh.CustomGravity)
+		fmt.Fprintf(&sb, "\tcustomGravity\t%s\n", formatVehicleFloat(veh.CustomGravity))
 	}
 
 	if veh.Armor != 0 {

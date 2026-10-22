@@ -109,23 +109,28 @@ func syncMBCHToAST(char *MBCHCharacter, doc *ASTDocument) {
 	// model, and its line is removed from the document.
 	liveExtras := make(map[string]string, len(char.ExtraFields)+len(char.RankAttributes))
 	for k, v := range char.RankAttributes {
-		liveExtras[k] = v
+		liveExtras[strings.ToLower(k)] = v
 	}
 	for k, v := range char.ExtraFields {
-		if strings.ToLower(k) == "description" {
-			// The description is a top-level key (SGPV reads it from the
-			// file buffer, bg_saga.c:2383); it is never duplicated into
-			// the ClassInfo extras tail.
+		if strings.ToLower(k) == "description" || isRankAttribute(k) {
+			// Description belongs at top level; rank modifiers belong
+			// exclusively to RankAttributes, never to the extras pass.
 			continue
 		}
 		liveExtras[k] = v
 	}
-	removeStaleExtras(b, liveExtras, mbchClassInfoTyped)
+	removeStaleExtras(b, liveExtras, func(key string) bool {
+		if isRankAttribute(key) {
+			_, live := liveExtras[strings.ToLower(key)]
+			return live // Retain shadowed case variants until the rank is deleted.
+		}
+		return mbchClassInfoTyped(key)
+	})
 	for _, k := range sortedKeys(char.RankAttributes) {
 		setFieldValue(b, k, char.RankAttributes[k], false)
 	}
 	for _, k := range sortedKeys(char.ExtraFields) {
-		if strings.ToLower(k) == "description" {
+		if strings.ToLower(k) == "description" || isRankAttribute(k) {
 			continue
 		}
 		v := char.ExtraFields[k]

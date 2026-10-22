@@ -1,0 +1,24 @@
+=== RUN   TestMBCHInsideOutsideDescription
+--- PASS: TestMBCHInsideOutsideDescription (0.00s)
+=== RUN   TestCustomSpecExtendedRoundTrip
+--- PASS: TestCustomSpecExtendedRoundTrip (0.00s)
+=== RUN   TestGenerateMBCHDoesNotMutateBaseline
+--- PASS: TestGenerateMBCHDoesNotMutateBaseline (0.00s)
+=== RUN   TestMBCHMultilineDescriptionRoundTrip
+--- PASS: TestMBCHMultilineDescriptionRoundTrip (0.00s)
+=== RUN   TestNoOpLexicalPreservation
+--- PASS: TestNoOpLexicalPreservation (0.00s)
+=== RUN   TestEditSelectedDefinition
+--- PASS: TestEditSelectedDefinition (0.00s)
+=== RUN   TestUnknownSiblingSurvival
+--- PASS: TestUnknownSiblingSurvival (0.00s)
+=== RUN   TestSABFreshGenerationRoundTripsEveryModeledField
+--- PASS: TestSABFreshGenerationRoundTripsEveryModeledField (0.00s)
+=== RUN   TestSABASTSyncRoundTripsEveryModeledScalar
+--- PASS: TestSABASTSyncRoundTripsEveryModeledScalar (0.00s)
+=== RUN   TestSiegeNoOpPreservation
+--- PASS: TestSiegeNoOpPreservation (0.00s)
+=== RUN   TestSiegeTeamRenameAndDelete
+--- PASS: TestSiegeTeamRenameAndDelete (0.00s)
+PASS
+ok  	github.com/Frenzeh/mbii-foundry/parsers	0.157s

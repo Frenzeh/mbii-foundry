@@ -283,9 +283,9 @@ func (sve *SkinVariantsEditor) buildRow(idx int) fyne.CanvasObject {
 	blueEntry := newFloatEntry(ch.ExtraFields[blueKey], blueKey, sve, "0.0")
 
 	rgbRow := container.NewGridWithColumns(3,
-		widget.NewFormItem("Red", redEntry).Widget,
-		widget.NewFormItem("Green", greenEntry).Widget,
-		widget.NewFormItem("Blue", blueEntry).Widget,
+		widget.NewForm(widget.NewFormItem("Red", redEntry)),
+		widget.NewForm(widget.NewFormItem("Green", greenEntry)),
+		widget.NewForm(widget.NewFormItem("Blue", blueEntry)),
 	)
 
 	presetBar := NewRGBPresetBar(func(r, g, b float64) {

@@ -16,6 +16,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -110,7 +111,7 @@ func (r *RecoveryStore) ensureDir() error {
 // lowercase-hex filename.
 func (r *RecoveryStore) Save(entry *RecoveryEntry) error {
 	if !r.Available() {
-		return nil
+		return fmt.Errorf("crash recovery storage is unavailable")
 	}
 	if entry == nil {
 		return fmt.Errorf("nil recovery entry")
@@ -339,20 +340,22 @@ func newRecoveryID() string {
 	return hex.EncodeToString(sum[:recoveryIDHexLen/2])
 }
 
-// captureRecoveryEntry snapshots one open editor into the store.
-// Editors keep a stable RecoveryID in their session so repeated
-// autosaves overwrite the same file instead of accumulating.
-func (a *App) captureRecoveryEntry(ed Editor) {
-	if !a.recovery.Available() || ed == nil {
-		return
-	}
-	se, ok := ed.(SessionEditor)
-	if !ok {
-		return
+// captureRecoveryEntry persists the latest working state or retires a previous
+// snapshot when the document is clean. Failures must reach the quit guard.
+func (a *App) captureRecoveryEntry(ed Editor) error {
+	if ed == nil {
+		return nil
 	}
 	draft, hasDraft := a.sourceDrafts.Get(ed)
 	if !ed.IsDirty() && !hasDraft {
-		return
+		return a.removeEditorRecovery(ed)
+	}
+	if !a.recovery.Available() {
+		return fmt.Errorf("crash recovery storage is unavailable")
+	}
+	se, ok := ed.(SessionEditor)
+	if !ok {
+		return fmt.Errorf("recovery is unavailable for editor type %T", ed)
 	}
 	sess := se.Session()
 	if !validRecoveryID(sess.RecoveryID) {
@@ -384,31 +387,26 @@ func (a *App) captureRecoveryEntry(ed Editor) {
 		entry.HasDraft = true
 	}
 	if err := a.recovery.Save(entry); err != nil {
-		LogError("recovery snapshot failed for %s: %v", entry.Title, err)
+		return fmt.Errorf("recovery snapshot failed for %s: %w", entry.Title, err)
 	}
+	return nil
 }
 
-// autosaveRecoveryPass snapshots every dirty editor. Runs on the UI
-// thread (rendering touches widgets).
-func (a *App) autosaveRecoveryPass() {
+// autosaveRecoveryPass runs on the UI thread because snapshots fold widgets
+// into the model. Clean documents retire stale records, including detached ones.
+func (a *App) autosaveRecoveryPass() error {
+	var failures []error
 	for _, ed := range a.editors {
-		if ed == nil {
-			continue
-		}
-		draftPending := a.sourceDrafts.Has(ed)
-		if ed.IsDirty() || draftPending {
-			a.captureRecoveryEntry(ed)
+		if err := a.captureRecoveryEntry(ed); err != nil {
+			failures = append(failures, err)
 		}
 	}
 	for ed := range a.detachedEditors {
-		if ed == nil {
-			continue
-		}
-		draftPending := a.sourceDrafts.Has(ed)
-		if ed.IsDirty() || draftPending {
-			a.captureRecoveryEntry(ed)
+		if err := a.captureRecoveryEntry(ed); err != nil {
+			failures = append(failures, err)
 		}
 	}
+	return errors.Join(failures...)
 }
 
 func (a *App) startRecoveryAutosave() {
@@ -419,21 +417,24 @@ func (a *App) startRecoveryAutosave() {
 		ticker := time.NewTicker(15 * time.Second)
 		defer ticker.Stop()
 		for range ticker.C {
-			fyne.Do(a.autosaveRecoveryPass)
+			fyne.Do(func() {
+				if err := a.autosaveRecoveryPass(); err != nil {
+					LogError("recovery autosave failed: %v", err)
+				}
+			})
 		}
 	}()
 }
 
-// removeEditorRecovery drops the snapshot for a closed/saved editor.
-func (a *App) removeEditorRecovery(ed Editor) {
+// removeEditorRecovery drops the snapshot for a closed/saved/clean editor.
+func (a *App) removeEditorRecovery(ed Editor) error {
 	if !a.recovery.Available() || ed == nil {
-		return
+		return nil
 	}
 	if se, ok := ed.(SessionEditor); ok {
-		if err := a.recovery.Remove(se.Session().RecoveryID); err != nil {
-			LogError("recovery cleanup failed: %v", err)
-		}
+		return a.recovery.Remove(se.Session().RecoveryID)
 	}
+	return nil
 }
 
 // offerSessionRecovery checks for leftover snapshots from a previous
@@ -523,7 +524,7 @@ func (a *App) restoreRecoveredEntryError(entry *RecoveryEntry) error {
 		original, err := snapshotSaveDestination(entry.OriginalPath)
 		if err == nil && original.Exists && original.Bytes == entry.Baseline {
 			if err := ed.LoadFile(entry.OriginalPath); err == nil {
-				baselineIntact = true
+				baselineIntact = se.Session().HasOriginal && se.Session().OriginalBytes == entry.Baseline
 			}
 		}
 	}
@@ -535,14 +536,23 @@ func (a *App) restoreRecoveredEntryError(entry *RecoveryEntry) error {
 		se.Session().ClearBaseline()
 	}
 
-	if err := se.ApplySourceText(entry.Working); err != nil {
-		return fmt.Errorf("apply recovered working source: %w", err)
+	// Recovery restores an internal working snapshot, not a user Apply. Fresh
+	// forms can legitimately have no identifier while a raw draft is retained.
+	// The editor's existing history callback accepts those snapshots without
+	// weakening ApplySourceText validation or inventing a name.
+	sess := se.Session()
+	sess.beginDiscreteChange()
+	oldSelection := sess.SelectedDef
+	sess.SelectedDef = entry.SelectedDef
+	if err := sess.restore(entry.Working); err != nil {
+		sess.SelectedDef = oldSelection
+		return fmt.Errorf("restore recovered working source: %w", err)
 	}
-	if err := se.SelectDefinition(entry.SelectedDef); err != nil {
-		return fmt.Errorf("restore definition selection %d: %w", entry.SelectedDef, err)
+	if se.SelectedDefinition() != entry.SelectedDef {
+		return fmt.Errorf("restore definition selection %d: unsupported by %s", entry.SelectedDef, entry.Format)
 	}
-
-	se.Session().RecoveryID = entry.ID
+	sess.endDiscreteChange()
+	sess.RecoveryID = entry.ID
 	if a.sourceDrafts == nil {
 		a.sourceDrafts = NewSourceDraftStore()
 	}

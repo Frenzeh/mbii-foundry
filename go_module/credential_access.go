@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/url"
+	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -46,11 +47,23 @@ func (a *App) refreshGitHubConnection() {
 
 func (a *App) loadCredentials(done func(error)) {
 	pending := a.legacyTokenPending
+	configPath := a.configPath
+	retainedWarning := ""
 	a.runCredentialWork(func() (string, error) {
+		// Inspect before any unlock prompt; cleanup refuses a backup changed meanwhile.
+		retained := inspectRetainedConfig(configPath)
+		var token string
+		var err error
 		if pending != "" {
-			return migrateLegacyGitHubToken(pending, readNativeCredential, writeNativeCredential)
+			token, err = migrateLegacyGitHubToken(pending, readNativeCredential, writeNativeCredential)
+		} else {
+			token, err = readNativeCredential()
 		}
-		return readNativeCredential()
+		if err != nil {
+			return "", err
+		}
+		retainedWarning = cleanRetainedCredential(retained, pending, token)
+		return token, nil
 	}, func(token string, err error) {
 		if err != nil {
 			done(err)
@@ -65,6 +78,7 @@ func (a *App) loadCredentials(done func(error)) {
 				return
 			}
 		}
+		a.credentialWarning = retainedWarning
 		a.refreshGitHubConnection()
 		done(nil)
 	})
@@ -83,11 +97,20 @@ func (a *App) storeCredential(token string, done func(error)) {
 		})
 		return
 	}
+	configPath := a.configPath
+	retainedWarning := ""
 	a.runCredentialWork(func() (string, error) {
-		return token, writeNativeCredential(token)
+		if err := writeNativeCredential(token); err != nil {
+			return "", err
+		}
+		if retained := inspectRetainedConfig(configPath); retained != nil {
+			retainedWarning = retainedCredentialWarning(retained.path)
+		}
+		return token, nil
 	}, func(stored string, err error) {
 		if err == nil {
 			a.config.GitHubToken = stored
+			a.credentialWarning = retainedWarning
 			a.refreshGitHubConnection()
 		}
 		done(err)
@@ -101,7 +124,8 @@ func (a *App) showCredentialConnect(continueAction func()) {
 	win := a.fyneApp.NewWindow("Connect GitHub — optional contribution access")
 	closed := false
 	win.SetOnClosed(func() { closed = true })
-	status := widget.NewLabel("Use your saved credential, or store a new token. Local editing never needs an account.")
+	notice := func(message string) string { return strings.TrimSpace(message + "\n" + a.credentialWarning) }
+	status := widget.NewLabel(notice("Use your saved credential, or store a new token. Local editing never needs an account."))
 	status.Wrapping = fyne.TextWrapWord
 	entry := NewPasswordInputEntry()
 	entry.SetPlaceHolder("New token (only for replacement or first-time setup)")
@@ -115,10 +139,10 @@ func (a *App) showCredentialConnect(continueAction func()) {
 		}
 		entry.SetText("")
 		if a.config.GitHubToken == "" {
-			status.SetText("No credential is stored. Add a token to contribute, or close this window and keep editing locally.")
+			status.SetText(notice("No credential is stored. Add a token to contribute, or close this window and keep editing locally."))
 			return
 		}
-		status.SetText("Secure credential ready. Local asset paths and documents are unchanged.")
+		status.SetText(notice("Secure credential ready. Local asset paths and documents are unchanged."))
 		if continueAction != nil {
 			win.Close()
 			continueAction()

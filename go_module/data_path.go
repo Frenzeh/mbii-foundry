@@ -64,3 +64,13 @@ func hasValidDataDir(path string) bool {
 	_, err = os.Stat(filepath.Join(path, "attributes.json"))
 	return err == nil
 }
+
+// catalogCachePath is separate from resolveDataPath: installed resources stay read-only.
+// A single document is atomically replaced only by the explicit manual HTTPS refresh.
+func catalogCachePath() (string, error) {
+	base, err := os.UserCacheDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(base, "mbii-foundry", "catalog.json"), nil
+}

@@ -1,0 +1,184 @@
+# github.com/Frenzeh/mbii-foundry.test
+ld: warning: ignoring duplicate libraries: '-lobjc'
+2026/10/21 14:20:07 Fyne error:  Failed to load user locales
+2026/10/21 14:20:07   Cause: cannot determine locale: exit status 1 (output: Error: Could not find key 'AppleLanguages' in domain 'kCFPreferencesAnyApplication'.
+)
+2026/10/21 14:20:07   At: /private/tmp/mbii-go-fyne-lav6mhba/modules/fyne.io/fyne/v2@v2.8.2/lang/lang.go:241
+=== RUN   TestCurrentCatalogPublicDataLoads
+2026/10/21 14:20:07 [INFO] Loaded and merged 25 classes from ../data/classes.json
+[INFO] Loaded and merged 25 classes from ../data/classes.json
+2026/10/21 14:20:07 [INFO] Loaded and merged 426 attributes from ../data/attributes.json
+[INFO] Loaded and merged 426 attributes from ../data/attributes.json
+2026/10/21 14:20:07 [INFO] Loaded and merged 65 weapons from ../data/weapons.json
+[INFO] Loaded and merged 65 weapons from ../data/weapons.json
+2026/10/21 14:20:07 [INFO] Loaded 25 class flags from ../data/class_flags.json
+[INFO] Loaded 25 class flags from ../data/class_flags.json
+2026/10/21 14:20:07 [INFO] Loaded 8 saber styles from ../data/saber_styles.json
+[INFO] Loaded 8 saber styles from ../data/saber_styles.json
+2026/10/21 14:20:07 [INFO] Loaded 73 glossary terms from ../data/glossary.json
+[INFO] Loaded 73 glossary terms from ../data/glossary.json
+--- PASS: TestCurrentCatalogPublicDataLoads (0.01s)
+=== RUN   TestCurrentCatalogSelectionPreservesAuthoredValues
+--- PASS: TestCurrentCatalogSelectionPreservesAuthoredValues (0.22s)
+=== RUN   TestCurrentCatalogSharedWeaponRankSurvivesRemoval
+=== RUN   TestCurrentCatalogSharedWeaponRankSurvivesRemoval/numeric
+2026/10/21 14:20:07 [INFO] NewMBCHEditor: NewPointBuyUI took 47.018875ms
+[INFO] NewMBCHEditor: NewPointBuyUI took 47.018875ms
+2026/10/21 14:20:07 [INFO] NewMBCHEditor: NewWeaponInfoUI took 25.954166ms
+[INFO] NewMBCHEditor: NewWeaponInfoUI took 25.954166ms
+2026/10/21 14:20:07 [INFO] NewMBCHEditor: NewForceInfoUI took 941.708µs
+[INFO] NewMBCHEditor: NewForceInfoUI took 941.708µs
+2026/10/21 14:20:07 [INFO] Found definitions at: /private/tmp/mbii-foundry-integration-i9zIbm/source/definitions
+[INFO] Found definitions at: /private/tmp/mbii-foundry-integration-i9zIbm/source/definitions
+2026/10/21 14:20:07 [INFO] NewMBCHEditor: createUI took 256.26575ms (total ctor 330.284916ms)
+[INFO] NewMBCHEditor: createUI took 256.26575ms (total ctor 330.284916ms)
+2026/10/21 14:20:07 [INFO] Updating UI for Character: Shared weapon rank
+[INFO] Updating UI for Character: Shared weapon rank
+2026/10/21 14:20:08 [INFO] updateIconPreview: resolver not ready (model="" skin="" uishader="")
+[INFO] updateIconPreview: resolver not ready (model="" skin="" uishader="")
+2026/10/21 14:20:08 [INFO] MBCHEditor.updateUI: refresh took 469.183125ms
+[INFO] MBCHEditor.updateUI: refresh took 469.183125ms
+=== RUN   TestCurrentCatalogSharedWeaponRankSurvivesRemoval/pills
+2026/10/21 14:20:08 [INFO] NewMBCHEditor: NewPointBuyUI took 1.184375ms
+[INFO] NewMBCHEditor: NewPointBuyUI took 1.184375ms
+2026/10/21 14:20:08 [INFO] NewMBCHEditor: NewWeaponInfoUI took 6.776084ms
+[INFO] NewMBCHEditor: NewWeaponInfoUI took 6.776084ms
+2026/10/21 14:20:08 [INFO] NewMBCHEditor: NewForceInfoUI took 1.114917ms
+[INFO] NewMBCHEditor: NewForceInfoUI took 1.114917ms
+2026/10/21 14:20:08 [INFO] Found definitions at: /private/tmp/mbii-foundry-integration-i9zIbm/source/definitions
+[INFO] Found definitions at: /private/tmp/mbii-foundry-integration-i9zIbm/source/definitions
+2026/10/21 14:20:08 [INFO] NewMBCHEditor: createUI took 240.219958ms (total ctor 249.389167ms)
+[INFO] NewMBCHEditor: createUI took 240.219958ms (total ctor 249.389167ms)
+2026/10/21 14:20:08 [INFO] Updating UI for Character: Shared weapon rank
+[INFO] Updating UI for Character: Shared weapon rank
+2026/10/21 14:20:08 [INFO] updateIconPreview: resolver not ready (model="" skin="" uishader="")
+[INFO] updateIconPreview: resolver not ready (model="" skin="" uishader="")
+2026/10/21 14:20:08 [INFO] MBCHEditor.updateUI: refresh took 163.407ms
+[INFO] MBCHEditor.updateUI: refresh took 163.407ms
+--- PASS: TestCurrentCatalogSharedWeaponRankSurvivesRemoval (1.76s)
+    --- PASS: TestCurrentCatalogSharedWeaponRankSurvivesRemoval/numeric (0.97s)
+    --- PASS: TestCurrentCatalogSharedWeaponRankSurvivesRemoval/pills (0.79s)
+=== RUN   TestCurrentCatalogSpecialActionSelection
+--- PASS: TestCurrentCatalogSpecialActionSelection (0.06s)
+=== RUN   TestCurrentCatalogOverrideSelectionPreservesUnknowns
+--- PASS: TestCurrentCatalogOverrideSelectionPreservesUnknowns (0.09s)
+=== RUN   TestCurrentCatalogDomainsAndVisibility
+2026/10/21 14:20:09 [INFO] Loaded and merged 25 classes from ../data/classes.json
+[INFO] Loaded and merged 25 classes from ../data/classes.json
+2026/10/21 14:20:09 [INFO] Loaded and merged 426 attributes from ../data/attributes.json
+[INFO] Loaded and merged 426 attributes from ../data/attributes.json
+2026/10/21 14:20:09 [INFO] Loaded and merged 65 weapons from ../data/weapons.json
+[INFO] Loaded and merged 65 weapons from ../data/weapons.json
+2026/10/21 14:20:09 [INFO] Loaded 25 class flags from ../data/class_flags.json
+[INFO] Loaded 25 class flags from ../data/class_flags.json
+2026/10/21 14:20:09 [INFO] Loaded 8 saber styles from ../data/saber_styles.json
+[INFO] Loaded 8 saber styles from ../data/saber_styles.json
+2026/10/21 14:20:09 [INFO] Loaded 73 glossary terms from ../data/glossary.json
+[INFO] Loaded 73 glossary terms from ../data/glossary.json
+--- PASS: TestCurrentCatalogDomainsAndVisibility (0.00s)
+=== RUN   TestSABDefinitionNavigationPreservesSiblings
+--- PASS: TestSABDefinitionNavigationPreservesSiblings (0.04s)
+=== RUN   TestVEHRealHandlingKeysPopulateFormFromReadOnlySource
+--- PASS: TestVEHRealHandlingKeysPopulateFormFromReadOnlySource (0.04s)
+=== RUN   TestSABApplySourceTextInMemoryAndUndo
+--- PASS: TestSABApplySourceTextInMemoryAndUndo (0.06s)
+=== RUN   TestMBCHModelProjectionsStaySynchronizedAcrossReplacementPaths
+2026/10/21 14:20:09 [INFO] NewMBCHEditor: NewPointBuyUI took 48.788583ms
+[INFO] NewMBCHEditor: NewPointBuyUI took 48.788583ms
+2026/10/21 14:20:09 [INFO] NewMBCHEditor: NewWeaponInfoUI took 43.649375ms
+[INFO] NewMBCHEditor: NewWeaponInfoUI took 43.649375ms
+2026/10/21 14:20:09 [INFO] NewMBCHEditor: NewForceInfoUI took 1.085958ms
+[INFO] NewMBCHEditor: NewForceInfoUI took 1.085958ms
+2026/10/21 14:20:09 [INFO] Found definitions at: /private/tmp/mbii-foundry-integration-i9zIbm/source/definitions
+[INFO] Found definitions at: /private/tmp/mbii-foundry-integration-i9zIbm/source/definitions
+2026/10/21 14:20:09 [INFO] NewMBCHEditor: createUI took 239.030334ms (total ctor 332.627125ms)
+[INFO] NewMBCHEditor: createUI took 239.030334ms (total ctor 332.627125ms)
+2026/10/21 14:20:09 [INFO] Loading file: /private/tmp/mbii-foundry-integration-i9zIbm/tmp/TestMBCHModelProjectionsStaySynchronizedAcrossReplacementPaths4008279279/001/v9_Vader.mbch
+[INFO] Loading file: /private/tmp/mbii-foundry-integration-i9zIbm/tmp/TestMBCHModelProjectionsStaySynchronizedAcrossReplacementPaths4008279279/001/v9_Vader.mbch
+2026/10/21 14:20:09 [INFO] Parsing content...
+[INFO] Parsing content...
+2026/10/21 14:20:09 [INFO] Parsed Character: Name='v9_Vader', Class='MB_CLASS_SITH'
+[INFO] Parsed Character: Name='v9_Vader', Class='MB_CLASS_SITH'
+2026/10/21 14:20:09 [INFO] Updating UI for Character: v9_Vader
+[INFO] Updating UI for Character: v9_Vader
+2026/10/21 14:20:10 [INFO] updateIconPreview: resolver not ready (model="" skin="" uishader="")
+[INFO] updateIconPreview: resolver not ready (model="" skin="" uishader="")
+2026/10/21 14:20:10 [INFO] MBCHEditor.updateUI: refresh took 273.394375ms
+[INFO] MBCHEditor.updateUI: refresh took 273.394375ms
+2026/10/21 14:20:10 [INFO] Updating UI for Character: source_applied
+[INFO] Updating UI for Character: source_applied
+2026/10/21 14:20:10 [INFO] updateIconPreview: resolver not ready (model="" skin="" uishader="")
+[INFO] updateIconPreview: resolver not ready (model="" skin="" uishader="")
+2026/10/21 14:20:10 [INFO] MBCHEditor.updateUI: refresh took 178.786791ms
+[INFO] MBCHEditor.updateUI: refresh took 178.786791ms
+2026/10/21 14:20:10 [INFO] Updating UI for Character: v9_Vader
+[INFO] Updating UI for Character: v9_Vader
+2026/10/21 14:20:10 [INFO] updateIconPreview: resolver not ready (model="" skin="" uishader="")
+[INFO] updateIconPreview: resolver not ready (model="" skin="" uishader="")
+2026/10/21 14:20:10 [INFO] MBCHEditor.updateUI: refresh took 200.796375ms
+[INFO] MBCHEditor.updateUI: refresh took 200.796375ms
+2026/10/21 14:20:10 [INFO] Updating UI for Character: json_imported
+[INFO] Updating UI for Character: json_imported
+2026/10/21 14:20:10 [INFO] updateIconPreview: resolver not ready (model="" skin="" uishader="")
+[INFO] updateIconPreview: resolver not ready (model="" skin="" uishader="")
+2026/10/21 14:20:10 [INFO] MBCHEditor.updateUI: refresh took 179.699708ms
+[INFO] MBCHEditor.updateUI: refresh took 179.699708ms
+2026/10/21 14:20:10 [INFO] Updating UI for Character: v9_Vader
+[INFO] Updating UI for Character: v9_Vader
+2026/10/21 14:20:10 [INFO] updateIconPreview: resolver not ready (model="" skin="" uishader="")
+[INFO] updateIconPreview: resolver not ready (model="" skin="" uishader="")
+2026/10/21 14:20:10 [INFO] MBCHEditor.updateUI: refresh took 208.993916ms
+[INFO] MBCHEditor.updateUI: refresh took 208.993916ms
+--- PASS: TestMBCHModelProjectionsStaySynchronizedAcrossReplacementPaths (1.48s)
+=== RUN   TestRecoveryStoreRoundtrip
+--- PASS: TestRecoveryStoreRoundtrip (0.02s)
+=== RUN   TestRecoveryChangedOriginalRestoresDetachedWithDraftAndSelection
+2026/10/21 14:20:10 [INFO] createNewFile[Recovered sabers.sab]: SetAssetBrowser took 250ns
+[INFO] createNewFile[Recovered sabers.sab]: SetAssetBrowser took 250ns
+2026/10/21 14:20:10 [INFO] createNewFile[Recovered sabers.sab]: SetOnHover+Holocron took 666ns
+[INFO] createNewFile[Recovered sabers.sab]: SetOnHover+Holocron took 666ns
+2026/10/21 14:20:10 [INFO] createNewFile[Recovered sabers.sab]: GetContent+TabItem took 750ns
+[INFO] createNewFile[Recovered sabers.sab]: GetContent+TabItem took 750ns
+--- PASS: TestRecoveryChangedOriginalRestoresDetachedWithDraftAndSelection (0.17s)
+=== RUN   TestSourcePanelSharedDraftSurvivesPassiveMirrors
+--- PASS: TestSourcePanelSharedDraftSurvivesPassiveMirrors (0.09s)
+=== RUN   TestAllSessionEditorsPublishExactCandidates
+2026/10/21 14:20:11 [INFO] NewMBCHEditor: NewPointBuyUI took 79.885417ms
+[INFO] NewMBCHEditor: NewPointBuyUI took 79.885417ms
+2026/10/21 14:20:11 [INFO] NewMBCHEditor: NewWeaponInfoUI took 49.176792ms
+[INFO] NewMBCHEditor: NewWeaponInfoUI took 49.176792ms
+2026/10/21 14:20:11 [INFO] NewMBCHEditor: NewForceInfoUI took 1.084ms
+[INFO] NewMBCHEditor: NewForceInfoUI took 1.084ms
+2026/10/21 14:20:11 [INFO] Found definitions at: /private/tmp/mbii-foundry-integration-i9zIbm/source/definitions
+[INFO] Found definitions at: /private/tmp/mbii-foundry-integration-i9zIbm/source/definitions
+2026/10/21 14:20:11 [INFO] NewMBCHEditor: createUI took 319.284416ms (total ctor 449.516542ms)
+[INFO] NewMBCHEditor: createUI took 319.284416ms (total ctor 449.516542ms)
+=== RUN   TestAllSessionEditorsPublishExactCandidates/MBCH
+=== RUN   TestAllSessionEditorsPublishExactCandidates/SAB
+=== RUN   TestAllSessionEditorsPublishExactCandidates/VEH
+=== RUN   TestAllSessionEditorsPublishExactCandidates/Siege
+--- PASS: TestAllSessionEditorsPublishExactCandidates (0.47s)
+    --- PASS: TestAllSessionEditorsPublishExactCandidates/MBCH (0.01s)
+    --- PASS: TestAllSessionEditorsPublishExactCandidates/SAB (0.00s)
+    --- PASS: TestAllSessionEditorsPublishExactCandidates/VEH (0.00s)
+    --- PASS: TestAllSessionEditorsPublishExactCandidates/Siege (0.00s)
+=== RUN   TestParseMBTCReadsEngineFormat
+--- PASS: TestParseMBTCReadsEngineFormat (0.00s)
+=== RUN   TestMBTCSerializeNoOpIsByteIdentical
+--- PASS: TestMBTCSerializeNoOpIsByteIdentical (0.00s)
+=== RUN   TestMBTCSyncPreservesUnmodeledOnEdit
+--- PASS: TestMBTCSyncPreservesUnmodeledOnEdit (0.00s)
+=== RUN   TestMBTCSubclassSwitchingEditsCorrectSlots
+--- PASS: TestMBTCSubclassSwitchingEditsCorrectSlots (0.04s)
+=== RUN   TestModpackExportSourceArchiveIsZipWithManifest
+--- PASS: TestModpackExportSourceArchiveIsZipWithManifest (0.03s)
+=== RUN   TestModpackBuildPK3ChooserJourney
+--- PASS: TestModpackBuildPK3ChooserJourney (0.05s)
+=== RUN   TestSessionEngineBasics
+--- PASS: TestSessionEngineBasics (0.00s)
+=== RUN   TestSessionEngineRedoInvalidationAndDirtyAfterSave
+--- PASS: TestSessionEngineRedoInvalidationAndDirtyAfterSave (0.00s)
+=== RUN   TestSessionEngineFailedRestoreKeepsState
+--- PASS: TestSessionEngineFailedRestoreKeepsState (0.00s)
+PASS
+ok  	github.com/Frenzeh/mbii-foundry	5.342s

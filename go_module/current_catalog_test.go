@@ -211,6 +211,7 @@ func TestCurrentCatalogSharedWeaponRankSurvivesRemoval(t *testing.T) {
 			const unrelated = "MB_ATT_STAMINA|X_CUSTOM,007|FUTURE_ATTRIBUTE,0|HI_MEDPAC"
 			original := unrelated + "|" + tc.attribute + ",2"
 			e := NewMBCHEditor(&App{})
+			t.Cleanup(e.Session().flushPending)
 			source := "ClassInfo\n{\nname \"Shared weapon rank\"\nweapons \"" + tc.first + "|" + tc.second + "\"\nattributes \"" + original + "\"\n}\n"
 			if err := e.ApplySourceText(source); err != nil {
 				t.Fatal(err)

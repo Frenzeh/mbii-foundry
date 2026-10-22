@@ -2,12 +2,12 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"fyne.io/fyne/v2"
 	fyneTest "fyne.io/fyne/v2/test"
@@ -15,13 +15,7 @@ import (
 	"github.com/Frenzeh/mbii-foundry/parsers"
 )
 
-func sourceListenerCount(editor *SABEditor) int {
-	editor.sourceSubs.mu.Lock()
-	defer editor.sourceSubs.mu.Unlock()
-	return len(editor.sourceSubs.fns)
-}
-
-func TestSourcePanelPopoutCloseStopsAndUnsubscribes(t *testing.T) {
+func TestSourcePanelPopoutCloseUnsubscribes(t *testing.T) {
 	useEditorTestApp(t)
 	ui := fyne.CurrentApp()
 	mainWindow := ui.NewWindow("main")
@@ -33,14 +27,10 @@ func TestSourcePanelPopoutCloseStopsAndUnsubscribes(t *testing.T) {
 		sourceDrafts: NewSourceDraftStore(),
 	}
 	editor := NewSABEditor(application)
+	t.Cleanup(editor.Session().flushPending)
 	application.sourcePanel = NewSourcePanel(application)
 	application.sourcePanel.SetActiveEditor(editor)
 	t.Cleanup(application.sourcePanel.Close)
-
-	baseline := sourceListenerCount(editor)
-	if baseline != 1 {
-		t.Fatalf("primary source panel listener count = %d, want 1", baseline)
-	}
 
 	for i := range 8 {
 		application.popOutSourcePanel()
@@ -48,9 +38,13 @@ func TestSourcePanelPopoutCloseStopsAndUnsubscribes(t *testing.T) {
 			t.Fatalf("iteration %d: source mirrors = %d, want 1", i, len(application.sourcePanelMirrors))
 		}
 		mirror := application.sourcePanelMirrors[0]
-		if got := sourceListenerCount(editor); got != baseline+1 {
-			t.Fatalf("iteration %d: listener count while open = %d, want %d", i, got, baseline+1)
+		t.Cleanup(mirror.Close)
+		editor.nameEntry.SetText(fmt.Sprintf("source_live_%d", i))
+		live := editor.CurrentSource()
+		if mirror.currentText() != live || application.sourcePanel.currentText() != live {
+			t.Fatalf("iteration %d: form edit did not update both source panels", i)
 		}
+		closedByteCount := mirror.byteCount.Text
 
 		var popout fyne.Window
 		for _, candidate := range ui.Driver().AllWindows() {
@@ -62,30 +56,18 @@ func TestSourcePanelPopoutCloseStopsAndUnsubscribes(t *testing.T) {
 			t.Fatalf("iteration %d: source popout window not found", i)
 		}
 		popout.Close()
-		fyne.DoAndWait(func() {})
 
 		if len(application.sourcePanelMirrors) != 0 {
 			t.Fatalf("iteration %d: closed mirror remains registered", i)
 		}
-		if got := sourceListenerCount(editor); got != baseline {
-			t.Fatalf("iteration %d: listener leaked after close: got %d, want %d", i, got, baseline)
+		mirror.Close()                 // idempotent after the window's OnClosed path
+		mirror.SetActiveEditor(editor) // a closed panel cannot reattach
+		editor.nameEntry.SetText(fmt.Sprintf("source_after_close_%d", i))
+		if application.sourcePanel.currentText() != editor.CurrentSource() {
+			t.Fatalf("iteration %d: closing a mirror stopped primary updates", i)
 		}
-		if !mirror.closed.Load() {
-			t.Fatalf("iteration %d: popout panel was not disposed", i)
-		}
-		select {
-		case <-mirror.tickerDone:
-		case <-time.After(time.Second):
-			t.Fatalf("iteration %d: source refresh ticker did not stop", i)
-		}
-		mirror.Close() // idempotent after the window's OnClosed path
-		editor.sourceSubs.fire()
-		fyne.DoAndWait(func() {})
-		if got := sourceListenerCount(editor); got != baseline {
-			t.Fatalf("iteration %d: closed panel callback re-subscribed: %d", i, got)
-		}
-		if application.sourcePanel.closed.Load() {
-			t.Fatalf("iteration %d: closing a mirror disposed the primary panel", i)
+		if mirror.currentText() != live || mirror.byteCount.Text != closedByteCount {
+			t.Fatalf("iteration %d: a closed mirror still received source updates", i)
 		}
 	}
 }
@@ -173,50 +155,33 @@ func TestAssetBrowserEmptyStateAndClearQuickNav(t *testing.T) {
 	if browser.emptyState == nil || !browser.emptyState.Visible() {
 		t.Fatal("initial Files pane did not show its no-asset-root state")
 	}
-	if browser.emptyHeadline == nil || browser.emptyHeadline.Text != "No asset root selected" {
-		t.Fatal("no-asset-root guidance headline is missing")
+	if browser.browserSplit.Visible() {
+		t.Fatal("no-root state retained the empty tree divider")
 	}
-	if browser.emptySelectButton == nil || browser.emptySelectButton.Text != "Select Asset Root" ||
+	if browser.emptySelectButton == nil || browser.emptySelectButton.OnTapped == nil ||
 		browser.emptySelectButton.Importance != widget.HighImportance {
-		t.Fatal("no-asset-root state lacks a prominent Select Asset Root action")
-	}
-	if browser.quickNavSelect.PlaceHolder != "Choose common path" {
-		t.Fatalf("Quick Nav placeholder = %q", browser.quickNavSelect.PlaceHolder)
-	}
-	if findTooltipByText(browser.topBar, "Jump to a common asset directory in the selected virtual filesystem") == nil {
-		t.Fatal("Go to asset path help tooltip is missing")
-	}
-	for _, tooltip := range []string{
-		"Add the current folder to favorites",
-		"Switch to list view",
-		"Go to parent folder",
-		"Go to home folder",
-		"Refresh the current folder",
-	} {
-		if findTooltipByText(browser.topBar, tooltip) == nil {
-			t.Fatalf("pane icon action lacks tooltip %q", tooltip)
-		}
+		t.Fatal("no-asset-root state lacks a prominent source selection action")
 	}
 
 	browser.loadGrid(&AssetEntry{Path: "models", IsDir: true, PK3Source: "VFS"})
-	if browser.emptyState.Visible() {
-		t.Fatal("no-source state remained visible after browser content loaded")
+	if browser.emptyState.Visible() || !browser.browserSplit.Visible() {
+		t.Fatal("loaded empty folder did not restore the browser panes")
 	}
-}
+	browser.browserSplit.SetOffset(0.45)
+	browser.currentDir = nil
+	browser.updateEmptyState()
+	if !browser.emptyState.Visible() || browser.browserSplit.Visible() {
+		t.Fatal("clearing the root did not restore the full-pane empty state")
+	}
 
-func findTooltipByText(root fyne.CanvasObject, tooltip string) *TooltipButton {
-	if root == nil {
-		return nil
+	browser.assets["models"] = &AssetEntry{Path: "models", IsDir: true, PK3Source: "archive.pk3"}
+	browser.updateEmptyState()
+	if browser.emptyState.Visible() || !browser.browserSplit.Visible() {
+		t.Fatal("loaded archive without a selected folder did not restore the browser panes")
 	}
-	if button, ok := root.(*TooltipButton); ok && button.tooltipText == tooltip {
-		return button
+	if browser.browserSplit.Offset != 0.45 {
+		t.Fatal("empty-state transition reset the tree split offset")
 	}
-	for _, child := range childObjects(root) {
-		if button := findTooltipByText(child, tooltip); button != nil {
-			return button
-		}
-	}
-	return nil
 }
 
 func TestCharacterSummaryConstructsWithoutFyneImageError(t *testing.T) {

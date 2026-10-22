@@ -108,6 +108,13 @@ class PK3Builder:
             resolve_dependencies: Whether to auto-resolve asset dependencies
             validate: Whether to validate before building
 
+        All populated asset lists are required inputs. Missing explicit assets or
+        required resolved dependencies fail the build without replacing an existing
+        output. Requested game-relative paths and files under configured search
+        roots keep their root-relative paths. Other loose files use typed
+        locations: models/skins/textures use their model directory and sounds
+        their soundset directory; ancestor directory names are not interpreted.
+
         Returns:
             BuildResult with success status and details
         """
@@ -120,72 +127,37 @@ class PK3Builder:
                 result.errors = errors
                 return result
 
-        # Create temp directory for staging
-        self.temp_dir = tempfile.mkdtemp(prefix="fa_pk3_")
-
         try:
+            # Stage generated metadata only after structure validation.
+            self.temp_dir = tempfile.mkdtemp(prefix="fa_pk3_")
             files_to_include: List[Tuple[str, str]] = []  # (source, archive_path)
 
-            # Process characters
-            for char_path in structure.characters:
-                if os.path.exists(char_path):
-                    archive_path = f"{MBII_PATHS[AssetType.CHARACTER]}/{os.path.basename(char_path)}"
-                    files_to_include.append((char_path, archive_path))
+            # Every populated typed list participates in the same build manifest.
+            for asset_type, paths in structure.get_all_assets().items():
+                for asset_path in paths:
+                    files_to_include.extend(self._gather_asset_files(asset_path, asset_type))
 
-                    # Resolve dependencies
-                    if resolve_dependencies:
-                        refs = self.resolver.resolve_mbch_assets(char_path)
+                    if resolve_dependencies and asset_type in (AssetType.CHARACTER, AssetType.SABER):
+                        source_path = self._resolve_source(asset_path)
+                        if asset_type == AssetType.CHARACTER:
+                            refs = self.resolver.resolve_mbch_assets(source_path)
+                        else:
+                            refs = self.resolver.resolve_sab_assets(source_path)
                         dep_files, missing = self._process_dependencies(refs)
                         files_to_include.extend(dep_files)
                         result.missing_assets.extend(missing)
-                else:
-                    result.warnings.append(f"Character file not found: {char_path}")
 
-            # Process sabers
-            for sab_path in structure.sabers:
-                if os.path.exists(sab_path):
-                    archive_path = f"{MBII_PATHS[AssetType.SABER]}/{os.path.basename(sab_path)}"
-                    files_to_include.append((sab_path, archive_path))
-
-                    # Resolve dependencies
-                    if resolve_dependencies:
-                        refs = self.resolver.resolve_sab_assets(sab_path)
-                        dep_files, missing = self._process_dependencies(refs)
-                        files_to_include.extend(dep_files)
-                        result.missing_assets.extend(missing)
-                else:
-                    result.warnings.append(f"Saber file not found: {sab_path}")
-
-            # Process siege configs
-            for siege_path in structure.siege_configs:
-                if os.path.exists(siege_path):
-                    archive_path = f"{MBII_PATHS[AssetType.SIEGE]}/{os.path.basename(siege_path)}"
-                    files_to_include.append((siege_path, archive_path))
-                else:
-                    result.warnings.append(f"Siege config not found: {siege_path}")
-
-            # Process team configs
-            for team_path in structure.team_configs:
-                if os.path.exists(team_path):
-                    archive_path = f"{MBII_PATHS[AssetType.TEAM_CONFIG]}/{os.path.basename(team_path)}"
-                    files_to_include.append((team_path, archive_path))
-                else:
-                    result.warnings.append(f"Team config not found: {team_path}")
-
-            # Process explicitly listed models
-            for model_path in structure.models:
-                model_files = self._gather_model_files(model_path)
-                files_to_include.extend(model_files)
-
-            # Process other files
             for file_path in structure.other_files:
-                if os.path.exists(file_path):
-                    # Try to determine correct archive path
-                    archive_path = self._determine_archive_path(file_path)
-                    files_to_include.append((file_path, archive_path))
+                files_to_include.extend(self._gather_asset_files(file_path))
 
-            # Remove duplicates
-            files_to_include = list(set(files_to_include))
+            if result.missing_assets:
+                result.errors.extend(f"Required asset not found: {asset}" for asset in result.missing_assets)
+                return result
+
+            files_to_include = self._validate_files(files_to_include, output_path, include_manifest)
+            if not files_to_include:
+                result.errors.append("No asset files to include")
+                return result
 
             # Create manifest
             if include_manifest:
@@ -210,8 +182,12 @@ class PK3Builder:
         finally:
             # Cleanup temp directory
             if self.temp_dir and os.path.exists(self.temp_dir):
-                shutil.rmtree(self.temp_dir)
-                self.temp_dir = None
+                try:
+                    shutil.rmtree(self.temp_dir)
+                    self.temp_dir = None
+                except OSError as error:
+                    result.success = False
+                    result.errors.append(f"Cleanup failed for {self.temp_dir}: {error}")
 
         return result
 
@@ -230,47 +206,144 @@ class PK3Builder:
 
         for ref in refs:
             if ref.found and ref.resolved_path:
-                if os.path.isfile(ref.resolved_path):
+                if os.path.isdir(ref.resolved_path):
+                    files.extend(self._gather_directory(ref.resolved_path, ref.path))
+                elif os.path.isfile(ref.resolved_path):
                     files.append((ref.resolved_path, ref.path))
-                elif os.path.isdir(ref.resolved_path):
-                    # Include all files in directory
-                    for root, dirs, filenames in os.walk(ref.resolved_path):
-                        for filename in filenames:
-                            full_path = os.path.join(root, filename)
-                            rel_path = os.path.relpath(full_path, os.path.dirname(ref.resolved_path))
-                            archive_path = os.path.join(os.path.dirname(ref.path), rel_path)
-                            files.append((full_path, archive_path))
+                else:
+                    raise FileNotFoundError(f"Resolved asset not found: {ref.resolved_path}")
             elif ref.required:
                 missing.append(f"{ref.asset_type}: {ref.name} ({ref.path})")
 
         return files, missing
 
-    def _gather_model_files(self, model_path: str) -> List[Tuple[str, str]]:
-        """Gather all files for a model"""
+    def _resolve_source(self, asset_path: str) -> str:
+        """Accept explicit local paths or game-relative paths in search roots."""
+        if os.path.exists(asset_path):
+            return os.path.abspath(asset_path)
+        resolved = self.resolver.find_asset(asset_path)
+        if resolved:
+            return os.path.abspath(resolved)
+        raise FileNotFoundError(f"Asset not found: {asset_path}")
+
+    def _gather_asset_files(
+        self, asset_path: str, asset_type: Optional[AssetType] = None
+    ) -> List[Tuple[str, str]]:
+        source = self._resolve_source(asset_path)
+        definitions = (AssetType.CHARACTER, AssetType.SABER, AssetType.SIEGE, AssetType.TEAM_CONFIG)
+        archive_path = None
+        if (asset_type or get_file_asset_type(source)) not in definitions:
+            archive_path = self._root_relative_path(asset_path, source)
+        if archive_path is None:
+            archive_path = self._determine_archive_path(source, asset_type)
+        if os.path.isdir(source):
+            return self._gather_directory(source, archive_path)
+        return [(source, archive_path)]
+
+    def _gather_directory(self, source: str, archive_path: str) -> List[Tuple[str, str]]:
+        """Keep directory contents, pruning hidden descendants like the desktop exporter."""
+        self._check_source(source)
         files = []
-
-        resolved = self.resolver.find_asset(model_path)
-        if not resolved or not os.path.isdir(resolved):
-            return files
-
-        for root, dirs, filenames in os.walk(resolved):
-            for filename in filenames:
+        for root, dirs, filenames in os.walk(source, onerror=self._raise_walk_error):
+            dirs[:] = sorted(d for d in dirs if not d.startswith('.'))
+            for directory in dirs:
+                self._check_source(os.path.join(root, directory))
+            for filename in sorted(filenames):
+                if filename.startswith('.'):
+                    continue
                 full_path = os.path.join(root, filename)
-                rel_path = os.path.relpath(full_path, os.path.dirname(resolved))
-                files.append((full_path, rel_path))
-
+                rel_path = os.path.relpath(full_path, source).replace(os.sep, '/')
+                files.append((full_path, f"{archive_path}/{rel_path}"))
+        if not files:
+            raise ValueError(f"No asset files found in directory: {source}")
         return files
 
-    def _determine_archive_path(self, file_path: str) -> str:
-        """Determine the correct archive path for a file"""
+    @staticmethod
+    def _raise_walk_error(error: OSError) -> None:
+        raise error
+
+    def _root_relative_path(self, requested: str, source: str) -> Optional[str]:
+        """Return the game-relative path from the requested value or matching search root."""
+        if not os.path.isabs(requested) and not os.path.exists(requested):
+            return Path(os.path.normpath(requested)).as_posix()
+        real_source = os.path.realpath(source)
+        matches = []
+        for search_path in self.search_paths:
+            root = os.path.realpath(search_path)
+            same_drive = os.path.splitdrive(root)[0].lower() == os.path.splitdrive(real_source)[0].lower()
+            if same_drive and real_source != root and os.path.commonpath((root, real_source)) == root:
+                matches.append(os.path.relpath(real_source, root))
+        # Nested roots: the deepest configured root is the most specific asset root.
+        return Path(min(matches, key=len)).as_posix() if matches else None
+
+    @staticmethod
+    def _check_source(source: str) -> None:
+        # Check selected entries, not ancestors outside the selected asset tree
+        # (ordinary platform temp roots may themselves be symlink aliases).
+        if Path(source).is_symlink():
+            raise ValueError(f"Symlink not allowed: {source}")
+
+    def _gather_model_files(self, model_path: str) -> List[Tuple[str, str]]:
+        """Gather a model directory or an explicitly selected model file."""
+        return self._gather_asset_files(model_path, AssetType.MODEL)
+
+    def _determine_archive_path(
+        self, file_path: str, asset_type: Optional[AssetType] = None
+    ) -> str:
+        """Infer a typed location for a loose file outside every configured search root."""
+        asset_type = asset_type or get_file_asset_type(file_path)
+        if asset_type in (AssetType.CHARACTER, AssetType.SABER, AssetType.SIEGE, AssetType.TEAM_CONFIG):
+            return f"{MBII_PATHS[asset_type]}/{os.path.basename(file_path)}"
+
         filename = os.path.basename(file_path)
-        asset_type = get_file_asset_type(filename)
-
-        if asset_type and asset_type in MBII_PATHS:
+        parent = os.path.basename(os.path.dirname(file_path))
+        if os.path.isdir(file_path) and asset_type in (AssetType.MODEL, AssetType.SKIN, AssetType.TEXTURE):
+            return get_asset_path(AssetType.SKIN, model=filename)
+        if os.path.isdir(file_path) and asset_type == AssetType.SOUND:
+            return get_asset_path(asset_type, soundset=filename)
+        if asset_type in (AssetType.MODEL, AssetType.SKIN, AssetType.TEXTURE):
+            if not parent:
+                raise ValueError(f"Cannot infer model directory for asset: {file_path}")
+            return f"{get_asset_path(AssetType.SKIN, model=parent)}/{filename}"
+        if asset_type == AssetType.SOUND:
+            if not parent:
+                raise ValueError(f"Cannot infer soundset directory for asset: {file_path}")
+            return f"{get_asset_path(asset_type, soundset=parent)}/{filename}"
+        if asset_type:
             return f"{MBII_PATHS[asset_type]}/{filename}"
-
-        # Default to root
         return filename
+
+    def _validate_files(
+        self, files: List[Tuple[str, str]], output_path: str, include_manifest: bool
+    ) -> List[Tuple[str, str]]:
+        """Validate the complete source/archive mapping before writing any output."""
+        entries: Dict[str, Tuple[str, str]] = {}
+        for source, archive_path in files:
+            self._check_source(source)
+            if not os.path.isfile(source):
+                raise FileNotFoundError(f"Asset is not a regular file: {source}")
+            if os.path.realpath(source) == os.path.realpath(output_path) or (
+                os.path.exists(output_path) and os.path.samefile(source, output_path)
+            ):
+                raise ValueError(f"Cannot include output file as an asset: {source}")
+            archive_path = archive_path.replace('\\', '/')
+            parts = archive_path.split('/')
+            if (
+                any(part in ('', '.', '..') or part.startswith('.') for part in parts)
+                or any(':' in part for part in parts)
+                or any(ord(char) < 32 or ord(char) == 127 for char in archive_path)
+            ):
+                raise ValueError(f"Invalid archive path: {archive_path}")
+            key = archive_path.casefold()
+            if include_manifest and key == 'manifest.json':
+                raise ValueError("Asset conflicts with generated manifest.json")
+            if key in entries:
+                previous_source, previous_path = entries[key]
+                if previous_path != archive_path or not os.path.samefile(previous_source, source):
+                    raise ValueError(f"Conflicting assets for archive path: {archive_path}")
+            else:
+                entries[key] = (source, archive_path)
+        return sorted(entries.values(), key=lambda entry: entry[1])
 
     def _create_manifest(
         self,
@@ -304,12 +377,22 @@ class PK3Builder:
         # Ensure output directory exists
         os.makedirs(os.path.dirname(output_path) or '.', exist_ok=True)
 
-        with zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED) as pk3:
-            for source_path, archive_path in files:
-                if os.path.exists(source_path):
-                    # Normalize path separators for ZIP
-                    archive_path = archive_path.replace('\\', '/')
-                    pk3.write(source_path, archive_path)
+        # Publish only a fully written archive, preserving an existing export on failure.
+        descriptor, staged_path = tempfile.mkstemp(
+            prefix=".fa_pk3_", suffix=".tmp", dir=os.path.dirname(output_path) or '.'
+        )
+        try:
+            with os.fdopen(descriptor, 'wb') as output:
+                with zipfile.ZipFile(output, 'w', zipfile.ZIP_DEFLATED) as pk3:
+                    for source_path, archive_path in files:
+                        self._check_source(source_path)
+                        if not os.path.isfile(source_path):
+                            raise FileNotFoundError(f"Asset is not a regular file: {source_path}")
+                        pk3.write(source_path, archive_path)
+            os.replace(staged_path, output_path)
+        finally:
+            if os.path.exists(staged_path):
+                os.remove(staged_path)
 
     def validate_package(self, pk3_path: str) -> List[str]:
         """

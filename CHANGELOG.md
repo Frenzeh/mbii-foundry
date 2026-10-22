@@ -7,6 +7,72 @@ pre-release suffixes until the project stabilizes.
 
 ## [Unreleased]
 
+## [0.16.3-alpha] — 2026-10-22
+
+### Verification limits
+- Native Home rendering was observed, and isolated automated checks passed.
+  Native editing, Source/Revert, Save As, Undo/Redo, recovery, and close/quit
+  cancellation could not be exercised because desktop input was unavailable.
+  This alpha is released with that limitation explicitly accepted; keep backups
+  and try the editing workflows on copies before using important content.
+
+### Changed
+- Updated the application and icon-extraction tool to Go 1.27.3, and the desktop
+  application to Fyne 2.8.2; aligned CI and release build toolchains.
+- Updated onboarding regression checks to traverse Fyne's public widget
+  renderers and verify viewport containment rather than concrete popup types.
+- Simplified the asset sidebar into separate source, quick-path, navigation,
+  search, and display-control rows. Its no-source prompt now fills the pane
+  without an empty tree divider; loaded folders retain their tree split.
+- Kept narrow activity tabs within the sidebar using centered icons and full
+  hover labels; wider tabs restore their text labels.
+- Added Home page padding and column gutters, wrapped hints and recent-file
+  links, and stacked Create/Recent and footer sections in narrower panes.
+  Existing sidebar and source-panel split preferences remain unchanged.
+- Set the macOS deployment target to 13.0 and verify both universal executable
+  slices; aligned Linux native build dependencies with the current Fyne stack.
+- Require explicit opt-in and asset paths for external-corpus tests, and a
+  separate opt-in for engine verification.
+- Move refreshed catalogs into one atomic user-cache file rather than modifying
+  bundled resources; use consistent merge and hidden-entry rules. Catalog
+  refreshes remain separate from signed application updates.
+- Clarify configured point-cost and EHP preview limitations, current application
+  architecture, and the supported Python packaging API.
+
+### Fixed
+- Intercept tab closure before removing document ownership, consolidate quit
+  requests, and report recovery-write failures without promising a snapshot.
+  Byte-identical Save As now adopts the selected destination.
+- Keep Source drafts authoritative across mirrors and editor switches; Revert
+  updates the editable text, and fresh unnamed documents can restore retained
+  drafts. Unbound local Source previews are read-only.
+  Source views now follow document and draft change notifications instead of
+  polling. Stale queued history commits cannot consume a newer typing window.
+- Preserve fresh editor defaults, numeric precision, definition-switch edits,
+  canonical custom-skill arrays and rank rows. Rebuilding skill forms no longer
+  leaves validation callbacks attached to removed rows during Undo/Redo.
+- Preserve effective parser fields, repeated saber blade definitions, cumulative
+  flags and siege ordering; distinguish actual bare fields from AST boundary
+  artifacts during save assessment.
+- Read loose assets through their resolved paths, honor archive entry identity
+  and ordering, and invalidate stale picker selections after navigation.
+  Shader previews use documented Foundry precedence, not a claim of engine parity.
+- Restore picker keyboard/focus behavior, explicit documentation actions and
+  active-document gauge ownership; marshal background UI updates to the UI loop.
+- Preserve pull-request consent and distinguish branch-push success from PR
+  creation failure.
+- Include all declared Python package inputs, reject missing/conflicting assets,
+  and publish archives atomically without replacing an existing output on failure.
+
+### Security
+- Pin public upstream sync without credentials and restrict authenticated
+  contribution pushes and redirects to the expected HTTPS GitHub fork.
+- Sanitize retained legacy credential backups only after explicit, verified
+  saved-credential use; leave unverifiable copies untouched rather than trusting
+  historical backup contents.
+- Create signer private-key files exclusively with owner-only permissions and
+  preserve truthful failure reporting without overwriting an existing key.
+
 ## [0.16.2-alpha] — 2026-10-21
 
 ### Added

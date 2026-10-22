@@ -106,6 +106,11 @@ func parseHoldablesString(s string) map[string]int {
 	return res
 }
 
+// setRaw updates this projection without publishing another user edit.
+func (hg *HoldableGrid) setRaw(s string) {
+	hg.values = parseHoldablesString(s)
+}
+
 // createUI builds the row of family-grouped circle badges.
 func (hg *HoldableGrid) createUI() {
 	families := []string{"Healing", "Vision", "Deployable", "Mobility", "Other"}
@@ -336,6 +341,8 @@ type clickableCell struct {
 	onTap   func()
 	onHover func()
 	onLeave func()
+	focused bool
+	border  *canvas.Rectangle
 }
 
 func newClickableCell(content fyne.CanvasObject, onTap func()) *clickableCell {
@@ -365,19 +372,37 @@ func (c *clickableCell) MouseOut() {
 func (c *clickableCell) MouseMoved(*desktop.MouseEvent) {}
 
 func (c *clickableCell) CreateRenderer() fyne.WidgetRenderer {
-	return widget.NewSimpleRenderer(c.content)
+	c.border = canvas.NewRectangle(color.Transparent)
+	c.border.StrokeColor = cardHoverBorder()
+	c.border.StrokeWidth = 2
+	c.border.CornerRadius = TileOuterCornerRadius
+	c.applyFocusStyle()
+	return widget.NewSimpleRenderer(container.NewStack(c.content, c.border))
 }
 
 func (c *clickableCell) FocusGained() {
+	c.focused = true
+	c.applyFocusStyle()
 	if c.onHover != nil {
 		c.onHover()
 	}
 }
 
 func (c *clickableCell) FocusLost() {
+	c.focused = false
+	c.applyFocusStyle()
 	if c.onLeave != nil {
 		c.onLeave()
 	}
+}
+
+func (c *clickableCell) applyFocusStyle() {
+	if c.border == nil {
+		return
+	}
+	c.border.StrokeColor = cardHoverBorder()
+	c.border.Hidden = !c.focused
+	c.border.Refresh()
 }
 
 func (c *clickableCell) TypedRune(r rune) {

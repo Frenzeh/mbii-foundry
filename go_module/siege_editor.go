@@ -46,7 +46,7 @@ type SiegeEditor struct {
 	assetBrowser   *AssetBrowser
 	holocronClient *HolocronClient
 	app            *App
-	sourceView     *widget.Entry
+	sourceView     *widget.RichText
 }
 
 type TeamUI struct {
@@ -135,6 +135,7 @@ func NewSiegeEditor(app *App) *SiegeEditor {
 		fileManager: app.fileManager,
 		app:         app,
 		sourceSubs:  &sourceListeners{},
+		loading:     true,
 	}
 	e.session = NewDocumentSession(
 		func() string { return e.sessionRender() },
@@ -142,6 +143,9 @@ func NewSiegeEditor(app *App) *SiegeEditor {
 	)
 	e.session.SetOnDirtyChange(e.setDirtyState)
 	e.createUI()
+	e.updateUI()
+	e.loading = false
+	e.session.Reset()
 	return e
 }
 
@@ -191,6 +195,9 @@ func (e *SiegeEditor) sessionRender() string { return e.GenerateSource() }
 // sessionRestore swaps a snapshot back into the working model
 // in-memory. Path, baseline and dirty bookkeeping are untouched.
 func (e *SiegeEditor) sessionRestore(src string) error {
+	if err := validateSourceStructure(src); err != nil {
+		return err
+	}
 	siege, err := parsers.ParseSiege(src)
 	if err != nil {
 		return err
@@ -301,8 +308,8 @@ func (e *SiegeEditor) createUI() {
 
 	teamsSplit := container.NewHSplit(e.team1UI.container, e.team2UI.container)
 
-	e.sourceView = NewMultiLineInputEntry()
-	e.sourceView.TextStyle = fyne.TextStyle{Monospace: true}
+	e.sourceView = widget.NewRichText()
+	e.sourceView.Wrapping = fyne.TextWrapOff
 	sourceTab := container.NewMax(container.NewScroll(e.sourceView))
 
 	tabs := container.NewAppTabs(
@@ -321,13 +328,8 @@ func (e *SiegeEditor) createUI() {
 }
 
 func (e *SiegeEditor) updateSourceView() {
-	e.updateSiegeFromUI()
-	content, err := parsers.GenerateSiege(e.siege)
-	if err != nil {
-		e.sourceView.SetText("Error generating source: " + err.Error())
-		return
-	}
-	e.sourceView.SetText(content)
+	e.sourceView.Segments = highlightedSegments(e.GenerateSource())
+	e.sourceView.Refresh()
 }
 
 func (e *SiegeEditor) updateUI() {

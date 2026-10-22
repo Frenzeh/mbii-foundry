@@ -110,7 +110,6 @@ type MBCHEditor struct {
 	mbPointsEntry     *ValidatedEntry
 	descriptionEntry  *ValidatedEntry
 	updateDescPreview func()
-	sourceView        *widget.RichText // Correct type
 
 	pointBuyUI     *PointBuyUI
 	weaponInfoUI   *WeaponInfoUI
@@ -161,6 +160,7 @@ func NewMBCHEditor(app *App) *MBCHEditor {
 	e := &MBCHEditor{
 		character:       parsers.NewMBCHCharacter(),
 		app:             app,
+		loading:         true,
 		devFieldEntries: make(map[string]*widget.Entry, len(devFieldsRegistry)),
 		sourceSubs:      &sourceListeners{},
 	}
@@ -190,6 +190,7 @@ func NewMBCHEditor(app *App) *MBCHEditor {
 	e.forceInfoUI = NewForceInfoUI(e)
 	LogInfo("NewMBCHEditor: NewForceInfoUI took %s", time.Since(tC))
 	e.customSkillsUI = NewCustomSkillsEditor(e.character, func() {
+		e.pointBuyUI.UpdateUI()
 		e.markDirty()
 	})
 	// Initialize onHover to a no-op so Select/Entry OnChanged handlers
@@ -199,6 +200,9 @@ func NewMBCHEditor(app *App) *MBCHEditor {
 	e.onHover = func(string, string) {}
 	tUI := time.Now()
 	e.createUI()
+	e.updateUI()
+	e.loading = false
+	e.session.Reset()
 	LogInfo("NewMBCHEditor: createUI took %s (total ctor %s)",
 		time.Since(tUI), time.Since(tCtor))
 	return e
@@ -341,6 +345,9 @@ func (e *MBCHEditor) fireSourceChanged() {
 		e.onSourceChanged()
 	}
 	e.sourceSubs.fire()
+	if e.app != nil {
+		e.app.updateBufferGaugeForEditor(e)
+	}
 }
 
 func (e *MBCHEditor) markDirty() {
@@ -353,9 +360,6 @@ func (e *MBCHEditor) markDirty() {
 	e.updateDefensiveMatrix()
 	e.updateAssetHealthBadges()
 	e.fireSourceChanged()
-	if e.app != nil && e.app.bufferGauge != nil {
-		e.app.bufferGauge.Update(e.character)
-	}
 }
 
 // sessionRender snapshots the working state (UI folded in).
@@ -450,6 +454,7 @@ func (e *MBCHEditor) updateAssetHealthBadges() {
 
 func (e *MBCHEditor) attachParser(entry *widget.Entry) {
 	entry.OnChanged = func(s string) {
+		e.markDirty()
 		// User is actively typing/editing. That's an interaction —
 		// the token they just wrote is the thing they're working on,
 		// so pin it as sticky (not a transient hover).
@@ -669,7 +674,6 @@ func (e *MBCHEditor) createUI() {
 	// previews revert to the last-interacted field on mouse-out.
 	e.attrGrid = NewAttributeGrid("", func(s string) {
 		e.attributesEntry.SetText(s)
-		e.markDirty()
 	}, hoverFn, e.resolveIconResource)
 	if e.app != nil {
 		e.attrGrid.SetOnUnhover(e.app.clearHoverContext)
@@ -685,7 +689,6 @@ func (e *MBCHEditor) createUI() {
 	// on the last-hovered weapon.
 	e.weaponGrid = NewWeaponGrid("", func(s string) {
 		e.weaponsEntry.SetText(s)
-		e.markDirty()
 	}, hoverFn, e.resolveWeaponIconResource)
 	if e.app != nil {
 		e.weaponGrid.SetOnUnhover(e.app.clearHoverContext)
@@ -710,8 +713,6 @@ func (e *MBCHEditor) createUI() {
 				return
 			}
 			e.attrGrid.updateValue(attID, n)
-			e.attrGrid.Refresh()
-			e.markDirty()
 		},
 	)
 	e.weaponGrid.SetFlagsBridge(
@@ -772,7 +773,6 @@ func (e *MBCHEditor) createUI() {
 			keep = append(keep, strings.Split(holdablesStr, "|")...)
 		}
 		e.attributesEntry.SetText(strings.Join(keep, "|"))
-		e.markDirty()
 	}, hoverFn)
 	if e.app != nil {
 		e.holdableGrid.SetOnUnhover(e.app.clearHoverContext)
@@ -781,6 +781,14 @@ func (e *MBCHEditor) createUI() {
 	// Text -> Grid binding. OnChanged reflects active typing — treat
 	// the token the user just finished as a sticky interaction.
 	e.attributesEntry.OnChanged = func(s string) {
+		e.attrGrid.setRaw(s)
+		e.holdableGrid.setRaw(s)
+		if e.loading {
+			return
+		}
+		e.attrGrid.Refresh()
+		e.weaponGrid.Refresh()
+		e.holdableGrid.Refresh()
 		tokens := strings.Split(s, "|")
 		if len(tokens) > 0 {
 			last := strings.TrimSpace(tokens[len(tokens)-1])
@@ -794,12 +802,14 @@ func (e *MBCHEditor) createUI() {
 				e.interact(key, context)
 			}
 		}
-		e.attrGrid.setRaw(s)
 		e.markDirty()
 	}
 
 	e.weaponsEntry.OnChanged = func(s string) {
 		e.weaponGrid.parseString(s)
+		if !e.loading {
+			e.weaponGrid.Refresh()
+		}
 		e.markDirty()
 	}
 
@@ -902,12 +912,16 @@ func (e *MBCHEditor) createUI() {
 	e.saber2Entry.OnFocus = func() { e.interact("WP_SABER", "Saber 2 Hilt") }
 
 	e.saberColorSelect = widget.NewSelect(SaberColors, func(s string) {
+		if e.loading {
+			return
+		}
 		parts := strings.Split(s, " - ")
 		if len(parts) > 0 {
 			if v, err := strconv.Atoi(parts[0]); err == nil {
 				e.character.SaberColor = v
 			}
 		}
+		e.markDirty()
 	})
 	e.saberColorSelect.SetSelected("0 - Red")
 
@@ -931,6 +945,7 @@ func (e *MBCHEditor) createUI() {
 		return nil
 	})
 	e.classLimitEntry.SetText("-1")
+	e.classLimitEntry.OnChanged = func(string) { e.markDirty() }
 	e.classLimitEntry.OnFocus = func() { e.interact("classNumberLimit", "") }
 
 	e.respawnTimeEntry = NewValidatedEntry(func(s string) error {
@@ -940,6 +955,7 @@ func (e *MBCHEditor) createUI() {
 		return nil
 	})
 	e.respawnTimeEntry.SetText("0")
+	e.respawnTimeEntry.OnChanged = func(string) { e.markDirty() }
 	e.respawnTimeEntry.OnFocus = func() { e.interact("respawnCustomTime", "") }
 
 	e.extraLivesEntry = NewValidatedEntry(func(s string) error {
@@ -949,6 +965,7 @@ func (e *MBCHEditor) createUI() {
 		return nil
 	})
 	e.extraLivesEntry.SetText("0")
+	e.extraLivesEntry.OnChanged = func(string) { e.markDirty() }
 	e.extraLivesEntry.OnFocus = func() { e.interact("extralives", "") }
 
 	e.isCustomCheck = widget.NewCheck("Enable Custom Build", nil)
@@ -1221,12 +1238,6 @@ func (e *MBCHEditor) createUI() {
 	}
 	skinsTab := container.NewVScroll(e.skinVariantsUI.GetContent())
 
-	// Source View — kept allocated so the updateSourceView helper
-	// stays safe to call, but no longer rendered as a tab: the right-
-	// pane live Source panel (with syntax highlighting + validated
-	// editing) has fully replaced it.
-	e.sourceView = widget.NewRichTextFromMarkdown("")
-
 	// Every tab's content goes through wrapForTab — bi-directional
 	// container.NewScroll — so a tab with wide content (simulator
 	// rank-pill rows, skin-variant cards with long path fields,
@@ -1321,30 +1332,6 @@ func wrapForTab(content fyne.CanvasObject) fyne.CanvasObject {
 	s := container.NewVScroll(content)
 	s.SetMinSize(fyne.NewSize(320, 280))
 	return s
-}
-
-func (e *MBCHEditor) updateSourceView() {
-	e.updateCharacterFromUI()
-
-	content, err := parsers.GenerateMBCH(e.character)
-	if err != nil {
-		e.sourceView.ParseMarkdown("Error: " + err.Error())
-		return
-	}
-
-	// Check size limit (CRITICAL for MBCH files)
-	charCount := len(content)
-	if charCount >= parsers.MBCHMaxFileBytes {
-		e.sourceView.ParseMarkdown(fmt.Sprintf("**⚠️ ERROR: File exceeds %d byte limit! (%d bytes)**\n\nReduce attributes or remove overrides to fix.\n\n---\n\n```\n%s\n```", parsers.MBCHMaxFileBytes, charCount, content))
-		return
-	} else if charCount > parsers.MBCHMaxFileBytes-500 {
-		e.sourceView.ParseMarkdown(fmt.Sprintf("**⚠️ WARNING: Approaching %d byte limit (%d/%d)**\n\n---\n\n```\n%s\n```", parsers.MBCHMaxFileBytes, charCount, parsers.MBCHMaxFileBytes, content))
-		return
-	}
-
-	highlighter := NewSyntaxHighlighter()
-	e.sourceView.Segments = highlighter.Highlight(content).Segments
-	e.sourceView.Refresh()
 }
 
 // GetCharacterCount returns the current character count of the generated file
@@ -1592,16 +1579,16 @@ func (e *MBCHEditor) updateUI() {
 	// Silence dirty-tracking during programmatic SetText/SetSelected
 	// fan-out below — those fire OnChanged on every widget that gets
 	// touched and would otherwise mark the just-loaded file dirty.
+	wasLoading := e.loading
 	e.loading = true
 	defer func() {
-		e.loading = false
-		// Re-render source for the source panel after UI sync, and
-		// ensure dirty stays clean post-load. SaveFile / explicit edits
-		// re-mark dirty as needed.
+		e.loading = wasLoading
 		if e.summary != nil {
 			e.summary.Refresh()
 		}
-		e.fireSourceChanged()
+		if !e.loading {
+			e.fireSourceChanged()
+		}
 	}()
 	// Standard updates
 	e.nameEntry.SetText(e.character.Name)
@@ -1626,15 +1613,19 @@ func (e *MBCHEditor) updateUI() {
 	e.healthEntry.SetText(strconv.Itoa(e.character.MaxHealth))
 	e.armorEntry.SetText(strconv.Itoa(e.character.MaxArmor))
 	e.forcePoolEntry.SetText(strconv.Itoa(e.character.ForcePool))
-	e.forceRegenEntry.SetText(fmt.Sprintf("%.1f", e.character.ForceRegen))
-	e.speedEntry.SetText(fmt.Sprintf("%.1f", e.character.Speed))
-	e.apMultEntry.SetText(fmt.Sprintf("%.1f", e.character.APMultiplier))
-	e.bpMultEntry.SetText(fmt.Sprintf("%.1f", e.character.BPMultiplier))
-	e.csMultEntry.SetText(fmt.Sprintf("%.1f", e.character.CSMultiplier))
-	e.asMultEntry.SetText(fmt.Sprintf("%.1f", e.character.ASMultiplier))
+	e.forceRegenEntry.SetText(strconv.FormatFloat(e.character.ForceRegen, 'f', -1, 64))
+	e.speedEntry.SetText(strconv.FormatFloat(e.character.Speed, 'f', -1, 64))
+	e.apMultEntry.SetText(strconv.FormatFloat(e.character.APMultiplier, 'f', -1, 64))
+	e.bpMultEntry.SetText(strconv.FormatFloat(e.character.BPMultiplier, 'f', -1, 64))
+	e.csMultEntry.SetText(strconv.FormatFloat(e.character.CSMultiplier, 'f', -1, 64))
+	e.asMultEntry.SetText(strconv.FormatFloat(e.character.ASMultiplier, 'f', -1, 64))
 	e.saber1Entry.SetText(e.character.Saber1)
 	e.saber2Entry.SetText(e.character.Saber2)
-	e.saberColorSelect.SetSelected(SaberColors[e.character.SaberColor])
+	colorSelection := strconv.Itoa(e.character.SaberColor)
+	if e.character.SaberColor >= 0 && e.character.SaberColor < len(SaberColors) {
+		colorSelection = SaberColors[e.character.SaberColor]
+	}
+	setLoadedCatalogSelection(e.saberColorSelect, SaberColors, colorSelection)
 	e.classLimitEntry.SetText(strconv.Itoa(e.character.ClassNumberLimit))
 	e.respawnTimeEntry.SetText(strconv.Itoa(e.character.RespawnCustomTime))
 	e.extraLivesEntry.SetText(strconv.Itoa(e.character.ExtraLives))
@@ -1650,7 +1641,7 @@ func (e *MBCHEditor) updateUI() {
 	e.attrGrid.setRaw(e.character.Attributes)
 	e.weaponGrid.parseString(e.character.Weapons)
 	if e.holdableGrid != nil {
-		e.holdableGrid.values = parseHoldablesString(e.character.Attributes)
+		e.holdableGrid.setRaw(e.character.Attributes)
 	}
 	t0 := time.Now()
 	e.pointBuyUI.UpdateUI()
@@ -1680,14 +1671,6 @@ func (e *MBCHEditor) updateUI() {
 }
 
 func (e *MBCHEditor) updateCharacterFromUI() {
-	// Restore from Grid if text is missing but grid has data (Fix for tab switch clearing)
-	if e.attributesEntry.Text == "" && len(e.attrGrid.values) > 0 {
-		e.attrGrid.TriggerChange()
-	}
-	if e.weaponsEntry.Text == "" && len(e.weaponGrid.selected) > 0 {
-		e.weaponGrid.TriggerChange()
-	}
-
 	// Basic
 	e.character.Name = e.nameEntry.Text
 	e.character.MBClass = e.classPicker.Selected()

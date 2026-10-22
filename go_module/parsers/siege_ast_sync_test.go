@@ -193,12 +193,12 @@ func TestSiegeRawBlockEdit(t *testing.T) {
 }
 
 // TestSiegeRealFileNoOp verifies byte-exact no-op generation on a real
-// shipped .siege file when available locally.
+// shipped .siege file when MBII_TEST_REAL_DATA=1 and MBII_TEXTASSETS are set.
 func TestSiegeRealFileNoOp(t *testing.T) {
-	const root = "/Users/pj/Library/CloudStorage/SynologyDrive-mcp5/mbii/TextAssets/mb2_pb_assets2/maps"
-	data, err := os.ReadFile(filepath.Join(root, "pb3_dotf.siege"))
+	root := externalTextAssetsRoot(t)
+	data, err := os.ReadFile(filepath.Join(root, "mb2_pb_assets2", "maps", "pb3_dotf.siege"))
 	if err != nil {
-		t.Skipf("real siege file not present: %v", err)
+		t.Fatalf("read selected siege fixture: %v", err)
 	}
 	src := string(data)
 	siege := mustParseSiege(t, src)

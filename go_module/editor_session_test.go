@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -12,11 +13,12 @@ import (
 	"fyne.io/fyne/v2/test"
 )
 
-func useEditorTestApp(t *testing.T) {
+func useEditorTestApp(t *testing.T) *sessionTestClock {
 	t.Helper()
 	app := test.NewApp()
 	app.Settings().SetTheme(&FoundryTheme{})
 	t.Cleanup(app.Quit)
+	return useSessionTestClock(t)
 }
 
 const multiSabFixture = `saber_a
@@ -112,8 +114,8 @@ func TestSABDefinitionNavigationPreservesSiblings(t *testing.T) {
 		t.Fatalf("should start on definition 0, got %d", e.SelectedDefinition())
 	}
 
-	// Edit definition A's name via the model, then switch to B.
-	e.saber.Name = "saber_a_renamed"
+	// Edit definition A through its form, then switch to B.
+	e.nameEntry.SetText("saber_a_renamed")
 
 	if err := e.SelectDefinition(1); err != nil {
 		t.Fatal(err)
@@ -164,9 +166,19 @@ func TestVEHRealHandlingKeysPopulateFormFromReadOnlySource(t *testing.T) {
 	if err := e.LoadFile(writeReadOnlyVeh(t, realVEHHandlingFixture)); err != nil {
 		t.Fatal(err)
 	}
-	if e.speedEntry.Text != "450.0" || e.accelEntry.Text != "20.0" || e.decelEntry.Text != "10.0" {
-		t.Fatalf("form shows speed=%q acceleration=%q deceleration=%q, want 450.0/20.0/10.0",
-			e.speedEntry.Text, e.accelEntry.Text, e.decelEntry.Text)
+	for _, field := range []struct {
+		name string
+		text string
+		want float64
+	}{
+		{name: "speed", text: e.speedEntry.Text, want: 450},
+		{name: "acceleration", text: e.accelEntry.Text, want: 20},
+		{name: "deceleration", text: e.decelEntry.Text, want: 10},
+	} {
+		value, err := strconv.ParseFloat(field.text, 64)
+		if err != nil || value != field.want {
+			t.Errorf("%s form value = %q (%v), want %g", field.name, field.text, err, field.want)
+		}
 	}
 	source := e.CurrentSource()
 	for _, want := range []string{"customShader\tvehicle/stap", "wingmate\n{\n\tspeedMax\t725\n\tacceleration\t15\n}"} {
@@ -516,9 +528,8 @@ func TestRecoveryStoreRejectsUnsafeNamesSymlinksCorruptAndOversize(t *testing.T)
 
 func newRecoveryTestApp(t *testing.T, recoveryDir, configDir string) *App {
 	t.Helper()
-	fyneApp := test.NewApp()
-	fyneApp.Settings().SetTheme(&FoundryTheme{})
-	t.Cleanup(fyneApp.Quit)
+	useEditorTestApp(t)
+	fyneApp := fyne.CurrentApp()
 	app := &App{
 		fyneApp:      fyneApp,
 		mainWindow:   fyneApp.NewWindow("recovery"),
@@ -707,12 +718,13 @@ func TestSourcePanelSharedDraftSurvivesPassiveMirrors(t *testing.T) {
 		t.Fatal(err)
 	}
 	primary := NewSourcePanel(app)
+	t.Cleanup(primary.Close)
 	mirror := NewSourcePanel(app)
+	t.Cleanup(mirror.Close)
 	primary.SetActiveEditor(editor)
 	mirror.SetActiveEditor(editor)
 	primary.setEditMode(true)
 	primary.editor.SetText("saber_a\n{")
-	mirror.refreshFromProvider()
 	draft, ok := app.sourceDrafts.Get(editor)
 	if !ok || draft.Text != "saber_a\n{" || draft.ParseErr == "" || !draft.EditMode {
 		t.Fatalf("shared invalid draft not retained exactly: %+v ok=%v", draft, ok)

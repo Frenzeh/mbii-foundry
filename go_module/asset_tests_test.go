@@ -311,7 +311,8 @@ func (m *mockErrorReader) Read([]byte) (int, error) {
 func TestSkinVariantTransitions(t *testing.T) {
 	app := test.NewApp()
 	app.Settings().SetTheme(theme.DefaultTheme())
-	defer app.Quit()
+	t.Cleanup(app.Quit)
+	useSessionTestClock(t)
 	win := app.NewWindow("Test")
 
 	foundryApp := &App{mainWindow: win}

@@ -289,9 +289,6 @@ func (s *PointBuySimulator) buildSlotCard(globalIdx int, ch *parsers.MBCHCharact
 	currentRank := s.purchased[globalIdx]
 	dots := NewRankDots(costs, currentRank,
 		func(rank int) bool {
-			if ch.MBPoints == 0 {
-				return true
-			}
 			tentative := s.purchasedCostExcluding(globalIdx) + s.costForRank(globalIdx, rank, ch)
 			return tentative <= ch.MBPoints
 		},
@@ -379,16 +376,12 @@ func (s *PointBuySimulator) purchasedCostExcluding(skipIdx int) int {
 	return total
 }
 
-// costForRank returns the cost for purchasing `rank` of slot idx.
+// costForRank sums configured costs through rank, matching the editor's maximum.
 func (s *PointBuySimulator) costForRank(globalIdx, rank int, ch *parsers.MBCHCharacter) int {
 	if rank <= 0 {
 		return 0
 	}
-	costs := parseRankCostList(ch.CustomRanks[globalIdx])
-	if rank-1 >= len(costs) {
-		return 0
-	}
-	return costs[rank-1]
+	return totalCostOf(parseRankCostList(ch.CustomRanks[globalIdx]), rank)
 }
 
 // refreshBudget updates the local configured-cost preview.

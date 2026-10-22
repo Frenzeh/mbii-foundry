@@ -4,6 +4,102 @@ import "fmt"
 import "strconv"
 import "strings"
 
+// Numbered blade fields are also affected by later unnumbered assignments.
+func saberBladeBase(key string) string {
+	lower := strings.ToLower(key)
+	for _, base := range []string{"sabercolor", "saberlength", "saberradius"} {
+		if strings.HasPrefix(lower, base) {
+			if n, err := strconv.Atoi(strings.TrimPrefix(lower, base)); err == nil && n >= 1 && n <= 8 {
+				return base
+			}
+		}
+	}
+	return ""
+}
+
+func getSaberBlockField(block *ASTBlock, key string) (string, bool) {
+	base := saberBladeBase(key)
+	flag := saberFlagField(key)
+	value, found, enabled := "", false, false
+	walkTokenPairs(block.Children, func(_ int, candidate string, _ int, candidateValue string, hasValue bool) bool {
+		if hasValue && (strings.EqualFold(candidate, key) || base != "" && strings.EqualFold(candidate, base)) {
+			value, found = candidateValue, true
+			enabled = enabled || flag && parseSaberBool(candidateValue)
+		}
+		return true
+	})
+	if flag && found {
+		value = "0"
+		if enabled {
+			value = "1"
+		}
+	}
+	if base != "" && found {
+		// Blade creation and global assignments are source-ordered too.
+		// Read the modeled blade rather than merely echoing the last token.
+		saber := NewSaberData()
+		readSaberBlockFields(saber, block)
+		n, _ := strconv.Atoi(strings.TrimPrefix(strings.ToLower(key), base))
+		if n > len(saber.Blades) {
+			return "", false
+		}
+		blade := saber.Blades[n-1]
+		switch base {
+		case "sabercolor":
+			value = blade.Color
+		case "saberlength":
+			value = strconv.FormatFloat(blade.Length, 'g', -1, 64)
+		case "saberradius":
+			value = strconv.FormatFloat(blade.Radius, 'g', -1, 64)
+		}
+	}
+	return value, found
+}
+
+func setSaberEffectiveField(block *ASTBlock, key, value string, quote bool) {
+	lastValueIdx := -1
+	base := saberBladeBase(key)
+	walkTokenPairs(block.Children, func(_ int, candidate string, valueIdx int, _ string, hasValue bool) bool {
+		if hasValue {
+			if strings.EqualFold(candidate, key) {
+				lastValueIdx = valueIdx
+			} else if base != "" && strings.EqualFold(candidate, base) {
+				lastValueIdx = -1 // An earlier numbered field is now shadowed.
+			}
+		}
+		return true
+	})
+	if lastValueIdx >= 0 {
+		token := block.Children[lastValueIdx].(*ASTToken)
+		if unquote(token.Text) == value {
+			return
+		}
+		if quote || strings.HasPrefix(token.Text, `"`) || value == "" {
+			value = `"` + value + `"`
+		}
+		token.Text = value
+		return
+	}
+	if quote || value == "" {
+		value = `"` + value + `"`
+	}
+	// Append rather than rewriting a shadowed numbered field: the new
+	// override must follow the global assignment, and old comments stay put.
+	if len(block.Children) > 0 {
+		last, ok := block.Children[len(block.Children)-1].(*ASTToken)
+		if !ok || last.Type != TokenWhitespace || !strings.HasSuffix(last.Text, "\n") {
+			block.Children = append(block.Children, &ASTToken{Type: TokenWhitespace, Text: "\n"})
+		}
+	}
+	block.Children = append(block.Children,
+		&ASTToken{Type: TokenWhitespace, Text: "\t"},
+		&ASTToken{Type: TokenString, Text: key},
+		&ASTToken{Type: TokenWhitespace, Text: "\t\t"},
+		&ASTToken{Type: TokenString, Text: value},
+		&ASTToken{Type: TokenWhitespace, Text: "\n"},
+	)
+}
+
 func syncSaberToAST(saber *SaberData, block *ASTBlock) {
 	if block.NameToken != nil {
 		block.NameToken.Text = saber.Name
@@ -28,24 +124,7 @@ func syncSaberToAST(saber *SaberData, block *ASTBlock) {
 	}
 
 	setEffective := func(key, value string, quote bool) {
-		lastValueIdx := -1
-		walkTokenPairs(block.Children, func(_ int, candidate string, valueIdx int, _ string, hasVal bool) bool {
-			if hasVal && strings.EqualFold(candidate, key) {
-				lastValueIdx = valueIdx
-			}
-			return true
-		})
-		if lastValueIdx < 0 {
-			setFieldValue(block, key, value, quote)
-			return
-		}
-		valueText := value
-		if quote {
-			valueText = `"` + value + `"`
-		} else if value == "" {
-			valueText = `""`
-		}
-		block.Children[lastValueIdx].(*ASTToken).Text = valueText
+		setSaberEffectiveField(block, key, value, quote)
 	}
 
 	syncStr := func(key, value, old, def string, quote bool) {
@@ -124,10 +203,11 @@ func syncSaberToAST(saber *SaberData, block *ASTBlock) {
 			effectiveKey := lastFieldKey(base, numbered)
 			// Updating a bare key would also alter every other blade.
 			// Add a blade-1 override instead when multiple blades exist.
-			if effectiveKey == "" {
+			if effectiveKey == "" || strings.EqualFold(effectiveKey, base) && len(saber.Blades) > 1 {
 				effectiveKey = base
-			} else if strings.EqualFold(effectiveKey, base) && len(saber.Blades) > 1 {
-				effectiveKey = numbered
+				if len(saber.Blades) > 1 {
+					effectiveKey = numbered
+				}
 			}
 			setEffective(effectiveKey, value, false)
 			return
@@ -244,10 +324,26 @@ func readSaberBlockFields(saber *SaberData, block *ASTBlock) {
 	})
 }
 
+func saberFlagField(key string) bool {
+	switch strings.ToLower(key) {
+	case "nowallmarks", "nodlight", "noblade", "noclashflare", "nodismemberment",
+		"noidleeffect", "alwaysblock", "nomanualdeactivate", "transitiondamage",
+		"notinopen", "notinmp", "nocartwheels", "throwable", "disarmable",
+		"blasterblocking", "oninwater", "bounceonwalls", "twohanded",
+		"usegoreconfig", "usegoreconfig2", "nodismemberment2",
+		"nobladeeffects", "nobladeeffects2":
+		return true
+	}
+	return false
+}
+
 // saberFieldTyped reports whether a .sab key is modeled natively by
 // setSaberField (including numbered blade keys). Typed keys are never
 // stale-removed during AST sync.
 func saberFieldTyped(key string) bool {
+	if saberFlagField(key) {
+		return true
+	}
 	k := strings.ToLower(key)
 	switch k {
 	case "name", "sabertype", "sabermodel", "customskin", "numblades",
@@ -261,12 +357,6 @@ func saberFieldTyped(key string) bool {
 		"maxchain", "lockbonus", "parrybonus", "breakparrybonus", "disarmbonus",
 		"movespeedscale", "animspeedscale", "damagescale", "knockbackscale",
 		"trailstyle", "blockeffect", "hitpersoneffect", "bladeeffect", "hitothereffect",
-		"nowallmarks", "nodlight", "noblade", "noclashflare", "nodismemberment",
-		"noidleeffect", "alwaysblock", "nomanualdeactivate", "transitiondamage",
-		"notinopen", "notinmp", "nocartwheels", "throwable", "disarmable",
-		"blasterblocking", "oninwater", "bounceonwalls", "twohanded",
-		"usegoreconfig", "usegoreconfig2", "nodismemberment2",
-		"nobladeeffects", "nobladeeffects2",
 		"g2marksshader", "g2weaponmarkshader", "slapanim", "readyanim",
 		"jumpatkupmove", "jumpatkfwdmove", "lungeatkmove":
 		return true
@@ -295,9 +385,11 @@ func DefinitionNames(source string) ([]string, error) {
 	var names []string
 	for _, node := range doc.Nodes {
 		if block, ok := node.(*ASTBlock); ok {
+			name := ""
 			if block.NameToken != nil {
-				names = append(names, block.NameToken.Text)
+				name = block.NameToken.Text
 			}
+			names = append(names, name)
 		}
 	}
 	return names, nil

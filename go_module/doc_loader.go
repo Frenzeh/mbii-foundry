@@ -58,8 +58,6 @@ func resolveDefinitionsPath() string {
 			filepath.Join(cwd, "definitions"),
 			filepath.Join(cwd, "..", "definitions"),
 			filepath.Join(cwd, "mbii-foundry", "definitions"),
-			// Legacy: Foundry mounted inside mbii-holocron as a submodule
-			filepath.Join(cwd, "fa_creator_app", "definitions"),
 		)
 	}
 	for _, c := range candidates {

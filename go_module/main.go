@@ -34,7 +34,7 @@ const (
 	// screen's "new version available" banner. Bump this before tagging
 	// a release — if they drift, testers get a stale banner or none at
 	// all.
-	AppVersion = "0.16.2-alpha"
+	AppVersion = "0.16.3-alpha"
 	AppName    = "MBII Foundry"
 )
 
@@ -503,12 +503,12 @@ func main() {
 	// embarrassing. So probe every reasonable location.
 	dataPath := resolveDataPath()
 	if dataPath == "" {
-		LogError("Could not find data/ folder. Info panel descriptions will show raw defaults until the data files are available.")
+		LogInfo("No installed data/ folder found; loading embedded catalogs and the user cache")
 	} else {
 		LogInfo("Loading data from: %s", dataPath)
-		if err := LoadExternalData(dataPath); err != nil {
-			LogError("Failed to load external data from %s: %v", dataPath, err)
-		}
+	}
+	if err := LoadExternalData(dataPath); err != nil {
+		LogError("Failed to load external data from %s: %v", dataPath, err)
 	}
 
 	application := &App{
@@ -577,43 +577,64 @@ func main() {
 	// Check for first run / missing configuration
 	application.checkFirstRun()
 
-	// Persist split-dragged offsets + final window size on close, and
-	// guard against silent data loss: if any open editor is dirty,
-	// prompt before exiting. Without this guard the user could close
-	// the app via Cmd+Q and lose every dirty tab without warning;
-	// per-tab close prompts didn't fire on app exit.
-	application.mainWindow.SetCloseIntercept(func() {
-		application.persistSplitOffsets()
-		application.persistWindowSize()
-		// Snapshot every dirty document first so even a confirmed quit
-		// is recoverable on next launch (crash recovery, not discard).
-		application.autosaveRecoveryPass()
-		dirtyTabs := []string{}
-		for tab, ed := range application.editors {
-			if ed != nil && (ed.IsDirty() || application.sourceDrafts.Has(ed)) {
-				dirtyTabs = append(dirtyTabs, tab.Text)
-			}
-		}
-		for ed, title := range application.detachedEditors {
-			if ed != nil && (ed.IsDirty() || application.sourceDrafts.Has(ed)) {
-				dirtyTabs = append(dirtyTabs, title)
-			}
-		}
-		if len(dirtyTabs) > 0 {
-			msg := fmt.Sprintf("These tabs have unsaved changes:\n\n  • %s\n\nQuit anyway?\n\n"+
-				"(A recovery snapshot of unsaved work will be kept and offered on next launch.)",
-				strings.Join(dirtyTabs, "\n  • "))
-			dialog.ShowConfirm("Unsaved Changes", msg, func(confirmed bool) {
-				if confirmed {
-					application.mainWindow.Close()
-				}
-			}, application.mainWindow)
-			return
-		}
-		application.mainWindow.Close()
-	})
+	// Native window close and the application Quit action share one guard.
+	application.mainWindow.SetCloseIntercept(application.requestQuit)
 
 	application.mainWindow.ShowAndRun()
+}
+
+// requestQuit preserves every live document, including detached editors and
+// unapplied source drafts, unless the user explicitly accepts losing recovery.
+func (a *App) requestQuit() {
+	a.persistSplitOffsets()
+	a.persistWindowSize()
+	recoveryErr := a.autosaveRecoveryPass()
+	var dirtyTabs []string
+	for tab, ed := range a.editors {
+		if ed != nil && (ed.IsDirty() || a.sourceDrafts.Has(ed)) {
+			dirtyTabs = append(dirtyTabs, tab.Text)
+		}
+	}
+	for ed, title := range a.detachedEditors {
+		if ed != nil && (ed.IsDirty() || a.sourceDrafts.Has(ed)) {
+			dirtyTabs = append(dirtyTabs, title)
+		}
+	}
+	if len(dirtyTabs) == 0 && recoveryErr == nil {
+		a.fyneApp.Quit()
+		return
+	}
+
+	msg := "These tabs have unsaved changes:\n\n  • " + strings.Join(dirtyTabs, "\n  • ")
+	if len(dirtyTabs) == 0 {
+		msg = "Recovery cleanup could not finish."
+	}
+	if recoveryErr != nil {
+		msg += "\n\nRecovery could not be guaranteed: " + recoveryErr.Error() +
+			"\nUnsaved work may be lost, or an older snapshot may be offered on next launch."
+	} else {
+		msg += "\n\nA recovery snapshot of this unsaved work was saved and will be offered on next launch."
+	}
+	msg += "\n\nQuit anyway?"
+	dialog.ShowConfirm("Unsaved Changes", msg, func(confirmed bool) {
+		if !confirmed {
+			return
+		}
+		// The document or a mirror draft may have changed while the dialog
+		// was open. Never rely on the earlier persistence result alone.
+		if err := a.autosaveRecoveryPass(); err != nil && recoveryErr == nil {
+			dialog.ShowConfirm("Recovery Unavailable",
+				"The latest work could not be saved for recovery: "+err.Error()+
+					"\n\nQuit without a guaranteed recovery snapshot?",
+				func(quitWithoutRecovery bool) {
+					if quitWithoutRecovery {
+						a.fyneApp.Quit()
+					}
+				}, a.mainWindow)
+			return
+		}
+		a.fyneApp.Quit()
+	}, a.mainWindow)
 }
 
 // monitorHolocronStatus polls the local Holocron server and updates the
@@ -622,17 +643,25 @@ func (a *App) monitorHolocronStatus() {
 	if a.holocronClient == nil {
 		return
 	}
+	// CheckAvailability mutates Available. Keep that mutation private to the
+	// worker and publish the shared client state alongside its icon on the UI.
+	checker := *a.holocronClient
 	for {
-		wasAvailable := a.holocronClient.Available
-		isAvailable := a.holocronClient.CheckAvailability()
+		wasAvailable := checker.Available
+		isAvailable := checker.CheckAvailability()
 
-		if wasAvailable != isAvailable && a.holocronStatus != nil {
-			if isAvailable {
-				a.holocronStatus.SetResource(theme.ConfirmIcon())
-			} else {
-				a.holocronStatus.SetResource(theme.CancelIcon())
-			}
-			a.holocronStatus.Refresh()
+		if wasAvailable != isAvailable {
+			fyne.Do(func() {
+				a.holocronClient.Available = isAvailable
+				if a.holocronStatus == nil {
+					return
+				}
+				if isAvailable {
+					a.holocronStatus.SetResource(theme.ConfirmIcon())
+				} else {
+					a.holocronStatus.SetResource(theme.CancelIcon())
+				}
+			})
 		}
 
 		time.Sleep(5 * time.Second)
@@ -670,16 +699,9 @@ func (a *App) setupUI() {
 
 	// DocTabs setup
 	a.docTabs = container.NewDocTabs()
-	a.docTabs.OnClosed = a.closeTab
-	a.docTabs.OnSelected = func(tab *container.TabItem) {
-		// When the user switches tabs, point the live source panel
-		// at the newly-active editor. Home/welcome tabs aren't
-		// editors and show a placeholder in the source pane.
-		if editor, ok := a.editors[tab]; ok {
-			a.setSourceEditorForAll(editor)
-		} else {
-			a.setSourceEditorForAll(nil)
-		}
+	a.docTabs.CloseIntercept = a.closeTab
+	a.docTabs.OnSelected = func(*container.TabItem) {
+		a.rebindSelectedSource()
 	}
 	a.docTabs.SetTabLocation(container.TabLocationTop)
 
@@ -690,6 +712,7 @@ func (a *App) setupUI() {
 	a.statusLabel = widget.NewLabel("")
 	a.statusLabel.TextStyle = fyne.TextStyle{Italic: true}
 	a.bufferGauge = NewBufferGaugeWidget()
+	a.bufferGauge.GetContent().Hide()
 
 	// Dev-mode status icon. Only displayed when MBII_FOUNDRY_DEV is set;
 	// updateMainLayout hides the whole label/icon pair for regular users.
@@ -895,9 +918,6 @@ func (a *App) showStickyContext(key, context string) {
 	if key == "" || a.infoPanel == nil {
 		return
 	}
-	if a.config.HoverTooltipsDisabled {
-		return
-	}
 	a.infoPanel.ShowSticky(key, context)
 	for _, m := range a.infoPanelMirrors {
 		m.ShowSticky(key, context)
@@ -939,9 +959,16 @@ func (a *App) clearHoverContext() {
 	}
 }
 
-func (a *App) discardDetachedEditor(ed Editor) {
+func (a *App) discardDetachedEditor(ed Editor) bool {
+	if err := a.removeEditorRecovery(ed); err != nil {
+		a.surfaceRecoveryError(fmt.Errorf("cannot discard recovery snapshot: %w", err))
+		return false
+	}
 	a.sourceDrafts.Delete(ed)
-	a.removeEditorRecovery(ed)
+	if se, ok := ed.(SessionEditor); ok {
+		se.Session().RecoveryID = ""
+	}
+	return true
 }
 
 func (a *App) confirmDetachedEditorClose(ed Editor, win fyne.Window, closeWindow func()) {
@@ -952,13 +979,15 @@ func (a *App) confirmDetachedEditorClose(ed Editor, win fyne.Window, closeWindow
 			message = "This file has unapplied source edits. Close window and discard?"
 		}
 		dialog.ShowConfirm("Unsaved Changes", message, func(confirmed bool) {
-			if confirmed {
+			if confirmed && a.discardDetachedEditor(ed) {
 				closeWindow()
 			}
 		}, win)
 		return
 	}
-	closeWindow()
+	if a.discardDetachedEditor(ed) {
+		closeWindow()
+	}
 }
 
 // popOutCurrentTab tears the active editor tab out of docTabs and rehosts it
@@ -978,16 +1007,16 @@ func (a *App) popOutCurrentTab() {
 	}
 
 	title := tab.Text
-	a.docTabs.Remove(tab)
 	delete(a.editors, tab)
 	if a.detachedEditors == nil {
 		a.detachedEditors = make(map[Editor]string)
 	}
 	a.detachedEditors[ed] = title
+	a.docTabs.Remove(tab)
+	a.rebindSelectedSource()
 
 	win := a.fyneApp.NewWindow(title + " — MBII Foundry")
 	reattachRequested := false
-	discardRequested := false
 	closeWithoutIntercept := func() {
 		win.SetCloseIntercept(nil)
 		win.Close()
@@ -1000,26 +1029,20 @@ func (a *App) popOutCurrentTab() {
 	win.Resize(fyne.NewSize(1100, 800))
 
 	reattach := func() {
-		newTab := container.NewTabItem(title, ed.GetContent())
-		a.editors[newTab] = ed
-		a.docTabs.Append(newTab)
-		a.docTabs.Select(newTab)
+		a.editors[tab] = ed
+		a.docTabs.Append(tab)
+		a.docTabs.Select(tab)
+		a.rebindSelectedSource()
 	}
 
 	win.SetCloseIntercept(func() {
-		a.confirmDetachedEditorClose(ed, win, func() {
-			discardRequested = true
-			closeWithoutIntercept()
-		})
+		a.confirmDetachedEditorClose(ed, win, closeWithoutIntercept)
 	})
 	win.SetOnClosed(func() {
 		delete(a.detachedEditors, ed)
 		if reattachRequested {
 			reattach()
 			return
-		}
-		if discardRequested {
-			a.discardDetachedEditor(ed)
 		}
 	})
 	win.Show()
@@ -1035,6 +1058,33 @@ func (a *App) setSourceEditorForAll(ed Editor) {
 	for _, m := range a.sourcePanelMirrors {
 		m.SetActiveEditor(ed)
 	}
+}
+
+// Removal and programmatic selection do not always emit OnSelected. Rebind
+// from the actual surviving selection rather than clearing a live neighbour.
+func (a *App) rebindSelectedSource() {
+	if a.docTabs == nil {
+		return
+	}
+	ed := a.editors[a.docTabs.Selected()]
+	a.setSourceEditorForAll(ed)
+	a.updateBufferGaugeForEditor(ed)
+}
+
+func (a *App) updateBufferGaugeForEditor(ed Editor) {
+	if a.bufferGauge == nil || a.docTabs == nil || a.editors[a.docTabs.Selected()] != ed {
+		return
+	}
+	mbch, ok := ed.(*MBCHEditor)
+	if !ok {
+		a.bufferGauge.GetContent().Hide()
+		return
+	}
+	if !mbch.loading {
+		mbch.updateCharacterFromUI()
+	}
+	a.bufferGauge.Update(mbch.character)
+	a.bufferGauge.GetContent().Show()
 }
 
 // reattachBar builds the standard top-of-window strip every pop-out
@@ -1258,6 +1308,7 @@ func (a *App) setupShortcuts() {
 			a.closeTab(t)
 		}
 	})
+	add(fyne.KeyQ, mod, a.requestQuit)
 
 	// Validate.
 	add(fyne.KeyR, mod, func() { a.validateFile() })
@@ -1307,6 +1358,9 @@ func (a *App) setupShortcuts() {
 
 	// macOS main menu — gives Cmd-anything a system-bar entry so the
 	// shortcuts above also show up where Mac users look for them.
+	quitItem := fyne.NewMenuItem("Quit", a.requestQuit)
+	quitItem.IsQuit = true
+	quitItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyQ, Modifier: mod}
 	fileMenu := fyne.NewMenu("File",
 		fyne.NewMenuItem("New Character", func() { a.createNewFile("Character", NewMBCHEditor(a)) }),
 		fyne.NewMenuItem("Open File…", func() { a.openFile() }),
@@ -1322,6 +1376,8 @@ func (a *App) setupShortcuts() {
 				a.closeTab(t)
 			}
 		}),
+		fyne.NewMenuItemSeparator(),
+		quitItem,
 	)
 	editMenu := fyne.NewMenu("Edit",
 		fyne.NewMenuItem("Undo", func() { a.undoActiveEditor() }),
@@ -1437,14 +1493,7 @@ func (a *App) createNewFile(title string, editor interface{}) {
 		a.editors[tab] = ed
 		a.docTabs.Append(tab)
 		a.docTabs.Select(tab)
-		// Belt-and-suspenders: explicitly point the source panel at the
-		// new editor. Fyne's DocTabs.OnSelected firing across
-		// remove/append/select is historically inconsistent; doing the
-		// wire-up directly is cheap and guarantees the live-source view
-		// shows content on the first open.
-		if a.sourcePanel != nil {
-			a.setSourceEditorForAll(ed)
-		}
+		a.rebindSelectedSource()
 
 		// Dirty handler — Editor interface already requires
 		// SetOnDirtyChanged, so the four-way type-switch this
@@ -1563,17 +1612,20 @@ func (a *App) refreshWelcomeBanner() {
 // next Save forces Save-As — writing back into a .pk3 in place isn't
 // something Foundry supports and shouldn't silently overwrite.
 //
-// VFS-backed entries (PK3Source == "VFS") are paths that live in the
-// merged virtual file system; the editors' LoadFile already falls back
-// to VFS when os.Open fails, so we route those straight through the
-// normal path-based open.
+// Loose and VFS-backed entries use FullPath when available, retaining
+// Path only as a logical fallback. PK3-backed entries are read from their
+// recorded archive below rather than treated as filesystem paths.
 func (a *App) openFileFromAsset(asset *AssetEntry) {
 	if asset == nil || asset.IsDir || asset.Path == "" {
 		return
 	}
 
 	if asset.PK3Source == "" || asset.PK3Source == "VFS" {
-		a.openFileFromPath(asset.Path)
+		path := asset.FullPath
+		if path == "" {
+			path = asset.Path
+		}
+		a.openFileFromPath(path)
 		return
 	}
 
@@ -1586,7 +1638,8 @@ func (a *App) openFileFromAsset(asset *AssetEntry) {
 
 	wanted := strings.ReplaceAll(asset.Path, "\\", "/")
 	var zf *zip.File
-	for _, f := range reader.File {
+	for i := len(reader.File) - 1; i >= 0; i-- {
+		f := reader.File[i]
 		if strings.ReplaceAll(f.Name, "\\", "/") == wanted {
 			zf = f
 			break
@@ -1647,6 +1700,9 @@ func (a *App) openFileFromAsset(asset *AssetEntry) {
 }
 
 func (a *App) closeTab(tab *container.TabItem) {
+	if tab == nil || a.docTabs == nil {
+		return
+	}
 	editor, ok := a.editors[tab]
 	if !ok {
 		a.removeTab(tab)
@@ -1674,38 +1730,34 @@ func (a *App) closeTab(tab *container.TabItem) {
 }
 
 func (a *App) removeTab(tab *container.TabItem) {
+	if tab == nil || a.docTabs == nil {
+		return
+	}
 	editor, wasEditor := a.editors[tab]
-	delete(a.editors, tab)
 	if wasEditor && editor != nil {
-		// The user explicitly closed this document — drop its retained
-		// draft and crash-recovery snapshot with it.
+		// Retire recovery before unregistering so a failed cleanup cannot
+		// turn explicitly discarded work into a future recovery offer.
+		if err := a.removeEditorRecovery(editor); err != nil {
+			a.surfaceRecoveryError(fmt.Errorf("cannot close document: %w", err))
+			return
+		}
 		a.sourceDrafts.Delete(editor)
-		a.removeEditorRecovery(editor)
 		if se, ok := editor.(SessionEditor); ok {
 			se.Session().RecoveryID = ""
 		}
 	}
-	// Clear the live source panel — whatever was being tracked is
-	// about to be torn down (or has been), so leaving the panel
-	// pointed at it risks stale refreshes.
-	if a.sourcePanel != nil {
-		a.setSourceEditorForAll(nil)
-	}
+	delete(a.editors, tab)
+	a.docTabs.Remove(tab)
 
-	// If no tabs remain, the user closed the last editor (or Home).
-	// Re-add the welcome screen so the app never ends up on a blank
-	// document area with no way back.
+	// Closing the last document still leaves a useful Home surface.
 	if len(a.docTabs.Items) == 0 {
 		welcomeScreen := NewWelcomeScreen(a)
 		welcomeTab := container.NewTabItem("Home", welcomeScreen.GetContent())
 		welcomeTab.Icon = theme.HomeIcon()
 		a.docTabs.Append(welcomeTab)
 		a.docTabs.Select(welcomeTab)
-		// Force the DocTabs to repaint — Append inside an OnClosed
-		// callback can otherwise leave the tab strip stale for a tick
-		// and the user sees a blank content area.
-		a.docTabs.Refresh()
 	}
+	a.rebindSelectedSource()
 }
 
 func (a *App) createToolbar() fyne.CanvasObject {
@@ -2130,17 +2182,16 @@ func (a *App) loadConfig() {
 
 	data, err := os.ReadFile(a.configPath)
 	if err == nil {
-		var legacy struct {
-			GitHubToken string `json:"github_token"`
-		}
 		if err := json.Unmarshal(data, &a.config); err != nil {
 			a.configLoadError = fmt.Errorf("configuration is invalid; original preserved: %w", err)
-		} else if err := json.Unmarshal(data, &legacy); err != nil {
+		} else if err := a.loadLegacyCredentialState(data); err != nil {
 			a.configLoadError = err
-		} else {
-			a.legacyTokenPending = legacy.GitHubToken
 		}
-	} else if !os.IsNotExist(err) {
+	} else if os.IsNotExist(err) {
+		if err := a.loadLegacyCredentialState(nil); err != nil {
+			a.configLoadError = err
+		}
+	} else {
 		a.configLoadError = err
 	}
 	if a.configLoadError != nil {
@@ -2287,15 +2338,21 @@ func (a *App) showPreferences() {
 	})
 	downloadMD3Btn.Importance = widget.LowImportance
 
-	updateEnumBtn := NewTooltipButton("Update Data from GitHub", nil, func() {
+	var updateEnumBtn *TooltipButton
+	updateEnumBtn = NewTooltipButton("Update Data from GitHub", nil, func() {
+		updateEnumBtn.Disable()
 		updateStatusLabel.SetText("Updating…")
 		go func() {
-			result, err := UpdateDataFromGitHub()
-			if err != nil {
-				updateStatusLabel.SetText("⚠ " + result)
-			} else {
-				updateStatusLabel.SetText("✓ " + result)
-			}
+			update, err := UpdateDataFromGitHub()
+			fyne.Do(func() {
+				updateEnumBtn.Enable()
+				if err != nil {
+					updateStatusLabel.SetText("⚠ " + err.Error())
+					return
+				}
+				PublishCatalogUpdate(update)
+				updateStatusLabel.SetText("✓ " + update.Summary)
+			})
 		}()
 	}, "Download latest enum definitions from GitHub")
 	updateEnumBtn.Importance = widget.LowImportance
@@ -2581,22 +2638,26 @@ func (a *App) syncWorkspace() {
 }
 
 func (a *App) doSync() {
+	manager := a.githubManager
+	if manager == nil {
+		return
+	}
 	progress := dialog.NewProgressInfinite("Updating...", "Pulling latest assets from official repository...", a.mainWindow)
 	progress.Show()
 
 	go func() {
-		err := a.githubManager.SyncUpdates()
-		progress.Hide()
-
-		if err != nil {
-			dialog.ShowError(fmt.Errorf("Update Failed: %v", err), a.mainWindow)
-		} else {
+		err := manager.SyncUpdates()
+		fyne.Do(func() {
+			progress.Hide()
+			if err != nil {
+				dialog.ShowError(fmt.Errorf("Update Failed: %v", err), a.mainWindow)
+				return
+			}
 			dialog.ShowInformation("Updated", "Assets are now up to date!", a.mainWindow)
-			// Refresh Browser
 			if a.assetBrowser != nil {
 				a.assetBrowser.Refresh()
 			}
-		}
+		})
 	}()
 }
 

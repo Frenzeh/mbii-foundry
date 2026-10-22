@@ -12,18 +12,53 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+type contributionSubmitter interface {
+	SwitchToUpstream() error
+	CreateBranch(string) error
+	StageAndCommit(string) error
+	PushCurrentBranch() error
+	OpenPullRequest(string, string) (string, error)
+}
+
+// Both submission modes share the same publication consent and error handling.
+func submitContribution(manager contributionSubmitter, branchName, title, description string, createPR bool) (string, error) {
+	if branchName != "" {
+		// Preserve the existing new-branch workflow: if local edits cannot move
+		// to upstream, branch from the current HEAD instead.
+		_ = manager.SwitchToUpstream()
+		if err := manager.CreateBranch(branchName); err != nil {
+			return "", err
+		}
+	}
+	if err := manager.StageAndCommit(title); err != nil {
+		return "", err
+	}
+	if err := manager.PushCurrentBranch(); err != nil {
+		return "", err
+	}
+	if !createPR {
+		return "Changes pushed successfully. No pull request was requested.", nil
+	}
+	url, err := manager.OpenPullRequest(title, description)
+	if err != nil {
+		return "", fmt.Errorf("changes were pushed, but the pull request could not be opened: %w", err)
+	}
+	return "Changes pushed successfully. Pull request ready:\n\n" + url, nil
+}
+
 func (a *App) showSubmissionWizard() {
 	if a.config.GitHubToken == "" {
 		a.showCredentialConnect(a.showSubmissionWizard)
 		return
 	}
-	if a.githubManager == nil {
+	manager := a.githubManager
+	if manager == nil {
 		dialog.ShowInformation("Git Not Configured", "Please setup your workspace first.", a.mainWindow)
 		return
 	}
 
 	// 1. Check Status
-	changes, err := a.githubManager.GetStatus()
+	changes, err := manager.GetStatus()
 	if err != nil {
 		dialog.ShowError(fmt.Errorf("Failed to check status: %v", err), a.mainWindow)
 		return
@@ -35,8 +70,12 @@ func (a *App) showSubmissionWizard() {
 	}
 
 	// 2. Prepare Form
-	currentBranch, _ := a.githubManager.GetCurrentBranch()
-	isAdvancedUser := currentBranch != "master" && currentBranch != a.githubManager.UpstreamBranch
+	currentBranch, err := manager.GetCurrentBranch()
+	if err != nil {
+		dialog.ShowError(err, a.mainWindow)
+		return
+	}
+	isAdvancedUser := currentBranch != "master" && currentBranch != manager.UpstreamBranch
 
 	// Mode Selection (if on feature branch)
 	modeSelect := widget.NewSelect([]string{"Create New Request (Recommended)", "Update Current Branch"}, nil)
@@ -73,57 +112,38 @@ func (a *App) showSubmissionWizard() {
 	// 3. Submit Action
 	var subWindow fyne.Window
 
-	submitBtn := widget.NewButtonWithIcon("Submit Contribution", theme.MailSendIcon(), func() {
-		if titleEntry.Text == "" {
+	var submitBtn *widget.Button
+	submitBtn = widget.NewButtonWithIcon("Submit Contribution", theme.MailSendIcon(), func() {
+		title, description := titleEntry.Text, descEntry.Text
+		createPR := prCheck.Checked
+		if title == "" {
 			dialog.ShowError(fmt.Errorf("Please provide a title/message."), a.mainWindow)
 			return
 		}
+		branchName := ""
+		if modeSelect.Selected != "Update Current Branch" {
+			timestamp := time.Now().Format("20060102-150405")
+			safeTitle := strings.ReplaceAll(strings.ToLower(title), " ", "-")
+			branchName = fmt.Sprintf("contrib/%s-%s", safeTitle, timestamp)
+		}
 
+		submitBtn.Disable()
 		progress := dialog.NewProgressInfinite("Submitting...", "Processing changes...", a.mainWindow)
 		progress.Show()
-
 		go func() {
-			var err error
-			var resultMsg string
-
-			if modeSelect.Selected == "Update Current Branch" {
-				// Advanced Path: Commit -> Push -> Optional PR
-				err = a.githubManager.StageAndCommit(titleEntry.Text)
-				if err == nil {
-					err = a.githubManager.PushCurrentBranch()
-				}
-				if err == nil && prCheck.Checked {
-					url, prErr := a.githubManager.OpenPullRequest(titleEntry.Text, descEntry.Text)
-					if prErr == nil {
-						resultMsg = "Branch updated and PR created!\n" + url
-					} else {
-						// PR might already exist, which is fine
-						resultMsg = "Branch updated successfully!"
+			resultMsg, err := submitContribution(manager, branchName, title, description, createPR)
+			fyne.Do(func() {
+				progress.Hide()
+				submitBtn.Enable()
+				if err != nil {
+					dialog.ShowError(err, a.mainWindow)
+				} else {
+					dialog.ShowInformation("Success!", resultMsg, a.mainWindow)
+					if subWindow != nil {
+						subWindow.Close()
 					}
-				} else if err == nil {
-					resultMsg = "Branch updated successfully!"
 				}
-			} else {
-				// Standard Path: New Branch -> PR
-				timestamp := time.Now().Format("20060102-150405")
-				safeTitle := strings.ReplaceAll(strings.ToLower(titleEntry.Text), " ", "-")
-				branchName := fmt.Sprintf("contrib/%s-%s", safeTitle, timestamp)
-
-				var url string
-				url, err = a.githubManager.CreateContribution(branchName, titleEntry.Text, descEntry.Text)
-				resultMsg = "Pull Request created successfully!\n\n" + url
-			}
-
-			progress.Hide()
-
-			if err != nil {
-				dialog.ShowError(err, a.mainWindow)
-			} else {
-				dialog.ShowInformation("Success!", resultMsg, a.mainWindow)
-				if subWindow != nil {
-					subWindow.Close()
-				}
-			}
+			})
 		}()
 	})
 	submitBtn.Importance = widget.HighImportance

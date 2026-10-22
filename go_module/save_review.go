@@ -522,7 +522,7 @@ func (a *App) beginSaveReview(ed Editor, se SessionEditor, tab *container.TabIte
 		return
 	}
 
-	if reviewed.Exists && reviewed.Bytes == candidate && !ed.IsDirty() && savedDraft == nil {
+	if reviewed.Exists && reviewed.Bytes == candidate && !ed.IsDirty() && savedDraft == nil && ed.GetCurrentPath() == path {
 		a.updateStatus(fmt.Sprintf("%s already saved — no changes", filepath.Base(path)))
 		if done != nil {
 			done(nil)
@@ -656,12 +656,16 @@ func (a *App) afterSuccessfulReviewedSave(ed Editor, tab *container.TabItem, pat
 	}
 	// Only a fully clean document loses its recovery snapshot. A newer
 	// mirror draft that appeared around publication remains recoverable.
+	var recoveryErr error
 	if a.sourceDrafts.Has(ed) {
-		a.captureRecoveryEntry(ed)
+		recoveryErr = a.captureRecoveryEntry(ed)
 	} else {
-		a.removeEditorRecovery(ed)
+		recoveryErr = a.removeEditorRecovery(ed)
 	}
 	a.updateStatus("Saved " + filepath.Base(path))
+	if recoveryErr != nil {
+		a.surfaceRecoveryError(fmt.Errorf("file saved, but recovery bookkeeping failed: %w", recoveryErr))
+	}
 }
 
 // showSaveAsReviewDialog owns the destination chooser until the async

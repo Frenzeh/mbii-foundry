@@ -63,7 +63,7 @@ type VEHEditor struct {
 	holocronClient *HolocronClient
 	app            *App
 
-	sourceView *widget.Entry
+	sourceView *widget.RichText
 
 	// Definition navigator widgets (summary strip).
 	defSelect  *widget.Select
@@ -78,6 +78,7 @@ func NewVEHEditor(app *App) *VEHEditor {
 		fileManager: app.fileManager,
 		app:         app,
 		sourceSubs:  &sourceListeners{},
+		loading:     true,
 	}
 	e.session = NewDocumentSession(
 		func() string { return e.sessionRender() },
@@ -85,6 +86,9 @@ func NewVEHEditor(app *App) *VEHEditor {
 	)
 	e.session.SetOnDirtyChange(e.setDirtyState)
 	e.createUI()
+	e.updateUI()
+	e.loading = false
+	e.session.Reset()
 	return e
 }
 
@@ -157,8 +161,8 @@ func (e *VEHEditor) createUI() {
 		widget.NewFormItem("Weapons", e.weaponsEntry),
 	)
 
-	e.sourceView = NewMultiLineInputEntry()
-	e.sourceView.TextStyle = fyne.TextStyle{Monospace: true}
+	e.sourceView = widget.NewRichText()
+	e.sourceView.Wrapping = fyne.TextWrapOff
 	sourceTab := container.NewMax(container.NewScroll(e.sourceView))
 
 	tabs := container.NewAppTabs(
@@ -199,13 +203,8 @@ func (e *VEHEditor) createUI() {
 }
 
 func (e *VEHEditor) updateSourceView() {
-	e.updateVehicleFromUI()
-	content, err := parsers.GenerateVEH(e.vehicle)
-	if err != nil {
-		e.sourceView.SetText("Error generating source: " + err.Error())
-		return
-	}
-	e.sourceView.SetText(content)
+	e.sourceView.Segments = highlightedSegments(e.GenerateSource())
+	e.sourceView.Refresh()
 }
 
 func (e *VEHEditor) updateUI() {
@@ -214,12 +213,12 @@ func (e *VEHEditor) updateUI() {
 	e.modelEntry.SetText(e.vehicle.Model)
 	e.skinEntry.SetText(e.vehicle.Skin)
 
-	e.speedEntry.SetText(fmt.Sprintf("%.1f", e.vehicle.SpeedMax))
-	e.turboEntry.SetText(fmt.Sprintf("%.1f", e.vehicle.TurboSpeed))
-	e.accelEntry.SetText(fmt.Sprintf("%.1f", e.vehicle.Accel))
-	e.decelEntry.SetText(fmt.Sprintf("%.1f", e.vehicle.Decel))
-	e.strafeEntry.SetText(fmt.Sprintf("%.1f", e.vehicle.StrafePerc))
-	e.brakingEntry.SetText(fmt.Sprintf("%.1f", e.vehicle.Braking))
+	e.speedEntry.SetText(strconv.FormatFloat(e.vehicle.SpeedMax, 'g', -1, 64))
+	e.turboEntry.SetText(strconv.FormatFloat(e.vehicle.TurboSpeed, 'g', -1, 64))
+	e.accelEntry.SetText(strconv.FormatFloat(e.vehicle.Accel, 'g', -1, 64))
+	e.decelEntry.SetText(strconv.FormatFloat(e.vehicle.Decel, 'g', -1, 64))
+	e.strafeEntry.SetText(strconv.FormatFloat(e.vehicle.StrafePerc, 'g', -1, 64))
+	e.brakingEntry.SetText(strconv.FormatFloat(e.vehicle.Braking, 'g', -1, 64))
 
 	e.armorEntry.SetText(strconv.Itoa(e.vehicle.Armor))
 	e.shieldsEntry.SetText(strconv.Itoa(e.vehicle.Shields))
@@ -411,6 +410,9 @@ func (e *VEHEditor) sessionRender() string { return e.GenerateSource() }
 // sessionRestore swaps a snapshot back into the working model
 // in-memory. Path, baseline and dirty bookkeeping are untouched.
 func (e *VEHEditor) sessionRestore(src string) error {
+	if err := validateSourceStructure(src); err != nil {
+		return err
+	}
 	names, err := parsers.DefinitionNames(src)
 	if err != nil || len(names) == 0 {
 		return fmt.Errorf("restore vehicle definitions: %v", err)
@@ -498,6 +500,9 @@ func (e *VEHEditor) ApplySourceText(src string) error {
 	if e.session.SelectedDef < 0 || e.session.SelectedDef >= len(names) {
 		return fmt.Errorf("definition %d out of range (%d definitions)", e.session.SelectedDef+1, len(names))
 	}
+	if strings.TrimSpace(names[e.session.SelectedDef]) == "" {
+		return fmt.Errorf("vehicle definition has no name")
+	}
 	veh, err := parsers.ParseVEHDefinition(src, e.session.SelectedDef)
 	if err != nil {
 		return err
@@ -529,6 +534,7 @@ func (e *VEHEditor) SelectDefinition(index int) error {
 	if index == e.session.SelectedDef {
 		return nil
 	}
+	e.updateVehicleFromUI()
 	cur, err := parsers.GenerateVEH(e.vehicle)
 	if err != nil {
 		return fmt.Errorf("cannot switch definition: %v", err)
@@ -538,6 +544,7 @@ func (e *VEHEditor) SelectDefinition(index int) error {
 		return fmt.Errorf("cannot parse definition %q: %v", e.defNames[index], err)
 	}
 	e.session.beginDiscreteChangeFrom(cur)
+	e.defNames[e.session.SelectedDef] = e.vehicle.Name
 	e.docSource = cur
 	e.session.SelectedDef = index
 	e.vehicle = veh

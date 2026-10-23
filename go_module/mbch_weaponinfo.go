@@ -322,8 +322,8 @@ func (ui *WeaponInfoUI) createUI() {
 }
 
 // resolveRowIcon pulls an icon for the list row. Uses the override's
-// own Icon field first, falls back to WeaponBasedOff, then to WeaponToReplace,
-// and finally to the theme glyph.
+// own Icon field first, then the replaced weapon's identity. WeaponBasedOff is
+// only an authoring fallback when the override has no replacement target.
 func (ui *WeaponInfoUI) resolveRowIcon(wi parsers.WeaponInfo) fyne.Resource {
 	// 1. Explicit Icon field
 	if wi.Icon != "" {
@@ -340,25 +340,8 @@ func (ui *WeaponInfoUI) resolveRowIcon(wi parsers.WeaponInfo) fyne.Resource {
 		}
 	}
 
-	// 2. WeaponBasedOff
-	if wi.WeaponBasedOff != "" {
-		if ui.editor.iconResolver != nil {
-			path := ui.editor.iconResolver.ResolveWeaponIcon(wi.WeaponBasedOff)
-			if ui.editor.assetBrowser != nil {
-				if res := ui.editor.assetBrowser.LoadIconResource(path); res != nil {
-					return res
-				}
-			}
-			if img, ok := LoadGameIcon(nil, path); ok {
-				return staticPNGResource("wp_based.png", img)
-			}
-		}
-		if res := ui.editor.resolveWeaponIconResource(wi.WeaponBasedOff); res != nil && res != theme.FileImageIcon() {
-			return res
-		}
-	}
-
-	// 3. WeaponToReplace
+	// 2. WeaponToReplace. A missing target icon stays generic rather than
+	// borrowing WeaponBasedOff's art and showing a different weapon identity.
 	if wi.WeaponToReplace != "" {
 		if ui.editor.iconResolver != nil {
 			path := ui.editor.iconResolver.ResolveWeaponIcon(wi.WeaponToReplace)
@@ -372,6 +355,25 @@ func (ui *WeaponInfoUI) resolveRowIcon(wi parsers.WeaponInfo) fyne.Resource {
 			}
 		}
 		if res := ui.editor.resolveWeaponIconResource(wi.WeaponToReplace); res != nil && res != theme.FileImageIcon() {
+			return res
+		}
+		return theme.FileImageIcon()
+	}
+
+	// 3. WeaponBasedOff, for incomplete authoring blocks with no target yet.
+	if wi.WeaponBasedOff != "" {
+		if ui.editor.iconResolver != nil {
+			path := ui.editor.iconResolver.ResolveWeaponIcon(wi.WeaponBasedOff)
+			if ui.editor.assetBrowser != nil {
+				if res := ui.editor.assetBrowser.LoadIconResource(path); res != nil {
+					return res
+				}
+			}
+			if img, ok := LoadGameIcon(nil, path); ok {
+				return staticPNGResource("wp_based.png", img)
+			}
+		}
+		if res := ui.editor.resolveWeaponIconResource(wi.WeaponBasedOff); res != nil && res != theme.FileImageIcon() {
 			return res
 		}
 	}

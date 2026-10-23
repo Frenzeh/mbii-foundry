@@ -34,7 +34,7 @@ const (
 	// screen's "new version available" banner. Bump this before tagging
 	// a release — if they drift, testers get a stale banner or none at
 	// all.
-	AppVersion = "0.16.3-alpha"
+	AppVersion = "0.17.0-alpha"
 	AppName    = "MBII Foundry"
 )
 
@@ -59,7 +59,9 @@ type App struct {
 	infoPanel          *InfoPanel
 	infoPanelMirrors   []*InfoPanel // pop-out windows hosting fresh InfoPanel instances
 	sourcePanel        *SourcePanel
-	sourcePanelMirrors []*SourcePanel  // pop-out windows tracking the same active editor
+	sourcePanelMirrors []*SourcePanel // pop-out windows tracking the same active editor
+	advancedWorkspace  *AdvancedWorkspace
+	editorModeMenuItem *fyne.MenuItem
 	activityBar        *SidebarHeader  // top-of-sidebar horizontal activity switcher (legacy field name)
 	sidebarHost        *fyne.Container // swap target for the active activity's content
 
@@ -126,6 +128,12 @@ type AppConfig struct {
 	// Right-side live source panel. Remembered across sessions.
 	SourcePanelVisible bool    `json:"source_panel_visible"`
 	SourcePanelOffset  float32 `json:"source_panel_offset"` // 0 = collapsed, 1 = full
+
+	// EditorMode changes only the presentation of the active document.
+	// Raw Advanced text remains in SourceDraftStore until explicit Apply.
+	EditorMode   string            `json:"editor_mode"`
+	SyntaxTheme  string            `json:"syntax_theme"`
+	SyntaxColors map[string]string `json:"syntax_colors,omitempty"`
 
 	// Left-side activity bar: the currently-selected activity id
 	// (files/library/modpacks/workspace). Empty = use the default.
@@ -691,6 +699,11 @@ func (a *App) setupUI() {
 	}
 	a.sourcePanel = NewSourcePanel(a)
 	a.sourcePanel.SetOnPopOut(a.popOutSourcePanel)
+	a.sourcePanel.SetDeferredValidation(normalizeEditorMode(a.config.EditorMode) == editorModeAdvanced)
+	if a.advancedWorkspace != nil {
+		a.advancedWorkspace.Close()
+	}
+	a.advancedWorkspace = NewAdvancedWorkspace(a)
 
 	a.modpackManager = NewModpackManager(a)
 	// Bulk editor (B): dialogs route through app.mainWindow and
@@ -831,15 +844,20 @@ func (a *App) updateMainLayout() {
 	a.sidebarSplit = nil
 	a.sourceSplit = nil
 
-	// Start with docTabs, then attach edge rails if either panel is
-	// collapsed. Rails sit as Border sides so docTabs still fills the
-	// remaining area.
+	// Both presentations retain the native document tabs. Advanced swaps each
+	// tab's content in place and omits the legacy Source pane so the same
+	// document is never shown in two source editors.
+	advancedMode := normalizeEditorMode(a.config.EditorMode) == editorModeAdvanced
 	docArea := fyne.CanvasObject(a.docTabs)
+	if !advancedMode && a.advancedWorkspace != nil {
+		a.advancedWorkspace.refreshGuidedBanner()
+		docArea = container.NewBorder(a.advancedWorkspace.GuidedBanner(), nil, nil, nil, docArea)
+	}
 	var leftRail, rightRail fyne.CanvasObject
 	if !a.sidebarVisible {
 		leftRail = collapsedEdgeRail(PanelExpandLeftIcon(), a.toggleSidebar, "Show sidebar")
 	}
-	if !a.config.SourcePanelVisible {
+	if !advancedMode && !a.config.SourcePanelVisible {
 		rightRail = collapsedEdgeRail(PanelExpandRightIcon(), a.toggleSourcePanel, "Show source panel")
 	}
 	if leftRail != nil || rightRail != nil {
@@ -864,7 +882,7 @@ func (a *App) updateMainLayout() {
 
 	// Source panel on the right. Collapsed → rightRail above handles
 	// the expand affordance.
-	if a.config.SourcePanelVisible && a.sourcePanel != nil {
+	if !advancedMode && a.config.SourcePanelVisible && a.sourcePanel != nil {
 		sourceSplit := container.NewHSplit(centerContent, a.sourcePanel.GetContent())
 		offset := a.config.SourcePanelOffset
 		if offset <= 0 || offset >= 1 {
@@ -890,6 +908,51 @@ func (a *App) toggleSidebar() {
 	a.saveConfig()
 	a.updateMainLayout()
 	a.mainWindow.Content().Refresh() // Force refresh of main window content
+}
+
+func normalizeEditorMode(mode string) string {
+	if strings.EqualFold(strings.TrimSpace(mode), editorModeAdvanced) {
+		return editorModeAdvanced
+	}
+	return editorModeGuided
+}
+
+func (a *App) setEditorMode(mode string, persist bool) {
+	if a == nil {
+		return
+	}
+	mode = normalizeEditorMode(mode)
+	previous := a.config.EditorMode
+	a.config.EditorMode = mode
+	if persist && !a.saveConfig() {
+		a.config.EditorMode = previous
+		return
+	}
+	if a.editorModeMenuItem != nil {
+		a.editorModeMenuItem.Checked = mode == editorModeAdvanced
+	}
+	deferValidation := mode == editorModeAdvanced
+	if a.sourcePanel != nil {
+		a.sourcePanel.SetDeferredValidation(deferValidation)
+	}
+	for _, mirror := range a.sourcePanelMirrors {
+		mirror.SetDeferredValidation(deferValidation)
+	}
+	if a.advancedWorkspace != nil {
+		a.advancedWorkspace.SetMode(mode)
+	}
+	if a.mainWindow != nil {
+		a.updateMainLayout()
+		a.mainWindow.Content().Refresh()
+	}
+}
+
+func (a *App) toggleEditorMode() {
+	if normalizeEditorMode(a.config.EditorMode) == editorModeAdvanced {
+		a.setEditorMode(editorModeGuided, true)
+		return
+	}
+	a.setEditorMode(editorModeAdvanced, true)
 }
 
 // toggleDeveloperFields flips ShowDeveloperFields and notifies every
@@ -963,6 +1026,9 @@ func (a *App) discardDetachedEditor(ed Editor) bool {
 	if err := a.removeEditorRecovery(ed); err != nil {
 		a.surfaceRecoveryError(fmt.Errorf("cannot discard recovery snapshot: %w", err))
 		return false
+	}
+	if a.advancedWorkspace != nil {
+		a.advancedWorkspace.RemoveEditor(ed)
 	}
 	a.sourceDrafts.Delete(ed)
 	if se, ok := ed.(SessionEditor); ok {
@@ -1068,6 +1134,9 @@ func (a *App) rebindSelectedSource() {
 	}
 	ed := a.editors[a.docTabs.Selected()]
 	a.setSourceEditorForAll(ed)
+	if a.advancedWorkspace != nil {
+		a.advancedWorkspace.SetActiveEditor(ed)
+	}
 	a.updateBufferGaugeForEditor(ed)
 }
 
@@ -1113,6 +1182,7 @@ func (a *App) popOutSourcePanel() {
 	win := a.fyneApp.NewWindow("Source — MBII Foundry")
 	mirror := NewSourcePanel(a)
 	mirror.SetOnPopOut(nil) // suppress chained pop-outs
+	mirror.SetDeferredValidation(normalizeEditorMode(a.config.EditorMode) == editorModeAdvanced)
 	a.sourcePanelMirrors = append(a.sourcePanelMirrors, mirror)
 	if a.sourcePanel != nil && a.sourcePanel.editorRef != nil {
 		mirror.SetActiveEditor(a.sourcePanel.editorRef)
@@ -1283,6 +1353,80 @@ func (a *App) persistSplitOffsets() {
 	}
 }
 
+// DispatchShortcut invokes application shortcuts without routing them back
+// through the canvas. Focused native editors can therefore forward shortcuts
+// they do not own without recursion or double-running their save/history keys.
+func (a *App) DispatchShortcut(shortcut fyne.Shortcut) bool {
+	key, ok := shortcut.(fyne.KeyboardShortcut)
+	if !ok || key.Mod()&^fyne.KeyModifierShift != fyne.KeyModifierShortcutDefault {
+		return false
+	}
+	shift := key.Mod()&fyne.KeyModifierShift != 0
+	if shift {
+		switch key.Key() {
+		case fyne.KeyS:
+			a.saveFileAs()
+		case fyne.KeyZ:
+			a.redoActiveEditor()
+		case fyne.KeyE:
+			a.toggleEditorMode()
+		case fyne.KeyA:
+			if normalizeEditorMode(a.config.EditorMode) == editorModeAdvanced && a.advancedWorkspace != nil {
+				a.advancedWorkspace.RequestAsset()
+			}
+		default:
+			return false
+		}
+		return true
+	}
+
+	switch key.Key() {
+	case fyne.KeyN:
+		a.createNewFile("Character", NewMBCHEditor(a))
+	case fyne.KeyO:
+		a.openFile()
+	case fyne.KeyS:
+		a.saveFile()
+	case fyne.KeyW:
+		if a.docTabs != nil {
+			if tab := a.docTabs.Selected(); tab != nil {
+				a.closeTab(tab)
+			}
+		}
+	case fyne.KeyQ:
+		a.requestQuit()
+	case fyne.KeyR:
+		a.validateFile()
+	case fyne.KeyComma:
+		a.showPreferences()
+	case fyne.KeyZ:
+		a.undoActiveEditor()
+	case fyne.KeyY:
+		a.redoActiveEditor()
+	case fyne.KeyF:
+		if normalizeEditorMode(a.config.EditorMode) == editorModeAdvanced && a.advancedWorkspace != nil {
+			a.advancedWorkspace.ShowSearch(false)
+		}
+	case fyne.KeyH:
+		if normalizeEditorMode(a.config.EditorMode) == editorModeAdvanced && a.advancedWorkspace != nil {
+			a.advancedWorkspace.ShowSearch(true)
+		}
+	default:
+		keyText := string(key.Key())
+		if len(keyText) != 1 {
+			return false
+		}
+		index := strings.Index("123456789", keyText)
+		if index < 0 {
+			return false
+		}
+		if a.docTabs != nil && index < len(a.docTabs.Items) {
+			a.docTabs.Select(a.docTabs.Items[index])
+		}
+	}
+	return true
+}
+
 // setupShortcuts wires keyboard shortcuts + a macOS-style main menu.
 // Until this landed the README and welcome screen advertised Cmd+N /
 // Cmd+O / Cmd+S etc. but none were actually bound — typing them did
@@ -1293,68 +1437,23 @@ func (a *App) setupShortcuts() {
 		return
 	}
 	c := a.mainWindow.Canvas()
-	add := func(key fyne.KeyName, mods fyne.KeyModifier, fn func()) {
-		c.AddShortcut(&desktop.CustomShortcut{KeyName: key, Modifier: mods}, func(_ fyne.Shortcut) { fn() })
+	add := func(key fyne.KeyName, mods fyne.KeyModifier) {
+		shortcut := &desktop.CustomShortcut{KeyName: key, Modifier: mods}
+		c.AddShortcut(shortcut, func(received fyne.Shortcut) { a.DispatchShortcut(received) })
 	}
 	mod := fyne.KeyModifierShortcutDefault // Cmd on macOS, Ctrl elsewhere
 
-	// File ops.
-	add(fyne.KeyN, mod, func() { a.createNewFile("Character", NewMBCHEditor(a)) })
-	add(fyne.KeyO, mod, func() { a.openFile() })
-	add(fyne.KeyS, mod, func() { a.saveFile() })
-	add(fyne.KeyS, mod|fyne.KeyModifierShift, func() { a.saveFileAs() })
-	add(fyne.KeyW, mod, func() {
-		if t := a.docTabs.Selected(); t != nil {
-			a.closeTab(t)
-		}
-	})
-	add(fyne.KeyQ, mod, a.requestQuit)
-
-	// Validate.
-	add(fyne.KeyR, mod, func() { a.validateFile() })
-
-	// Preferences (Cmd+,).
-	add(fyne.KeyComma, mod, func() { a.showPreferences() })
-
-	// Tab navigation — Cmd+1..9.
-	for i := 1; i <= 9; i++ {
-		idx := i
-		var key fyne.KeyName
-		switch i {
-		case 1:
-			key = fyne.Key1
-		case 2:
-			key = fyne.Key2
-		case 3:
-			key = fyne.Key3
-		case 4:
-			key = fyne.Key4
-		case 5:
-			key = fyne.Key5
-		case 6:
-			key = fyne.Key6
-		case 7:
-			key = fyne.Key7
-		case 8:
-			key = fyne.Key8
-		case 9:
-			key = fyne.Key9
-		}
-		add(key, mod, func() {
-			if a.docTabs == nil || idx > len(a.docTabs.Items) {
-				return
-			}
-			a.docTabs.Select(a.docTabs.Items[idx-1])
-		})
+	for _, key := range []fyne.KeyName{
+		fyne.KeyN, fyne.KeyO, fyne.KeyS, fyne.KeyW, fyne.KeyQ, fyne.KeyR,
+		fyne.KeyComma, fyne.KeyZ, fyne.KeyY, fyne.KeyF, fyne.KeyH,
+		fyne.Key1, fyne.Key2, fyne.Key3, fyne.Key4, fyne.Key5,
+		fyne.Key6, fyne.Key7, fyne.Key8, fyne.Key9,
+	} {
+		add(key, mod)
 	}
-
-	// Undo / redo across form edits, source applies and JSON imports.
-	add(fyne.KeyZ, mod, func() { a.undoActiveEditor() })
-	add(fyne.KeyZ, mod|fyne.KeyModifierShift, func() { a.redoActiveEditor() })
-	add(fyne.KeyY, mod, func() { a.redoActiveEditor() })
-
-	// Validate.
-	add(fyne.KeyR, mod, func() { a.validateFile() })
+	for _, key := range []fyne.KeyName{fyne.KeyS, fyne.KeyZ, fyne.KeyE, fyne.KeyA} {
+		add(key, mod|fyne.KeyModifierShift)
+	}
 
 	// macOS main menu — gives Cmd-anything a system-bar entry so the
 	// shortcuts above also show up where Mac users look for them.
@@ -1389,7 +1488,12 @@ func (a *App) setupShortcuts() {
 		a.toggleDeveloperFields()
 	})
 	devFieldsItem.Checked = a.config.ShowDeveloperFields
+	modeItem := fyne.NewMenuItem("Use Advanced Editor", a.toggleEditorMode)
+	modeItem.Checked = normalizeEditorMode(a.config.EditorMode) == editorModeAdvanced
+	modeItem.Shortcut = &desktop.CustomShortcut{KeyName: fyne.KeyE, Modifier: mod | fyne.KeyModifierShift}
+	a.editorModeMenuItem = modeItem
 	viewMenu := fyne.NewMenu("View",
+		modeItem,
 		fyne.NewMenuItemSeparator(),
 		devFieldsItem,
 		fyne.NewMenuItemSeparator(),
@@ -1741,6 +1845,9 @@ func (a *App) removeTab(tab *container.TabItem) {
 			a.surfaceRecoveryError(fmt.Errorf("cannot close document: %w", err))
 			return
 		}
+		if a.advancedWorkspace != nil {
+			a.advancedWorkspace.RemoveEditor(editor)
+		}
 		a.sourceDrafts.Delete(editor)
 		if se, ok := editor.(SessionEditor); ok {
 			se.Session().RecoveryID = ""
@@ -1783,6 +1890,27 @@ func (a *App) createToolbar() fyne.CanvasObject {
 		}, "Create New File"),
 		btn(theme.FolderOpenIcon(), func() { a.openFile() }, "Open File"),
 		btn(theme.DocumentSaveIcon(), func() { a.saveFile() }, "Save File"),
+
+		widget.NewSeparator(),
+
+		func() fyne.CanvasObject {
+			button := widget.NewButton("Guided", func() { a.setEditorMode(editorModeGuided, true) })
+			if normalizeEditorMode(a.config.EditorMode) == editorModeGuided {
+				button.Importance = widget.HighImportance
+			} else {
+				button.Importance = widget.LowImportance
+			}
+			return button
+		}(),
+		func() fyne.CanvasObject {
+			button := widget.NewButton("Advanced", func() { a.setEditorMode(editorModeAdvanced, true) })
+			if normalizeEditorMode(a.config.EditorMode) == editorModeAdvanced {
+				button.Importance = widget.HighImportance
+			} else {
+				button.Importance = widget.LowImportance
+			}
+			return button
+		}(),
 
 		widget.NewSeparator(),
 
@@ -1829,7 +1957,9 @@ func (a *App) createToolbar() fyne.CanvasObject {
 		btn(theme.HelpIcon(), func() { a.showAbout() }, "About MBII Foundry"),
 	)
 
-	return container.NewHBox(items...)
+	// Tool actions remain reachable without their aggregate minimum width
+	// widening the native window or pushing the Source pane off-screen.
+	return container.NewHScroll(container.NewHBox(items...))
 }
 
 // undoActiveEditor / redoActiveEditor route Cmd+Z / Cmd+Shift+Z (and
@@ -1838,7 +1968,14 @@ func (a *App) createToolbar() fyne.CanvasObject {
 // definition switches; undoing past a save correctly re-marks the
 // document dirty against its saved baseline.
 func (a *App) undoActiveEditor() {
+	if normalizeEditorMode(a.config.EditorMode) == editorModeAdvanced && a.advancedWorkspace != nil && a.advancedWorkspace.UndoFocused() {
+		return
+	}
 	if se, ok := a.activeSessionEditor(); ok {
+		if a.sourceDrafts.Has(se) {
+			a.updateStatus("Apply or revert the pending source draft before undoing Guided history")
+			return
+		}
 		if !se.Undo() {
 			a.updateStatus("Nothing to undo")
 		}
@@ -1846,7 +1983,14 @@ func (a *App) undoActiveEditor() {
 }
 
 func (a *App) redoActiveEditor() {
+	if normalizeEditorMode(a.config.EditorMode) == editorModeAdvanced && a.advancedWorkspace != nil && a.advancedWorkspace.RedoFocused() {
+		return
+	}
 	if se, ok := a.activeSessionEditor(); ok {
+		if a.sourceDrafts.Has(se) {
+			a.updateStatus("Apply or revert the pending source draft before redoing Guided history")
+			return
+		}
 		if !se.Redo() {
 			a.updateStatus("Nothing to redo")
 		}
@@ -2216,6 +2360,7 @@ func (a *App) loadConfig() {
 		a.config.SourcePanelVisible = true
 		a.config.SourcePanelOffset = 0.70
 	}
+	a.config.EditorMode = normalizeEditorMode(a.config.EditorMode)
 
 	// Apply Theme
 	if a.config.PrimaryColor == "" {
@@ -2277,6 +2422,14 @@ func (a *App) showPreferences() {
 
 	md3viewEntry := NewInputEntry()
 	md3viewEntry.SetText(a.config.MD3ViewPath)
+
+	editorModeSelect := widget.NewSelect([]string{"Guided", "Advanced"}, nil)
+	if normalizeEditorMode(a.config.EditorMode) == editorModeAdvanced {
+		editorModeSelect.SetSelected("Advanced")
+	} else {
+		editorModeSelect.SetSelected("Guided")
+	}
+	syntaxPreferences := newSourcePalettePreferences(a.config.SyntaxTheme, a.config.SyntaxColors)
 
 	themeSelect := widget.NewSelect([]string{"Blue (Jedi)", "Red (Sith)", "Gold (Foundry)", "Green (Console)", "Orange (Rebel)", "Purple (Mace)"}, nil)
 
@@ -2388,6 +2541,7 @@ func (a *App) showPreferences() {
 	// dark bands across the dialog — an accidental consequence of the
 	// dark theme + Fyne's form row padding.
 	coreForm := widget.NewForm(
+		widget.NewFormItem("Editing Mode", editorModeSelect),
 		widget.NewFormItem("Color Mode", modeSelect),
 		widget.NewFormItem("Theme Color", themeSelect),
 		widget.NewFormItem("Density", densitySelect),
@@ -2423,6 +2577,10 @@ func (a *App) showPreferences() {
 		coreForm,
 		Gap(SpaceMD),
 
+		sectionHeading("ADVANCED SOURCE COLOURS"),
+		syntaxPreferences.Content(),
+		Gap(SpaceMD),
+
 		sectionHeading("PATHS"),
 		pathsForm,
 		container.NewPadded(downloadMD3Btn),
@@ -2448,11 +2606,19 @@ func (a *App) showPreferences() {
 			}
 		}
 		previous := a.config
+		syntaxTheme, syntaxColors, err := syntaxPreferences.Value()
+		if err != nil {
+			prefsError.SetText(err.Error())
+			return
+		}
 		a.config.GamedataPath = gamedataEntry.Text
 		a.config.TextAssetsPath = textAssetsEntry.Text
 		a.config.MD3ViewPath = md3viewEntry.Text
 		a.config.HoverTooltipsDisabled = !tooltipsCheck.Checked
 		a.config.Density = strings.ToLower(densitySelect.Selected)
+		a.config.EditorMode = normalizeEditorMode(editorModeSelect.Selected)
+		a.config.SyntaxTheme = syntaxTheme
+		a.config.SyntaxColors = syntaxColors
 
 		// Save Theme
 		switch themeSelect.Selected {
@@ -2485,6 +2651,14 @@ func (a *App) showPreferences() {
 		a.applyColorVariant(a.config.ColorVariant)
 		a.applyThemeColor(a.config.PrimaryColor)
 		a.applyDensity(a.config.Density)
+		if a.advancedWorkspace != nil {
+			if err := a.advancedWorkspace.RefreshPalette(); err != nil {
+				a.config = previous
+				prefsError.SetText("Syntax colours were not applied: " + err.Error())
+				return
+			}
+		}
+		a.setEditorMode(a.config.EditorMode, false)
 		a.githubManager = NewGitHubManager(a.config.GitHubToken, a.config.TextAssetsPath)
 
 		// Refresh components

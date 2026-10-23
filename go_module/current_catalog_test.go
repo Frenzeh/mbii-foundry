@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -26,7 +27,7 @@ func usePublicCatalogs(t *testing.T) {
 		hiddenAttributeIDs, hiddenWeaponIDs, hiddenClassIDs = hiddenAttrs, hiddenWeapons, hiddenClasses
 	})
 	LoadedAttributes, LoadedWeapons, LoadedClasses = nil, nil, nil
-	hiddenClassIDs = map[string]bool{"MB_CLASS_NOCLASS": true, "MB_CLASS_OBSERVER": true}
+	hiddenClassIDs = publicHiddenClassIDs()
 	hiddenWeaponIDs = map[string]bool{"WP_NONE": true}
 	hiddenAttributeIDs = map[string]bool{
 		"MB_ATT_INVALID": true, "MB_ATT_FP_FINAL": true,
@@ -138,7 +139,7 @@ func TestCurrentCatalogSelectionPreservesAuthoredValues(t *testing.T) {
 	if picker.Selected() != "MB_CLASS_FUTURE" {
 		t.Fatal("loading an unknown class changed its identifier")
 	}
-	for _, id := range []string{"MB_CLASS_SHOCKTROOPER", "MB_CLASS_OPERATIVE", "MB_CLASS_ENFORCER", "MB_CLASS_SPY", "MB_CLASS_ASTRODROID", "MB_CLASS_ASTROMECH", "MB_CLASS_JETTROOPER", "MB_CLASS_ASSASSINDROID", "MB_CLASS_PATROLIAN"} {
+	for _, id := range []string{"MB_CLASS_SHOCKTROOPER", "MB_CLASS_OPERATIVE", "MB_CLASS_ASTRODROID", "MB_CLASS_JETTROOPER", "MB_CLASS_ASSASSINDROID", "MB_CLASS_PATROLIAN"} {
 		found := false
 		for _, card := range picker.cards {
 			if card.def.ID == id {
@@ -194,6 +195,46 @@ func TestCurrentCatalogSelectionPreservesAuthoredValues(t *testing.T) {
 	}
 	if reopened.MBClass != ch.MBClass || reopened.Attributes != want || reopened.ExtraFields["futureField"] != "opaque value" {
 		t.Fatalf("catalog selection did not survive round-trip without unrelated loss: %+v", reopened)
+	}
+}
+
+func TestHiddenClassesStayUnselectableAndRoundTripAuthoredValues(t *testing.T) {
+	usePublicCatalogs(t)
+	useEditorTestApp(t)
+	picker := NewClassIconPicker(nil)
+	cards := make(map[string]bool, len(picker.cards))
+	for _, card := range picker.cards {
+		cards[card.def.ID] = true
+	}
+	if !cards["MB_CLASS_ASTRODROID"] {
+		t.Fatal("active Astrodroid class is not selectable")
+	}
+	for _, id := range []string{"MB_CLASS_ENFORCER", "MB_CLASS_SPY", "MB_CLASS_ASTROMECH"} {
+		t.Run(id, func(t *testing.T) {
+			if cards[id] {
+				t.Fatalf("hidden class %s is selectable", id)
+			}
+			character, err := parsers.ParseMBCH(fmt.Sprintf("ClassInfo\n{\nname \"Before\"\nMBClass %s\nfutureField \"keep\"\n}\n", id))
+			if err != nil {
+				t.Fatal(err)
+			}
+			picker.SetSelected(character.MBClass)
+			if picker.Selected() != id {
+				t.Fatalf("loading hidden class changed %s to %s", id, picker.Selected())
+			}
+			character.Name = "After"
+			generated, err := parsers.GenerateMBCH(character)
+			if err != nil {
+				t.Fatal(err)
+			}
+			reopened, err := parsers.ParseMBCH(generated)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if reopened.MBClass != id || reopened.Name != "After" || reopened.ExtraFields["futureField"] != "keep" {
+				t.Fatalf("unrelated edit changed hidden class or retained fields: %+v", reopened)
+			}
+		})
 	}
 }
 
@@ -342,10 +383,15 @@ func TestCurrentCatalogDomainsAndVisibility(t *testing.T) {
 		if hasCatalogOption(forcePowerOptions(), "FP_SUMMON") {
 			t.Error("hidden force target leaked into picker")
 		}
+		classes := make(map[string]bool)
 		for _, class := range GetClasses() {
-			if class.ID == "MB_CLASS_OPERATIVE" || class.ID == "MB_CLASS_OBSERVER" {
+			classes[class.ID] = true
+			if class.ID == "MB_CLASS_OPERATIVE" || class.ID == "MB_CLASS_OBSERVER" || class.ID == "MB_CLASS_ENFORCER" || class.ID == "MB_CLASS_SPY" || class.ID == "MB_CLASS_ASTROMECH" {
 				t.Errorf("hidden class leaked into picker: %s", class.ID)
 			}
+		}
+		if !classes["MB_CLASS_ASTRODROID"] {
+			t.Error("active Astrodroid class was filtered from picker")
 		}
 		for _, attr := range GetAttributes() {
 			if attr.ID == "MB_ATT_CYBERNETICS" {

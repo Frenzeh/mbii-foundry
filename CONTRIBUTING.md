@@ -76,8 +76,14 @@ packager/          separate Python packaging library
 Important application boundaries:
 
 - `go_module/parsers/` owns parsing and source-preserving AST updates.
-- `session_state.go`, `source_panel.go`, `save_review.go`, and
-  `crash_recovery.go` own document state and safe user workflows.
+- `session_state.go`, `source_panel.go`, `advanced_workspace.go`,
+  `save_review.go`, and `crash_recovery.go` own shared document/draft state
+  and safe user workflows.
+- `source_code_*` owns native text editing and presentation;
+  `source_language.go`, `source_completion.go`, and `source_diagnostics.go`
+  reuse canonical parsers and metadata for non-mutating authoring assistance.
+- `source_assets.go` reuses the configured VFS and existing asset/preview
+  infrastructure; Advanced insertion must not enumerate host filesystem roots.
 - `safeio/` owns atomic publication primitives.
 - `archive_export.go` is the shared PK3/source ZIP writer.
 - `updatemanifest/`, `cmd/signer/`, and `update_installer*` share the update
@@ -114,6 +120,14 @@ go build ./...
 For UI changes, also launch the application and exercise the changed surface.
 For file-format changes, use a synthetic or redistributable fixture and inspect
 the exact Save review output. Do not use private game files as test fixtures.
+
+Advanced-editor changes also require native mouse/Shift-click selection,
+scrolling, keyboard shortcuts, completion, asset insertion, and exact save/reopen
+checks. Headless direct-handler tests do not prove desktop event routing. Retain
+invalid drafts across mode changes, cancellation, and recovery; removing a
+document must invalidate outstanding edit targets. Source ranges use zero-based
+UTF-8 byte offsets with exclusive ends; diagnostic line/column values are
+one-based Unicode-rune positions.
 
 External corpus tests and benchmarks require `MBII_TEST_REAL_DATA=1` and their
 explicit asset-path input. They do not discover an installed game by default.

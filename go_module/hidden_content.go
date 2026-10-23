@@ -9,23 +9,27 @@ import (
 
 // Curated visibility rules for classes, weapons, and attributes.
 //
-// The PUBLIC source carries only the baseline sentinel set (enum zero
-// values, resource markers, etc.). Anything beyond that — dev-only
-// toggles, experimental content, build variants — is supplied at
-// runtime via the optional private overlay (see loadPrivateHidden*).
-// Absent the overlay, the editor shows every public entry.
+// The public source carries mandatory visibility rules (enum zero
+// values, resource markers, and unavailable catalog entries). Anything
+// beyond that — dev-only toggles, experimental content, build variants
+// — is supplied at runtime via the optional private overlay (see
+// loadPrivateHidden*).
 //
 // Keep this file narrow: no inline feature names, no references to
 // build flags, no roadmap hints. That content lives in the private
 // overlay, which is not distributed with public releases.
 
-// hiddenClassIDs — baseline set. Enum sentinels and spectator pseudo-
-// classes only; real gameplay classes never appear here in the
-// public source.
-var hiddenClassIDs = map[string]bool{
-	"MB_CLASS_NOCLASS":  true,
-	"MB_CLASS_OBSERVER": true,
+func publicHiddenClassIDs() map[string]bool {
+	return map[string]bool{
+		"MB_CLASS_NOCLASS":   true,
+		"MB_CLASS_OBSERVER":  true,
+		"MB_CLASS_ENFORCER":  true,
+		"MB_CLASS_SPY":       true,
+		"MB_CLASS_ASTROMECH": true,
+	}
 }
+
+var hiddenClassIDs = publicHiddenClassIDs()
 
 // hiddenWeaponIDs — baseline sentinels.
 var hiddenWeaponIDs = map[string]bool{

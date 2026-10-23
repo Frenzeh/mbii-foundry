@@ -22,11 +22,12 @@ import (
 // One instance per VFS, built by Prebuild after indexing and invalidated
 // with Reset before a later background rebuild.
 type ShaderResolver struct {
-	vfs     *VirtualFileSystem
-	mu      sync.RWMutex
-	buildMu sync.Mutex
-	built   bool
-	shaders map[string]string // shader name (lowercased) → texture path
+	vfs      *VirtualFileSystem
+	mu       sync.RWMutex
+	buildMu  sync.Mutex
+	built    bool
+	shaders  map[string]string   // shader name (lowercased) → optional preview texture
+	declared map[string]struct{} // every declared shader name, including built-in-only maps
 }
 
 // NewShaderResolver constructs a resolver bound to a VFS. Prebuild parses
@@ -44,6 +45,7 @@ func (sr *ShaderResolver) Reset() {
 	defer sr.mu.Unlock()
 	sr.built = false
 	sr.shaders = nil
+	sr.declared = nil
 }
 
 // Resolve looks up a shader name and returns the primary texture path
@@ -68,6 +70,50 @@ func (sr *ShaderResolver) Resolve(name string) string {
 		return ""
 	}
 	return sr.shaders[strings.ToLower(name)]
+}
+
+// Suggest returns declared shader names matching a case-insensitive prefix.
+// Like Resolve, it is non-blocking and returns no results until Prebuild has
+// completed. Names are logical game references, never .shader file paths.
+func (sr *ShaderResolver) Suggest(prefix string, max int) []string {
+	if sr == nil {
+		return nil
+	}
+	prefix = strings.ToLower(strings.TrimSpace(prefix))
+	sr.mu.RLock()
+	if !sr.built {
+		sr.mu.RUnlock()
+		return nil
+	}
+	names := make([]string, 0, len(sr.declared))
+	for name := range sr.declared {
+		if prefix == "" || strings.HasPrefix(name, prefix) {
+			names = append(names, name)
+		}
+	}
+	sr.mu.RUnlock()
+	sort.Strings(names)
+	if max > 0 && len(names) > max {
+		names = names[:max]
+	}
+	return names
+}
+
+// visitDeclared calls visit for every declared shader name without copying or
+// sorting. It is non-blocking like Suggest and visits nothing before Prebuild.
+// visit runs under the resolver read lock and must not call back into it.
+func (sr *ShaderResolver) visitDeclared(visit func(string)) {
+	if sr == nil {
+		return
+	}
+	sr.mu.RLock()
+	defer sr.mu.RUnlock()
+	if !sr.built {
+		return
+	}
+	for name := range sr.declared {
+		visit(name)
+	}
 }
 
 // Prebuild serializes scans and skips a completed build. Call from a
@@ -97,6 +143,7 @@ func (sr *ShaderResolver) build() {
 	if sr.vfs == nil {
 		sr.mu.Lock()
 		sr.shaders = map[string]string{}
+		sr.declared = map[string]struct{}{}
 		sr.built = true
 		sr.mu.Unlock()
 		return
@@ -143,6 +190,7 @@ func (sr *ShaderResolver) build() {
 	// wrapped in a recover() so a malformed shader file can't crash
 	// the editor — worst case it skips that file.
 	out := map[string]string{}
+	declared := map[string]struct{}{}
 	for _, file := range shaderFiles {
 		func() {
 			defer func() { _ = recover() }()
@@ -155,12 +203,13 @@ func (sr *ShaderResolver) build() {
 			if err != nil || len(data) == 0 {
 				return
 			}
-			parseShaderFile(string(data), out)
+			parseShaderFileInto(string(data), out, declared)
 		}()
 	}
 
 	sr.mu.Lock()
 	sr.shaders = out
+	sr.declared = declared
 	sr.built = true
 	sr.mu.Unlock()
 }
@@ -173,6 +222,10 @@ func (sr *ShaderResolver) build() {
 //   - missing map directive (skipped silently)
 //   - case differences (every key/value lowercased)
 func parseShaderFile(body string, out map[string]string) {
+	parseShaderFileInto(body, out, nil)
+}
+
+func parseShaderFileInto(body string, out map[string]string, declared map[string]struct{}) {
 	// Strip block comments first — line comments handled by the
 	// scanner. Block comments inside strings shouldn't exist in Q3
 	// shaders so a naive replace is safe.
@@ -231,8 +284,16 @@ func parseShaderFile(body string, out map[string]string) {
 					depth = 0 // clamp — malformed shader, don't corrupt next entry
 				}
 				if depth == 0 {
-					if currentName != "" && firstMap != "" {
-						out[strings.ToLower(currentName)] = strings.ToLower(firstMap)
+					if currentName != "" {
+						name := strings.ToLower(currentName)
+						if declared != nil {
+							declared[name] = struct{}{}
+						}
+						if firstMap != "" {
+							out[name] = strings.ToLower(firstMap)
+						} else {
+							delete(out, name)
+						}
 					}
 					currentName = ""
 					firstMap = ""

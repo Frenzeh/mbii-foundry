@@ -7,6 +7,43 @@ pre-release suffixes until the project stabilizes.
 
 ## [Unreleased]
 
+## [0.17.0-alpha] — 2026-10-23
+
+### Verification limits
+- Guided/Advanced editing, completion, selection, scrolling, asset insertion,
+  reviewed save, and recovery were exercised natively on macOS with synthetic
+  files. Windows and Linux builds are covered by automated tests, not native
+  interaction.
+
+### Added
+- Persistent Guided/Advanced switching over the same document and pending draft;
+  Advanced uses a full-width native code editor without losing document tabs.
+- Line numbers, syntax colours, matching-bracket markers, Foundry Dark/Monokai/
+  Light presets, and editable syntax-colour overrides.
+- Context-aware field, flag, enum, and asset completion plus positioned live
+  errors/warnings. Unknown custom content remains editable and preserved;
+  diagnostics are an authoring aid, not an engine-crash guarantee.
+- Indentation, line comments, find/replace, and per-document text undo/redo,
+  routed through the existing guarded Apply, reviewed Save, and recovery flows.
+- Configured-VFS asset insertion with portable field-specific references and
+  compatible image/shader still previews.
+
+### Changed
+- Hide conditionally unavailable Enforcer, Spy, and Astromech classes from
+  available choices and completion. Keep Astrodroid available and preserve
+  already-authored identifiers without renumbering.
+
+### Fixed
+- Preserve engine-effective MBCH fields and equivalent numeric lexemes during
+  source-preserving saves without rewriting dead same-line tokens, comments,
+  key casing, or ordering.
+- Restore attribute tile drawing and give the Attributes tab a single scroll
+  owner; clarify the distinction between abilities and starting inventory.
+- Keep class-flag names, technical identifiers, and full descriptions in
+  content-sized rows instead of overlapping fixed-height grid cells.
+- Use the replacement weapon's identity for override-row fallback icons.
+  Missing target artwork uses a generic glyph rather than a different weapon.
+
 ## [0.16.3-alpha] — 2026-10-22
 
 ### Verification limits

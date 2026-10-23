@@ -124,6 +124,10 @@ type AssetBrowser struct {
 	// It is not a full shader renderer or an active-engine-profile resolver.
 	shaderResolver *ShaderResolver
 
+	// virtualOnly is set before createUI for isolated VFS pickers so source
+	// construction never probes Home, cloud storage, volumes, or favorites.
+	virtualOnly bool
+
 	// Registered before indexing starts; invoked on the Fyne thread.
 	onVFSReady func()
 }
@@ -320,6 +324,11 @@ func (ab *AssetBrowser) scanPK3Files() {
 }
 
 func (ab *AssetBrowser) refreshSources() {
+	if ab.virtualOnly {
+		ab.sourceSelect.Options = []string{"All Game Data (Virtual)"}
+		ab.sourceSelect.Refresh()
+		return
+	}
 	sources := []string{"Home", "Computer", "All Game Data (Virtual)", "--- Locations ---"}
 
 	// 1. Detect Cloud Storage (macOS specific mainly, but useful)

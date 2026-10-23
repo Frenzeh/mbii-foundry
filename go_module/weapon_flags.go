@@ -206,6 +206,45 @@ func buildCheckmarkPip(checked bool, accent color.Color) fyne.CanvasObject {
 	)
 }
 
+// classFlagRowsLayout keeps each flag on a full-width, content-sized row.
+// Resizing before measuring lets wrapped labels report the height they need at
+// the current viewport width instead of inheriting a fixed card height.
+type classFlagRowsLayout struct{}
+
+func (*classFlagRowsLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+	padding := theme.Padding()
+	y := float32(0)
+	for _, object := range objects {
+		if !object.Visible() {
+			continue
+		}
+		object.Resize(fyne.NewSize(size.Width, object.MinSize().Height))
+		height := object.MinSize().Height
+		object.Resize(fyne.NewSize(size.Width, height))
+		object.Move(fyne.NewPos(0, y))
+		y += height + padding
+	}
+}
+
+func (*classFlagRowsLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
+	padding := theme.Padding()
+	var min fyne.Size
+	visible := 0
+	for _, object := range objects {
+		if !object.Visible() {
+			continue
+		}
+		childMin := object.MinSize()
+		min.Width = fyne.Max(min.Width, childMin.Width)
+		min.Height += childMin.Height
+		visible++
+	}
+	if visible > 1 {
+		min.Height += padding * float32(visible-1)
+	}
+	return min
+}
+
 func (wfe *WeaponFlagsEditor) buildClassFlagsSection() fyne.CanvasObject {
 	ch := wfe.editor.character
 	activeFlags := map[string]bool{}
@@ -218,7 +257,7 @@ func (wfe *WeaponFlagsEditor) buildClassFlagsSection() fyne.CanvasObject {
 	header := widget.NewLabelWithStyle("Class Flags (CFL_*)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	sub := widget.NewLabelWithStyle("Inherent character traits, physical attributes, and passive immunities.", fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
 
-	grid := container.NewGridWrap(fyne.NewSize(275, 54))
+	rows := container.New(&classFlagRowsLayout{})
 	for _, flag := range GetClassFlags() {
 		f := flag
 		checked := activeFlags[f.ID]
@@ -253,15 +292,18 @@ func (wfe *WeaponFlagsEditor) buildClassFlagsSection() fyne.CanvasObject {
 
 		pip := buildCheckmarkPip(checked, accent)
 
-		idLbl := widget.NewLabelWithStyle(f.ID,
-			fyne.TextAlignLeading, fyne.TextStyle{Bold: true, Monospace: true})
 		nameLbl := widget.NewLabelWithStyle(f.Name,
-			fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
+			fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+		nameLbl.Wrapping = fyne.TextWrapWord
+		idLbl := widget.NewLabelWithStyle(f.ID,
+			fyne.TextAlignLeading, fyne.TextStyle{Monospace: true})
+		idLbl.Wrapping = fyne.TextWrapBreak
 		descLbl := widget.NewLabel(f.Description)
 		descLbl.Wrapping = fyne.TextWrapWord
 
 		textStack := container.NewVBox(
-			container.NewHBox(idLbl, nameLbl),
+			nameLbl,
+			idLbl,
 			descLbl,
 		)
 
@@ -283,11 +325,11 @@ func (wfe *WeaponFlagsEditor) buildClassFlagsSection() fyne.CanvasObject {
 			Padded:      true,
 		})
 
-		grid.Add(newClickableCell(tile, toggle))
+		rows.Add(newClickableCell(tile, toggle))
 	}
 
 	return NewTilePanel(
-		container.NewVBox(header, sub, grid),
+		container.NewVBox(header, sub, rows),
 		TileOpts{
 			AccentColor: color.NRGBA{R: 100, G: 190, B: 240, A: 255},
 			FillAlpha:   14,

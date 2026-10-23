@@ -31,12 +31,25 @@ type CustomFilePicker struct {
 
 	sources     []string
 	initialPath string // New field to store the initial path
+	virtualOnly bool
 }
 
 func NewCustomFilePicker(win fyne.Window, ab *AssetBrowser) *CustomFilePicker {
+	return newCustomFilePicker(win, ab, false)
+}
+
+// NewVirtualFilePicker creates the standard asset picker restricted to the
+// merged game VFS. The mode is fixed before UI construction so it never
+// enumerates or exposes host filesystem locations.
+func NewVirtualFilePicker(win fyne.Window, ab *AssetBrowser) *CustomFilePicker {
+	return newCustomFilePicker(win, ab, true)
+}
+
+func newCustomFilePicker(win fyne.Window, ab *AssetBrowser, virtualOnly bool) *CustomFilePicker {
 	cfp := &CustomFilePicker{
-		window:  win,
-		browser: ab,
+		window:      win,
+		browser:     ab,
+		virtualOnly: virtualOnly,
 	}
 	cfp.createUI()
 	return cfp
@@ -126,17 +139,19 @@ func (cfp *CustomFilePicker) createUI() {
 			return
 		}
 
-		homeDir, _ := os.UserHomeDir() // Ensure homeDir is available here too
-
 		if s == "All Game Data (Virtual)" {
 			cfp.browser.loadVFS("")
+		} else if cfp.virtualOnly {
+			return
 		} else if s == "TextAssets" {
 			cfp.browser.loadFS(cfp.browser.textAssetsPath)
 		} else if s == "Home" {
+			homeDir, _ := os.UserHomeDir()
 			cfp.browser.loadFS(homeDir)
 		} else if s == "Computer" {
 			cfp.browser.loadFS("/")
 		} else if strings.HasPrefix(s, "Cloud: ") {
+			homeDir, _ := os.UserHomeDir()
 			name := strings.TrimPrefix(s, "Cloud: ")
 			cfp.browser.loadFS(filepath.Join(homeDir, "Library", "CloudStorage", name))
 		} else if strings.HasPrefix(s, "Volume: ") {
@@ -172,6 +187,9 @@ func (cfp *CustomFilePicker) createUI() {
 
 	// Configure Browser interactions
 	cfp.browser.SetOnAssetSelected(func(asset *AssetEntry) {
+		if cfp.virtualOnly && cfp.browser.currentPK3 != "VFS" {
+			asset = nil
+		}
 		cfp.selectedFile = asset
 		if asset == nil {
 			cfp.selectButton.Disable()
@@ -181,7 +199,7 @@ func (cfp *CustomFilePicker) createUI() {
 	})
 
 	cfp.browser.SetOnAssetDouble(func(asset *AssetEntry) {
-		if asset == nil || asset.IsDir {
+		if asset == nil || asset.IsDir || cfp.virtualOnly && cfp.browser.currentPK3 != "VFS" {
 			return
 		}
 		if cfp.onSelected != nil {
@@ -199,10 +217,16 @@ func (cfp *CustomFilePicker) createUI() {
 	// are distinct concepts.
 	upBtn := widget.NewButtonWithIcon("Up", theme.MoveUpIcon(), cfp.goUp)
 	upBtn.Importance = widget.LowImportance
-	homeBtn := widget.NewButtonWithIcon("Home", theme.HomeIcon(), func() {
+	homeLabel, homeIcon := "Home", theme.HomeIcon()
+	homeAction := func() {
 		home, _ := os.UserHomeDir()
 		cfp.browser.loadFS(home)
-	})
+	}
+	if cfp.virtualOnly {
+		homeLabel, homeIcon = "Root", theme.StorageIcon()
+		homeAction = func() { cfp.browser.loadVFS("") }
+	}
+	homeBtn := widget.NewButtonWithIcon(homeLabel, homeIcon, homeAction)
 	homeBtn.Importance = widget.LowImportance
 	refreshBtn := widget.NewButtonWithIcon("", theme.ViewRefreshIcon(), cfp.browser.refreshCurrentDirectory)
 	refreshBtn.Importance = widget.LowImportance
@@ -264,6 +288,10 @@ func (cfp *CustomFilePicker) createUI() {
 	// in the main editor's browser, so pinning here benefits both.
 	var favBtn *widget.Button
 	syncFavBtn := func() {
+		if cfp.virtualOnly {
+			favBtn.Disable()
+			return
+		}
 		if cfp.browser.currentPK3 != "" || cfp.browser.currentDir == nil || cfp.browser.currentDir.Path == "" {
 			favBtn.Disable()
 			favBtn.SetIcon(theme.FolderOpenIcon())
@@ -298,10 +326,15 @@ func (cfp *CustomFilePicker) createUI() {
 	// refresh the breadcrumb and favorite toggle through the browser.
 	cfp.syncFavBtn = syncFavBtn
 
+	rightNav := container.NewHBox(sortLabel, sortSelect)
+	if !cfp.virtualOnly {
+		rightNav.Add(favBtn)
+	}
+	rightNav.Add(viewBtn)
 	topNav := container.NewBorder(
 		nil, nil,
 		container.NewHBox(upBtn, homeBtn, refreshBtn),
-		container.NewHBox(sortLabel, sortSelect, favBtn, viewBtn),
+		rightNav,
 		container.NewScroll(cfp.pathBar),
 	)
 
@@ -356,6 +389,8 @@ func (cfp *CustomFilePicker) refreshPathBar() {
 				})
 			}
 		}
+	} else if cfp.virtualOnly {
+		addButton("All Game Data", theme.StorageIcon(), func() { cfp.browser.loadVFS("") })
 	} else if dir := cfp.browser.currentDir; dir != nil {
 		path := filepath.Clean(dir.Path)
 		volume := filepath.VolumeName(path)
@@ -384,6 +419,13 @@ func (cfp *CustomFilePicker) refreshPathBar() {
 // favorites + PK3s. Called at init and whenever favorites change so
 // a newly-pinned folder shows up in the sidebar immediately.
 func (cfp *CustomFilePicker) rebuildSources() {
+	if cfp.virtualOnly {
+		cfp.sources = []string{"All Game Data (Virtual)"}
+		if cfp.sidebar != nil {
+			cfp.sidebar.Refresh()
+		}
+		return
+	}
 	homeDir, _ := os.UserHomeDir()
 
 	cfp.sources = []string{"All Game Data (Virtual)", "Home", "Computer"}
@@ -433,6 +475,10 @@ func (cfp *CustomFilePicker) rebuildSources() {
 // various "up" cases (FS, PK3, VFS) so the button does the right thing
 // regardless of where the user is.
 func (cfp *CustomFilePicker) goUp() {
+	if cfp.virtualOnly && cfp.browser.currentPK3 != "VFS" {
+		cfp.browser.loadVFS("")
+		return
+	}
 	cfp.browser.goUp()
 }
 
@@ -446,7 +492,16 @@ func (cfp *CustomFilePicker) Show(onSelected func(*AssetEntry)) {
 
 	// Default to Home or Computer if nothing loaded
 	if cfp.browser.currentDir == nil {
-		if cfp.initialPath != "" {
+		if cfp.virtualOnly {
+			initial := cfp.initialPath
+			if filepath.IsAbs(initial) || strings.HasPrefix(strings.ReplaceAll(initial, "\\", "/"), "/") || strings.Contains(initial, ":") || hasParentPathSegment(initial) {
+				initial = ""
+			}
+			cfp.browser.navigateToPath(initial)
+			if cfp.browser.currentPK3 != "VFS" {
+				cfp.browser.loadVFS("")
+			}
+		} else if cfp.initialPath != "" {
 			if filepath.IsAbs(cfp.initialPath) {
 				cfp.browser.loadFS(cfp.initialPath)
 			} else {
@@ -458,4 +513,13 @@ func (cfp *CustomFilePicker) Show(onSelected func(*AssetEntry)) {
 		}
 	}
 	cfp.refreshPathBar()
+}
+
+func hasParentPathSegment(value string) bool {
+	for _, segment := range strings.Split(strings.ReplaceAll(value, "\\", "/"), "/") {
+		if segment == ".." {
+			return true
+		}
+	}
+	return false
 }

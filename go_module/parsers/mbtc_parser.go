@@ -1232,7 +1232,11 @@ func ValidateSerialized(format ConfigFormat, content, key, value string) error {
 		if err := validateFirstDefinitionSerialized(format, content, key, value); err != nil {
 			return err
 		}
-		return validateSABSemantics(content)
+		saber, err := ParseSAB(content)
+		if err != nil {
+			return fmt.Errorf("re-parse failed: %w", err)
+		}
+		return ValidateSABSemantics(saber)
 	case FormatVEH:
 		if err := validateFirstDefinitionSerialized(format, content, key, value); err != nil {
 			return err
@@ -1384,13 +1388,12 @@ func validateFirstDefinitionSerialized(format ConfigFormat, content, key, value 
 	return fmt.Errorf("validation failed: no definition after edit")
 }
 
-// validateSABSemantics checks what a saber consumer requires beyond the
+// ValidateSABSemantics checks what a saber consumer requires beyond the
 // edited key: a real blade layout and a saber type (mirrors the editor's
 // own validation and BG_ParseSaberFile expectations).
-func validateSABSemantics(content string) error {
-	saber, err := ParseSAB(content)
-	if err != nil {
-		return fmt.Errorf("re-parse failed: %w", err)
+func ValidateSABSemantics(saber *SaberData) error {
+	if saber == nil {
+		return fmt.Errorf("semantic validation: missing saber definition")
 	}
 	if saber.NumBlades < 1 {
 		return fmt.Errorf("semantic validation: numBlades %d — a saber needs at least one blade", saber.NumBlades)

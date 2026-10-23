@@ -209,7 +209,10 @@ func (w *AttributeToggleWidget) createUI(onInfo func(string, string), iconRes fy
 		Padded:      false,
 	})
 
-	hover := NewHoverContainer(w.tile, func() {
+	// Fyne's canvas walker only descends concrete *fyne.Container values or
+	// widgets. TilePanelWidget embeds a container for dynamic accent updates,
+	// but passing that wrapper here makes the tile body an undrawn leaf.
+	hover := NewHoverContainer(w.tile.Container, func() {
 		if onInfo != nil {
 			onInfo(w.ID, "")
 		}

@@ -86,6 +86,10 @@ type SourcePanel struct {
 	// create, replace, or delete the shared document draft.
 	settingText bool
 
+	// Advanced mode owns live analysis. While deferred, mirror/store updates
+	// display the supplied diagnostic without invoking the format parser again.
+	deferValidation bool
+
 	// onPopOut, if set, opens this panel's content in a new window
 	// for dual-monitor workflows. The pop-out button next to the
 	// collapse arrow invokes it; App wires this to a method that
@@ -151,16 +155,12 @@ func NewSourcePanel(a *App) *SourcePanel {
 		}
 	}
 
-	// Stack wraps both views; Show/Hide flips which is visible.
-	// SetMinSize on each inner Scroll enforces a floor of 240px so
-	// the HSplit rail can't drag the source pane so narrow that
-	// TextWrapBreak degrades to one-character-per-line (the "vertical
-	// alphabet soup" case). 240px is about 30 monospace chars at
-	// body size — enough for most tokens to lay out meaningfully.
+	// Stack wraps both views; Show/Hide flips which is visible. Do not set a
+	// width floor here: child minimums propagate through nested splits and can
+	// make the native window wider than the physical viewport. No-wrap source
+	// remains readable through the scroll containers at narrow widths.
 	highlightScroll := container.NewScroll(sp.highlighted)
-	highlightScroll.SetMinSize(fyne.NewSize(240, 0))
 	editorScroll := container.NewScroll(sp.editor)
-	editorScroll.SetMinSize(fyne.NewSize(240, 0))
 	sp.viewHost = container.NewStack(highlightScroll, editorScroll)
 	sp.viewHost.Objects[1].Hide() // editor hidden initially
 
@@ -220,7 +220,7 @@ func NewSourcePanel(a *App) *SourcePanel {
 	// header with one divider keeps it distinct without competing with
 	// the editor or repeating the info panel's card treatment.
 	chrome := container.NewPadded(container.NewVBox(headerRow, actionRow, validationRow))
-	topBlock := container.NewVBox(chrome, NewAccentRule())
+	topBlock := container.NewVBox(container.NewHScroll(chrome), NewAccentRule())
 
 	sp.container = container.NewBorder(topBlock, nil, nil, nil, sp.viewHost)
 	return sp
@@ -245,6 +245,20 @@ func (sp *SourcePanel) Close() {
 // SetOnPopOut wires the pop-out button. Pass nil to disable (used
 // by mirror panels so they don't spawn their own pop-outs).
 func (sp *SourcePanel) SetOnPopOut(cb func()) { sp.onPopOut = cb }
+
+// SetDeferredValidation prevents a hidden Guided source surface from parsing
+// Advanced drafts a second time. Changing this flag never validates by itself,
+// so presentation switches remain zero-reparse operations.
+func (sp *SourcePanel) SetDeferredValidation(deferValidation bool) {
+	if sp == nil {
+		return
+	}
+	sp.deferValidation = deferValidation
+	if d, ok := sp.drafts.Get(sp.editorRef); ok {
+		sp.lastParseErr = d.ParseErr
+		sp.showStoredValidation()
+	}
+}
 
 // SetActiveEditor tells the panel which editor to track. Safe to
 // pass nil.
@@ -305,9 +319,14 @@ func (sp *SourcePanel) applyDraft(d SourceDraft) {
 	sp.updateByteCount(d.Text)
 	sp.highlighted.Segments = highlightedSegments(d.Text)
 	sp.highlighted.Refresh()
-	// Reassess through the active parser so recovered/older drafts never
-	// become "valid" merely because their stored diagnostic was blank.
-	sp.validateEdits(d.Text)
+	// Advanced already supplied analysis for this exact draft. Avoid a second
+	// parser pass in the hidden Guided surface; ordinary/recovered Guided drafts
+	// retain the original defensive reassessment.
+	if sp.deferValidation {
+		sp.showStoredValidation()
+	} else {
+		sp.validateEdits(d.Text)
+	}
 	if d.EditMode != sp.inEditMode {
 		sp.setEditMode(d.EditMode)
 	}
@@ -442,7 +461,11 @@ func (sp *SourcePanel) setEditMode(on bool) {
 		sp.applyBtn.Show()
 		sp.revertBtn.Show()
 		sp.validationRow.Show()
-		sp.validateEdits(sp.editor.Text)
+		if sp.deferValidation {
+			sp.showStoredValidation()
+		} else {
+			sp.validateEdits(sp.editor.Text)
+		}
 	} else {
 		sp.viewHost.Objects[1].Hide()
 		sp.viewHost.Objects[0].Show()
@@ -485,6 +508,25 @@ func (sp *SourcePanel) validateEdits(src string) {
 		msg = msg[:240] + "…"
 	}
 	sp.lastParseErr = msg
+	sp.validationIcon.SetResource(theme.ErrorIcon())
+	sp.validationMsg.SetText("Parse error: " + msg)
+	sp.applyBtn.Disable()
+}
+
+func (sp *SourcePanel) showStoredValidation() {
+	if sp.validationIcon == nil || sp.validationMsg == nil || sp.applyBtn == nil {
+		return
+	}
+	if sp.lastParseErr == "" {
+		sp.validationIcon.SetResource(theme.ConfirmIcon())
+		sp.validationMsg.SetText("No stored blocking error — Apply performs final validation.")
+		sp.applyBtn.Enable()
+		return
+	}
+	msg := sp.lastParseErr
+	if len(msg) > 240 {
+		msg = msg[:240] + "…"
+	}
 	sp.validationIcon.SetResource(theme.ErrorIcon())
 	sp.validationMsg.SetText("Parse error: " + msg)
 	sp.applyBtn.Disable()

@@ -58,6 +58,13 @@ description slots. Rank modifiers (`rankHealth`, `rankArmor`, and other `rank*`
 keys) have one canonical value rather than competing copies in advanced fields.
 Review Source before saving changes to unusual or repeated keys.
 
+In character files, **Attributes** controls abilities and their levels;
+**Inventory** controls starting weapons and items. **Flags** lists passive class
+traits separately, with the technical identifier beneath each readable name.
+Enforcer, Spy, and Astromech are excluded from available class choices;
+Astrodroid remains available. Opening a file that already uses a hidden class
+does not renumber or replace its stored identifier.
+
 Configured rank-cost totals are authoring previews, not verified purchase or
 specialization mechanics. Defensive pool displays show configured values;
 energy, explosive, and melee EHP remain **Unverified**, without inferred
@@ -65,9 +72,14 @@ class/attribute damage-reduction bonuses.
 
 ## 3. Use the form and Source together
 
-The right-hand **Source** panel displays the current form's exact would-save
-text. Use its collapse/expand control to hide or restore it, or
-`View -> Pop Out Source Panel` for a separate window.
+Use the **Guided / Advanced** controls above the document tabs to choose your
+editing style. The choice is remembered. Both presentations share one document
+and one pending Source draft; switching modes does not apply, reformat, or
+discard text. Guided continues to show the last explicitly applied form state.
+
+In Guided mode, the right-hand **Source** panel displays the current form's exact
+would-save text, or its pending draft. Use its collapse/expand control to hide
+or restore it, or `View -> Pop Out Source Panel` for a separate window.
 
 - **Copy** copies the currently displayed source.
 - **Edit** changes to a plain-text editor and pauses form-driven replacement of
@@ -85,6 +97,39 @@ text. Use its collapse/expand control to hide or restore it, or
 If you press Save while a Source draft exists, Foundry asks whether to apply it
 before beginning save review. A parse error leaves the draft available for
 correction. Canceling leaves both the document and draft unchanged.
+
+### Advanced text editing
+
+Advanced provides a full-width editable source view for `.mbch`, `.sab`, `.veh`,
+and `.siege` documents, with line numbers and syntax colours. Document tabs,
+pending drafts, cursor position, and local text history stay separate per file.
+The team composer remains a separate tool.
+
+- **Complete** offers context-aware field, flag, enum, and asset suggestions.
+  `Ctrl-Space` also requests completion where the operating system permits it;
+  choose a suggestion explicitly to change the source.
+- **Find/replace** supports case-sensitive matching, previous/next matches,
+  individual replacements, and Replace All. `Command/Ctrl-F` opens Find;
+  `Command/Ctrl-H` opens Replace.
+- `Tab` / `Shift-Tab` indent or dedent; `Command/Ctrl-/` toggles line comments.
+  Enter keeps the current indentation. These are undoable text edits, not an
+  automatic formatter.
+- Line/column diagnostics distinguish **errors** from **warnings**. Select a
+  diagnostic to locate it; matching-bracket markers help inspect structure.
+  Unknown custom fields are retained rather than silently removed.
+- **Apply to Guided** explicitly updates the form from a valid draft. Errors
+  keep the draft editable and block Apply; switching to Guided does not bypass
+  this guard. Save and Save As still use the reviewed-save workflow below.
+- Choose a syntax preset or custom token/background/selection colours in
+  `Edit -> Preferences`. Syntax colours are independent of the application
+  theme; custom colours use `#RRGGBB` or `#RRGGBBAA`.
+- **Insert Asset** uses configured game/loose assets and inserts a portable
+  logical reference at the retained selection. Compatible image/shader choices
+  offer a still-image preview; this is not a 3D or engine-rendering preview.
+
+Diagnostics check known syntax and format rules, not every engine behavior.
+A clean editor is **not** a guarantee against runtime crashes; test the result
+in the intended MBII engine version.
 
 ## 4. Undo, redo, and close safely
 

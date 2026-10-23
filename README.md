@@ -1,8 +1,8 @@
 # MBII Foundry
 
-A desktop editor for Movie Battles II text files, with visual forms, a live
-Source panel, and asset lookup from your local game installation. Local editing
-requires **no account or token**.
+A desktop editor for Movie Battles II text files. Choose **Guided** forms or an
+**Advanced** text editor with syntax colours, completion, and live diagnostics.
+Both use the same document and local assets. Editing needs **no account or token**.
 
 **[Download from Releases](https://github.com/Frenzeh/mbii-foundry/releases)**
 · [User guide](USER_GUIDE.md) · [Build from source](go_module/README.md#run-from-source)
@@ -41,8 +41,9 @@ launch. See [release trust details](go_module/README.md#release-trust-boundary).
    You can change these machine-local paths later in `Edit -> Preferences`.
 2. **Open a file** with `File -> Open File`, or start a character with
    `File -> New Character`.
-3. **Edit the form** and watch the Source panel. For direct text edits, choose
-   **Edit** in Source, then **Apply** once the draft parses successfully.
+3. **Choose your editing style.** Guided provides forms and a Source panel;
+   Advanced gives the text the full editor width. Switching modes keeps your
+   draft, even if it has errors. Use **Apply to Guided** when it is ready.
 4. **Save and review.** `File -> Save` or `Save As` shows the current file beside
    the exact text to be written. Check that text, especially comments and unusual
    fields, before approving. Replacing an existing file requires a verified backup;

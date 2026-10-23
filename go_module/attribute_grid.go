@@ -277,8 +277,12 @@ func (ag *AttributeGrid) createUI() {
 			ag.Refresh()
 		}
 
-		scroll := container.NewVScroll(content)
-		ag.container = container.NewBorder(ag.search, nil, nil, nil, scroll)
+		hint := widget.NewLabelWithStyle(
+			"Attributes set class abilities and upgrade levels. Choose starting weapons and carried items in Inventory.",
+			fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
+		hint.Wrapping = fyne.TextWrapWord
+		header := container.NewVBox(ag.search, hint)
+		ag.container = container.NewVBox(header, content)
 	}
 
 	filterLower := strings.ToLower(ag.filter)

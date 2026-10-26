@@ -19,8 +19,14 @@
 set -euo pipefail
 
 # --- Expected identity ---
+# Either address is accepted: the original ProtonMail identity and the
+# GitHub noreply identity that the fleet now commits with. Both resolve to
+# the same GitHub account (Frenzeh), so GitHub attributes them identically.
 EXPECTED_NAME="Frenzy"
-EXPECTED_EMAIL="elitewarriors@protonmail.com"
+EXPECTED_EMAILS=(
+    "elitewarriors@protonmail.com"
+    "57467287+Frenzeh@users.noreply.github.com"
+)
 EXPECTED_REMOTE_PATTERN='github\.com.*Frenzeh/mbii-foundry(\.git)?$'
 
 # --- Actual identity ---
@@ -50,9 +56,17 @@ if [[ "$actual_name" != "$EXPECTED_NAME" ]]; then
          "Fix: git config user.name '$EXPECTED_NAME'"
 fi
 
-if [[ "$actual_email" != "$EXPECTED_EMAIL" ]]; then
-    fail "Git user.email is '$actual_email' — expected '$EXPECTED_EMAIL'." \
-         "Fix: git config user.email '$EXPECTED_EMAIL'"
+email_ok=false
+for expected in "${EXPECTED_EMAILS[@]}"; do
+    if [[ "$actual_email" == "$expected" ]]; then
+        email_ok=true
+        break
+    fi
+done
+if [[ "$email_ok" != true ]]; then
+    fail "Git user.email is '$actual_email' — expected one of:" \
+         "$(printf '  %s\n' "${EXPECTED_EMAILS[@]}")" \
+         "Fix: git config user.email '${EXPECTED_EMAILS[0]}'"
 fi
 
 # --- Remote check ---

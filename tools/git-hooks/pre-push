@@ -65,7 +65,7 @@ for expected in "${EXPECTED_EMAILS[@]}"; do
 done
 if [[ "$email_ok" != true ]]; then
     fail "Git user.email is '$actual_email' — expected one of:" \
-         "$(printf '  %s\n' "${EXPECTED_EMAILS[@]}")" \
+         "${EXPECTED_EMAILS[@]/#/  }" \
          "Fix: git config user.email '${EXPECTED_EMAILS[0]}'"
 fi
 

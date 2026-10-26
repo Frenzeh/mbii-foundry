@@ -93,7 +93,16 @@ func (a *App) showWorkspaceSetupWizard() {
 				}
 				a.config.TextAssetsPath = targetPath
 				a.saveConfig()
-				a.githubManager = manager
+				// Credentials can change in the non-modal Connect window during setup.
+				if a.config.GitHubToken != "" && a.config.GitHubToken == manager.token {
+					a.githubManager = manager
+				} else {
+					a.refreshGitHubConnection()
+					if a.githubManager != nil {
+						// The upstream branch is reusable; the previous account identity is not.
+						a.githubManager.UpstreamBranch = manager.UpstreamBranch
+					}
+				}
 				logLabel.SetText(status)
 				dialog.ShowInformation("Success", "Workspace initialized successfully!", a.mainWindow)
 				if setupWindow != nil {

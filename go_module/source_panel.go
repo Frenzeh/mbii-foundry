@@ -49,9 +49,10 @@ type SourcePanel struct {
 	// Live-parse validation feedback — only visible in edit mode.
 	// Updates on every keystroke with either a success tick or the
 	// parser's error message. Apply is disabled when the parse fails.
-	validationIcon *widget.Icon
-	validationMsg  *widget.Label
-	validationRow  *fyne.Container
+	validationIcon    *widget.Icon
+	validationMsg     *widget.Label
+	validationDetails *TooltipButton
+	validationRow     *fyne.Container
 
 	container *fyne.Container
 
@@ -121,6 +122,8 @@ func NewSourcePanel(a *App) *SourcePanel {
 	sp.header = widget.NewLabelWithStyle("SOURCE", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	sp.byteCount = widget.NewLabel("")
 	sp.byteCount.TextStyle = fyne.TextStyle{Monospace: true}
+	sp.byteCount.Wrapping = fyne.TextWrapWord
+	sp.byteCount.Hide()
 
 	// Highlighted view (default). TextWrapOff: long lines extend past
 	// the right edge and the bi-directional Scroll wrapper provides
@@ -208,19 +211,31 @@ func NewSourcePanel(a *App) *SourcePanel {
 	sp.validationMsg = widget.NewLabel("")
 	sp.validationMsg.TextStyle = fyne.TextStyle{Monospace: true}
 	sp.validationMsg.Wrapping = fyne.TextWrapWord
-	validationRow := container.NewHBox(sp.validationIcon, sp.validationMsg)
+	sp.validationDetails = NewTooltipButton("", theme.InfoIcon(), func() {
+		if sp.app == nil || sp.app.mainWindow == nil || sp.lastParseErr == "" {
+			return
+		}
+		message := widget.NewLabel(sp.lastParseErr)
+		message.Wrapping = fyne.TextWrapWord
+		d := dialog.NewCustom("Source diagnostic", "Close", container.NewVScroll(message), sp.app.mainWindow)
+		d.Resize(sourceDetailsSize(sp.app.mainWindow.Canvas().Size()))
+		d.Show()
+	}, "Show the complete source diagnostic")
+	sp.validationDetails.Importance = widget.LowImportance
+	sp.validationDetails.Hide()
+	validationRow := container.NewBorder(nil, nil, sp.validationIcon, sp.validationDetails, sp.validationMsg)
 	validationRow.Hide()
 	sp.validationRow = validationRow
 
 	headerActions := container.NewHBox(copyBtn, popOutBtn, collapseBtn)
-	headerRow := container.NewBorder(nil, nil, sp.header, headerActions, sp.byteCount)
-	actionRow := container.NewHBox(sp.editToggle, sp.applyBtn, sp.revertBtn)
+	headerRow := container.NewBorder(nil, nil, nil, headerActions, sp.header)
+	actionRow := newSourceActionRow(sp.editToggle, sp.applyBtn, sp.revertBtn)
 
 	// Source is utility chrome, not a promotional card. A flat padded
 	// header with one divider keeps it distinct without competing with
 	// the editor or repeating the info panel's card treatment.
-	chrome := container.NewPadded(container.NewVBox(headerRow, actionRow, validationRow))
-	topBlock := container.NewVBox(container.NewHScroll(chrome), NewAccentRule())
+	chrome := container.NewPadded(container.NewVBox(headerRow, sp.byteCount, actionRow, validationRow))
+	topBlock := container.NewVBox(chrome, NewAccentRule())
 
 	sp.container = container.NewBorder(topBlock, nil, nil, nil, sp.viewHost)
 	return sp
@@ -367,7 +382,7 @@ func (sp *SourcePanel) refreshFromProvider() {
 		sp.setEditorText("")
 		sp.lastRenderedSource = ""
 		sp.userDirty = false
-		sp.byteCount.SetText("")
+		sp.updateByteCount("")
 		return
 	}
 
@@ -499,17 +514,15 @@ func (sp *SourcePanel) validateEdits(src string) {
 		sp.lastParseErr = ""
 		sp.validationIcon.SetResource(theme.ConfirmIcon())
 		sp.validationMsg.SetText("Parses cleanly — Apply will update the form.")
+		sp.validationDetails.Hide()
 		sp.applyBtn.Enable()
 		return
 	}
-	// Clip overly long errors so the panel doesn't blow up vertically.
-	msg := err.Error()
-	if len(msg) > 240 {
-		msg = msg[:240] + "…"
-	}
-	sp.lastParseErr = msg
+	// Keep the complete error in the draft; only the rail preview is bounded.
+	sp.lastParseErr = err.Error()
 	sp.validationIcon.SetResource(theme.ErrorIcon())
-	sp.validationMsg.SetText("Parse error: " + msg)
+	sp.validationMsg.SetText("Parse error: " + sourceDiagnosticPreview(sp.lastParseErr))
+	sp.validationDetails.Show()
 	sp.applyBtn.Disable()
 }
 
@@ -520,16 +533,86 @@ func (sp *SourcePanel) showStoredValidation() {
 	if sp.lastParseErr == "" {
 		sp.validationIcon.SetResource(theme.ConfirmIcon())
 		sp.validationMsg.SetText("No stored blocking error — Apply performs final validation.")
+		sp.validationDetails.Hide()
 		sp.applyBtn.Enable()
 		return
 	}
-	msg := sp.lastParseErr
-	if len(msg) > 240 {
-		msg = msg[:240] + "…"
-	}
 	sp.validationIcon.SetResource(theme.ErrorIcon())
-	sp.validationMsg.SetText("Parse error: " + msg)
+	sp.validationMsg.SetText("Parse error: " + sourceDiagnosticPreview(sp.lastParseErr))
+	sp.validationDetails.Show()
 	sp.applyBtn.Disable()
+}
+
+const sourceDiagnosticPreviewRunes = 160
+
+func sourceDiagnosticPreview(message string) string {
+	end := len(message)
+	count := 0
+	for offset := range message {
+		if count == sourceDiagnosticPreviewRunes {
+			end = offset
+			break
+		}
+		count++
+	}
+	preview := message[:end]
+	// A bounded multiline error must not become hundreds of rail rows.
+	// Normalize only the displayed prefix; the full detail remains untouched.
+	if strings.ContainsAny(preview, "\r\n\t") {
+		preview = strings.Join(strings.Fields(preview), " ")
+	}
+	if end < len(message) {
+		return preview + "…"
+	}
+	return preview
+}
+
+func sourceDetailsSize(viewport fyne.Size) fyne.Size {
+	return fyne.NewSize(fyne.Min(720, viewport.Width*0.9), fyne.Min(440, viewport.Height*0.8))
+}
+
+// Source actions wrap rather than scrolling out of reach. Unlike RowWrap's
+// cached occupied width, the minimum stays at the widest single control when
+// a rail is narrowed again. Measuring and laying out rows allocate no slices.
+type sourceActionRowLayout struct {
+	width float32
+}
+
+func newSourceActionRow(objects ...fyne.CanvasObject) *fyne.Container {
+	return container.New(&sourceActionRowLayout{}, objects...)
+}
+
+func (l *sourceActionRowLayout) arrange(objects []fyne.CanvasObject, width float32, place bool) fyne.Size {
+	padding := theme.Padding()
+	var x, y, rowHeight, minWidth float32
+	for _, object := range objects {
+		if !object.Visible() {
+			continue
+		}
+		size := object.MinSize()
+		minWidth = fyne.Max(minWidth, size.Width)
+		if x > 0 && width > 0 && x+size.Width > width {
+			x = 0
+			y += rowHeight + padding
+			rowHeight = 0
+		}
+		if place {
+			object.Move(fyne.NewPos(x, y))
+			object.Resize(size)
+		}
+		x += size.Width + padding
+		rowHeight = fyne.Max(rowHeight, size.Height)
+	}
+	return fyne.NewSize(minWidth, y+rowHeight)
+}
+
+func (l *sourceActionRowLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+	l.width = size.Width
+	l.arrange(objects, size.Width, true)
+}
+
+func (l *sourceActionRowLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
+	return l.arrange(objects, l.width, false)
 }
 
 func validateSourceStructure(src string) error {
@@ -606,8 +689,10 @@ func (sp *SourcePanel) updateByteCount(src string) {
 	n := len(src)
 	if sp.provider == nil || n == 0 {
 		sp.byteCount.SetText("")
+		sp.byteCount.Hide()
 		return
 	}
+	sp.byteCount.Show()
 	if !sp.editorIsMBCH() {
 		sp.byteCount.SetText(fmt.Sprintf("%d bytes", n))
 		return

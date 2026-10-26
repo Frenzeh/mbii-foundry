@@ -8,9 +8,8 @@ package main
 //
 // A collapse/expand toggle sits pinned to the right edge of the header.
 // When the sidebar is expanded, the toggle uses a "push-to-left" icon;
-// collapsed, it uses "pull-from-left". The toolbar surfaces the same
-// toggle (for when the sidebar is fully hidden and there's no header
-// to click), keeping the control findable in every state.
+// collapsed, it uses "pull-from-left". A collapsed edge rail keeps the
+// control findable when the sidebar header is hidden.
 //
 // This replaces the old vertical icon strip (VS Code activity bar
 // style). That pattern was unintuitive — users didn't know the icons
@@ -120,7 +119,8 @@ func (s *SidebarHeader) CreateRenderer() fyne.WidgetRenderer {
 	}
 	s.collapseBtn = newActivityPill(collapseItem, s, true)
 
-	row := container.NewBorder(nil, nil, s.collapseBtn, nil, tabRow)
+	s.SetCollapsed(s.collapsed)
+	row := container.NewBorder(nil, nil, nil, s.collapseBtn, tabRow)
 	return widget.NewSimpleRenderer(container.NewVBox(row, NewAccentRule()))
 }
 
@@ -145,7 +145,10 @@ type activityPill struct {
 }
 
 func newActivityPill(item *ActivityItem, parent *SidebarHeader, isToggle bool) *activityPill {
-	p := &activityPill{item: item, parent: parent, isToggle: isToggle}
+	p := &activityPill{
+		item: item, parent: parent, isToggle: isToggle,
+		active: !isToggle && parent.activeID == item.ID,
+	}
 	p.ExtendBaseWidget(p)
 	return p
 }
@@ -170,10 +173,9 @@ func (p *activityPill) CreateRenderer() fyne.WidgetRenderer {
 }
 
 func (p *activityPill) MinSize() fyne.Size {
-	if p.isToggle {
-		return fyne.NewSize(36, 36)
-	}
-	return fyne.NewSize(64, 36)
+	// Icon-only pills use the same target as the collapse control. The
+	// grid expands them evenly; hidden labels must not pin a narrow rail.
+	return fyne.NewSize(36, 36)
 }
 
 type activityPillLayout struct {

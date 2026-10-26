@@ -125,6 +125,7 @@ func (e *VEHEditor) createUI() {
 		widget.NewFormItem("Model", container.NewBorder(nil, nil, nil, browseModelBtn, e.modelEntry)),
 		widget.NewFormItem("Skin", e.skinEntry),
 	)
+	identityForm.Orientation = widget.Vertical
 
 	e.speedEntry = NewInputEntry()
 	e.speedEntry.OnChanged = func(s string) { dirty() }
@@ -147,6 +148,7 @@ func (e *VEHEditor) createUI() {
 		widget.NewFormItem("Strafe %", e.strafeEntry),
 		widget.NewFormItem("Braking", e.brakingEntry),
 	)
+	statsForm.Orientation = widget.Vertical
 
 	e.armorEntry = NewInputEntry()
 	e.armorEntry.OnChanged = func(s string) { dirty() }
@@ -160,6 +162,7 @@ func (e *VEHEditor) createUI() {
 		widget.NewFormItem("Shields", e.shieldsEntry),
 		widget.NewFormItem("Weapons", e.weaponsEntry),
 	)
+	combatForm.Orientation = widget.Vertical
 
 	e.sourceView = widget.NewRichText()
 	e.sourceView.Wrapping = fyne.TextWrapOff
@@ -195,10 +198,11 @@ func (e *VEHEditor) createUI() {
 	e.defSelect.PlaceHolder = "(single definition)"
 	e.defSummary = widget.NewLabel("")
 	e.defSummary.TextStyle = fyne.TextStyle{Italic: true}
+	e.defSummary.Wrapping = fyne.TextWrapBreak
 	defBar := NewFormSection("Active definition", "Choose which block in this file is being edited.",
-		container.NewBorder(nil, nil, nil, e.defSummary, e.defSelect))
+		newFormColumns(1, e.defSelect, e.defSummary))
 
-	e.container = container.NewBorder(container.NewPadded(defBar), nil, nil, nil, tabs)
+	e.container = newEditorContent(container.NewPadded(defBar), tabs)
 	e.refreshDefinitionBar()
 }
 
@@ -570,7 +574,7 @@ func (e *VEHEditor) refreshDefinitionBar() {
 	}
 	e.defSelect.Options = e.defNames
 	e.defSelect.SetSelected(e.defNames[e.session.SelectedDef])
-	e.defSummary.SetText(fmt.Sprintf("editing %d of %d", e.session.SelectedDef+1, len(e.defNames)))
+	e.defSummary.SetText(fmt.Sprintf("editing %d of %d\n%s", e.session.SelectedDef+1, len(e.defNames), e.defNames[e.session.SelectedDef]))
 	e.defSelect.Refresh()
 }
 

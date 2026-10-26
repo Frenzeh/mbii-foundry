@@ -81,6 +81,13 @@ In Guided mode, the right-hand **Source** panel displays the current form's exac
 would-save text, or its pending draft. Use its collapse/expand control to hide
 or restore it, or `View -> Pop Out Source Panel` for a separate window.
 
+Sidebars, form sections, and action rows reflow as panes narrow. Long field
+values remain editable by moving the caret or scrolling horizontally inside the
+field; explanatory text wraps. Collapsing and reopening a rail preserves its
+saved split ratio, and the collapsed rail can also be activated from the keyboard.
+Long document-tab captions use an ellipsis without changing the filename. The
+selected document's full title remains available in the native window title.
+
 - **Copy** copies the currently displayed source.
 - **Edit** changes to a plain-text editor and pauses form-driven replacement of
   that text.
@@ -213,6 +220,11 @@ The **Library/Assets** activity indexes:
 
 Search and browse logical game paths. Double-clicking a compatible asset in a
 picker inserts its logical path into the focused field.
+
+The file picker keeps navigation actions separate from its horizontally
+scrollable breadcrumbs. The copy button beside the breadcrumbs copies the full
+current location. Long grid filenames show an ellipsis rather than a cut glyph;
+switch to **List** to inspect full names before opening or selecting an asset.
 
 For character models and skins, the small diagnostic button beside the field
 reports one of these conditions:

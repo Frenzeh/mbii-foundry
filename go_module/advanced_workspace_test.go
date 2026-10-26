@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"strings"
 	"testing"
+	"unicode/utf8"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -175,38 +176,6 @@ func TestAdvancedCodeForwardsUnhandledApplicationShortcuts(t *testing.T) {
 	}
 }
 
-func TestGuidedPendingDraftBannerKeepsStatusAboveActions(t *testing.T) {
-	ui := test.NewApp()
-	ui.Settings().SetTheme(&FoundryTheme{})
-	t.Cleanup(ui.Quit)
-	window := ui.NewWindow("guided banner")
-	t.Cleanup(window.Close)
-	a := &App{
-		fyneApp: ui, mainWindow: window,
-		sourceDrafts: NewSourceDraftStore(), editors: make(map[*container.TabItem]Editor),
-	}
-	a.docTabs = container.NewDocTabs()
-	editor := NewSABEditor(a)
-	a.sourceDrafts.Set(editor, SourceDraft{Text: "broken {", ParseErr: "unclosed block", EditMode: true})
-	workspace := NewAdvancedWorkspace(a)
-	t.Cleanup(workspace.Close)
-	workspace.SetActiveEditor(editor)
-	workspace.refreshGuidedBanner()
-
-	workspace.guidedBanner.Resize(fyne.NewSize(420, 100))
-	content, ok := workspace.guidedBanner.Objects[0].(*fyne.Container)
-	if !ok || len(content.Objects) != 2 {
-		t.Fatalf("guided banner does not expose separate status and action rows: %#v", workspace.guidedBanner.Objects)
-	}
-	status, actions := content.Objects[0], content.Objects[1]
-	if actions.Position().Y < status.Position().Y+status.Size().Height {
-		t.Fatalf("guided banner actions overlap status: status=%v/%v actions=%v/%v", status.Position(), status.Size(), actions.Position(), actions.Size())
-	}
-	if !workspace.guidedLabel.Visible() || workspace.guidedLabel.Text == "" {
-		t.Fatal("guided pending-draft status was hidden to avoid overlap")
-	}
-}
-
 func TestAdvancedWorkspaceRetainsPerDocumentBufferHistory(t *testing.T) {
 	ui := test.NewApp()
 	ui.Settings().SetTheme(&FoundryTheme{})
@@ -270,7 +239,8 @@ func TestSourcePanelDeferredValidationPreservesAdvancedDiagnostic(t *testing.T) 
 	a := &App{fyneApp: ui, mainWindow: ui.NewWindow("deferred source"), sourceDrafts: NewSourceDraftStore()}
 	t.Cleanup(a.mainWindow.Close)
 	editor := NewSABEditor(a)
-	draft := SourceDraft{Text: "malformed {", ParseErr: "advanced diagnostic sentinel", EditMode: true}
+	message := strings.Repeat("é", 119) + "🙂界 " + strings.Repeat("diagnostic path/λ/", 20)
+	draft := SourceDraft{Text: "malformed {", ParseErr: message, EditMode: true}
 	a.sourceDrafts.Set(editor, draft)
 	panel := NewSourcePanel(a)
 	t.Cleanup(panel.Close)
@@ -282,6 +252,37 @@ func TestSourcePanelDeferredValidationPreservesAdvancedDiagnostic(t *testing.T) 
 	}
 	if got, ok := a.sourceDrafts.Get(editor); !ok || got != draft {
 		t.Fatalf("hidden Guided panel rewrote Advanced draft: %+v ok=%v", got, ok)
+	}
+	if !utf8.ValidString(panel.validationMsg.Text) {
+		t.Fatalf("diagnostic preview splits a Unicode rune: %q", panel.validationMsg.Text)
+	}
+	if !strings.Contains(panel.validationMsg.Text, "…") || !panel.validationDetails.Visible() {
+		t.Fatal("bounded diagnostic preview has no full-detail action")
+	}
+	a.mainWindow.SetContent(panel.GetContent())
+	a.mainWindow.Resize(fyne.NewSize(400, 720))
+	test.Tap(panel.validationDetails)
+	detail := findLabelByPrefix(a.mainWindow.Canvas().Overlays().Top(), message)
+	if detail == nil || detail.Text != message {
+		t.Fatal("complete Unicode diagnostic is not accessible from the rail")
+	}
+}
+
+func TestSourceDiagnosticPreviewBoundsUnicodeAndMultilineErrors(t *testing.T) {
+	for _, count := range []int{sourceDiagnosticPreviewRunes - 1, sourceDiagnosticPreviewRunes, sourceDiagnosticPreviewRunes + 1} {
+		message := strings.Repeat("界", count)
+		preview := sourceDiagnosticPreview(message)
+		want := message
+		if count > sourceDiagnosticPreviewRunes {
+			want = strings.Repeat("界", sourceDiagnosticPreviewRunes) + "…"
+		}
+		if !utf8.ValidString(preview) || preview != want {
+			t.Fatalf("Unicode preview boundary failed for %d runes: %q", count, preview)
+		}
+	}
+	multiline := sourceDiagnosticPreview(strings.Repeat("界\r\n\t", sourceDiagnosticPreviewRunes))
+	if strings.ContainsAny(multiline, "\r\n\t") || utf8.RuneCountInString(multiline) > sourceDiagnosticPreviewRunes+1 {
+		t.Fatalf("multiline diagnostic escapes bounded rail preview: %q", multiline)
 	}
 }
 
@@ -357,6 +358,122 @@ func TestAdvancedChromeMinimumsStayWithinViewport(t *testing.T) {
 		if width := object.MinSize().Width; width > viewportWidth {
 			t.Fatalf("%s minimum width %.1f exceeds %.1fpx viewport", name, width, viewportWidth)
 		}
+	}
+}
+
+func TestSourceChromeReflowsAcrossRailWidths(t *testing.T) {
+	ui := test.NewApp()
+	ui.Settings().SetTheme(&FoundryTheme{})
+	t.Cleanup(ui.Quit)
+	window := ui.NewWindow("source reflow")
+	t.Cleanup(window.Close)
+	a := &App{
+		fyneApp: ui, mainWindow: window, sourceDrafts: NewSourceDraftStore(),
+		editors: make(map[*container.TabItem]Editor),
+	}
+	a.docTabs = container.NewDocTabs()
+	editor := NewSABEditor(a)
+	a.sourceDrafts.Set(editor, SourceDraft{
+		Text: "malformed {", ParseErr: strings.Repeat("界/long-diagnostic-path/", 20), EditMode: true,
+	})
+	workspace := NewAdvancedWorkspace(a)
+	t.Cleanup(workspace.Close)
+	workspace.SetActiveEditor(editor)
+	doc := workspace.documents[editor]
+	panel := NewSourcePanel(a)
+	t.Cleanup(panel.Close)
+	panel.SetDeferredValidation(true)
+	panel.SetActiveEditor(editor)
+
+	for _, replace := range []bool{false, true} {
+		workspace.showSearch(doc, replace)
+		for _, root := range []fyne.CanvasObject{panel.GetContent(), doc.content, workspace.GuidedBanner()} {
+			for _, width := range []float32{760, 260, 400, 260, 760} {
+				root.Resize(fyne.NewSize(width, 720))
+				test.LaidOutObjects(root)
+				root.Refresh()
+				test.LaidOutObjects(root)
+				assertSourceChromeContained(t, root)
+				if root.MinSize().Width > width {
+					t.Fatalf("chrome retains a wider minimum after rail resize: width=%.0f min=%v", width, root.MinSize())
+				}
+			}
+		}
+	}
+	if !panel.applyBtn.Visible() || !panel.revertBtn.Visible() || !doc.applyBtn.Visible() || !doc.findEntry.Visible() || !doc.replaceEntry.Visible() {
+		t.Fatal("reflow hid source editing or search actions")
+	}
+}
+
+func assertSourceChromeContained(t *testing.T, root fyne.CanvasObject) {
+	t.Helper()
+	// Scroll content deliberately exceeds its viewport; chrome must not need
+	// scrolling to reach actions. Native Entry/TextGrid internals scroll too.
+	if _, ok := root.(*container.Scroll); ok {
+		return
+	}
+	parent, ok := root.(*fyne.Container)
+	if !ok {
+		return
+	}
+	for _, child := range parent.Objects {
+		if !child.Visible() {
+			continue
+		}
+		position, size := child.Position(), child.Size()
+		if position.X < 0 || position.Y < 0 || position.X+size.Width > root.Size().Width+1 || position.Y+size.Height > root.Size().Height+1 {
+			t.Fatalf("%T exceeds chrome bounds: position=%v size=%v parent=%v", child, position, size, root.Size())
+		}
+		if _, scroll := child.(*container.Scroll); !scroll && size.Width+1 < child.MinSize().Width {
+			t.Fatalf("%T clips its measured content: size=%v minimum=%v", child, size, child.MinSize())
+		}
+		assertSourceChromeContained(t, child)
+	}
+}
+
+func TestAdvancedDiagnosticsWrapAndNavigateAfterWindowResize(t *testing.T) {
+	ui := test.NewApp()
+	ui.Settings().SetTheme(&FoundryTheme{})
+	t.Cleanup(ui.Quit)
+	window := ui.NewWindow("source diagnostics")
+	t.Cleanup(window.Close)
+	code := NewSourceCodeEditor()
+	code.SetText("prefix 界🙂 suffix")
+	window.SetContent(code)
+	window.Resize(fyne.NewSize(760, 720))
+	message := "Unicode diagnostic: " + strings.Repeat("long/path/界🙂/", 30)
+	diagnostic := SourceDiagnostic{
+		Range: SourceRange{Start: len("prefix "), End: len("prefix 界🙂")},
+		Line:  1, Column: 8, Severity: SourceError, Message: message,
+	}
+	doc := &advancedDocumentView{code: code, analysis: SourceAnalysis{Diagnostics: []SourceDiagnostic{diagnostic}}}
+	workspace := &AdvancedWorkspace{app: &App{fyneApp: ui, mainWindow: window}}
+	workspace.showDiagnostics(doc)
+	for _, width := range []float32{760, 400, 760, 400} {
+		window.Resize(fyne.NewSize(width, 720))
+		overlay := window.Canvas().Overlays().Top()
+		// Recreating Fyne's overlay renderer treats its centered position as manual placement.
+		overlay.Refresh()
+		label := findLabelByPrefix(overlay, message)
+		if label == nil || label.Text != message {
+			t.Fatal("diagnostic description was lost or truncated")
+		}
+		position, ok := objectPositionWithin(overlay, label)
+		position = position.Add(overlay.Position())
+		if !ok || position.X < 0 || position.X+label.Size().Width > window.Canvas().Size().Width+1 {
+			t.Fatalf("diagnostic escapes resized window: position=%v size=%v viewport=%v", position, label.Size(), window.Canvas().Size())
+		}
+		if label.Size().Height < label.MinSize().Height {
+			t.Fatal("diagnostic's wrapped lines are vertically clipped")
+		}
+	}
+	selectButton := findButtonByText(window.Canvas().Overlays().Top(), "ERROR — line 1, col 8")
+	if selectButton == nil {
+		t.Fatal("diagnostic location is not actionable")
+	}
+	test.Tap(selectButton)
+	if start, end := code.Selection(); start != diagnostic.Range.Start || end != diagnostic.Range.End {
+		t.Fatalf("diagnostic selected incorrect Unicode byte range: [%d,%d)", start, end)
 	}
 }
 

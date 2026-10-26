@@ -58,8 +58,42 @@ type TeamUI struct {
 	iconEntry     *widget.Entry
 	briefingEntry *widget.Entry
 
-	objList   *widget.List
-	container *fyne.Container
+	objList          *widget.List
+	objectivesLayout *siegeObjectivesLayout
+	container        *fyne.Container
+}
+
+// siegeObjectivesLayout keeps the list scrollable without letting its small
+// native minimum collapse the Team panel below the complete form.
+type siegeObjectivesLayout struct {
+	ui      *TeamUI
+	measure *widget.Label
+	width   float32
+}
+
+func (l *siegeObjectivesLayout) MinSize(_ []fyne.CanvasObject) fyne.Size {
+	return l.ui.objList.MinSize().Max(fyne.NewSize(0, 180))
+}
+
+func (l *siegeObjectivesLayout) Layout(_ []fyne.CanvasObject, size fyne.Size) {
+	l.ui.objList.Resize(size)
+	if l.width != size.Width {
+		l.width = size.Width
+		l.updateHeights()
+	}
+}
+
+func (l *siegeObjectivesLayout) updateHeights() {
+	if l.width <= 0 || l.ui.team == nil {
+		return
+	}
+	// Measure every row, including those currently outside the viewport, so
+	// resizing cannot leave stale heights further down the objectives list.
+	for id, objective := range l.ui.team.Objectives {
+		l.measure.SetText(objective.GoalName)
+		l.measure.Resize(fyne.NewSize(l.width, l.measure.MinSize().Height))
+		l.ui.objList.SetItemHeight(id, l.measure.MinSize().Height)
+	}
 }
 
 func NewTeamUI(editor *SiegeEditor, label string) *TeamUI {
@@ -72,6 +106,7 @@ func NewTeamUI(editor *SiegeEditor, label string) *TeamUI {
 	ui.iconEntry = NewInputEntry()
 	ui.iconEntry.OnChanged = func(s string) { editor.markDirty() }
 	ui.briefingEntry = NewMultiLineInputEntry()
+	ui.briefingEntry.Wrapping = fyne.TextWrapWord
 	ui.briefingEntry.OnChanged = func(s string) { editor.markDirty() }
 
 	form := widget.NewForm(
@@ -80,8 +115,9 @@ func NewTeamUI(editor *SiegeEditor, label string) *TeamUI {
 		widget.NewFormItem("Icon", container.NewBorder(nil, nil, nil, NewTooltipButton("", theme.FolderOpenIcon(), func() { editor.app.showFilePickerForEntry(ui.iconEntry, "Select Team Icon", AssetTypeIcon) }, "Browse for Team Icon"), ui.iconEntry)),
 		widget.NewFormItem("Briefing", ui.briefingEntry),
 	)
+	form.Orientation = widget.Vertical
 
-	// Objectives List (Placeholder for now, full obj editing is complex)
+	// Objectives remain read-only and independently scrollable.
 	ui.objList = widget.NewList(
 		func() int {
 			if ui.team == nil {
@@ -89,7 +125,11 @@ func NewTeamUI(editor *SiegeEditor, label string) *TeamUI {
 			}
 			return len(ui.team.Objectives)
 		},
-		func() fyne.CanvasObject { return widget.NewLabel("Objective") },
+		func() fyne.CanvasObject {
+			label := widget.NewLabel("Objective")
+			label.Wrapping = fyne.TextWrapWord
+			return label
+		},
 		func(id widget.ListItemID, obj fyne.CanvasObject) {
 			if ui.team != nil {
 				obj.(*widget.Label).SetText(ui.team.Objectives[id].GoalName)
@@ -97,10 +137,12 @@ func NewTeamUI(editor *SiegeEditor, label string) *TeamUI {
 		},
 	)
 
-	ui.container = container.NewBorder(
-		widget.NewLabelWithStyle(label, fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
-		nil, nil, nil,
-		container.NewVSplit(form, ui.objList),
+	measure := widget.NewLabel("")
+	measure.Wrapping = fyne.TextWrapWord
+	ui.objectivesLayout = &siegeObjectivesLayout{ui: ui, measure: measure}
+	objectives := container.New(ui.objectivesLayout, ui.objList)
+	ui.container = container.NewVBox(
+		NewFormSection(label, "", container.NewVBox(form, objectives)),
 	)
 	return ui
 }
@@ -116,6 +158,7 @@ func (ui *TeamUI) Update(team *parsers.SiegeTeam) {
 	ui.useTeamEntry.SetText(team.UseTeam)
 	ui.iconEntry.SetText(team.TeamIcon)
 	ui.briefingEntry.SetText(team.Briefing)
+	ui.objectivesLayout.updateHeights()
 	ui.objList.Refresh()
 }
 
@@ -302,19 +345,20 @@ func (e *SiegeEditor) createUI() {
 		widget.NewFormItem("Radar Bottom Right", e.radarBREntry),
 		widget.NewFormItem("MB Modes Allowed", e.modesEntry),
 	)
+	globalForm.Orientation = widget.Vertical
 
 	e.team1UI = NewTeamUI(e, "Team 1 (Heroes/Imperials)")
 	e.team2UI = NewTeamUI(e, "Team 2 (Villains/Rebels)")
 
-	teamsSplit := container.NewHSplit(e.team1UI.container, e.team2UI.container)
+	teams := container.NewVScroll(newFormColumns(2, e.team1UI.container, e.team2UI.container))
 
 	e.sourceView = widget.NewRichText()
 	e.sourceView.Wrapping = fyne.TextWrapOff
 	sourceTab := container.NewMax(container.NewScroll(e.sourceView))
 
 	tabs := container.NewAppTabs(
-		container.NewTabItem("Global", container.NewVScroll(globalForm)),
-		container.NewTabItem("Teams", teamsSplit),
+		container.NewTabItem("Global", container.NewVScroll(NewFormSection("Global", "", globalForm))),
+		container.NewTabItem("Teams", teams),
 		container.NewTabItem("Source", sourceTab),
 	)
 

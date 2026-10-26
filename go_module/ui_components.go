@@ -1,14 +1,17 @@
 package main
 
 import (
+	"image/color"
 	"sort"
 	"strings"
 	"time"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/driver/desktop"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -56,19 +59,35 @@ func (b *TooltipButton) MouseIn(e *desktop.MouseEvent) {
 	// during the delay, hovering will flip false and we abort.
 	go func() {
 		time.Sleep(tooltipHoverDelay)
-		fyne.Do(func() {
-			if !b.hovering || b.popUp != nil {
-				return
-			}
-			c := fyne.CurrentApp().Driver().CanvasForObject(b)
-			if c == nil {
-				return
-			}
-			label := widget.NewLabel(b.tooltipText)
-			b.popUp = widget.NewPopUp(label, c)
-			b.popUp.ShowAtRelativePosition(fyne.NewPos(0, b.Size().Height), b)
-		})
+		fyne.Do(b.showTooltip)
 	}()
+}
+
+func (b *TooltipButton) showTooltip() {
+	if !b.hovering || b.popUp != nil {
+		return
+	}
+	c := fyne.CurrentApp().Driver().CanvasForObject(b)
+	if c == nil {
+		return
+	}
+	label := widget.NewLabel(b.tooltipText)
+	b.popUp = widget.NewPopUp(label, c)
+	b.popUp.ShowAtRelativePosition(fyne.NewPos(0, b.Size().Height), b)
+}
+
+// Activation can remove the button while its delayed hover callback is queued.
+// Dismiss both pending and visible hints before handing control to the action.
+func (b *TooltipButton) Tapped(event *fyne.PointEvent) {
+	b.MouseOut()
+	b.Button.Tapped(event)
+}
+
+func (b *TooltipButton) TypedKey(event *fyne.KeyEvent) {
+	if event.Name == fyne.KeySpace {
+		b.MouseOut()
+	}
+	b.Button.TypedKey(event)
 }
 
 func (b *TooltipButton) MouseOut() {
@@ -291,23 +310,130 @@ func NewInputEntry() *widget.Entry {
 	return e
 }
 
-// NewSlotEntry is for Entries placed inside a parent ScrollContainer
-// (point-buy slots, rank-attribute rows, anything in a scrollable list).
-// It disables the Entry's internal horizontal scroll widget so wheel
-// events bubble up to the parent — without this, hovering over an
-// Entry eats the wheel event because widget.Entry embeds its own
-// *widget.Scroll for text overflow (which always wins hit-testing
-// against the outer container.NewVScroll).
-//
-// Trade-off: very long text past the visible width can't be scrolled
-// into view via the keyboard caret; for short structured values
-// (skill IDs, "0,4,10" cost strings, icon paths) this is invisible.
-func NewSlotEntry() *widget.Entry {
-	e := widget.NewEntry()
+// wheelRoute lets a slot entry retain the identity of its owning vertical
+// viewport while that viewport is rebuilt or attached later.
+type wheelRoute struct {
+	target fyne.Scrollable
+}
+
+func (r *wheelRoute) Scrolled(event *fyne.ScrollEvent) {
+	if r == nil || r.target == nil || event == nil {
+		return
+	}
+	r.target.Scrolled(event)
+}
+
+// slotEntry keeps the native Entry event surface while adding a scroll-only
+// overlay that separates vertical page gestures from horizontal text panning.
+type slotEntry struct {
+	widget.Entry
+	wheel *wheelRoute
+}
+
+// NewSlotEntry keeps long point-buy names, descriptions, and paths editable
+// inside a narrow slot without trapping vertical wheel gestures in the Entry's
+// horizontal viewport.
+func NewSlotEntry(wheel *wheelRoute) *slotEntry {
+	e := &slotEntry{wheel: wheel}
 	e.TextStyle = fyne.TextStyle{Monospace: true}
 	e.Wrapping = fyne.TextWrapOff
-	e.Scroll = container.ScrollNone
+	e.Scroll = container.ScrollHorizontalOnly
+	e.ExtendBaseWidget(e)
 	return e
+}
+
+func (e *slotEntry) CreateRenderer() fyne.WidgetRenderer {
+	delegate := e.Entry.CreateRenderer()
+	delegateObjects := delegate.Objects()
+	var horizontal *container.Scroll
+	for _, object := range delegateObjects {
+		if scroll, ok := object.(*container.Scroll); ok {
+			horizontal = scroll
+			break
+		}
+	}
+	overlay := newSlotEntryScrollOverlay(e.wheel, &wheelRoute{target: horizontal})
+	objects := make([]fyne.CanvasObject, len(delegateObjects)+1)
+	copy(objects, delegateObjects)
+	objects[len(objects)-1] = overlay
+	return &slotEntryRenderer{
+		delegate: delegate,
+		overlay:  overlay,
+		objects:  objects,
+	}
+}
+
+type slotEntryRenderer struct {
+	delegate fyne.WidgetRenderer
+	overlay  *slotEntryScrollOverlay
+	objects  []fyne.CanvasObject
+}
+
+func (r *slotEntryRenderer) Destroy() {
+	r.delegate.Destroy()
+}
+
+func (r *slotEntryRenderer) Layout(size fyne.Size) {
+	r.delegate.Layout(size)
+	r.overlay.Move(fyne.NewPos(0, 0))
+	r.overlay.Resize(size)
+}
+
+func (r *slotEntryRenderer) MinSize() fyne.Size {
+	return r.delegate.MinSize()
+}
+
+func (r *slotEntryRenderer) Objects() []fyne.CanvasObject {
+	return r.objects
+}
+
+func (r *slotEntryRenderer) Refresh() {
+	r.delegate.Refresh()
+	r.overlay.Refresh()
+}
+
+// slotEntryScrollOverlay is intentionally only a Widget and Scrollable. It
+// must not become a tap, focus, drag, mouse, or desktop-input target because
+// all non-wheel behavior belongs to the embedded native Entry.
+type slotEntryScrollOverlay struct {
+	widget.BaseWidget
+	vertical   *wheelRoute
+	horizontal *wheelRoute
+}
+
+func newSlotEntryScrollOverlay(vertical, horizontal *wheelRoute) *slotEntryScrollOverlay {
+	overlay := &slotEntryScrollOverlay{vertical: vertical, horizontal: horizontal}
+	overlay.ExtendBaseWidget(overlay)
+	return overlay
+}
+
+func (o *slotEntryScrollOverlay) CreateRenderer() fyne.WidgetRenderer {
+	return widget.NewSimpleRenderer(canvas.NewRectangle(color.Transparent))
+}
+
+func (o *slotEntryScrollOverlay) Scrolled(event *fyne.ScrollEvent) {
+	if event == nil {
+		return
+	}
+	dx, dy := event.Scrolled.DX, event.Scrolled.DY
+	if dy != 0 && absoluteSlotWheelDelta(dy) >= absoluteSlotWheelDelta(dx) {
+		forwarded := *event
+		forwarded.Scrolled = fyne.Delta{DY: dy}
+		o.vertical.Scrolled(&forwarded)
+		return
+	}
+	if dx != 0 {
+		forwarded := *event
+		forwarded.Scrolled = fyne.Delta{DX: dx}
+		o.horizontal.Scrolled(&forwarded)
+	}
+}
+
+func absoluteSlotWheelDelta(delta float32) float32 {
+	if delta < 0 {
+		return -delta
+	}
+	return delta
 }
 
 // AttachPathSuggest wires PK3-aware inline autocomplete onto an existing
@@ -418,6 +544,7 @@ func NewPasswordInputEntry() *widget.Entry {
 // share spacing, typography, and accent behavior.
 func NewFormSection(title, hint string, content fyne.CanvasObject) fyne.CanvasObject {
 	heading := widget.NewLabelWithStyle(title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	heading.Wrapping = fyne.TextWrapWord
 	objects := []fyne.CanvasObject{heading}
 	if hint != "" {
 		subtitle := widget.NewLabelWithStyle(hint, fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
@@ -425,9 +552,136 @@ func NewFormSection(title, hint string, content fyne.CanvasObject) fyne.CanvasOb
 		objects = append(objects, subtitle)
 	}
 	objects = append(objects, content)
-	return NewTilePanel(container.NewVBox(objects...), TileOpts{
+	return NewTilePanel(newFormColumns(1, objects...), TileOpts{
 		FillAlpha:   9,
 		StrokeAlpha: 38,
 		Padded:      true,
 	})
+}
+
+// newEditorContent measures a wrapping header at the current pane width before
+// assigning the remaining height to its editor. A Border layout measures the
+// header at its previous width, which can overlap tabs on the first narrow resize.
+func newEditorContent(header, body fyne.CanvasObject) *fyne.Container {
+	return container.New(&editorHeaderLayout{}, header, body)
+}
+
+type editorHeaderLayout struct{}
+
+func (*editorHeaderLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+	header, body := objects[0], objects[1]
+	top := float32(0)
+	if header.Visible() {
+		header.Resize(fyne.NewSize(size.Width, header.MinSize().Height))
+		height := header.MinSize().Height
+		header.Resize(fyne.NewSize(size.Width, height))
+		header.Move(fyne.NewPos(0, 0))
+		top = height + theme.Padding()
+	}
+	body.Move(fyne.NewPos(0, top))
+	body.Resize(fyne.NewSize(size.Width, fyne.Max(0, size.Height-top)))
+}
+
+func (*editorHeaderLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
+	header, body := objects[0], objects[1]
+	min := body.MinSize()
+	if header.Visible() {
+		headerMin := header.MinSize()
+		min.Width = fyne.Max(min.Width, headerMin.Width)
+		min.Height += headerMin.Height + theme.Padding()
+	}
+	return min
+}
+
+// newFormColumns reflows related form groups without fixing their height.
+// Unlike GridWrap, each row grows with wrapped labels and validation messages.
+// The minimum is one column, allowing the editor rail to shrink again.
+func newFormColumns(maxColumns int, objects ...fyne.CanvasObject) *fyne.Container {
+	return container.New(&formColumnsLayout{maxColumns: maxColumns, columns: 1}, objects...)
+}
+
+type formColumnsLayout struct {
+	maxColumns int
+	columns    int
+}
+
+func (l *formColumnsLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+	padding := theme.Padding()
+	columnMin := float32(280)
+	visible := 0
+	for _, object := range objects {
+		if object.Visible() {
+			columnMin = fyne.Max(columnMin, object.MinSize().Width)
+			visible++
+		}
+	}
+	columns := int((size.Width + padding) / (columnMin + padding))
+	if columns > l.maxColumns {
+		columns = l.maxColumns
+	}
+	if columns > visible {
+		columns = visible
+	}
+	if columns < 1 {
+		columns = 1
+	}
+	l.columns = columns
+	width := fyne.Max(0, (size.Width-padding*float32(columns-1))/float32(columns))
+	y := float32(0)
+	for start := 0; start < len(objects); {
+		end, count := start, 0
+		height := float32(0)
+		for end < len(objects) && count < columns {
+			object := objects[end]
+			end++
+			if !object.Visible() {
+				continue
+			}
+			// Width must reach the text renderer before measuring row height.
+			object.Resize(fyne.NewSize(width, object.MinSize().Height))
+			height = fyne.Max(height, object.MinSize().Height)
+			count++
+		}
+		column := 0
+		for _, object := range objects[start:end] {
+			if !object.Visible() {
+				continue
+			}
+			object.Resize(fyne.NewSize(width, height))
+			object.Move(fyne.NewPos(float32(column)*(width+padding), y))
+			column++
+		}
+		if count > 0 {
+			y += height + padding
+		}
+		start = end
+	}
+}
+
+func (l *formColumnsLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
+	var min fyne.Size
+	rowHeight := float32(0)
+	column, rows := 0, 0
+	for _, object := range objects {
+		if !object.Visible() {
+			continue
+		}
+		childMin := object.MinSize()
+		min.Width = fyne.Max(min.Width, childMin.Width)
+		rowHeight = fyne.Max(rowHeight, childMin.Height)
+		column++
+		if column == l.columns {
+			min.Height += rowHeight
+			rows++
+			column, rowHeight = 0, 0
+		}
+	}
+	if column > 0 {
+		min.Height += rowHeight
+		rows++
+	}
+	if rows > 1 {
+		min.Height += theme.Padding() * float32(rows-1)
+	}
+	return min
 }

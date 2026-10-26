@@ -75,8 +75,8 @@ func devFieldKeysSorted() []string {
 // can flip it together with any other dev-flagged UI; the editor
 // hides it by default and only shows it when AppConfig.ShowDeveloperFields
 // is on (View → Show Developer Fields).
-func (e *MBCHEditor) buildDevFieldsCard() *widget.Card {
-	items := make([]*widget.FormItem, 0, len(devFieldsRegistry))
+func (e *MBCHEditor) buildDevFieldsCard() fyne.CanvasObject {
+	fields := make([]fyne.CanvasObject, 0, len(devFieldsRegistry))
 	for _, df := range devFieldsRegistry {
 		df := df // capture per-iteration
 		var entry *widget.Entry
@@ -89,6 +89,7 @@ func (e *MBCHEditor) buildDevFieldsCard() *widget.Card {
 				}
 			}
 			selectEntry := widget.NewSelectEntry(options)
+			selectEntry.TextStyle = fyne.TextStyle{Monospace: true}
 			entry = &selectEntry.Entry
 			input = selectEntry
 		} else {
@@ -110,16 +111,17 @@ func (e *MBCHEditor) buildDevFieldsCard() *widget.Card {
 			}
 			e.markDirty()
 		}
-		item := widget.NewFormItem(df.Label, input)
-		item.HintText = df.Description
-		items = append(items, item)
+		form := widget.NewForm(widget.NewFormItem(df.Label, input))
+		form.Orientation = widget.Vertical
+		hint := widget.NewLabelWithStyle(df.Description, fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
+		hint.Wrapping = fyne.TextWrapWord
+		fields = append(fields, newFormColumns(1, form, hint))
 		e.devFieldEntries[df.Key] = entry
 	}
-	form := widget.NewForm(items...)
-	return widget.NewCard(
+	return NewFormSection(
 		"Advanced (Developer) Fields",
 		"Engine fields and special actions. Hidden by default; toggle via View → Show Developer Fields.",
-		form,
+		newFormColumns(1, fields...),
 	)
 }
 

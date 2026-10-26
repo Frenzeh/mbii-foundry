@@ -7,6 +7,37 @@ pre-release suffixes until the project stabilizes.
 
 ## [Unreleased]
 
+### Verification limits
+- Full isolated Go suite and macOS arm64/amd64 and Windows amd64 builds pass.
+  Native macOS checks use synthetic files only. Windows/Linux interaction and a
+  Linux build were not qualified in this pass. Native automation did not deliver
+  effective divider-drag or wheel gestures; resize and wheel-routing coverage is
+  from the Fyne test driver, not a claimed native gesture pass.
+
+### Changed
+- Reflow sidebar controls, Home content, reference headers, status metrics, and
+  editor forms within narrow panes instead of forcing wider rails or clipping
+  labels. Collapsed rails remain keyboard-accessible and retain saved split ratios.
+- Wrap form help, character summaries, Point Buy sections, and source-editor
+  actions; stack constrained selector/detail layouts and keep long editable
+  values reachable in their native horizontal text viewports.
+- Give file-picker breadcrumbs their own scrollable row and full-location copy
+  action. Grid captions use visible ellipses; List view retains full names.
+- Bound document-tab captions by measured text width while retaining dirty
+  markers, extensions, and full titles in the native window and document lifecycle.
+
+### Fixed
+- Reserve canonical Custom Skills slots for retained empty cards, preventing a
+  newly added card from overwriting later edits to an existing card.
+- Prevent asynchronous workspace setup from republishing a GitHub manager whose
+  credential was replaced or removed while setup was running.
+- Route vertical Point Buy slot-entry wheel gestures to the owning page or
+  archetype list while preserving horizontal text scrolling and editing state.
+- Keep source-editor gutters, caret reveal, completion selection, diagnostic
+  previews, and dialogs usable across viewport changes.
+- Dismiss pending and visible action hints before button actions replace panes
+  or open dialogs.
+
 ## [0.17.0-alpha] — 2026-10-23
 
 ### Verification limits

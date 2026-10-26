@@ -137,7 +137,7 @@ func NewWeaponFlagsEditor(editor *MBCHEditor) *WeaponFlagsEditor {
 }
 
 func (wfe *WeaponFlagsEditor) createUI() {
-	wfe.listBox = container.NewVBox()
+	wfe.listBox = newFormColumns(1)
 
 	addBtn := widget.NewButtonWithIcon("Add Weapon Flags...", theme.ContentAddIcon(), func() {
 		wfe.showAddDialog()
@@ -145,13 +145,16 @@ func (wfe *WeaponFlagsEditor) createUI() {
 
 	classFlagsTile := wfe.buildClassFlagsSection()
 
-	weaponFlagsHeader := widget.NewLabelWithStyle("Weapon Held Flags (WP_*Flags)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	weaponFlagsSub := widget.NewLabelWithStyle("Per-weapon combat modifiers (HELD_*) applied when holding the specific weapon.", fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
+	weaponFlagsHeader := NewFormSection(
+		"Weapon Held Flags (WP_*Flags)",
+		"Per-weapon combat modifiers (HELD_*) applied when holding the specific weapon.",
+		addBtn,
+	)
 
-	wfe.container = container.NewVBox(
+	wfe.container = newFormColumns(1,
 		classFlagsTile,
 		widget.NewSeparator(),
-		container.NewBorder(nil, nil, container.NewVBox(weaponFlagsHeader, weaponFlagsSub), addBtn),
+		weaponFlagsHeader,
 		wfe.listBox,
 	)
 }
@@ -254,9 +257,6 @@ func (wfe *WeaponFlagsEditor) buildClassFlagsSection() fyne.CanvasObject {
 		}
 	}
 
-	header := widget.NewLabelWithStyle("Class Flags (CFL_*)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	sub := widget.NewLabelWithStyle("Inherent character traits, physical attributes, and passive immunities.", fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
-
 	rows := container.New(&classFlagRowsLayout{})
 	for _, flag := range GetClassFlags() {
 		f := flag
@@ -328,14 +328,10 @@ func (wfe *WeaponFlagsEditor) buildClassFlagsSection() fyne.CanvasObject {
 		rows.Add(newClickableCell(tile, toggle))
 	}
 
-	return NewTilePanel(
-		container.NewVBox(header, sub, rows),
-		TileOpts{
-			AccentColor: color.NRGBA{R: 100, G: 190, B: 240, A: 255},
-			FillAlpha:   14,
-			StrokeAlpha: 50,
-			Padded:      true,
-		},
+	return NewFormSection(
+		"Class Flags (CFL_*)",
+		"Inherent character traits, physical attributes, and passive immunities.",
+		rows,
 	)
 }
 
@@ -347,6 +343,7 @@ func (wfe *WeaponFlagsEditor) buildRow(flagsKey string) fyne.CanvasObject {
 	// Header: icon + weapon name + delete button.
 	title := widget.NewLabelWithStyle(flagsKey,
 		fyne.TextAlignLeading, fyne.TextStyle{Bold: true, Monospace: true})
+	title.Wrapping = fyne.TextWrapBreak
 
 	var iconObj fyne.CanvasObject = layout_newSpacer()
 	if alias, ok := weaponIconAliases[wpID]; ok && alias != "" {
@@ -365,9 +362,9 @@ func (wfe *WeaponFlagsEditor) buildRow(flagsKey string) fyne.CanvasObject {
 	deleteBtn.Importance = widget.LowImportance
 
 	header := container.NewBorder(nil, nil,
-		container.NewHBox(iconObj, title),
+		container.NewCenter(iconObj),
 		deleteBtn,
-		nil,
+		title,
 	)
 
 	active := parseFlags(ch.ExtraFields[flagsKey])
@@ -382,7 +379,7 @@ func (wfe *WeaponFlagsEditor) buildRow(flagsKey string) fyne.CanvasObject {
 		byFamily[fam] = append(byFamily[fam], f)
 	}
 
-	body := container.NewVBox(header)
+	bodyObjects := []fyne.CanvasObject{header}
 	for _, fam := range familyOrder {
 		flags, ok := byFamily[fam]
 		if !ok || len(flags) == 0 {
@@ -396,7 +393,7 @@ func (wfe *WeaponFlagsEditor) buildRow(flagsKey string) fyne.CanvasObject {
 			flag := f
 			grid.Add(buildHeldFlagCell(flag, active, ch, flagsKey, wfe))
 		}
-		body.Add(NewTilePanel(
+		bodyObjects = append(bodyObjects, NewTilePanel(
 			container.NewVBox(famHeader, grid),
 			TileOpts{
 				AccentColor: heldFlagFamilyAccent(fam),
@@ -407,7 +404,7 @@ func (wfe *WeaponFlagsEditor) buildRow(flagsKey string) fyne.CanvasObject {
 		))
 	}
 
-	card := widget.NewCard("", "", body)
+	card := widget.NewCard("", "", newFormColumns(1, bodyObjects...))
 	return card
 }
 

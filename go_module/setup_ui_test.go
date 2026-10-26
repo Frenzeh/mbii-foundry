@@ -253,37 +253,6 @@ func TestSetupWizardLongValidationStatusStaysBounded(t *testing.T) {
 	}
 }
 
-func TestCharacterSummaryRemainsInEditorComposition(t *testing.T) {
-	ui := test.NewApp()
-	ui.Settings().SetTheme(&FoundryTheme{})
-	defer ui.Quit()
-
-	editor := NewMBCHEditor(nil)
-	if editor.summary == nil {
-		t.Fatal("character summary was not constructed")
-	}
-	if !containsObject(editor.GetContent(), editor.summary) {
-		t.Fatal("character summary is no longer part of the editor composition")
-	}
-	summaryMin := editor.summary.MinSize()
-	t.Logf("summary min=%v composed=true", summaryMin)
-	if summaryMin.Height > 120 {
-		t.Fatalf("character summary is not compact: min size %v", summaryMin)
-	}
-
-	window := ui.NewWindow("editor layout")
-	window.SetContent(editor.GetContent())
-	window.Show()
-	defer window.Close()
-	for _, size := range []fyne.Size{fyne.NewSize(1400, 892), fyne.NewSize(1024, 720)} {
-		window.Resize(size)
-		t.Logf("window=%v summary=%v visible=%v", size, editor.summary.Size(), editor.summary.Visible())
-		if !editor.summary.Visible() || editor.summary.Size().Height <= 0 {
-			t.Fatalf("summary not laid out at window size %v: visible=%v size=%v", size, editor.summary.Visible(), editor.summary.Size())
-		}
-	}
-}
-
 func findButtonByText(root fyne.CanvasObject, text string) *widget.Button {
 	if root == nil {
 		return nil

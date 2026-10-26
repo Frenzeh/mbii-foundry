@@ -19,6 +19,7 @@ type CustomFilePicker struct {
 
 	// UI elements
 	pathBar      *fyne.Container // clickable breadcrumb row
+	pathScroll   *container.Scroll
 	sidebar      *widget.List
 	selectButton *widget.Button
 	cancelButton *widget.Button
@@ -326,22 +327,33 @@ func (cfp *CustomFilePicker) createUI() {
 	// refresh the breadcrumb and favorite toggle through the browser.
 	cfp.syncFavBtn = syncFavBtn
 
-	rightNav := container.NewHBox(sortLabel, sortSelect)
-	if !cfp.virtualOnly {
-		rightNav.Add(favBtn)
+	actions := []fyne.CanvasObject{
+		upBtn, homeBtn, refreshBtn,
+		container.NewHBox(sortLabel, sortSelect),
 	}
-	rightNav.Add(viewBtn)
-	topNav := container.NewBorder(
-		nil, nil,
-		container.NewHBox(upBtn, homeBtn, refreshBtn),
-		rightNav,
-		container.NewScroll(cfp.pathBar),
+	if !cfp.virtualOnly {
+		actions = append(actions, favBtn)
+	}
+	actions = append(actions, viewBtn)
+	actionRow := newSourceActionRow(actions...)
+
+	// Keep the path on a dedicated horizontal viewport so the action controls
+	// cannot consume its width. The copy button stays outside the viewport and
+	// reads the browser's live, untruncated location label on every tap.
+	cfp.pathScroll = container.NewHScroll(cfp.pathBar)
+	pathRow := container.NewBorder(nil, nil, nil,
+		assetBrowserCopyTextButton(cfp.browser.breadcrumbLabel, "Copy full picker location"),
+		cfp.pathScroll,
+	)
+	topNav := newFormColumns(1,
+		actionRow,
+		pathRow,
 	)
 
 	// Main Layout
 	split := container.NewHSplit(
 		container.NewBorder(widget.NewLabelWithStyle("Sources", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}), nil, nil, nil, cfp.sidebar),
-		container.NewBorder(topNav, nil, nil, nil, cfp.browser.GetContent()),
+		newEditorContent(topNav, cfp.browser.GetContent()),
 	)
 	split.SetOffset(0.25)
 
@@ -409,6 +421,12 @@ func (cfp *CustomFilePicker) refreshPathBar() {
 		cfp.pathBar.Add(widget.NewLabel("Select a source"))
 	}
 	cfp.pathBar.Refresh()
+	if cfp.pathScroll != nil {
+		// New locations should open on the current (trailing) crumb. Ancestors
+		// remain reachable by scrolling the viewport back toward the start.
+		maxOffset := fyne.Max(0, cfp.pathBar.MinSize().Width-cfp.pathScroll.Size().Width)
+		cfp.pathScroll.ScrollToOffset(fyne.NewPos(maxOffset, 0))
+	}
 	if cfp.syncFavBtn != nil {
 		cfp.syncFavBtn()
 	}

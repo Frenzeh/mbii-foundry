@@ -379,6 +379,10 @@ func (a *App) captureRecoveryEntry(ed Editor) error {
 	}
 	if p := ed.GetCurrentPath(); p != "" {
 		entry.Title = filepath.Base(p)
+	} else if tab := a.tabForEditor(ed); tab != nil {
+		entry.Title = strings.TrimPrefix(a.fullTabTitle(tab), "* ")
+	} else if title, ok := a.detachedEditors[ed]; ok {
+		entry.Title = strings.TrimPrefix(title, "* ")
 	}
 	if hasDraft {
 		entry.Draft = draft.Text
@@ -570,10 +574,7 @@ func (a *App) restoreRecoveredEntryError(entry *RecoveryEntry) error {
 	}
 	a.createNewFile(title, ed)
 	if tab := a.tabForEditor(ed); tab != nil {
-		tab.Text = title
-		if a.docTabs != nil {
-			a.docTabs.Refresh()
-		}
+		a.setTabTitle(tab, documentTitleWithDirty(title, ed.IsDirty()))
 	}
 	return nil
 }

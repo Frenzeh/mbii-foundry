@@ -23,9 +23,9 @@ type CharacterSummaryWidget struct {
 	ir        *IconResolver
 
 	container *fyne.Container
-	nameLbl   *canvas.Text
-	classLbl  *canvas.Text
-	statsLbl  *canvas.Text
+	nameLbl   *widget.RichText
+	classLbl  *widget.RichText
+	statsLbl  *widget.RichText
 	preview   *canvas.Image
 }
 
@@ -46,15 +46,27 @@ func (w *CharacterSummaryWidget) createUI() {
 	eyebrow := canvas.NewText("CHARACTER", theme.PlaceHolderColor())
 	eyebrow.TextSize = SizeSmall
 	eyebrow.TextStyle = fyne.TextStyle{Bold: true, Monospace: true}
-	w.nameLbl = canvas.NewText("", theme.ForegroundColor())
-	w.nameLbl.TextSize = SizeSubtitle
-	w.nameLbl.TextStyle = fyne.TextStyle{Bold: true}
-	w.classLbl = canvas.NewText("", theme.PlaceHolderColor())
-	w.classLbl.TextSize = SizeSmall
-	w.classLbl.TextStyle = fyne.TextStyle{Bold: true}
-	w.statsLbl = canvas.NewText("", theme.PlaceHolderColor())
-	w.statsLbl.TextSize = SizeSmall
-	w.statsLbl.TextStyle = fyne.TextStyle{Monospace: true}
+	w.nameLbl = widget.NewRichText(&widget.TextSegment{Style: widget.RichTextStyle{
+		Inline:    true,
+		ColorName: theme.ColorNameForeground,
+		SizeName:  theme.SizeNameSubHeadingText,
+		TextStyle: fyne.TextStyle{Bold: true},
+	}})
+	w.classLbl = widget.NewRichText(&widget.TextSegment{Style: widget.RichTextStyle{
+		Inline:    true,
+		ColorName: theme.ColorNamePlaceHolder,
+		SizeName:  theme.SizeNameCaptionText,
+		TextStyle: fyne.TextStyle{Bold: true},
+	}})
+	w.statsLbl = widget.NewRichText(&widget.TextSegment{Style: widget.RichTextStyle{
+		Inline:    true,
+		ColorName: theme.ColorNamePlaceHolder,
+		SizeName:  theme.SizeNameCaptionText,
+		TextStyle: fyne.TextStyle{Monospace: true},
+	}})
+	w.nameLbl.Wrapping = fyne.TextWrapWord
+	w.classLbl.Wrapping = fyne.TextWrapWord
+	w.statsLbl.Wrapping = fyne.TextWrapWord
 
 	// GridWrap owns the portrait geometry. Setting a conflicting MinSize on
 	// canvas.Image triggers Fyne's image renderer "param mismatch" path.
@@ -62,7 +74,7 @@ func (w *CharacterSummaryWidget) createUI() {
 	w.preview.FillMode = canvas.ImageFillContain
 	w.preview.ScaleMode = canvas.ImageScaleSmooth
 
-	identity := container.NewVBox(eyebrow, w.nameLbl, w.classLbl, w.statsLbl)
+	identity := newFormColumns(1, eyebrow, w.nameLbl, w.classLbl, w.statsLbl)
 	row := container.NewBorder(nil, nil,
 		container.NewGridWrap(fyne.NewSize(56, 56), w.preview),
 		nil,
@@ -89,13 +101,13 @@ func (w *CharacterSummaryWidget) Refresh() {
 	if name == "" {
 		name = "Unnamed Character"
 	}
-	w.nameLbl.Text = stripQ3Colors(name)
+	w.nameLbl.Segments[0].(*widget.TextSegment).Text = stripQ3Colors(name)
 
 	classInfo := w.character.MBClass
 	if classInfo == "" {
 		classInfo = "MB_CLASS_UNKNOWN"
 	}
-	w.classLbl.Text = formatClassDisplayName(classInfo)
+	w.classLbl.Segments[0].(*widget.TextSegment).Text = formatClassDisplayName(classInfo)
 
 	// Keep the summary scannable: the labels are compact and the values
 	// line up in monospace without punctuation-heavy pipes.
@@ -118,7 +130,7 @@ func (w *CharacterSummaryWidget) Refresh() {
 			stats = append(stats, fmt.Sprintf("BP %.2f", w.character.BPMultiplier))
 		}
 	}
-	w.statsLbl.Text = strings.Join(stats, "   ")
+	w.statsLbl.Segments[0].(*widget.TextSegment).Text = strings.Join(stats, "   ")
 
 	// Update preview image
 	if w.ir != nil && w.ab != nil {

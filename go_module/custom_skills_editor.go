@@ -105,8 +105,15 @@ func (cse *CustomSkillsEditor) nextFreeSlot() int {
 	if specs > parsers.PointbuyMaxArchetypes {
 		specs = parsers.PointbuyMaxArchetypes
 	}
+	// Empty cards retain their slots until explicitly deleted.
+	var reserved [parsers.PointbuyMaxTotalSlots]bool
+	for _, item := range cse.skills {
+		if item.Index >= 0 && item.Index < len(reserved) {
+			reserved[item.Index] = true
+		}
+	}
 	for i := range specs * parsers.PointbuySlotsPerArchetype {
-		if cse.character.CustomSkills[i] == "" && cse.character.CustomNames[i] == "" &&
+		if !reserved[i] && cse.character.CustomSkills[i] == "" && cse.character.CustomNames[i] == "" &&
 			cse.character.CustomRanks[i] == "" && cse.character.CustomDescs[i] == "" {
 			return i
 		}
@@ -116,7 +123,9 @@ func (cse *CustomSkillsEditor) nextFreeSlot() int {
 
 func (cse *CustomSkillsEditor) BuildUI() fyne.CanvasObject {
 	headerLbl := widget.NewLabelWithStyle("Custom Build Skills (c_att_skill_*)", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	headerLbl.Wrapping = fyne.TextWrapWord
 	infoLbl := widget.NewLabel("Configure character-specific custom build trees, rank costs, and level descriptions.")
+	infoLbl.Wrapping = fyne.TextWrapWord
 
 	addBtn := widget.NewButtonWithIcon("Add Custom Skill", theme.ContentAddIcon(), func() {
 		slot := cse.nextFreeSlot()
@@ -137,15 +146,13 @@ func (cse *CustomSkillsEditor) BuildUI() fyne.CanvasObject {
 	cse.addButton = addBtn
 	cse.rebuildUI()
 
-	topBar := container.NewHBox(headerLbl, addBtn)
-
-	scroll := container.NewVScroll(cse.cardList)
-	scroll.SetMinSize(fyne.NewSize(600, 360))
-
-	return container.NewBorder(
-		container.NewVBox(topBar, infoLbl, widget.NewSeparator()),
-		nil, nil, nil,
-		scroll,
+	// The MBCH tab owns scrolling for the full form.
+	return container.NewVBox(
+		headerLbl,
+		infoLbl,
+		container.NewHBox(addBtn),
+		widget.NewSeparator(),
+		cse.cardList,
 	)
 }
 
@@ -161,6 +168,7 @@ func (cse *CustomSkillsEditor) rebuildUI() {
 
 	if len(cse.skills) == 0 {
 		emptyMsg := widget.NewLabelWithStyle("No custom skills configured for this character.", fyne.TextAlignCenter, fyne.TextStyle{Italic: true})
+		emptyMsg.Wrapping = fyne.TextWrapWord
 		cse.cardList.Add(container.NewPadded(emptyMsg))
 		cse.cardList.Refresh()
 		return
@@ -197,6 +205,7 @@ func (cse *CustomSkillsEditor) rebuildUI() {
 		}
 
 		descEntry := widget.NewMultiLineEntry()
+		descEntry.Wrapping = fyne.TextWrapWord
 		descEntry.SetText(skillRef.Descs)
 		descEntry.SetPlaceHolder("Level descriptions (newline separated)")
 		descEntry.SetMinRowsVisible(3)
@@ -214,10 +223,8 @@ func (cse *CustomSkillsEditor) rebuildUI() {
 
 		form := container.NewVBox(
 			container.NewBorder(nil, nil, titleLbl, deleteBtn),
-			container.NewGridWithColumns(2,
-				container.NewVBox(widget.NewLabel("Display Name:"), nameEntry),
-				container.NewVBox(widget.NewLabel("Skill Enum / ID:"), skillEntry),
-			),
+			container.NewVBox(widget.NewLabel("Display Name:"), nameEntry),
+			container.NewVBox(widget.NewLabel("Skill Enum / ID:"), skillEntry),
 			container.NewVBox(widget.NewLabel("Rank Costs:"), ranksEntry),
 			container.NewVBox(widget.NewLabel("Rank Descriptions:"), descEntry),
 		)

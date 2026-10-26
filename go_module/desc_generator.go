@@ -449,8 +449,8 @@ func NewQ3ColorToolbar(entry *ValidatedEntry, onAutoGenerate func()) fyne.Canvas
 	})
 	autoBtn.Importance = widget.MediumImportance
 
-	leftBar := container.NewHBox(buttons...)
-	return container.NewBorder(nil, nil, leftBar, autoBtn, nil)
+	buttons = append(buttons, autoBtn)
+	return newSourceActionRow(buttons...)
 }
 
 func stripQ3Colors(s string) string {
@@ -517,7 +517,9 @@ func RenderQ3ColoredPreview(rawText string) fyne.CanvasObject {
 	content := container.NewVBox(rows...)
 	bg := canvas.NewRectangle(color.NRGBA{14, 18, 24, 255})
 	card := container.NewStack(bg, container.NewPadded(content))
-	return container.NewVScroll(card)
+	// Preserve explicit game lines; long spans remain reachable horizontally
+	// instead of forcing the whole Profile pane to their unwrapped width.
+	return container.NewScroll(card)
 }
 
 func formatWeaponDisplayName(id string) string {

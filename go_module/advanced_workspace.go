@@ -75,7 +75,7 @@ func NewAdvancedWorkspace(a *App) *AdvancedWorkspace {
 	})
 	w.guidedBanner = container.NewPadded(container.NewVBox(
 		w.guidedLabel,
-		container.NewHScroll(container.NewHBox(w.guidedApply, openAdvanced)),
+		newSourceActionRow(w.guidedApply, openAdvanced),
 	))
 	w.guidedBanner.Hide()
 
@@ -210,8 +210,10 @@ func (w *AdvancedWorkspace) newDocument(ed Editor) *advancedDocumentView {
 	doc.code.SetReadOnly(false)
 	doc.cursorStatus = widget.NewLabel("")
 	doc.cursorStatus.TextStyle = fyne.TextStyle{Monospace: true}
+	doc.cursorStatus.Wrapping = fyne.TextWrapWord
 	doc.draftStatus = widget.NewLabel("")
 	doc.draftStatus.TextStyle = fyne.TextStyle{Bold: true}
+	doc.draftStatus.Wrapping = fyne.TextWrapWord
 	doc.diagnosticBtn = widget.NewButton("No diagnostics", func() { w.showDiagnostics(doc) })
 	doc.diagnosticBtn.Importance = widget.LowImportance
 	doc.applyBtn = widget.NewButton("Apply", func() { w.applyDraft(doc) })
@@ -271,18 +273,20 @@ func (w *AdvancedWorkspace) newDocument(ed Editor) *advancedDocumentView {
 	for _, button := range []*widget.Button{completionBtn, assetBtn, findBtn, replaceBtn, revertBtn} {
 		button.Importance = widget.LowImportance
 	}
-	actions := container.NewHScroll(container.NewHBox(
-		doc.draftStatus,
+	actions := newSourceActionRow(
 		doc.applyBtn,
 		revertBtn,
 		findBtn,
 		replaceBtn,
 		completionBtn,
 		assetBtn,
+	)
+	status := container.NewPadded(container.NewVBox(
+		doc.cursorStatus,
+		newSourceActionRow(doc.diagnosticBtn),
 	))
-	status := container.NewHScroll(container.NewHBox(doc.cursorStatus, doc.diagnosticBtn))
 	doc.content = container.NewBorder(
-		container.NewVBox(actions, doc.searchBar),
+		container.NewPadded(container.NewVBox(doc.draftStatus, actions, doc.searchBar)),
 		status,
 		nil,
 		nil,
@@ -321,6 +325,7 @@ func (w *AdvancedWorkspace) newSearchBar(doc *advancedDocumentView) *fyne.Contai
 	doc.replaceEntry.SetPlaceHolder("Replace with")
 	doc.matchCase = widget.NewCheck("Match case", nil)
 	doc.searchStatus = widget.NewLabel("")
+	doc.searchStatus.Wrapping = fyne.TextWrapWord
 
 	find := func(backwards bool) {
 		if doc.code.FindNext(doc.findEntry.Text, doc.matchCase.Checked, backwards) {
@@ -338,8 +343,7 @@ func (w *AdvancedWorkspace) newSearchBar(doc *advancedDocumentView) *fyne.Contai
 			doc.searchStatus.SetText("No match")
 		}
 	}
-	doc.replaceRow = container.NewHBox(
-		doc.replaceEntry,
+	replaceActions := newSourceActionRow(
 		widget.NewButton("Replace", func() {
 			if doc.code.ReplaceNext(doc.findEntry.Text, doc.replaceEntry.Text, doc.matchCase.Checked) {
 				doc.searchStatus.SetText("Replaced one match")
@@ -352,8 +356,8 @@ func (w *AdvancedWorkspace) newSearchBar(doc *advancedDocumentView) *fyne.Contai
 			doc.searchStatus.SetText(fmt.Sprintf("Replaced %d match(es)", n))
 		}),
 	)
-	findRow := container.NewHBox(
-		doc.findEntry,
+	doc.replaceRow = container.NewVBox(doc.replaceEntry, replaceActions)
+	findActions := newSourceActionRow(
 		widget.NewButton("Previous", func() { find(true) }),
 		widget.NewButton("Next", func() { find(false) }),
 		doc.matchCase,
@@ -361,9 +365,8 @@ func (w *AdvancedWorkspace) newSearchBar(doc *advancedDocumentView) *fyne.Contai
 			doc.searchBar.Hide()
 			w.focusCode(doc)
 		}),
-		doc.searchStatus,
 	)
-	return container.NewVBox(container.NewHScroll(findRow), container.NewHScroll(doc.replaceRow))
+	return container.NewVBox(doc.findEntry, findActions, doc.searchStatus, doc.replaceRow)
 }
 
 func (w *AdvancedWorkspace) showSearch(doc *advancedDocumentView, replace bool) {
@@ -591,22 +594,28 @@ func (w *AdvancedWorkspace) showDiagnostics(doc *advancedDocumentView) {
 	var d dialog.Dialog
 	for i := range doc.analysis.Diagnostics {
 		diagnostic := doc.analysis.Diagnostics[i]
-		label := fmt.Sprintf("%s — line %d, col %d: %s", strings.ToUpper(string(diagnostic.Severity)), diagnostic.Line, diagnostic.Column, diagnostic.Message)
-		button := widget.NewButton(label, func() {
+		items = append(items, newSourceDiagnosticRow(diagnostic, func() {
 			doc.code.SelectRange(diagnostic.Range.Start, diagnostic.Range.End)
 			w.focusCode(doc)
 			if d != nil {
 				d.Hide()
 			}
-		})
-		button.Alignment = widget.ButtonAlignLeading
-		button.Importance = widget.LowImportance
-		items = append(items, button)
+		}))
 	}
 	scroll := container.NewVScroll(container.NewVBox(items...))
-	scroll.SetMinSize(fyne.NewSize(680, 360))
 	d = dialog.NewCustom("Source diagnostics", "Close", scroll, w.app.mainWindow)
+	d.Resize(sourceDetailsSize(w.app.mainWindow.Canvas().Size()))
 	d.Show()
+}
+
+func newSourceDiagnosticRow(diagnostic SourceDiagnostic, selectRange func()) *fyne.Container {
+	location := fmt.Sprintf("%s — line %d, col %d", strings.ToUpper(string(diagnostic.Severity)), diagnostic.Line, diagnostic.Column)
+	button := widget.NewButton(location, selectRange)
+	button.Alignment = widget.ButtonAlignLeading
+	button.Importance = widget.LowImportance
+	message := widget.NewLabel(diagnostic.Message)
+	message.Wrapping = fyne.TextWrapWord
+	return container.NewVBox(newSourceActionRow(button), message)
 }
 
 func (w *AdvancedWorkspace) focusCode(doc *advancedDocumentView) {

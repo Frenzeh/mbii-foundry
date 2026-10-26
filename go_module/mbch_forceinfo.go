@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"image/color"
 	"strings"
 
 	"fyne.io/fyne/v2"
@@ -54,7 +55,7 @@ func forcePowerOptions() []string {
 
 type ForceInfoUI struct {
 	editor    *MBCHEditor
-	container *container.Split
+	container *fyne.Container
 
 	forceList  *widget.List
 	emptyState *fyne.Container
@@ -195,29 +196,37 @@ func (ui *ForceInfoUI) createUI() {
 
 	identityHeader := widget.NewLabelWithStyle("Identity & Visuals", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	soundsHeader := widget.NewLabelWithStyle("Audio FX", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	identityHeader.Wrapping = fyne.TextWrapWord
+	soundsHeader.Wrapping = fyne.TextWrapWord
+	previewLabel := widget.NewLabelWithStyle("Live Icon Preview", fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
+	previewLabel.Wrapping = fyne.TextWrapWord
 
 	iconRow := container.NewBorder(nil, nil, nil, browseIconBtn, ui.iconEntry)
 	startSoundRow := container.NewBorder(nil, nil, nil, browseStartSoundBtn, ui.startSoundEntry)
 	loopSoundRow := container.NewBorder(nil, nil, nil, browseLoopSoundBtn, ui.loopSoundEntry)
 
+	identityForm := widget.NewForm(
+		widget.NewFormItem("Force To Replace", ui.forceToReplaceSelect),
+		widget.NewFormItem("Icon Path", iconRow),
+		widget.NewFormItem("Force Power Name", ui.forcePowerNameEntry),
+	)
+	identityForm.Orientation = widget.Vertical
 	identityCard := NewTilePanel(container.NewVBox(
 		identityHeader,
 		container.NewHBox(ui.iconPreview, container.NewVBox(
-			widget.NewLabelWithStyle("Live Icon Preview", fyne.TextAlignLeading, fyne.TextStyle{Italic: true}),
+			previewLabel,
 		)),
-		widget.NewForm(
-			widget.NewFormItem("Force To Replace", ui.forceToReplaceSelect),
-			widget.NewFormItem("Icon Path", iconRow),
-			widget.NewFormItem("Force Power Name", ui.forcePowerNameEntry),
-		),
+		identityForm,
 	), TileOpts{FillAlpha: 18, StrokeAlpha: 60, Padded: true})
 
+	soundsForm := widget.NewForm(
+		widget.NewFormItem("Start Sound", startSoundRow),
+		widget.NewFormItem("Loop Sound", loopSoundRow),
+	)
+	soundsForm.Orientation = widget.Vertical
 	soundsCard := NewTilePanel(container.NewVBox(
 		soundsHeader,
-		widget.NewForm(
-			widget.NewFormItem("Start Sound", startSoundRow),
-			widget.NewFormItem("Loop Sound", loopSoundRow),
-		),
+		soundsForm,
 	), TileOpts{FillAlpha: 18, StrokeAlpha: 60, Padded: true})
 
 	formBody := container.NewVBox(identityCard, soundsCard)
@@ -231,8 +240,16 @@ func (ui *ForceInfoUI) createUI() {
 
 	ui.detailPane = container.NewStack(ui.emptyState, detailScroll)
 
-	ui.container = container.NewHSplit(listPane, ui.detailPane)
-	ui.container.SetOffset(0.3)
+	// Preserve a useful list and detail viewport without letting their minima
+	// add horizontally. The shared form-column layout keeps the same controls
+	// side by side when they fit and stacks them when the editor narrows.
+	selectorFloor := canvas.NewRectangle(color.Transparent)
+	selectorFloor.SetMinSize(fyne.NewSize(0, 180))
+	selectorPane := container.NewStack(selectorFloor, listPane)
+	detailFloor := canvas.NewRectangle(color.Transparent)
+	detailFloor.SetMinSize(fyne.NewSize(0, 360))
+	detailViewport := container.NewStack(detailFloor, ui.detailPane)
+	ui.container = newFormColumns(2, selectorPane, detailViewport)
 }
 
 func (ui *ForceInfoUI) resolveRowIcon(fi parsers.ForceInfo) fyne.Resource {

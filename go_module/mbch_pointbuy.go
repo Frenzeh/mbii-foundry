@@ -65,7 +65,9 @@ type PointBuyUI struct {
 	editor  *MBCHEditor
 	loading bool
 
-	container *fyne.Container
+	container   *fyne.Container
+	pageWheel   wheelRoute
+	windowWheel [parsers.PointbuyMaxArchetypes]wheelRoute
 
 	// Header controls (apply to all archetypes).
 	customBuildCheck *widget.Check
@@ -87,19 +89,21 @@ type PointBuyUI struct {
 	slotModes     []*widget.Select
 	slotSkills    []*widget.Select
 	slotIcons     []*canvas.Image // raster-friendly; widget.Icon renders at theme-icon size and loses raster detail
-	slotNames     []*widget.Entry
-	slotRanks     []*widget.Entry
-	slotDescs     []*widget.Entry
+	slotNames     []*slotEntry
+	slotRanks     []*slotEntry
+	slotDescs     []*slotEntry
 	slotMaxCost   []*widget.Label
 	slotForms     []*widget.Form       // one form per slot — rebuilt items drive mode-based visibility
 	slotFormItems [][]*widget.FormItem // [slot][0..3] = Skill / Name / Costs / Description items
+	slotFormHosts []*fyne.Container    // stable owner while a mode change swaps the form
+	slotHelp      []*widget.Label      // wrapped help for the visible slot fields
 
 	// Per-archetype spec header (name + icon + description) widgets.
 	// Description was previously dropped — engine parses customSpecDesc_N
 	// (bg_saga.c:2375) but Foundry's older write path skipped it.
-	specNameEntries [parsers.PointbuyMaxArchetypes]*widget.Entry
-	specIconEntries [parsers.PointbuyMaxArchetypes]*widget.Entry
-	specDescEntries [parsers.PointbuyMaxArchetypes]*widget.Entry
+	specNameEntries [parsers.PointbuyMaxArchetypes]*slotEntry
+	specIconEntries [parsers.PointbuyMaxArchetypes]*slotEntry
+	specDescEntries [parsers.PointbuyMaxArchetypes]*slotEntry
 
 	// Rank modifiers (applies across archetypes).
 	rankAttrContainer *fyne.Container
@@ -156,6 +160,7 @@ func (p *PointBuyUI) createUI() {
 	}
 
 	p.budgetLabel = widget.NewLabel("max cumulative configured costs: 0 / 0 · runtime behavior Unverified")
+	p.budgetLabel.Wrapping = fyne.TextWrapWord
 
 	// Archetype count buttons. GridWrap forces all three to the same
 	// width so "1 / 2 / 3" reads as a coherent toggle group, not three
@@ -171,16 +176,20 @@ func (p *PointBuyUI) createUI() {
 		archetypeBtnRow.Add(container.New(layout.NewGridWrapLayout(fyne.NewSize(44, 34)), btn))
 	}
 
-	headerForm := widget.NewForm(
-		widget.NewFormItem("Custom Build", p.customBuildCheck),
-		widget.NewFormItem("mbPoints", p.mbPointsEntry),
-		widget.NewFormItem("Archetypes", archetypeBtnRow),
-		widget.NewFormItem("Budget check", p.budgetLabel),
+	headerFields := newFormColumns(2,
+		NewFormSection("Custom Build",
+			"If off, the class uses the classic fixed loadout instead of point-buy.",
+			p.customBuildCheck),
+		NewFormSection("mbPoints",
+			"Configured budget for the local preview (e.g. 100); runtime purchase behavior is Unverified.",
+			p.mbPointsEntry),
+		NewFormSection("Archetypes",
+			"Number of configured archetype slot windows.",
+			archetypeBtnRow),
+		NewFormSection("Budget check",
+			"Sums configured costs through the selected rank, consistently with Simulate; runtime behavior is Unverified.",
+			p.budgetLabel),
 	)
-	headerForm.Items[0].HintText = "If off, the class uses the classic fixed loadout instead of point-buy"
-	headerForm.Items[1].HintText = "Configured budget for the local preview (e.g. 100); runtime purchase behavior is Unverified"
-	headerForm.Items[2].HintText = "Number of configured archetype slot windows"
-	headerForm.Items[3].HintText = "Sums configured costs through the selected rank, consistently with Simulate; runtime behavior Unverified"
 
 	// --- Build all 45 slot widgets up front. Tabs only show the
 	// slice relevant to each archetype; slots outside the active
@@ -191,12 +200,14 @@ func (p *PointBuyUI) createUI() {
 	p.slotModes = make([]*widget.Select, parsers.PointbuyMaxTotalSlots)
 	p.slotSkills = make([]*widget.Select, parsers.PointbuyMaxTotalSlots)
 	p.slotIcons = make([]*canvas.Image, parsers.PointbuyMaxTotalSlots)
-	p.slotNames = make([]*widget.Entry, parsers.PointbuyMaxTotalSlots)
-	p.slotRanks = make([]*widget.Entry, parsers.PointbuyMaxTotalSlots)
-	p.slotDescs = make([]*widget.Entry, parsers.PointbuyMaxTotalSlots)
+	p.slotNames = make([]*slotEntry, parsers.PointbuyMaxTotalSlots)
+	p.slotRanks = make([]*slotEntry, parsers.PointbuyMaxTotalSlots)
+	p.slotDescs = make([]*slotEntry, parsers.PointbuyMaxTotalSlots)
 	p.slotMaxCost = make([]*widget.Label, parsers.PointbuyMaxTotalSlots)
 	p.slotForms = make([]*widget.Form, parsers.PointbuyMaxTotalSlots)
 	p.slotFormItems = make([][]*widget.FormItem, parsers.PointbuyMaxTotalSlots)
+	p.slotFormHosts = make([]*fyne.Container, parsers.PointbuyMaxTotalSlots)
+	p.slotHelp = make([]*widget.Label, parsers.PointbuyMaxTotalSlots)
 	for i := 0; i < parsers.PointbuyMaxTotalSlots; i++ {
 		p.slotRows[i] = p.buildSlotRow(i, attrOptions)
 	}
@@ -217,6 +228,11 @@ func (p *PointBuyUI) createUI() {
 	// rank pills against the live mbPoints ceiling. Rebuilt on tab
 	// change or when the edit data mutates.
 	p.simulator = NewPointBuySimulator(p)
+	p.simulator.container = buildResponsivePointBuySimulatorPane(p.simulator)
+	p.simulator.resetBtn.OnTapped = func() {
+		p.simulator.purchased = map[int]int{}
+		p.refreshResponsiveSimulator()
+	}
 
 	// Edit / Simulate tabs. Edit holds the archetype + slot editor;
 	// Simulate lets the author play the build to test balance.
@@ -228,7 +244,7 @@ func (p *PointBuyUI) createUI() {
 	// recent edits propagate without requiring a file reload.
 	p.modeTabs.OnSelected = func(tab *container.TabItem) {
 		if tab == p.modeTabs.Items[1] { // Simulate
-			p.simulator.Refresh()
+			p.refreshResponsiveSimulator()
 		}
 	}
 
@@ -247,23 +263,177 @@ func (p *PointBuyUI) createUI() {
 	multHint.Wrapping = fyne.TextWrapWord
 
 	p.container = container.NewVBox(
-		widget.NewCard("Point Buy Budget",
+		NewFormSection("Point Buy Budget",
 			"Toggle Custom Build, set total mbPoints, and pick how many archetypes the class offers (1–3).",
-			container.NewPadded(headerForm),
-		),
-		widget.NewCard("Custom Multipliers",
+			headerFields),
+		NewFormSection("Custom Multipliers",
 			"Point-buy multipliers — pick these from a slot's skill dropdown.",
-			container.NewPadded(multHint),
-		),
-		widget.NewCard("Build & Simulator",
+			multHint),
+		NewFormSection("Build & Simulator",
 			"Edit skills here, then flip to Simulate to try the build.",
-			p.modeTabs,
-		),
-		widget.NewCard("Rank Modifiers",
+			p.modeTabs),
+		NewFormSection("Rank Modifiers",
 			"Per-rank stat overrides (rankHealth, rankAP, rankROF, …). Values are comma-separated per rank. Shared across all archetypes.",
-			container.NewVBox(addRankAttrBtn, p.rankAttrContainer),
-		),
+			container.NewVBox(addRankAttrBtn, p.rankAttrContainer)),
 	)
+}
+
+// buildResponsivePointBuySimulatorPane keeps the simulator's existing state and
+// callbacks but lets its budget and archetype controls stack. The simulator's
+// original left/right border made the hidden tab establish a wide minimum for
+// the entire Point Buy AppTabs, even while authors were editing slots.
+func buildResponsivePointBuySimulatorPane(simulator *PointBuySimulator) *fyne.Container {
+	budgetHint := widget.NewLabelWithStyle(
+		"Configured-cost preview only; runtime purchase behavior is Unverified.",
+		fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
+	budgetHint.Wrapping = fyne.TextWrapWord
+	budgetBlock := container.NewVBox(
+		container.NewHBox(simulator.budgetSpent, simulator.budgetTotal),
+		simulator.budgetRemaining,
+		simulator.budgetFill,
+	)
+
+	// Reuse the simulator's dynamic button host. A width-first layout keeps
+	// one, two, or three archetype choices reachable instead of pinning them
+	// into one horizontal minimum.
+	simulator.archetypeBar = newFormColumns(parsers.PointbuyMaxArchetypes)
+	archetypeBlock := container.NewVBox(
+		simulator.archetypeLabel,
+		simulator.archetypeBar,
+		simulator.resetBtn,
+	)
+
+	top := newFormColumns(2,
+		NewFormSection("Points Spent", "", container.NewVBox(budgetHint, budgetBlock)),
+		NewFormSection("Archetype", "Switching archetypes or resetting clears only the local preview.", archetypeBlock),
+	)
+	scroll := container.NewVScroll(simulator.slotBox)
+	scroll.SetMinSize(fyne.NewSize(0, 440))
+	return container.NewBorder(
+		container.NewVBox(container.NewPadded(top), widget.NewSeparator()),
+		nil, nil, nil,
+		scroll,
+	)
+}
+
+// refreshResponsiveSimulator mirrors the simulator's configured-cost behavior
+// while rendering its dynamic controls with wrapped, stacking containers. All
+// purchases remain ephemeral and archetype changes still reset the preview.
+func (p *PointBuyUI) refreshResponsiveSimulator() {
+	simulator := p.simulator
+	character := p.editor.character
+	count := character.HasCustomSpec
+	if count < 2 {
+		count = 1
+	}
+	if count > parsers.PointbuyMaxArchetypes {
+		count = parsers.PointbuyMaxArchetypes
+	}
+	if simulator.activeSpec >= count {
+		simulator.activeSpec = 0
+	}
+
+	simulator.specNames = make([]string, count)
+	simulator.archetypeBar.Objects = nil
+	for i := 0; i < count; i++ {
+		name := character.CustomSpecNames[i]
+		if name == "" {
+			name = fmt.Sprintf("Spec %d", i+1)
+		}
+		simulator.specNames[i] = name
+		index := i
+		button := widget.NewButton(name, func() {
+			if simulator.activeSpec == index {
+				return
+			}
+			simulator.activeSpec = index
+			simulator.purchased = map[int]int{}
+			p.refreshResponsiveSimulator()
+		})
+		if i == simulator.activeSpec {
+			button.Importance = widget.HighImportance
+		} else {
+			button.Importance = widget.MediumImportance
+		}
+		simulator.archetypeBar.Add(button)
+	}
+	if count == 1 {
+		simulator.archetypeLabel.Hide()
+		simulator.archetypeBar.Hide()
+	} else {
+		simulator.archetypeLabel.Show()
+		simulator.archetypeBar.Show()
+	}
+	simulator.archetypeBar.Refresh()
+
+	simulator.slotBox.Objects = nil
+	base := simulator.activeSpec * parsers.PointbuySlotsPerArchetype
+	for i := 0; i < parsers.PointbuySlotsPerArchetype; i++ {
+		if row := p.buildResponsiveSimulatorSlotCard(base + i); row != nil {
+			simulator.slotBox.Add(row)
+		}
+	}
+	simulator.slotBox.Refresh()
+	simulator.refreshBudget()
+}
+
+func (p *PointBuyUI) buildResponsiveSimulatorSlotCard(globalIdx int) fyne.CanvasObject {
+	simulator := p.simulator
+	character := p.editor.character
+	skill := character.CustomSkills[globalIdx]
+	name := character.CustomNames[globalIdx]
+	ranks := character.CustomRanks[globalIdx]
+	description := character.CustomDescs[globalIdx]
+	if skill == "" {
+		return nil
+	}
+	if skill == "MB_ATT_INVALID" && strings.TrimSpace(ranks) == "-1" {
+		return buildHeaderStrip(name)
+	}
+
+	if name == "" {
+		name = skill
+	}
+	title := widget.NewLabelWithStyle(name, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	title.Wrapping = fyne.TextWrapWord
+	title.SizeName = theme.SizeNameSubHeadingText
+	text := container.NewVBox(title)
+	if description != "" {
+		desc := widget.NewLabelWithStyle(description, fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
+		desc.Wrapping = fyne.TextWrapWord
+		desc.SizeName = theme.SizeNameCaptionText
+		text.Add(desc)
+	}
+	identity := container.NewBorder(nil, nil,
+		container.NewGridWrap(fyne.NewSize(44, 44), simulator.buildSlotIcon(skill)),
+		nil,
+		text,
+	)
+
+	costs := parseRankCostList(ranks)
+	currentRank := simulator.purchased[globalIdx]
+	dots := NewRankDots(costs, currentRank,
+		func(rank int) bool {
+			tentative := simulator.purchasedCostExcluding(globalIdx) + simulator.costForRank(globalIdx, rank, character)
+			return tentative <= character.MBPoints
+		},
+		func(newRank int) {
+			if newRank < 0 {
+				newRank = 0
+			}
+			if newRank > len(costs) {
+				newRank = len(costs)
+			}
+			simulator.purchased[globalIdx] = newRank
+			p.refreshResponsiveSimulator()
+		},
+	)
+
+	background := canvas.NewRectangle(skillCardFill())
+	background.StrokeColor = skillCardStroke()
+	background.StrokeWidth = 1
+	content := container.NewVBox(identity, dots)
+	return container.NewPadded(container.NewStack(background, container.NewPadded(content)))
 }
 
 // buildSlotRow renders one c_att_skill_N slot (global index 0..44).
@@ -290,20 +460,22 @@ func (p *PointBuyUI) buildSlotRow(globalIdx int, attrOptions []string) *fyne.Con
 	iconW.SetMinSize(fyne.NewSize(24, 24))
 	p.slotIcons[globalIdx] = iconW
 
-	nameEntry := NewSlotEntry()
+	wheel := &p.windowWheel[globalIdx/parsers.PointbuySlotsPerArchetype]
+	nameEntry := NewSlotEntry(wheel)
 	nameEntry.SetPlaceHolder("Display name (e.g. \"Blaster Pistol:\")")
 	p.slotNames[globalIdx] = nameEntry
 
-	rankEntry := NewSlotEntry()
+	rankEntry := NewSlotEntry(wheel)
 	rankEntry.SetPlaceHolder("0,4,10")
 	p.slotRanks[globalIdx] = rankEntry
 
-	descEntry := NewSlotEntry()
+	descEntry := NewSlotEntry(wheel)
 	descEntry.SetPlaceHolder("Optional description (c_att_descs)")
 	p.slotDescs[globalIdx] = descEntry
 
 	maxCost := widget.NewLabel("")
 	maxCost.TextStyle = fyne.TextStyle{Italic: true}
+	maxCost.Wrapping = fyne.TextWrapWord
 	p.slotMaxCost[globalIdx] = maxCost
 
 	mode.OnChanged = func(s string) {
@@ -378,41 +550,48 @@ func (p *PointBuyUI) buildSlotRow(globalIdx int, attrOptions []string) *fyne.Con
 		p.customSkillsChanged()
 	}
 
-	// Skill row packs the attribute dropdown between the resolved icon
-	// (for visual recall) and the max-cost label (live sum readout).
+	// Keep the live sum below the picker. Pinning it to the right of a long
+	// attribute ID made the slot establish a wide minimum before its form
+	// could stack for a narrow editor rail.
 	skillRow := container.NewBorder(nil, nil,
 		container.NewGridWrap(fyne.NewSize(28, 28), iconW),
-		maxCost,
+		nil,
 		skillSel,
 	)
+	skillControl := container.NewVBox(skillRow, maxCost)
 
-	// Form carries the per-field label + HintText so authors can see
-	// what each input does even after they've typed into it (unlike
-	// placeholders, which vanish the moment the field has content).
+	// Form captions stay immediately above their inputs. The complete field
+	// help lives in the wrapped label below so it remains visible without
+	// letting native unwrapped FormItem hints establish the outer width.
 	// Keep each item and entry across mode changes. refreshSlotLayout changes
-	// the form owner only when the visible item sequence changes, so labels
-	// and hints disappear together without retaining stale form callbacks.
-	skillItem := widget.NewFormItem("Skill", skillRow)
-	skillItem.HintText = "MB_ATT_* attribute ID — what this row grants (weapon, ability, perk)"
+	// the form owner only when the visible item sequence changes, without
+	// retaining stale form callbacks.
+	skillItem := widget.NewFormItem("Skill", skillControl)
 	nameItem := widget.NewFormItem("Name", nameEntry)
-	nameItem.HintText = "Display label shown in the in-game loadout menu (e.g. \"A280 Blaster Rifle:\")"
 	costsItem := widget.NewFormItem("Costs", rankEntry)
-	costsItem.HintText = "Configured per-rank costs. The local preview sums \"0,4,10\" to 14 through rank 3; runtime behavior Unverified"
 	descItem := widget.NewFormItem("Description", descEntry)
-	descItem.HintText = "Optional tooltip shown under the rank in-game (e.g. \"Adds secondary fire\")"
 
 	form := widget.NewForm(skillItem, nameItem, costsItem, descItem)
+	form.Orientation = widget.Vertical
 	p.slotForms[globalIdx] = form
 	p.slotFormItems[globalIdx] = []*widget.FormItem{skillItem, nameItem, costsItem, descItem}
+	formHost := container.NewStack(form)
+	p.slotFormHosts[globalIdx] = formHost
+	help := widget.NewLabel("")
+	help.TextStyle = fyne.TextStyle{Italic: true}
+	help.Wrapping = fyne.TextWrapWord
+	help.Hide()
+	p.slotHelp[globalIdx] = help
 
 	left := container.NewHBox(
 		container.NewGridWrap(fyne.NewSize(24, 24), container.NewCenter(slotLabel)),
 		container.NewGridWrap(fyne.NewSize(90, 36), mode),
 	)
 
-	row := container.NewBorder(nil, widget.NewSeparator(),
-		left, nil, form)
-	return row
+	// At roomy widths the selector and fields can share a row; at the 360px
+	// boundary they stack before either side can force an outer scroller.
+	fields := container.NewVBox(formHost, help)
+	return container.NewVBox(newFormColumns(2, left, fields), widget.NewSeparator())
 }
 
 func (p *PointBuyUI) customSkillsChanged() {
@@ -459,7 +638,7 @@ func (p *PointBuyUI) selectArchetypeCount(n int, fromUser bool) {
 	p.rebuildArchetypeTabs()
 	p.customSkillsChanged()
 	if p.simulator != nil {
-		p.simulator.Refresh()
+		p.refreshResponsiveSimulator()
 	}
 }
 
@@ -501,7 +680,7 @@ func (p *PointBuyUI) buildSpecPane(spec, totalSpecs int) fyne.CanvasObject {
 	content := container.NewVBox()
 
 	if totalSpecs > 1 {
-		nameEntry := NewSlotEntry()
+		nameEntry := NewSlotEntry(&p.pageWheel)
 		nameEntry.SetPlaceHolder(fmt.Sprintf("Spec %d name (shown as tab title)", spec+1))
 		nameEntry.SetText(p.editor.character.CustomSpecNames[spec])
 		nameEntry.OnChanged = func(s string) {
@@ -515,7 +694,7 @@ func (p *PointBuyUI) buildSpecPane(spec, totalSpecs int) fyne.CanvasObject {
 		}
 		p.specNameEntries[spec] = nameEntry
 
-		iconEntry := NewSlotEntry()
+		iconEntry := NewSlotEntry(&p.pageWheel)
 		iconEntry.SetPlaceHolder("Icon path (e.g. gfx/menus/alpha/icon_weap_accuracy)")
 		iconEntry.SetText(p.editor.character.CustomSpecIcons[spec])
 		iconEntry.OnChanged = func(s string) {
@@ -524,7 +703,7 @@ func (p *PointBuyUI) buildSpecPane(spec, totalSpecs int) fyne.CanvasObject {
 		}
 		p.specIconEntries[spec] = iconEntry
 
-		descEntry := NewSlotEntry()
+		descEntry := NewSlotEntry(&p.pageWheel)
 		descEntry.SetPlaceHolder("Description (shown in-menu under the spec name)")
 		descEntry.SetText(p.editor.character.CustomSpecDescs[spec])
 		descEntry.OnChanged = func(s string) {
@@ -538,7 +717,12 @@ func (p *PointBuyUI) buildSpecPane(spec, totalSpecs int) fyne.CanvasObject {
 			widget.NewFormItem("Spec Icon", iconEntry),
 			widget.NewFormItem("Spec Desc", descEntry),
 		)
-		content.Add(header)
+		header.Orientation = widget.Vertical
+		content.Add(NewFormSection(
+			fmt.Sprintf("Archetype %d details", spec+1),
+			"The name becomes the tab title, the icon accepts a game asset path, and the description appears beneath the name in-menu.",
+			header,
+		))
 		content.Add(widget.NewSeparator())
 	}
 
@@ -550,6 +734,7 @@ func (p *PointBuyUI) buildSpecPane(spec, totalSpecs int) fyne.CanvasObject {
 	}
 	scroll := container.NewVScroll(slotBox)
 	scroll.SetMinSize(fyne.NewSize(0, 420))
+	p.windowWheel[spec].target = scroll
 	content.Add(scroll)
 
 	return content
@@ -572,8 +757,14 @@ func (p *PointBuyUI) refreshSlotLayout(i int) {
 	switch p.slotModes[i].Selected {
 	case "Header":
 		visible = items[1:2]
+		p.slotHelp[i].SetText("Name: section label shown in the in-game loadout menu.")
+		p.slotHelp[i].Show()
 	case "Skill":
 		visible = items
+		p.slotHelp[i].SetText("Skill: MB_ATT_* attribute granted by this row. Name: in-game loadout label. Costs: comma-separated per-rank costs; the local preview sums 0,4,10 to 14 through rank 3, while runtime behavior remains Unverified. Description: optional in-game rank tooltip.")
+		p.slotHelp[i].Show()
+	default:
+		p.slotHelp[i].Hide()
 	}
 	if !slices.Equal(form.Items, visible) {
 		// Fyne 2.8.2 can leave truncated entries bound to obsolete indices,
@@ -591,11 +782,13 @@ func (p *PointBuyUI) refreshSlotLayout(i int) {
 		oldForm.Items = nil
 		oldForm.Refresh()
 		form = widget.NewForm(visible...)
+		form.Orientation = widget.Vertical
 		p.slotForms[i] = form
-		p.slotRows[i].Remove(oldForm)
-		p.slotRows[i].Add(form)
+		p.slotFormHosts[i].Remove(oldForm)
+		p.slotFormHosts[i].Add(form)
 	}
 	form.Refresh()
+	p.slotFormHosts[i].Refresh()
 	p.slotRows[i].Refresh()
 }
 
@@ -767,7 +960,7 @@ func (p *PointBuyUI) refreshRankAttributes() {
 			k := key
 			val := p.editor.character.RankAttributes[k]
 
-			entry := NewSlotEntry()
+			entry := NewSlotEntry(&p.pageWheel)
 			entry.SetText(val)
 			entry.OnChanged = func(s string) {
 				p.editor.character.RankAttributes[k] = s
@@ -781,13 +974,13 @@ func (p *PointBuyUI) refreshRankAttributes() {
 			})
 
 			label := widget.NewLabel(k)
-			label.TextStyle = fyne.TextStyle{Monospace: true}
-
-			row := container.NewBorder(nil, nil,
-				container.NewGridWrap(fyne.NewSize(220, 28), label),
-				delBtn,
-				entry,
-			)
+			label.TextStyle = fyne.TextStyle{Bold: true, Monospace: true}
+			label.Wrapping = fyne.TextWrapBreak
+			help := widget.NewLabelWithStyle("Comma-separated values, one configured value per rank.",
+				fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
+			help.Wrapping = fyne.TextWrapWord
+			header := container.NewBorder(nil, nil, nil, delBtn, label)
+			row := container.NewVBox(header, help, entry)
 			p.rankAttrContainer.Add(row)
 		}
 	}
@@ -842,7 +1035,7 @@ func (p *PointBuyUI) UpdateUI() {
 	p.refreshBudget()
 	p.refreshRankAttributes()
 	if p.simulator != nil {
-		p.simulator.Refresh()
+		p.refreshResponsiveSimulator()
 	}
 }
 

@@ -64,13 +64,25 @@ func (c *TileCard) CreateRenderer() fyne.WidgetRenderer {
 	iconWidget := widget.NewIcon(c.Icon)
 	iconBox := container.NewGridWrap(fyne.NewSize(28, 28), iconWidget)
 
-	label := canvas.NewText(c.Label, theme.ForegroundColor())
-	label.TextSize = SizeBody
-	label.TextStyle = fyne.TextStyle{Bold: true}
+	label := widget.NewRichText(&widget.TextSegment{
+		Text: c.Label,
+		Style: widget.RichTextStyle{
+			Inline: true, SizeName: theme.SizeNameText,
+			ColorName: theme.ColorNameForeground,
+			TextStyle: fyne.TextStyle{Bold: true},
+		},
+	})
+	label.Wrapping = fyne.TextWrapWord
 
-	sub := canvas.NewText(c.Sublabel, theme.ForegroundColor())
-	sub.TextSize = SizeSmall
-	sub.TextStyle = fyne.TextStyle{Monospace: true}
+	sub := widget.NewRichText(&widget.TextSegment{
+		Text: c.Sublabel,
+		Style: widget.RichTextStyle{
+			Inline: true, SizeName: theme.SizeNameCaptionText,
+			ColorName: theme.ColorNameForeground,
+			TextStyle: fyne.TextStyle{Monospace: true},
+		},
+	})
+	sub.Wrapping = fyne.TextWrapWord
 
 	textStack := container.NewVBox(label, sub)
 	chevron := widget.NewIcon(theme.NavigateNextIcon())
@@ -88,7 +100,10 @@ func (c *TileCard) CreateRenderer() fyne.WidgetRenderer {
 	return widget.NewSimpleRenderer(container.NewStack(c.bg, c.border, accentRow))
 }
 
-func (c *TileCard) MinSize() fyne.Size { return fyne.NewSize(200, 58) }
+func (c *TileCard) MinSize() fyne.Size {
+	min := c.BaseWidget.MinSize()
+	return fyne.NewSize(fyne.Max(200, min.Width), fyne.Max(58, min.Height))
+}
 
 func (c *TileCard) Tapped(*fyne.PointEvent) {
 	if c.OnTap != nil {

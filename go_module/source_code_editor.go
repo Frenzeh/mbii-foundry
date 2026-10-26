@@ -40,14 +40,20 @@ type SourceCodeEditor struct {
 	shift           bool
 	preferredColumn int
 
-	codeGrid     *widget.TextGrid
-	gutterGrid   *widget.TextGrid
-	codeScroll   *container.Scroll
-	gutterScroll *container.Scroll
-	background   *canvas.Rectangle
-	completionBG *canvas.Rectangle
-	completion   *fyne.Container
-	completionUI *fyne.Container
+	codeGrid         *widget.TextGrid
+	gutterGrid       *widget.TextGrid
+	codeScroll       *container.Scroll
+	gutterScroll     *container.Scroll
+	background       *canvas.Rectangle
+	completionBG     *canvas.Rectangle
+	completion       *fyne.Container
+	completionUI     *fyne.Container
+	completionScroll *container.Scroll
+
+	// Updated with styling, not by reparsing the buffer during every resize.
+	caretRow     int
+	caretColumn  int
+	caretColumns int
 
 	completionItems []SourceCompletion
 	completionRows  []*sourceCompletionRow
@@ -126,8 +132,8 @@ func NewSourceCodeEditor() *SourceCodeEditor {
 	editor.codeGrid = widget.NewTextGrid()
 	editor.codeGrid.TabWidth = 4
 	editor.gutterGrid = widget.NewTextGrid()
-	editor.codeScroll = container.NewScroll(editor.codeGrid)
-	editor.gutterScroll = container.NewVScroll(editor.gutterGrid)
+	editor.codeScroll = container.NewScroll(container.NewPadded(editor.codeGrid))
+	editor.gutterScroll = container.NewVScroll(container.NewPadded(editor.gutterGrid))
 	editor.codeScroll.OnScrolled = func(offset fyne.Position) {
 		editor.gutterScroll.ScrollToOffset(fyne.NewPos(0, offset.Y))
 	}
@@ -139,7 +145,8 @@ func NewSourceCodeEditor() *SourceCodeEditor {
 	editor.completionBG.StrokeColor = palette.LineNumber
 	editor.completionBG.StrokeWidth = 1
 	editor.completionUI = container.NewVBox()
-	editor.completion = container.NewStack(editor.completionBG, container.NewPadded(editor.completionUI))
+	editor.completionScroll = container.NewScroll(editor.completionUI)
+	editor.completion = container.NewStack(editor.completionBG, container.NewPadded(editor.completionScroll))
 	editor.completion.Hide()
 	editor.ExtendBaseWidget(editor)
 	editor.rebuildTextSurfaces()
@@ -624,11 +631,12 @@ func (e *SourceCodeEditor) focus() {
 }
 
 func (e *SourceCodeEditor) moveCaretFromPoint(point fyne.Position, extend bool) {
-	gutterWidth := e.gutterScroll.Size().Width
-	if point.X < gutterWidth {
-		point.X = gutterWidth
+	origin := e.codeScroll.Position()
+	if point.X < origin.X {
+		point.X = origin.X
 	}
-	local := fyne.NewPos(point.X-gutterWidth+e.codeScroll.Offset.X, point.Y+e.codeScroll.Offset.Y)
+	inset := e.codeGrid.Position()
+	local := fyne.NewPos(point.X-origin.X+e.codeScroll.Offset.X-inset.X, point.Y-origin.Y+e.codeScroll.Offset.Y-inset.Y)
 	row, column := e.codeGrid.CursorLocationForPosition(local)
 	lines := sourceTextLines(e.buffer.text)
 	if row < 0 {
@@ -942,20 +950,26 @@ func (e *SourceCodeEditor) afterCursorMove(oldCaret int) {
 }
 
 func (e *SourceCodeEditor) ensureCaretVisible() {
-	lines := sourceTextLines(e.buffer.text)
-	row := sourceLineForOffset(lines, e.buffer.caret)
-	column := sourceColumnForOffset(lines[row], e.buffer.caret)
-	position := e.codeGrid.PositionForCursorLocation(row, column)
-	cellWidth := e.codeGrid.PositionForCursorLocation(0, 1).X
-	cellHeight := e.codeGrid.PositionForCursorLocation(1, 0).Y
+	view := e.codeScroll.Size()
+	if view.Width <= 0 || view.Height <= 0 {
+		return
+	}
+	origin := e.codeGrid.PositionForCursorLocation(0, 0)
+	position := e.codeGrid.PositionForCursorLocation(e.caretRow, e.caretColumn)
+	cellWidth := e.codeGrid.PositionForCursorLocation(0, 1).X - origin.X
+	cellHeight := e.codeGrid.PositionForCursorLocation(1, 0).Y - origin.Y
 	if cellWidth <= 0 {
 		cellWidth = 10
 	}
 	if cellHeight <= 0 {
 		cellHeight = 18
 	}
+	// Reveal the whole glyph plus the same inset used by the scroll content,
+	// not a cell pressed against the clipping edge.
+	inset := e.codeGrid.Position()
+	cellWidth = cellWidth*float32(max(1, e.caretColumns)) + 2*inset.X
+	cellHeight += 2 * inset.Y
 	offset := e.codeScroll.Offset
-	view := e.codeScroll.Size()
 	if position.X < offset.X {
 		offset.X = position.X
 	} else if position.X+cellWidth > offset.X+view.Width {
@@ -977,6 +991,7 @@ func (e *SourceCodeEditor) ensureCaretVisible() {
 }
 
 func (e *SourceCodeEditor) rebuildCompletionUI() {
+	e.completionScroll.ScrollToOffset(fyne.Position{})
 	e.completionUI.RemoveAll()
 	e.completionRows = e.completionRows[:0]
 	if len(e.completionItems) == 0 {
@@ -997,23 +1012,35 @@ func (e *SourceCodeEditor) updateCompletionLabels() {
 	for index, row := range e.completionRows {
 		row.setState(sourceCompletionRowLabel(e.completionItems[index]), index == e.completionIndex, e.palette)
 	}
+	e.ensureCompletionVisible()
 }
 
-const sourceCompletionRowRunes = 96
+func (e *SourceCodeEditor) ensureCompletionVisible() {
+	if e.completionIndex < 0 || e.completionIndex >= len(e.completionRows) {
+		return
+	}
+	row := e.completionRows[e.completionIndex]
+	view := e.completionScroll.Size()
+	if view.Height <= 0 {
+		return
+	}
+	offset := e.completionScroll.Offset
+	if row.Position().Y < offset.Y {
+		offset.Y = row.Position().Y
+	} else if end := row.Position().Y + row.Size().Height; end > offset.Y+view.Height {
+		offset.Y = end - view.Height
+	}
+	e.completionScroll.ScrollToOffset(offset)
+}
 
-// sourceCompletionRowLabel fits label and detail on one canvas.Text line:
-// catalog descriptions can contain newlines, which canvas.Text cannot draw.
+// canvas.Text is single-line; the bounded popup scrolls to expose complete
+// identifiers and descriptions instead of cutting paths at a rune limit.
 func sourceCompletionRowLabel(item SourceCompletion) string {
 	label := item.Label
 	if item.Detail != "" {
 		label += " — " + item.Detail
 	}
-	label = strings.Join(strings.Fields(label), " ")
-	if utf8.RuneCountInString(label) <= sourceCompletionRowRunes {
-		return label
-	}
-	runes := []rune(label)
-	return string(runes[:sourceCompletionRowRunes-1]) + "…"
+	return strings.Join(strings.Fields(label), " ")
 }
 
 func (e *SourceCodeEditor) moveCompletion(delta int) {
@@ -1130,6 +1157,9 @@ func (e *SourceCodeEditor) styleCodeGrid(lines []sourceLine) {
 	for row, line := range lines {
 		gridColumn := 0
 		for _, cell := range line.Cells {
+			if e.buffer.caret == cell.Start {
+				e.caretRow, e.caretColumn, e.caretColumns = row, gridColumn, cell.Width
+			}
 			for runIndex < len(e.analysis.Syntax) && e.analysis.Syntax[runIndex].Range.End <= cell.Start {
 				runIndex++
 			}
@@ -1156,6 +1186,9 @@ func (e *SourceCodeEditor) styleCodeGrid(lines []sourceLine) {
 				e.codeGrid.SetStyle(row, gridColumn+column, style)
 			}
 			gridColumn += cell.Width
+		}
+		if e.buffer.caret == line.ContentEnd {
+			e.caretRow, e.caretColumn, e.caretColumns = row, gridColumn, 1
 		}
 		background := uint8(0)
 		if selectionStart != selectionEnd && line.ContentEnd >= selectionStart && line.ContentEnd < selectionEnd {
@@ -1244,24 +1277,25 @@ func (r *sourceCodeEditorRenderer) Destroy() {}
 func (r *sourceCodeEditorRenderer) Layout(size fyne.Size) {
 	r.editor.background.Move(fyne.Position{})
 	r.editor.background.Resize(size)
-	gutterWidth := r.editor.gutterGrid.MinSize().Width
-	if gutterWidth < 44 {
-		gutterWidth = 44
-	}
-	if gutterWidth > 96 {
-		gutterWidth = 96
-	}
+	gutterWidth := fyne.Max(44, r.editor.gutterScroll.Content.MinSize().Width)
 	r.editor.gutterScroll.Move(fyne.Position{})
 	r.editor.gutterScroll.Resize(fyne.NewSize(gutterWidth, size.Height))
+	previousViewport := r.editor.codeScroll.Size()
 	r.editor.codeScroll.Move(fyne.NewPos(gutterWidth, 0))
 	r.editor.codeScroll.Resize(fyne.NewSize(fyne.Max(0, size.Width-gutterWidth), size.Height))
+	if r.editor.codeScroll.Size() != previousViewport {
+		// A split/rail resize must not strand the active end of a selection
+		// outside the viewport. Ordinary refreshes must not undo manual scroll.
+		r.editor.ensureCaretVisible()
+	}
 
 	if r.editor.completion.Visible() {
-		popupSize := r.editor.completion.MinSize()
+		popupSize := r.editor.completionUI.MinSize().Add(fyne.NewSize(16, 16))
 		popupSize.Width = fyne.Min(fyne.Max(popupSize.Width, 220), fyne.Max(0, size.Width-gutterWidth-16))
 		popupSize.Height = fyne.Min(popupSize.Height, fyne.Max(0, size.Height-16))
 		r.editor.completion.Resize(popupSize)
 		r.editor.completion.Move(fyne.NewPos(fyne.Max(gutterWidth, size.Width-popupSize.Width-8), 8))
+		r.editor.ensureCompletionVisible()
 	}
 }
 

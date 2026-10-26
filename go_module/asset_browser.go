@@ -455,7 +455,7 @@ func (ab *AssetBrowser) createUI() {
 			ab.navigateToPath(path)
 		}
 	})
-	ab.quickNavSelect.PlaceHolder = "Choose common path"
+	ab.quickNavSelect.PlaceHolder = "Common path"
 
 	ab.searchEntry = NewInputEntry()
 	ab.searchEntry.SetPlaceHolder("Search...")
@@ -521,23 +521,24 @@ func (ab *AssetBrowser) createUI() {
 	refreshBtn := NewTooltipButton("", theme.ViewRefreshIcon(), ab.refreshCurrentDirectory, "Refresh the current folder")
 	refreshBtn.Importance = widget.LowImportance
 
-	navButtons := container.NewHBox(upBtn, homeBtn, refreshBtn, favBtn)
-	zoomControl := container.NewGridWrap(fyne.NewSize(96, ab.sortSelect.MinSize().Height), ab.zoomSlider)
-	controlsRow := container.NewBorder(nil, nil, nil,
-		container.NewHBox(widget.NewLabel("Size"), zoomControl, viewModeBtn), ab.sortSelect)
+	navButtons := container.NewHBox(upBtn, homeBtn, refreshBtn)
+	controlsRow := container.NewBorder(nil, nil, nil, viewModeBtn, ab.sortSelect)
+	sizeRow := container.NewBorder(nil, nil, widget.NewLabel("Size"), nil, ab.zoomSlider)
 
 	ab.breadcrumbLabel = widget.NewLabel("VFS /")
 	ab.breadcrumbLabel.Truncation = fyne.TextTruncateEllipsis
+	copyLocationBtn := assetBrowserCopyTextButton(ab.breadcrumbLabel, "Copy full asset location")
 
 	quickNavHelp := NewTooltipButton("", theme.HelpIcon(), nil,
 		"Jump to a common asset directory in the selected virtual filesystem")
 	quickNavHelp.Importance = widget.LowImportance
 	ab.topBar = container.NewPadded(container.NewVBox(
-		ab.sourceSelect,
+		container.NewBorder(nil, nil, nil, favBtn, ab.sourceSelect),
 		container.NewBorder(nil, nil, nil, quickNavHelp, ab.quickNavSelect),
-		container.NewBorder(nil, nil, navButtons, nil, ab.breadcrumbLabel),
+		container.NewBorder(nil, nil, navButtons, copyLocationBtn, ab.breadcrumbLabel),
 		ab.searchEntry,
 		controlsRow,
+		sizeRow,
 	))
 
 	ab.tree = widget.NewTree(
@@ -625,6 +626,8 @@ func (ab *AssetBrowser) createUI() {
 	// This label mirrors directory load/error results below the browser.
 	ab.statusLabel = widget.NewLabel("")
 	ab.statusLabel.Truncation = fyne.TextTruncateEllipsis
+	statusRow := container.NewBorder(nil, nil, nil,
+		assetBrowserCopyTextButton(ab.statusLabel, "Copy full browser status"), ab.statusLabel)
 
 	treeScroll := container.NewScroll(ab.tree)
 	treeScroll.SetMinSize(fyne.NewSize(120, 0))
@@ -632,8 +635,18 @@ func (ab *AssetBrowser) createUI() {
 	ab.browserSplit.SetOffset(0.3)
 	body := container.NewStack(ab.browserSplit, ab.emptyState)
 
-	ab.container = container.NewBorder(ab.topBar, ab.statusLabel, nil, nil, body)
+	ab.container = container.NewBorder(ab.topBar, statusRow, nil, nil, body)
 	ab.updateEmptyState()
+}
+
+// Read the live label text on tap so ellipsized paths and errors remain available
+// after navigation, refresh, or an asynchronous index result.
+func assetBrowserCopyTextButton(label *widget.Label, tooltip string) *TooltipButton {
+	button := NewTooltipButton("", theme.ContentCopyIcon(), func() {
+		fyne.CurrentApp().Clipboard().SetContent(label.Text)
+	}, tooltip)
+	button.Importance = widget.LowImportance
+	return button
 }
 
 func (ab *AssetBrowser) updateEmptyState() {
@@ -896,7 +909,8 @@ func (g *GridItem) CreateRenderer() fyne.WidgetRenderer {
 		content = container.NewHBox(iconArea, lbl)
 	} else {
 		lbl.Alignment = fyne.TextAlignCenter
-		lbl.Wrapping = fyne.TextTruncate
+		lbl.Wrapping = fyne.TextWrapOff
+		lbl.Truncation = fyne.TextTruncateEllipsis
 		content = container.NewBorder(nil, lbl, nil, nil, iconArea)
 	}
 	// Stack background behind the content so click/hover feedback

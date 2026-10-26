@@ -136,11 +136,9 @@ func NewBufferGaugeWidget() *BufferGaugeWidget {
 	badge.CornerRadius = 6
 
 	label := widget.NewLabelWithStyle(bufferGaugeLabel(BufferStatus{}), fyne.TextAlignLeading, fyne.TextStyle{Monospace: true})
+	label.Wrapping = fyne.TextWrapWord
 
-	cnt := container.NewHBox(
-		badge,
-		label,
-	)
+	cnt := container.NewBorder(nil, nil, container.NewCenter(badge), nil, label)
 
 	return &BufferGaugeWidget{
 		container: cnt,

@@ -53,10 +53,7 @@ func (w *WelcomeScreen) GetContent() fyne.CanvasObject {
 		LogError("Welcome logo PNG decode failed: %v (bytes=%d)", err, len(embedLogoMBII))
 	}
 
-	title := canvas.NewText("FOUNDRY", theme.ForegroundColor())
-	title.Alignment = fyne.TextAlignLeading
-	title.TextSize = SizeTitle
-	title.TextStyle = fyne.TextStyle{Bold: true}
+	title := welcomeHeading("FOUNDRY", SizeTitle, theme.ColorNameForeground, fyne.TextAlignLeading)
 
 	subtitle := welcomeHint("MOVIE BATTLES II CONTENT EDITOR")
 	subtitle.TextStyle = fyne.TextStyle{Bold: true}
@@ -127,11 +124,8 @@ func (w *WelcomeScreen) GetContent() fyne.CanvasObject {
 
 // sectionCaption gives primary sections enough weight to anchor each column
 // without competing with the page title.
-func sectionCaption(text string) *canvas.Text {
-	t := canvas.NewText(text, theme.ForegroundColor())
-	t.TextSize = SizeBody
-	t.TextStyle = fyne.TextStyle{Bold: true}
-	return t
+func sectionCaption(text string) fyne.CanvasObject {
+	return welcomeHeading(text, SizeBody, theme.ColorNameForeground, fyne.TextAlignLeading)
 }
 
 // buildRecentColumn returns recent-file links or a short onboarding block.
@@ -154,15 +148,11 @@ func (w *WelcomeScreen) buildRecentColumn() fyne.CanvasObject {
 		return items
 	}
 
-	emptyHeadline := canvas.NewText("NO RECENT FILES", theme.ForegroundColor())
-	emptyHeadline.TextSize = SizeSubtitle
-	emptyHeadline.TextStyle = fyne.TextStyle{Bold: true}
+	emptyHeadline := welcomeHeading("NO RECENT FILES", SizeSubtitle, theme.ColorNameForeground, fyne.TextAlignLeading)
 
 	emptyHint := welcomeHint("Create something new or open an existing file.")
 
-	tipHeader := canvas.NewText("WHILE YOU'RE HERE", theme.ForegroundColor())
-	tipHeader.TextSize = SizeBody
-	tipHeader.TextStyle = fyne.TextStyle{Bold: true}
+	tipHeader := sectionCaption("WHILE YOU'RE HERE")
 
 	return container.NewVBox(
 		emptyHeadline,
@@ -202,15 +192,8 @@ func (w *WelcomeScreen) buildFooter() fyne.CanvasObject {
 // aligned so everything flows to the edge and reads as a cohesive
 // mark.
 func (w *WelcomeScreen) buildBrandColumn() fyne.CanvasObject {
-	brandLine := canvas.NewText("MBII FOUNDRY", theme.PlaceHolderColor())
-	brandLine.TextSize = SizeSmall
-	brandLine.TextStyle = fyne.TextStyle{Bold: true}
-	brandLine.Alignment = fyne.TextAlignTrailing
-
-	versionTxt := canvas.NewText("v"+AppVersion, theme.ForegroundColor())
-	versionTxt.TextSize = SizeSubtitle
-	versionTxt.TextStyle = fyne.TextStyle{Bold: true}
-	versionTxt.Alignment = fyne.TextAlignTrailing
+	brandLine := welcomeHeading("MBII FOUNDRY", SizeSmall, theme.ColorNamePlaceHolder, fyne.TextAlignTrailing)
+	versionTxt := welcomeHeading("v"+AppVersion, SizeSubtitle, theme.ColorNameForeground, fyne.TextAlignTrailing)
 
 	children := []fyne.CanvasObject{
 		layout.NewSpacer(), // push the brand block to the bottom edge
@@ -234,6 +217,37 @@ func (w *WelcomeScreen) buildBrandColumn() fyne.CanvasObject {
 	}
 
 	return container.NewVBox(children...)
+}
+
+// welcomeHeading keeps the existing canvas-text sizes while allowing Home's
+// headings and branding to wrap with the pane. Only text size is overridden;
+// fonts, colors, and density continue to come from the application theme.
+func welcomeHeading(text string, size float32, colorName fyne.ThemeColorName, alignment fyne.TextAlign) fyne.CanvasObject {
+	content := widget.NewRichText(&widget.TextSegment{
+		Text: text,
+		Style: widget.RichTextStyle{
+			Alignment: alignment,
+			ColorName: colorName,
+			TextStyle: fyne.TextStyle{Bold: true},
+		},
+	})
+	content.Wrapping = fyne.TextWrapWord
+	return container.NewThemeOverride(content, welcomeHeadingTheme{
+		Theme:    fyne.CurrentApp().Settings().Theme(),
+		textSize: size,
+	})
+}
+
+type welcomeHeadingTheme struct {
+	fyne.Theme
+	textSize float32
+}
+
+func (t welcomeHeadingTheme) Size(name fyne.ThemeSizeName) float32 {
+	if name == theme.SizeNameText {
+		return t.textSize
+	}
+	return t.Theme.Size(name)
 }
 
 func welcomeHint(text string) *widget.Label {

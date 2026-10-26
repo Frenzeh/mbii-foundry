@@ -53,7 +53,8 @@ type App struct {
 
 	docTabs         *container.DocTabs
 	editors         map[*container.TabItem]Editor
-	detachedEditors map[Editor]string // torn-out editors remain live until reattached or discarded
+	tabTitles       map[*container.TabItem]string // full titles; TabItem.Text is display-only
+	detachedEditors map[Editor]string             // torn-out editors remain live until reattached or discarded
 
 	assetBrowser       *AssetBrowser
 	infoPanel          *InfoPanel
@@ -564,7 +565,7 @@ func main() {
 		go application.monitorHolocronStatus()
 	}
 
-	application.mainWindow = application.fyneApp.NewWindow(fmt.Sprintf("%s - MBII Content Editor", AppName))
+	application.mainWindow = application.fyneApp.NewWindow(mainWindowTitle)
 	// Restore last-session window size if persisted; else default
 	// 1400x900. Sub-1200x600 is treated as corrupt config (Fyne
 	// rounding glitches at very small initial sizes) and ignored.
@@ -600,7 +601,7 @@ func (a *App) requestQuit() {
 	var dirtyTabs []string
 	for tab, ed := range a.editors {
 		if ed != nil && (ed.IsDirty() || a.sourceDrafts.Has(ed)) {
-			dirtyTabs = append(dirtyTabs, tab.Text)
+			dirtyTabs = append(dirtyTabs, a.fullTabTitle(tab))
 		}
 	}
 	for ed, title := range a.detachedEditors {
@@ -724,6 +725,7 @@ func (a *App) setupUI() {
 	// bar when the label is empty so the chrome disappears with it.
 	a.statusLabel = widget.NewLabel("")
 	a.statusLabel.TextStyle = fyne.TextStyle{Italic: true}
+	a.statusLabel.Wrapping = fyne.TextWrapWord
 	a.bufferGauge = NewBufferGaugeWidget()
 	a.bufferGauge.GetContent().Hide()
 
@@ -806,9 +808,7 @@ func (a *App) updateMainLayout() {
 	// look like dragging does nothing.
 	a.persistSplitOffsets()
 
-	// Keep the activity bar's collapse icon in sync with the current
-	// sidebar state. The toggle lives on the activity bar now (bottom
-	// of the left strip) — the old status-bar toggle is gone.
+	// Keep the sidebar header's right-edge collapse control in sync.
 	if a.activityBar != nil {
 		a.activityBar.SetCollapsed(!a.sidebarVisible)
 	}
@@ -820,21 +820,20 @@ func (a *App) updateMainLayout() {
 	var statusBar fyne.CanvasObject
 	hasStatus := a.statusLabel.Text != "" || a.holocronClient != nil || a.bufferGauge != nil
 	if hasStatus {
-		statusBarItems := []fyne.CanvasObject{
-			a.statusLabel,
-			layout.NewSpacer(),
+		var statusRows []fyne.CanvasObject
+		if a.statusLabel.Text != "" || a.holocronClient != nil {
+			var devStatus fyne.CanvasObject
+			if a.holocronClient != nil {
+				devStatus = container.NewHBox(widget.NewLabel("Holocron:"), a.holocronStatus)
+			}
+			statusRows = append(statusRows, container.NewBorder(nil, nil, nil, devStatus, a.statusLabel))
 		}
+		// Metrics and operation feedback each own a full-width row. Their
+		// text can reflow without taking width from the document or each other.
 		if a.bufferGauge != nil {
-			statusBarItems = append(statusBarItems, a.bufferGauge.GetContent())
+			statusRows = append(statusRows, a.bufferGauge.GetContent())
 		}
-		if a.holocronClient != nil {
-			statusBarItems = append(statusBarItems,
-				widget.NewSeparator(),
-				widget.NewLabel("Holocron:"),
-				a.holocronStatus,
-			)
-		}
-		statusBar = container.NewHBox(statusBarItems...)
+		statusBar = container.NewVBox(statusRows...)
 	}
 
 	// Compose the center: [sidebar | docTabs+edge-rails | source-panel]
@@ -1072,8 +1071,9 @@ func (a *App) popOutCurrentTab() {
 		return
 	}
 
-	title := tab.Text
+	title := a.fullTabTitle(tab)
 	delete(a.editors, tab)
+	delete(a.tabTitles, tab)
 	if a.detachedEditors == nil {
 		a.detachedEditors = make(map[Editor]string)
 	}
@@ -1082,6 +1082,15 @@ func (a *App) popOutCurrentTab() {
 	a.rebindSelectedSource()
 
 	win := a.fyneApp.NewWindow(title + " — MBII Foundry")
+	ed.SetOnDirtyChanged(func(dirty bool) {
+		updated := documentTitleWithDirty(title, dirty)
+		if updated == title {
+			return
+		}
+		title = updated
+		a.detachedEditors[ed] = title
+		win.SetTitle(title + " — " + AppName)
+	})
 	reattachRequested := false
 	closeWithoutIntercept := func() {
 		win.SetCloseIntercept(nil)
@@ -1096,6 +1105,10 @@ func (a *App) popOutCurrentTab() {
 
 	reattach := func() {
 		a.editors[tab] = ed
+		a.setTabTitle(tab, title)
+		ed.SetOnDirtyChanged(func(dirty bool) {
+			a.updateTabTitle(tab, dirty)
+		})
 		a.docTabs.Append(tab)
 		a.docTabs.Select(tab)
 		a.rebindSelectedSource()
@@ -1132,6 +1145,7 @@ func (a *App) rebindSelectedSource() {
 	if a.docTabs == nil {
 		return
 	}
+	a.updateSelectedWindowTitle()
 	ed := a.editors[a.docTabs.Selected()]
 	a.setSourceEditorForAll(ed)
 	if a.advancedWorkspace != nil {
@@ -1572,7 +1586,9 @@ func (a *App) toggleSourcePanel() {
 func (a *App) createNewFile(title string, editor interface{}) {
 	// Check if we should replace the "Start" tab if it's the only one
 	if len(a.docTabs.Items) == 1 && a.docTabs.Items[0].Text == "Home" {
-		a.docTabs.Remove(a.docTabs.Items[0])
+		home := a.docTabs.Items[0]
+		delete(a.tabTitles, home)
+		a.docTabs.Remove(home)
 	}
 
 	if ed, ok := editor.(Editor); ok {
@@ -1585,7 +1601,8 @@ func (a *App) createNewFile(title string, editor interface{}) {
 		LogInfo("createNewFile[%s]: SetOnHover+Holocron took %s", title, time.Since(t2))
 
 		t3 := time.Now()
-		tab := container.NewTabItem("Untitled "+title, ed.GetContent())
+		tab := container.NewTabItem("", ed.GetContent())
+		a.setTabTitle(tab, "Untitled "+title)
 		LogInfo("createNewFile[%s]: GetContent+TabItem took %s", title, time.Since(t3))
 		// Register the mapping BEFORE Append AND Select. Append can
 		// auto-select the new tab when it's the only one (e.g. right
@@ -1672,8 +1689,7 @@ func (a *App) openFileFromPath(filePath string) *container.TabItem {
 		tCreate := time.Now()
 		a.createNewFile(title, editor)
 		tab := a.docTabs.Selected()
-		tab.Text = title
-		a.docTabs.Refresh()
+		a.setTabTitle(tab, title)
 		LogInfo("openFileFromPath[%s]: createNewFile+tab took %s", title, time.Since(tCreate))
 
 		a.updateStatus(fmt.Sprintf("Opened %s", title))
@@ -1797,8 +1813,7 @@ func (a *App) openFileFromAsset(asset *AssetEntry) {
 	// to Save-As and lands somewhere they actually expect. Rename the tab
 	// to the PK3-source-qualified form so the read-only origin is clear.
 	ed.SetCurrentPath("")
-	tab.Text = asset.Name + "  ·  " + filepath.Base(asset.PK3Source)
-	a.docTabs.Refresh()
+	a.setTabTitle(tab, asset.Name+"  ·  "+filepath.Base(asset.PK3Source))
 	a.updateStatus(fmt.Sprintf("Opened %s (from %s — Save As to persist)",
 		asset.Name, filepath.Base(asset.PK3Source)))
 }
@@ -1854,6 +1869,7 @@ func (a *App) removeTab(tab *container.TabItem) {
 		}
 	}
 	delete(a.editors, tab)
+	delete(a.tabTitles, tab)
 	a.docTabs.Remove(tab)
 
 	// Closing the last document still leaves a useful Home surface.
@@ -2345,11 +2361,10 @@ func (a *App) loadConfig() {
 		a.credentialWarning = "A legacy credential is preserved in the original configuration. Use Connect GitHub to migrate it securely; local editing needs no account."
 	}
 
-	// Balance the nested three-pane layout: the sidebar receives 30%
-	// of the left/editor region and the source panel takes the final
-	// 30% of the window. This keeps the editor dominant while leaving
-	// both utility panes readable.
-	if a.config.SidebarOffset == 0 || a.config.SidebarOffset >= 0.6 {
+	// First-launch proportions balance the nested panes. Preserve every
+	// valid saved ratio; native Split layout clamps rendered bounds to the
+	// children's minima without replacing the user's preferred offset.
+	if a.config.SidebarOffset <= 0 || a.config.SidebarOffset >= 1 {
 		a.config.SidebarOffset = 0.30
 	}
 
@@ -2404,13 +2419,7 @@ func (a *App) updateStatus(msg string) {
 }
 
 func (a *App) updateTabTitle(tab *container.TabItem, isDirty bool) {
-	baseName := strings.TrimPrefix(tab.Text, "* ")
-	if isDirty {
-		tab.Text = "* " + baseName
-	} else {
-		tab.Text = baseName
-	}
-	a.docTabs.Refresh()
+	a.setTabTitle(tab, documentTitleWithDirty(a.fullTabTitle(tab), isDirty))
 }
 
 func (a *App) showPreferences() {

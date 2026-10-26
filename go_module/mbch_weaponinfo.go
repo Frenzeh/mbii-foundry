@@ -21,6 +21,7 @@ package main
 
 import (
 	"fmt"
+	"image/color"
 	"sort"
 	"strconv"
 
@@ -37,7 +38,7 @@ import (
 // "Weapon Mods" tab.
 type WeaponInfoUI struct {
 	editor    *MBCHEditor
-	container *container.Split
+	container *fyne.Container
 
 	weaponList *widget.List
 	listIcon   *canvas.Image // shared list-row icon template (replaced per row)
@@ -227,6 +228,7 @@ func (ui *WeaponInfoUI) createUI() {
 			),
 		),
 	)
+	identityForm.Orientation = widget.Vertical
 
 	visualsForm := widget.NewForm(
 		widget.NewFormItem("New World Model",
@@ -266,6 +268,7 @@ func (ui *WeaponInfoUI) createUI() {
 					"Browse for Alt Missile Effect"),
 				ui.altMissileEffectEntry)),
 	)
+	visualsForm.Orientation = widget.Vertical
 
 	soundsForm := widget.NewForm(
 		widget.NewFormItem("Flash Sound 0",
@@ -287,12 +290,14 @@ func (ui *WeaponInfoUI) createUI() {
 					"Browse for Charge Sound"),
 				ui.chargeSoundEntry)),
 	)
+	soundsForm.Orientation = widget.Vertical
 
 	ammoForm := widget.NewForm(
 		widget.NewFormItem("Custom Ammo", ui.customAmmoEntry),
 		widget.NewFormItem("Clip Size", ui.clipSizeEntry),
 		widget.NewFormItem("Reload Time Modifier", ui.reloadTimeModifierEntry),
 	)
+	ammoForm.Orientation = widget.Vertical
 
 	accordion := widget.NewAccordion(
 		widget.NewAccordionItem("Identity", identityForm),
@@ -307,8 +312,9 @@ func (ui *WeaponInfoUI) createUI() {
 	// the user to either add one or pick an existing row. Better
 	// than showing an empty form with placeholder text everywhere.
 	emptyMsg := widget.NewLabelWithStyle(
-		"Select a weapon override from the list,\nor click Add to create one.",
+		"Select a weapon override from the list, or click Add to create one.",
 		fyne.TextAlignCenter, fyne.TextStyle{Italic: true})
+	emptyMsg.Wrapping = fyne.TextWrapWord
 	ui.emptyState = container.NewCenter(emptyMsg)
 
 	// Stack holds both empty-state + detail form; we toggle Show/Hide
@@ -317,8 +323,18 @@ func (ui *WeaponInfoUI) createUI() {
 	detailScroll.Hide()
 	ui.detailPane = container.NewStack(ui.emptyState, detailScroll)
 
-	ui.container = container.NewHSplit(listPane, ui.detailPane)
-	ui.container.SetOffset(0.3)
+	// A split adds both child minima, so one long form pins every AppTabs page
+	// wide. Keep a real, bounded list viewport and a full detail viewport, then
+	// let the shared form-column layout place them beside each other when they
+	// fit and stack them at narrow widths. The same controls move; no mirrored
+	// fields or horizontal form scroller are involved.
+	selectorFloor := canvas.NewRectangle(color.Transparent)
+	selectorFloor.SetMinSize(fyne.NewSize(0, 180))
+	selectorPane := container.NewStack(selectorFloor, listPane)
+	detailFloor := canvas.NewRectangle(color.Transparent)
+	detailFloor.SetMinSize(fyne.NewSize(0, 360))
+	detailViewport := container.NewStack(detailFloor, ui.detailPane)
+	ui.container = newFormColumns(2, selectorPane, detailViewport)
 }
 
 // resolveRowIcon pulls an icon for the list row. Uses the override's

@@ -85,6 +85,7 @@ func BuildDefensiveMatrixWidget(dm DefensiveMatrix) fyne.CanvasObject {
 	rawSummary := fmt.Sprintf("HP: %d  |  Armor: %d  |  Lives: %d  |  Configured pool: %d",
 		dm.MaxHealth, dm.MaxArmor, dm.TotalLives, dm.TotalRawEHP)
 	rawLbl := widget.NewLabelWithStyle(rawSummary, fyne.TextAlignLeading, fyne.TextStyle{Monospace: true})
+	rawLbl.Wrapping = fyne.TextWrapBreak
 
 	energyPill := createStatBadge("Energy EHP: Unverified", false,
 		color.RGBA{R: 40, G: 140, B: 240, A: 255})
@@ -92,15 +93,16 @@ func BuildDefensiveMatrixWidget(dm DefensiveMatrix) fyne.CanvasObject {
 		color.RGBA{R: 240, G: 120, B: 40, A: 255})
 	meleePill := createStatBadge("Melee EHP: Unverified", false,
 		color.RGBA{R: 180, G: 60, B: 200, A: 255})
-	ehpRow := container.NewHBox(energyPill, expPill, meleePill)
+	ehpRow := newFormColumns(3, energyPill, expPill, meleePill)
 
 	conditionalFootnote := widget.NewLabelWithStyle(
 		"Unverified: no class- or attribute-based damage-reduction estimates are applied.",
 		fyne.TextAlignLeading,
 		fyne.TextStyle{Italic: true},
 	)
+	conditionalFootnote.Wrapping = fyne.TextWrapWord
 
-	content := container.NewVBox(
+	content := newFormColumns(1,
 		container.NewHBox(widget.NewIcon(theme.RadioButtonCheckedIcon()), titleLbl),
 		rawLbl,
 		ehpRow,
@@ -115,6 +117,7 @@ func BuildDefensiveMatrixWidget(dm DefensiveMatrix) fyne.CanvasObject {
 
 func createStatBadge(text string, boosted bool, accent color.RGBA) fyne.CanvasObject {
 	lbl := widget.NewLabelWithStyle(text, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	lbl.Wrapping = fyne.TextWrapWord
 	bgColor := color.RGBA{R: 40, G: 45, B: 55, A: 255}
 	if boosted {
 		bgColor = color.RGBA{R: accent.R / 4, G: accent.G / 4, B: accent.B / 4, A: 255}

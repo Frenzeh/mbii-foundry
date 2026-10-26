@@ -13,7 +13,6 @@ package main
 
 import (
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
@@ -25,10 +24,17 @@ import (
 // hint: 1-2 sentence body explaining what the user can do.
 // actionLabel + action: optional button. Pass "" + nil to omit.
 func NewEmptyStateTile(headline, hint, actionLabel string, action func()) fyne.CanvasObject {
-	headlineText := canvas.NewText(headline, theme.PlaceHolderColor())
-	headlineText.TextSize = SizeSmall
-	headlineText.TextStyle = fyne.TextStyle{Bold: true, Monospace: true}
-	headlineText.Alignment = fyne.TextAlignCenter
+	headlineText := widget.NewRichText(&widget.TextSegment{
+		Text: headline,
+		Style: widget.RichTextStyle{
+			Alignment: fyne.TextAlignCenter,
+			ColorName: theme.ColorNamePlaceHolder,
+			SizeName:  theme.SizeNameCaptionText,
+			TextStyle: fyne.TextStyle{Bold: true, Monospace: true},
+			Inline:    true,
+		},
+	})
+	headlineText.Wrapping = fyne.TextWrapWord
 
 	hintLabel := widget.NewLabelWithStyle(hint, fyne.TextAlignCenter, fyne.TextStyle{})
 	hintLabel.Wrapping = fyne.TextWrapWord
@@ -46,5 +52,5 @@ func NewEmptyStateTile(headline, hint, actionLabel string, action func()) fyne.C
 		StrokeAlpha: 28,
 		Padded:      true,
 	})
-	return container.NewPadded(container.NewCenter(tile))
+	return container.NewPadded(tile)
 }

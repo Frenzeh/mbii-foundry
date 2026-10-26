@@ -83,6 +83,16 @@ func auditMBCHEntries(root fyne.CanvasObject) []*widget.Entry {
 	return entries
 }
 
+func auditMBCHSlotEntries(root fyne.CanvasObject) []*slotEntry {
+	var entries []*slotEntry
+	walkAuditMBCH(root, func(obj fyne.CanvasObject) {
+		if entry, ok := obj.(*slotEntry); ok {
+			entries = append(entries, entry)
+		}
+	})
+	return entries
+}
+
 func auditMBCHButton(t *testing.T, root fyne.CanvasObject, text string) *widget.Button {
 	t.Helper()
 	var found *widget.Button
@@ -275,7 +285,7 @@ func TestAuditMBCHFrontAndMiddleSkillReplacementPreservesDocumentHistory(t *test
 func TestAuditMBCHRankModifierFormOwnsParsedValue(t *testing.T) {
 	const source = "ClassInfo\n{\nname \"Ranks\"\nisCustomBuild 1\nrankHealth 100,120,150\n}\n"
 	e := loadAuditMBCH(t, source)
-	entries := auditMBCHEntries(e.pointBuyUI.rankAttrContainer)
+	entries := auditMBCHSlotEntries(e.pointBuyUI.rankAttrContainer)
 	if len(entries) != 1 || entries[0].Text != "100,120,150" {
 		t.Fatal("parsed rankHealth did not populate the rank-modifier form")
 	}

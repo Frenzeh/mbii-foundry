@@ -249,9 +249,9 @@ func TestMBCHModelProjectionsStaySynchronizedAcrossReplacementPaths(t *testing.T
 	assertProjection := func(name, class, health, armor string) {
 		t.Helper()
 		wantStats := "HP " + health + "   ARMOR " + armor
-		if e.summary.nameLbl.Text != name || e.summary.classLbl.Text != class || e.summary.statsLbl.Text != wantStats {
+		if e.summary.nameLbl.String() != name || e.summary.classLbl.String() != class || e.summary.statsLbl.String() != wantStats {
 			t.Fatalf("summary = %q/%q/%q, want %q/%q/%q",
-				e.summary.nameLbl.Text, e.summary.classLbl.Text, e.summary.statsLbl.Text,
+				e.summary.nameLbl.String(), e.summary.classLbl.String(), e.summary.statsLbl.String(),
 				name, class, wantStats)
 		}
 		if e.nameEntry.Text != name || e.healthEntry.Text != health || e.armorEntry.Text != armor {

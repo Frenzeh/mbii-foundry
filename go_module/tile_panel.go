@@ -17,6 +17,8 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/theme"
 )
 
 // The outer radius is one pixel larger than the inset frame so the two
@@ -42,9 +44,8 @@ type TileOpts struct {
 	// info-panel hero (cards get 14/60, hero stays 22/110).
 	FillAlpha   uint8
 	StrokeAlpha uint8
-	// Padded wraps the content in a single Padded layer when true.
-	// Most callers want this; the info-panel hero already does its
-	// own double-padding for inner spacing.
+	// Padded places the content inside the inset frame with a small
+	// additional gutter. The frame and glyph edges must not share a boundary.
 	Padded bool
 }
 
@@ -91,7 +92,8 @@ func NewDynamicTilePanel(content fyne.CanvasObject, opts TileOpts) *TilePanelWid
 
 	body := content
 	if opts.Padded {
-		body = container.NewPadded(content)
+		gutter := theme.Padding() + SpaceXS
+		body = container.New(layout.NewCustomPaddedLayout(gutter, gutter, gutter, gutter), content)
 	}
 
 	stack := container.NewStack(bg, framePadded, body)

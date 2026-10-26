@@ -19,6 +19,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -30,6 +31,7 @@ type CollapsedRail struct {
 	onTap   func()
 
 	hovering bool
+	focused  bool
 	bg       *canvas.Rectangle
 	popUp    *widget.PopUp
 }
@@ -44,6 +46,8 @@ func (r *CollapsedRail) CreateRenderer() fyne.WidgetRenderer {
 	// Faint resting background so the rail is visually findable as its
 	// own element, not a void at the edge of the docTabs area.
 	r.bg = canvas.NewRectangle(collapsedRailRestingFill())
+	r.bg.StrokeWidth = 2
+	r.applyStyle()
 
 	iconWidget := widget.NewIcon(r.icon)
 	// Icon anchored at the top, centered horizontally. Spacer below
@@ -62,8 +66,27 @@ func (r *CollapsedRail) MinSize() fyne.Size {
 }
 
 func (r *CollapsedRail) Tapped(*fyne.PointEvent) {
+	r.MouseOut()
 	if r.onTap != nil {
 		r.onTap()
+	}
+}
+
+func (r *CollapsedRail) FocusGained() {
+	r.focused = true
+	r.applyStyle()
+}
+
+func (r *CollapsedRail) FocusLost() {
+	r.focused = false
+	r.applyStyle()
+}
+
+func (r *CollapsedRail) TypedRune(rune) {}
+
+func (r *CollapsedRail) TypedKey(event *fyne.KeyEvent) {
+	if event.Name == fyne.KeySpace || event.Name == fyne.KeyReturn || event.Name == fyne.KeyEnter {
+		r.Tapped(nil)
 	}
 }
 
@@ -107,12 +130,16 @@ func (r *CollapsedRail) applyStyle() {
 	if r.bg == nil {
 		return
 	}
-	if r.hovering {
+	if r.hovering || r.focused {
 		// Full-strip accent fill — this is the whole point of the
 		// widget: clarify that the rail *is* the collapsed panel.
 		r.bg.FillColor = tintWithAlpha(CurrentThemeColor, 90)
 	} else {
 		r.bg.FillColor = collapsedRailRestingFill()
+	}
+	r.bg.StrokeColor = color.Transparent
+	if r.focused {
+		r.bg.StrokeColor = theme.FocusColor()
 	}
 	r.bg.Refresh()
 }

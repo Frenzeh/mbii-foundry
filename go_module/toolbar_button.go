@@ -115,6 +115,7 @@ func (b *ToolbarButton) Tapped(*fyne.PointEvent) {
 	if b.disabled {
 		return
 	}
+	b.MouseOut()
 	if b.onTap != nil {
 		b.onTap()
 	}

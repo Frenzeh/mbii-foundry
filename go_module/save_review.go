@@ -643,10 +643,7 @@ func (a *App) afterSuccessfulSave(ed Editor, tab *container.TabItem, path string
 
 func (a *App) afterSuccessfulReviewedSave(ed Editor, tab *container.TabItem, path string, savedDraft *SourceDraft) {
 	if tab != nil {
-		tab.Text = filepath.Base(path)
-		if a.docTabs != nil {
-			a.docTabs.Refresh()
-		}
+		a.setTabTitle(tab, filepath.Base(path))
 	}
 	if a.fileManager != nil {
 		a.fileManager.AddRecentFile(path)

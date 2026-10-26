@@ -25,10 +25,8 @@ import (
 	"strings"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
-	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
@@ -140,7 +138,7 @@ func (wg *WeaponGrid) createUI() {
 		content = wg.content
 		content.Objects = nil
 	} else {
-		content = container.NewVBox()
+		content = newFormColumns(1)
 		wg.content = content
 
 		wg.search = NewInputEntry()
@@ -154,8 +152,9 @@ func (wg *WeaponGrid) createUI() {
 		legend := widget.NewLabelWithStyle(
 			"Click a level pill to set the paired attribute. Off = weapon not on the class.",
 			fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
-		header := container.NewVBox(wg.search, legend)
-		wg.container = container.NewVBox(header, content)
+		legend.Wrapping = fyne.TextWrapWord
+		header := newFormColumns(1, wg.search, legend)
+		wg.container = newFormColumns(1, header, content)
 	}
 
 	filterLower := strings.ToLower(wg.filter)
@@ -215,10 +214,10 @@ func (wg *WeaponGrid) createUI() {
 // (when resolved) is the primary affordance: a 64×64 extracted PNG
 // fills the left edge so authors recognize the weapon by its in-game
 // art instead of by reading WP_*. Name + paired-attribute monospace
-// caption sit beside it; level pills inline on the right; badges
-// stacked on the far right. Surface fills brighter as the level
-// climbs — Off → faint, 1 → moderate, 2/3 → saturated — so the
-// loadout's hot-pick weapons stand out at a glance.
+// caption sit beside it, badges stay on that title row, and level
+// controls receive a separate width-first row that can reflow. Surface
+// fills brighter as the level climbs — Off → faint, 1 → moderate,
+// 2/3 → saturated — so the loadout's hot-pick weapons stand out.
 func (wg *WeaponGrid) buildCard(w WeaponDef) fyne.CanvasObject {
 	weaponID := w.ID
 	owned := wg.selected[weaponID]
@@ -267,16 +266,19 @@ func (wg *WeaponGrid) buildCard(w WeaponDef) fyne.CanvasObject {
 	// useful technical handle.
 	nameLbl := widget.NewLabelWithStyle(w.Name,
 		fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	nameLbl.Wrapping = fyne.TextWrapWord
 	var subtitle string
 	if pair != "" {
 		subtitle = pair
 	} else {
 		subtitle = weaponID
 	}
-	subLbl := canvas.NewText(subtitle, theme.PlaceHolderColor())
-	subLbl.TextSize = SizeSmall
-	subLbl.TextStyle = fyne.TextStyle{Monospace: true}
-	titleStack := container.NewVBox(nameLbl, subLbl)
+	subLbl := widget.NewLabelWithStyle(subtitle,
+		fyne.TextAlignLeading, fyne.TextStyle{Monospace: true})
+	subLbl.Importance = widget.LowImportance
+	subLbl.SizeName = theme.SizeNameCaptionText
+	subLbl.Wrapping = fyne.TextWrapBreak
+	titleStack := newFormColumns(1, nameLbl, subLbl)
 
 	// Level pills — render only when there's a paired MB_ATT_* AND
 	// the bridge callbacks are wired. Without the bridge, the user
@@ -319,12 +321,13 @@ func (wg *WeaponGrid) buildCard(w WeaponDef) fyne.CanvasObject {
 		badgeCol = container.NewHBox(badges...)
 	}
 
-	body := container.NewBorder(
+	titleRow := container.NewBorder(
 		nil, nil,
-		container.NewHBox(iconObj, container.NewPadded(titleStack)),
+		container.NewCenter(iconObj),
 		badgeCol,
-		container.New(layout.NewCenterLayout(), actionRow),
+		container.NewPadded(titleStack),
 	)
+	body := newFormColumns(1, titleRow, actionRow)
 
 	// Surface chrome scales with level: Off → faint, 1 → moderate,
 	// 2 → strong, 3 → saturated. Gives the loadout a heat-map feel
@@ -383,8 +386,12 @@ func (wg *WeaponGrid) buildLevelPills(weaponID, attID string, w WeaponDef) fyne.
 		}
 		caption := widget.NewLabelWithStyle("paired: "+attID,
 			fyne.TextAlignCenter, fyne.TextStyle{Italic: true, Monospace: true})
-		return container.NewVBox(container.NewHBox(widget.NewLabel(label),
-			container.NewGridWrap(fyne.NewSize(64, 32), entry)), caption)
+		caption.Wrapping = fyne.TextWrapBreak
+		return newFormColumns(1,
+			container.NewHBox(widget.NewLabel(label),
+				container.NewGridWrap(fyne.NewSize(64, 32), entry)),
+			caption,
+		)
 	}
 
 	pills := []fyne.CanvasObject{}
@@ -414,10 +421,11 @@ func (wg *WeaponGrid) buildLevelPills(weaponID, attID string, w WeaponDef) fyne.
 		}
 		pills = append(pills, pill)
 	}
-	row := container.NewHBox(pills...)
+	row := container.NewGridWrap(fyne.NewSize(52, 36), pills...)
 	caption := widget.NewLabelWithStyle("paired: "+attID,
 		fyne.TextAlignCenter, fyne.TextStyle{Italic: true, Monospace: true})
-	return container.NewVBox(row, caption)
+	caption.Wrapping = fyne.TextWrapBreak
+	return newFormColumns(1, row, caption)
 }
 
 func (wg *WeaponGrid) setWeaponLevel(weaponID, attID string, level int) {

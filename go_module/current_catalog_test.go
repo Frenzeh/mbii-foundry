@@ -309,15 +309,9 @@ func TestCurrentCatalogSpecialActionSelection(t *testing.T) {
 	ch := parsers.NewMBCHCharacter()
 	ch.ExtraFields = map[string]string{"special1": "EAS_FUTURE", "special2": "EAS_OTHER_FUTURE", "futureField": "keep"}
 	e := &MBCHEditor{character: ch, loading: true, devFieldEntries: make(map[string]*widget.Entry)}
-	card := e.buildDevFieldsCard()
+	e.buildDevFieldsCard()
 	e.populateDevFieldsFromCharacter()
-	form := card.Content.(*widget.Form)
-	var action *widget.SelectEntry
-	for _, item := range form.Items {
-		if item.Text == "Special 1" {
-			action, _ = item.Widget.(*widget.SelectEntry)
-		}
-	}
+	action := e.devFieldEntries["special1"]
 	if action == nil || action.Text != "EAS_FUTURE" {
 		t.Fatal("special-action picker must retain an unknown loaded action")
 	}

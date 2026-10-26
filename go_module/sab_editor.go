@@ -265,6 +265,7 @@ func (e *SABEditor) createUI() {
 		widget.NewFormItem("Custom Skin", e.customSkinEntry),
 		widget.NewFormItem("Num Blades", e.numBladesEntry),
 	)
+	identityForm.Orientation = widget.Vertical
 
 	e.bladePreview = canvas.NewRectangle(color.RGBA{0, 0, 255, 255})
 	e.bladePreview.SetMinSize(fyne.NewSize(200, 20))
@@ -285,6 +286,7 @@ func (e *SABEditor) createUI() {
 		widget.NewFormItem("Length", e.blade1LengthEntry),
 		widget.NewFormItem("Radius", e.blade1RadiusEntry),
 	)
+	bladeForm.Orientation = widget.Vertical
 
 	e.soundOnEntry = NewInputEntry()
 	e.soundOffEntry = NewInputEntry()
@@ -305,6 +307,7 @@ func (e *SABEditor) createUI() {
 		widget.NewFormItem("Loop", container.NewBorder(nil, nil, nil, browseSound(e.soundLoopEntry), e.soundLoopEntry)),
 		widget.NewFormItem("Spin", container.NewBorder(nil, nil, nil, browseSound(e.spinSoundEntry), e.spinSoundEntry)),
 	)
+	soundsForm.Orientation = widget.Vertical
 
 	e.swingSound1Entry = NewInputEntry()
 	e.swingSound2Entry = NewInputEntry()
@@ -313,6 +316,7 @@ func (e *SABEditor) createUI() {
 	e.swingSound2Entry.OnChanged = func(s string) { e.markDirty() }
 	e.swingSound3Entry.OnChanged = func(s string) { e.markDirty() }
 	e.swingSoundsGroup = widget.NewForm(widget.NewFormItem("Swing 1", e.swingSound1Entry), widget.NewFormItem("Swing 2", e.swingSound2Entry), widget.NewFormItem("Swing 3", e.swingSound3Entry))
+	e.swingSoundsGroup.Orientation = widget.Vertical
 
 	e.fallSound1Entry = NewInputEntry()
 	e.fallSound2Entry = NewInputEntry()
@@ -321,6 +325,7 @@ func (e *SABEditor) createUI() {
 	e.fallSound2Entry.OnChanged = func(s string) { e.markDirty() }
 	e.fallSound3Entry.OnChanged = func(s string) { e.markDirty() }
 	e.fallSoundsGroup = widget.NewForm(widget.NewFormItem("Fall 1", e.fallSound1Entry), widget.NewFormItem("Fall 2", e.fallSound2Entry), widget.NewFormItem("Fall 3", e.fallSound3Entry))
+	e.fallSoundsGroup.Orientation = widget.Vertical
 
 	e.hitSound1Entry = NewInputEntry()
 	e.hitSound2Entry = NewInputEntry()
@@ -329,6 +334,7 @@ func (e *SABEditor) createUI() {
 	e.hitSound2Entry.OnChanged = func(s string) { e.markDirty() }
 	e.hitSound3Entry.OnChanged = func(s string) { e.markDirty() }
 	e.hitSoundsGroup = widget.NewForm(widget.NewFormItem("Hit 1", e.hitSound1Entry), widget.NewFormItem("Hit 2", e.hitSound2Entry), widget.NewFormItem("Hit 3", e.hitSound3Entry))
+	e.hitSoundsGroup.Orientation = widget.Vertical
 
 	e.blockSound1Entry = NewInputEntry()
 	e.blockSound2Entry = NewInputEntry()
@@ -337,6 +343,7 @@ func (e *SABEditor) createUI() {
 	e.blockSound2Entry.OnChanged = func(s string) { e.markDirty() }
 	e.blockSound3Entry.OnChanged = func(s string) { e.markDirty() }
 	e.blockSoundsGroup = widget.NewForm(widget.NewFormItem("Block 1", e.blockSound1Entry), widget.NewFormItem("Block 2", e.blockSound2Entry), widget.NewFormItem("Block 3", e.blockSound3Entry))
+	e.blockSoundsGroup.Orientation = widget.Vertical
 
 	e.bounceSound1Entry = NewInputEntry()
 	e.bounceSound2Entry = NewInputEntry()
@@ -345,6 +352,7 @@ func (e *SABEditor) createUI() {
 	e.bounceSound2Entry.OnChanged = func(s string) { e.markDirty() }
 	e.bounceSound3Entry.OnChanged = func(s string) { e.markDirty() }
 	e.bounceSoundsGroup = widget.NewForm(widget.NewFormItem("Bounce 1", e.bounceSound1Entry), widget.NewFormItem("Bounce 2", e.bounceSound2Entry), widget.NewFormItem("Bounce 3", e.bounceSound3Entry))
+	e.bounceSoundsGroup.Orientation = widget.Vertical
 
 	e.styleEntry = NewInputEntry()
 	e.singleBladeStyleEntry = NewInputEntry()
@@ -361,6 +369,7 @@ func (e *SABEditor) createUI() {
 	e.breakParryEntry.OnChanged = func(s string) { e.markDirty() }
 	e.disarmBonusEntry.OnChanged = func(s string) { e.markDirty() }
 	combatForm := widget.NewForm(widget.NewFormItem("Saber Style", e.styleEntry), widget.NewFormItem("Single Blade Style", e.singleBladeStyleEntry), widget.NewFormItem("Max Chain", e.maxChainEntry), widget.NewFormItem("Lock Bonus", e.lockBonusEntry), widget.NewFormItem("Parry Bonus", e.parryBonusEntry), widget.NewFormItem("Break Parry Bonus", e.breakParryEntry), widget.NewFormItem("Disarm Bonus", e.disarmBonusEntry))
+	combatForm.Orientation = widget.Vertical
 
 	e.moveSpeedEntry = NewInputEntry()
 	e.animSpeedEntry = NewInputEntry()
@@ -371,6 +380,7 @@ func (e *SABEditor) createUI() {
 	e.damageScaleEntry.OnChanged = func(s string) { e.markDirty() }
 	e.knockbackEntry.OnChanged = func(s string) { e.markDirty() }
 	speedDamageForm := widget.NewForm(widget.NewFormItem("Move Speed Scale", e.moveSpeedEntry), widget.NewFormItem("Anim Speed Scale", e.animSpeedEntry), widget.NewFormItem("Damage Scale", e.damageScaleEntry), widget.NewFormItem("Knockback Scale", e.knockbackEntry))
+	speedDamageForm.Orientation = widget.Vertical
 
 	e.trailStyleEntry = NewInputEntry()
 	e.blockEffectEntry = NewInputEntry()
@@ -387,6 +397,7 @@ func (e *SABEditor) createUI() {
 	e.g2MarksShaderEntry.OnChanged = func(s string) { e.markDirty() }
 	e.g2WeaponMarkShaderEntry.OnChanged = func(s string) { e.markDirty() }
 	effectsForm := widget.NewForm(widget.NewFormItem("Trail Style", e.trailStyleEntry), widget.NewFormItem("Block Effect", e.blockEffectEntry), widget.NewFormItem("Hit Person Effect", e.hitPersonEffectEntry), widget.NewFormItem("Hit Other Effect", e.hitOtherEffectEntry), widget.NewFormItem("Blade Effect", e.bladeEffectEntry), widget.NewFormItem("G2 Marks Shader", e.g2MarksShaderEntry), widget.NewFormItem("G2 Weapon Mark Shader", e.g2WeaponMarkShaderEntry))
+	effectsForm.Orientation = widget.Vertical
 
 	e.noWallMarksCheck = widget.NewCheck("No Wall Marks", func(b bool) { e.saber.NoWallMarks = b; e.markDirty() })
 	e.noDlightCheck = widget.NewCheck("No Dynamic Light", func(b bool) { e.saber.NoDlight = b; e.markDirty() })
@@ -429,6 +440,7 @@ func (e *SABEditor) createUI() {
 	e.jumpAtkFwdMoveEntry.OnChanged = func(s string) { e.markDirty() }
 	e.lungeAtkMoveEntry.OnChanged = func(s string) { e.markDirty() }
 	animForm := widget.NewForm(widget.NewFormItem("Slap Animation", e.slapAnimEntry), widget.NewFormItem("Ready Animation", e.readyAnimEntry), widget.NewFormItem("Jump Attack Up", e.jumpAtkUpMoveEntry), widget.NewFormItem("Jump Attack Forward", e.jumpAtkFwdMoveEntry), widget.NewFormItem("Lunge Attack", e.lungeAtkMoveEntry))
+	animForm.Orientation = widget.Vertical
 
 	// Source View
 	e.sourceView = widget.NewRichText()
@@ -477,10 +489,11 @@ func (e *SABEditor) createUI() {
 	e.defSelect.PlaceHolder = "(single definition)"
 	e.defSummary = widget.NewLabel("")
 	e.defSummary.TextStyle = fyne.TextStyle{Italic: true}
+	e.defSummary.Wrapping = fyne.TextWrapBreak
 	defBar := NewFormSection("Active definition", "Choose which saber block in this file is being edited.",
-		container.NewBorder(nil, nil, nil, e.defSummary, e.defSelect))
+		newFormColumns(1, e.defSelect, e.defSummary))
 
-	e.container = container.NewBorder(container.NewPadded(defBar), nil, nil, nil, tabs)
+	e.container = newEditorContent(container.NewPadded(defBar), tabs)
 	e.refreshDefinitionBar()
 }
 
@@ -625,7 +638,7 @@ func (e *SABEditor) refreshDefinitionBar() {
 	}
 	e.defSelect.Options = e.defNames
 	e.defSelect.SetSelected(e.defNames[e.session.SelectedDef])
-	e.defSummary.SetText(fmt.Sprintf("editing %d of %d", e.session.SelectedDef+1, len(e.defNames)))
+	e.defSummary.SetText(fmt.Sprintf("editing %d of %d\n%s", e.session.SelectedDef+1, len(e.defNames), e.defNames[e.session.SelectedDef]))
 	e.defSelect.Refresh()
 }
 

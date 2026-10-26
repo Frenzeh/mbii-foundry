@@ -18,7 +18,6 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
-	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
@@ -130,7 +129,7 @@ type MBCHEditor struct {
 	// AB_*Flags, jetpack rig tags/offsets, forceblocking). The card
 	// itself is also pushed into devSurfaces so the View toggle
 	// flips it.
-	devFieldsCard *widget.Card
+	devFieldsCard fyne.CanvasObject
 
 	// devFieldEntries maps each dev-flagged key to its Entry widget
 	// so updateUI / populateDevFieldsFromCharacter can populate them
@@ -645,6 +644,7 @@ func (e *MBCHEditor) createUI() {
 	e.iconPreview.SetMinSize(fyne.NewSize(64, 64))
 	e.portraitSource = widget.NewLabel("")
 	e.portraitSource.TextStyle = fyne.TextStyle{Italic: true}
+	e.portraitSource.Wrapping = fyne.TextWrapWord
 
 	e.weaponsEntry = NewMultiLineInputEntry()
 	e.attributesEntry = NewMultiLineInputEntry()
@@ -1079,19 +1079,22 @@ func (e *MBCHEditor) createUI() {
 		widget.NewFormItem("Name", e.nameEntry),
 		widget.NewFormItem("MB Class", e.classPicker),
 		widget.NewFormItem("Portrait",
-			container.NewHBox(
-				portraitClickable,
-				container.NewVBox(
+			container.NewBorder(nil, nil, portraitClickable, nil,
+				newFormColumns(1,
 					e.portraitSource,
 					changeSkinBtn,
 				),
 			),
 		),
-		widget.NewFormItem("Model", container.NewBorder(nil, nil, nil, container.NewHBox(galleryModelBtn, browseModelBtn, previewBtn, e.modelHealthBadge), e.modelEntry)),
+		widget.NewFormItem("Model", container.NewVBox(
+			e.modelEntry,
+			container.NewHBox(galleryModelBtn, browseModelBtn, previewBtn, e.modelHealthBadge),
+		)),
 		widget.NewFormItem("Skin", container.NewBorder(nil, nil, nil, e.skinHealthBadge, e.skinEntry)),
 		widget.NewFormItem("UI Shader", container.NewBorder(nil, nil, nil, browseIconBtn, e.uiShaderEntry)),
 		widget.NewFormItem("Sound Set", e.soundsetEntry),
 	)
+	profileForm.Orientation = widget.Vertical
 
 	// Add Focus Listeners for Profile fields (requires simple wrapper or changing NewEntry to NewValidatedEntry for consistency if we want OnFocus)
 	// For now, let's just make them NewValidatedEntry with always-true validation to get OnFocus
@@ -1100,6 +1103,8 @@ func (e *MBCHEditor) createUI() {
 
 	limitsForm := widget.NewForm(widget.NewFormItem("Class Limit", e.classLimitEntry), widget.NewFormItem("Respawn Time", e.respawnTimeEntry), widget.NewFormItem("Extra Lives", e.extraLivesEntry))
 	customBuildForm := widget.NewForm(widget.NewFormItem("", e.isCustomCheck), widget.NewFormItem("MB Points", e.mbPointsEntry))
+	limitsForm.Orientation = widget.Vertical
+	customBuildForm.Orientation = widget.Vertical
 	// Accordion instead of a stack of cards — users can collapse
 	// sections they aren't editing, making the scrollable area much
 	// shorter when you only care about a few fields. First item
@@ -1145,11 +1150,11 @@ func (e *MBCHEditor) createUI() {
 		}
 	})
 
-	descHeader := container.NewVBox(
-		container.NewHBox(
-			widget.NewLabelWithStyle("Description", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-			widget.NewLabelWithStyle("(Left: Source Edit | Right: In-Game Live Colors)", fyne.TextAlignLeading, fyne.TextStyle{Italic: true}),
-		),
+	descHint := widget.NewLabelWithStyle("(Left: Source Edit | Right: In-Game Live Colors)", fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
+	descHint.Wrapping = fyne.TextWrapWord
+	descHeader := newFormColumns(1,
+		widget.NewLabelWithStyle("Description", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		descHint,
 		descToolbar,
 	)
 
@@ -1159,7 +1164,7 @@ func (e *MBCHEditor) createUI() {
 	)
 	descBodySplit.SetOffset(0.5)
 
-	descPane := container.NewBorder(descHeader, nil, nil, nil, descBodySplit)
+	descPane := newEditorContent(descHeader, descBodySplit)
 	profileSplit := container.NewVSplit(
 		container.NewVScroll(profileAccordion),
 		descPane,
@@ -1168,14 +1173,10 @@ func (e *MBCHEditor) createUI() {
 	profileTab := profileSplit
 
 	statsForm := widget.NewForm(widget.NewFormItem("Max Health", e.healthEntry), widget.NewFormItem("Max Armor", e.armorEntry), widget.NewFormItem("Force Pool", e.forcePoolEntry), widget.NewFormItem("Force Regen", e.forceRegenEntry), widget.NewFormItem("Speed", e.speedEntry))
-
-	// Wrap grids in scroll containers
-	weaponScroll := container.NewVScroll(e.weaponGrid.GetContent())
-	attrScroll := container.NewVScroll(e.attrGrid.GetContent())
-
-	// Removed Accordion for Grids - Moved to Tabs
+	statsForm.Orientation = widget.Vertical
 
 	equipForm := widget.NewForm(widget.NewFormItem("Weapons", e.weaponsEntry), widget.NewFormItem("Attributes (Raw)", e.attributesEntry), widget.NewFormItem("Force Powers", e.forcePowersEntry))
+	equipForm.Orientation = widget.Vertical
 
 	saberForm := widget.NewForm(
 		widget.NewFormItem("Saber 1", e.saber1Entry),
@@ -1190,6 +1191,8 @@ func (e *MBCHEditor) createUI() {
 		widget.NewFormItem("AS Mult", e.asMultEntry),
 		widget.NewFormItem("Class Flags", e.classFlagsSelect), // Use MultiSelect
 	)
+	saberForm.Orientation = widget.Vertical
+	advForm.Orientation = widget.Vertical
 	// Merge all Stats & Sabers sections into one accordion so the layout
 	// is consistent across tabs and users can collapse any section they
 	// don't care about in a given editing session.
@@ -1210,7 +1213,7 @@ func (e *MBCHEditor) createUI() {
 	e.devFieldsCard.Hide()
 	e.devSurfaces = append(e.devSurfaces, e.devFieldsCard)
 
-	loadoutTab := container.NewVBox(
+	loadoutTab := newFormColumns(1,
 		e.defensiveMatrixContainer,
 		statsAccordion,
 		e.devFieldsCard,
@@ -1219,6 +1222,8 @@ func (e *MBCHEditor) createUI() {
 	weaponTab := e.weaponInfoUI.GetContent()
 	forceTab := e.forceInfoUI.GetContent()
 	pointBuyTab := e.pointBuyUI.GetContent()
+	pointBuyPage := wrapForTab(pointBuyTab)
+	e.pointBuyUI.pageWheel.target = pointBuyPage
 
 	// Weapon flags editor — WP_*Flags HELD_* modifiers. Own tab so
 	// the checkbox grid has breathing room; "Weapon Mods" already
@@ -1227,7 +1232,6 @@ func (e *MBCHEditor) createUI() {
 	if e.weaponFlagsUI == nil {
 		e.weaponFlagsUI = NewWeaponFlagsEditor(e)
 	}
-	flagsTab := container.NewVScroll(e.weaponFlagsUI.GetContent())
 
 	// Skin variants editor — model_N / skin_N / uishader_N tuples
 	// for multi-skin characters (Rebel trooper has 20 variants for
@@ -1236,19 +1240,10 @@ func (e *MBCHEditor) createUI() {
 	if e.skinVariantsUI == nil {
 		e.skinVariantsUI = NewSkinVariantsEditor(e)
 	}
-	skinsTab := container.NewVScroll(e.skinVariantsUI.GetContent())
 
-	// Every tab's content goes through wrapForTab — bi-directional
-	// container.NewScroll — so a tab with wide content (simulator
-	// rank-pill rows, skin-variant cards with long path fields,
-	// point-buy slot forms, etc.) can't push the whole app window
-	// past the user's screen width. Scroll caps MinSize at
-	// scrollbar metrics; wide content just scrolls internally.
-	//
-	// This is the same pattern that fixed the sidebar-rail pin on
-	// the info panel — applied here defensively across every tab
-	// because any future "add a wider widget" change would
-	// otherwise silently re-introduce the over-sized-window bug.
+	// Each tab uses one vertical viewport so form groups and grids receive
+	// the editor width. Their children must reflow rather than impose a wide
+	// minimum that would keep the surrounding rails from shrinking.
 	// Class Scalars form — the static apMultiplier / bpMultiplier /
 	// csMultiplier / asMultiplier / forceRegen / speed float fields
 	// from the ClassInfo block. Surfaced inside the attribute grid's
@@ -1259,16 +1254,23 @@ func (e *MBCHEditor) createUI() {
 	classScalarsBuilder := func() fyne.CanvasObject {
 		header := widget.NewLabelWithStyle("Class Scalars",
 			fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+		header.Wrapping = fyne.TextWrapWord
 		sub := widget.NewLabelWithStyle(
 			"Static float fields on the ClassInfo block (1.0 = neutral). Distinct from the MB_ATT_*_MULTIPLIER point-buy primitives that live in the Point Buy tab.",
 			fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
-		grid := container.New(layout.NewGridLayoutWithColumns(3),
-			widget.NewForm(widget.NewFormItem("AP Mult", e.apMultEntry)),
-			widget.NewForm(widget.NewFormItem("BP Mult", e.bpMultEntry)),
-			widget.NewForm(widget.NewFormItem("CS Mult", e.csMultEntry)),
-			widget.NewForm(widget.NewFormItem("AS Mult", e.asMultEntry)),
-			widget.NewForm(widget.NewFormItem("Force Regen", e.forceRegenEntry)),
-			widget.NewForm(widget.NewFormItem("Speed", e.speedEntry)),
+		sub.Wrapping = fyne.TextWrapWord
+		scalar := func(label string, entry fyne.CanvasObject) fyne.CanvasObject {
+			form := widget.NewForm(widget.NewFormItem(label, entry))
+			form.Orientation = widget.Vertical
+			return form
+		}
+		grid := newFormColumns(3,
+			scalar("AP Mult", e.apMultEntry),
+			scalar("BP Mult", e.bpMultEntry),
+			scalar("CS Mult", e.csMultEntry),
+			scalar("AS Mult", e.asMultEntry),
+			scalar("Force Regen", e.forceRegenEntry),
+			scalar("Speed", e.speedEntry),
 		)
 		body := container.NewVBox(header, sub, grid)
 		return NewTilePanel(body, TileOpts{FillAlpha: 18, StrokeAlpha: 70, Padded: true})
@@ -1286,9 +1288,11 @@ func (e *MBCHEditor) createUI() {
 	// inventoryBody handles all scrolling.
 	holdablesHeader := widget.NewLabelWithStyle("Holdables (Inventory items)",
 		fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	holdablesHeader.Wrapping = fyne.TextWrapWord
 	holdablesSub := widget.NewLabelWithStyle(
 		"HI_* items the class can spawn with. Click a circle to toggle on/off.",
 		fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
+	holdablesSub.Wrapping = fyne.TextWrapWord
 	inventoryBody := container.NewVBox(
 		e.weaponGrid.GetContent(),
 		widget.NewSeparator(),
@@ -1306,29 +1310,22 @@ func (e *MBCHEditor) createUI() {
 		container.NewTabItem("Custom Skills", wrapForTab(e.customSkillsUI.BuildUI())),
 		container.NewTabItem("Weapon Mods", wrapForTab(weaponTab)),
 		container.NewTabItem("Force Mods", wrapForTab(forceTab)),
-		container.NewTabItem("Point Buy", wrapForTab(pointBuyTab)),
+		container.NewTabItem("Point Buy", pointBuyPage),
 	)
-	// wrapForTab wraps what used to be wrapped with VScroll/…Scroll
-	// variants — previously inconsistent, some tabs missed the wrap
-	// and propagated MinSize upward.
-	_ = attrScroll
-	_ = weaponScroll
-	_ = flagsTab
-	_ = skinsTab
 	var vfs *VirtualFileSystem
 	if e.app != nil && e.app.assetBrowser != nil {
 		vfs = e.app.assetBrowser.vfs
 	}
 	e.summary = NewCharacterSummaryWidget(e.character, vfs, e.assetBrowser, e.iconResolver)
 
-	e.container = container.NewBorder(container.NewPadded(e.summary), nil, nil, nil, tabs)
+	e.container = newEditorContent(container.NewPadded(e.summary), tabs)
 }
 
 // wrapForTab wraps a tab's content in a vertical Scroll with
 // a sensible minimum size. Using VScroll ensures the child content
 // receives the exact viewport width, allowing GridWrap layouts to
 // reflow columns cleanly without being cropped when sidebars are dragged.
-func wrapForTab(content fyne.CanvasObject) fyne.CanvasObject {
+func wrapForTab(content fyne.CanvasObject) *container.Scroll {
 	s := container.NewVScroll(content)
 	s.SetMinSize(fyne.NewSize(320, 280))
 	return s

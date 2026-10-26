@@ -18,8 +18,8 @@ type InfoPanel struct {
 	container *fyne.Container
 
 	// Compact identity header shown above the contextual documentation.
-	categoryChip *canvas.Text
-	idChip       *canvas.Text
+	categoryChip *widget.Label
+	idChip       *widget.Label
 	title        *widget.Label
 	headerIcon   *canvas.Image
 
@@ -149,16 +149,14 @@ func categoryTagFor(kind, bucket string) string {
 // updateHeaderChips sets the hero band's ID chip + category chip and resolves headerIcon.
 func (ip *InfoPanel) updateHeaderChips(id, category string) {
 	if ip.idChip != nil {
-		ip.idChip.Text = id
-		ip.idChip.Refresh()
+		ip.idChip.SetText(id)
 	}
 	if ip.categoryChip != nil {
 		up := strings.ToUpper(category)
 		if up == "REFERENCE" {
 			up = ""
 		}
-		ip.categoryChip.Text = up
-		ip.categoryChip.Refresh()
+		ip.categoryChip.SetText(up)
 	}
 	if ip.headerIcon != nil {
 		if res := resolveInfoPanelIcon(id); res != nil {
@@ -282,16 +280,18 @@ func (ip *InfoPanel) createUI() {
 	// Category chip — small-caps accent-colored label above the title.
 	// Tells the reader what KIND of thing they're looking at (attribute,
 	// weapon, force power, class, etc.) without needing the body to say so.
-	ip.categoryChip = canvas.NewText("", CurrentThemeColor)
-	ip.categoryChip.TextSize = SizeSmall
-	ip.categoryChip.TextStyle = fyne.TextStyle{Bold: true, Monospace: true}
+	ip.categoryChip = widget.NewLabelWithStyle("", fyne.TextAlignLeading, fyne.TextStyle{Bold: true, Monospace: true})
+	ip.categoryChip.SizeName = theme.SizeNameCaptionText
+	ip.categoryChip.Importance = widget.HighImportance
+	ip.categoryChip.Wrapping = fyne.TextWrapWord
 
-	// ID chip — monospace enum id pinned right. Cues the reader into the
-	// machine-facing name so they know what to type in source.
-	ip.idChip = canvas.NewText("", theme.PlaceHolderColor())
-	ip.idChip.TextSize = SizeSmall
-	ip.idChip.TextStyle = fyne.TextStyle{Monospace: true}
-	ip.idChip.Alignment = fyne.TextAlignTrailing
+	// Keep the complete machine identifier visible and copyable. A dedicated
+	// wrapping row avoids competing with the header actions in a narrow rail.
+	ip.idChip = widget.NewLabelWithStyle("", fyne.TextAlignLeading, fyne.TextStyle{Monospace: true})
+	ip.idChip.SizeName = theme.SizeNameCaptionText
+	ip.idChip.Importance = widget.LowImportance
+	ip.idChip.Wrapping = fyne.TextWrapBreak
+	ip.idChip.Selectable = true
 
 	welcomeMsg := `
 ### Info Panel
@@ -348,11 +348,9 @@ This panel provides real-time documentation and context for the field you're edi
 			hoverToggleBtn.SetTooltip("Hover swaps context: OFF — click a field to update the info panel")
 		}
 	}
-	rightChip := container.NewHBox(ip.idChip, hoverToggleBtn, popOutBtn)
-	heroRow := container.NewBorder(nil, nil,
+	heroRow := container.NewBorder(nil, nil, nil,
+		container.NewHBox(hoverToggleBtn, popOutBtn),
 		ip.categoryChip,
-		rightChip,
-		nil,
 	)
 
 	ip.headerIcon = canvas.NewImageFromResource(nil)
@@ -361,12 +359,12 @@ This panel provides real-time documentation and context for the field you're edi
 	ip.headerIcon.SetMinSize(fyne.NewSize(44, 44))
 	ip.headerIcon.Hide()
 
-	heroTitleBlock := container.NewVBox(heroRow, ip.title)
-	heroContent := container.NewBorder(nil, nil,
-		container.NewGridWrap(fyne.NewSize(44, 44), ip.headerIcon),
+	heroTitle := container.NewBorder(nil, nil,
+		container.NewCenter(ip.headerIcon),
 		nil,
-		heroTitleBlock,
+		ip.title,
 	)
+	heroContent := container.NewVBox(heroRow, heroTitle, ip.idChip)
 	hero := NewTilePanel(heroContent, TileOpts{
 		FillAlpha:   12,
 		StrokeAlpha: 48,

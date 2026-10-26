@@ -6,7 +6,7 @@ submitting changes requires a normal branch and pull request.
 
 ## Prerequisites
 
-- Go 1.24 or newer, matching `go_module/go.mod` and CI.
+- Go 1.27.3 or newer, matching `go_module/go.mod` and CI.
 - Git.
 - Fyne's native requirements for your platform:
   [docs.fyne.io/started](https://docs.fyne.io/started/).
@@ -15,6 +15,10 @@ submitting changes requires a normal branch and pull request.
 
 Do development builds on the target operating system. WSL produces a Linux
 application, not a native Windows executable.
+
+The macOS deployment target is 13.0. Use `build_app.sh` for a universal bundle;
+it builds and checks both architectures with that target. A successful build
+on a newer Mac is not runtime certification on macOS 13.
 
 ## Build and run
 
@@ -96,6 +100,10 @@ file, or archive implementation.
 
 From `go_module/`:
 
+Use nonsynced scratch directories for temporary files and isolated
+`HOME`/configuration/cache directories. Leave external-data opt-ins unset for
+ordinary verification.
+
 ```bash
 gofmt -w <changed-go-files>
 go test ./...
@@ -107,6 +115,29 @@ For UI changes, also launch the application and exercise the changed surface.
 For file-format changes, use a synthetic or redistributable fixture and inspect
 the exact Save review output. Do not use private game files as test fixtures.
 
+External corpus tests and benchmarks require `MBII_TEST_REAL_DATA=1` and their
+explicit asset-path input. They do not discover an installed game by default.
+Engine verification has a separate opt-in, shown below.
+
+### Python packaging API
+
+The supported standard-library API is `packager.PK3Builder` with
+`packager.PK3Structure`; `packager.build_pk3` is the convenience entrypoint.
+From the repository root:
+
+```bash
+python3 -m unittest packager.test_pk3_builder
+```
+
+Every populated asset list is a required input. Missing requested files or
+required dependencies fail the build without replacing an existing export.
+Use configured search roots or game-relative paths to preserve custom
+subdirectories. Loose files outside those roots use type-based destinations;
+unrelated ancestor directory names do not determine archive layout.
+
+The Python builder and desktop Go exporter are separate implementations.
+Verify the one changed rather than treating the other's checks as coverage.
+
 ## Engine-backed metadata
 
 `go_module/testdata/engine_snapshot.json` records the external engine revision,
@@ -115,7 +146,7 @@ inventory used by drift checks. To verify the committed snapshot:
 
 ```bash
 cd go_module
-MBII_ENGINE_SRC=/absolute/path/to/moviebattles \
+MBII_VERIFY_ENGINE=1 MBII_ENGINE_SRC=/absolute/path/to/moviebattles \
   go test . -run '^TestExplicitEngineVerification$' -count=1
 ```
 
@@ -178,6 +209,21 @@ credential store and are excluded from `config.json`. Tests for credential
 migration must use the repository's mock/injected store, never a real token or
 interactive keychain.
 
+Retained legacy backups are not proof of secure migration. Explicitly choosing
+**Use saved credential** and connecting with a verified native-store token
+permits conservative cleanup; unverifiable historical copies remain untouched
+and may still contain plaintext. Loading preferences alone does not sanitize
+them.
+
+Contribution sync pulls the pinned public upstream without a token. Authenticated
+pushes must target the expected HTTPS GitHub fork, including effective URL
+rewrites and redirects. Pushing a branch is not consent to open a pull request;
+PR creation requires a separate explicit action and must report its own outcome.
+
+Catalog refreshes use HTTPS and validated data, but are not covered by the
+signed application-update manifest. Their mutable cache is
+`os.UserCacheDir()/mbii-foundry/catalog.json`; bundled resources stay read-only.
+
 ## Release and update trust
 
 Tags matching `v*` start the release workflow. Before any platform build, the
@@ -185,7 +231,8 @@ workflow requires the tag to point at the current `main` commit, requires a
 successful completed `main` CI run for that exact commit, and verifies the tag,
 `AppVersion`, changelog heading, and macOS marketing version agree. It then:
 
-- builds Linux amd64, Windows amd64, and a true macOS universal executable;
+- builds Linux amd64, Windows amd64, and a true macOS universal executable
+  with checked macOS 13.0 deployment targets for both slices;
 - requires the canonical Ed25519 public key in every release binary;
 - exposes the private key only to one isolated signing job;
 - proves the private and public keys match;
@@ -194,10 +241,10 @@ successful completed `main` CI run for that exact commit, and verifies the tag,
 - creates a draft GitHub release containing exactly three archives and three
   manifests. Publishing the inspected draft is a separate, explicit action.
 
-v0.16.0-alpha is intentionally ad-hoc signed on macOS and is not notarized.
-This workflow does not import a Developer ID certificate or claim Apple
-publisher identity. The project does not configure Authenticode for Windows,
-and the Windows application opens the release page instead of replacing itself.
+The current macOS release workflow uses ad-hoc signing and does not notarize.
+It does not import a Developer ID certificate or claim Apple publisher identity.
+The project does not configure Authenticode for Windows, and the Windows
+application opens the release page instead of replacing itself.
 
 The Ed25519 publisher key is a long-lived update trust root, not an operating
 system signing identity. Keep its private half outside the repository and logs,

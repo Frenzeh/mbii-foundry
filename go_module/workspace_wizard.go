@@ -46,54 +46,63 @@ func (a *App) showWorkspaceSetupWizard() {
 	// 3. Action
 	var setupWindow fyne.Window
 
-	setupBtn := widget.NewButton("Initialize Workspace", func() {
+	var setupBtn *widget.Button
+	setupBtn = widget.NewButton("Initialize Workspace", func() {
 		targetPath := pathEntry.Text
 		if targetPath == "" {
 			dialog.ShowError(fmt.Errorf("Please select a destination folder."), a.mainWindow)
 			return
 		}
 
-		// Update Config
-		a.config.TextAssetsPath = targetPath
-		a.saveConfig()
-
-		// Re-init Manager with new path
-		a.githubManager = NewGitHubManager(a.config.GitHubToken, targetPath)
-
-		// Start Process
+		// This worker owns its manager until successful UI-thread publication.
+		manager := NewGitHubManager(a.config.GitHubToken, targetPath)
+		setupBtn.Disable()
+		pathEntry.Disable()
+		pathSelectBtn.Disable()
 		progressBar.Show()
 		logLabel.SetText("Starting setup...")
 
 		go func() {
-			err := a.githubManager.SetupWorkspace(func(msg string) {
-				logLabel.SetText(msg)
+			err := manager.SetupWorkspace(func(msg string) {
+				fyne.Do(func() {
+					logLabel.SetText(msg)
+				})
 			})
-
+			status := ""
 			if err == nil {
-				logLabel.SetText("Detecting development branch...")
-				branch, errBranch := a.githubManager.DetectDevelopmentBranch()
+				fyne.Do(func() {
+					logLabel.SetText("Detecting development branch...")
+				})
+				branch, errBranch := manager.DetectDevelopmentBranch()
 				if errBranch == nil {
-					logLabel.SetText("Tracking upstream branch: " + branch)
+					status = "Tracking upstream branch: " + branch
 				} else {
-					logLabel.SetText("Warning: Defaulting to master. (" + errBranch.Error() + ")")
+					status = "Warning: Defaulting to master. (" + errBranch.Error() + ")"
 				}
 			}
 
-			progressBar.Hide()
-
-			if err != nil {
-				dialog.ShowError(err, a.mainWindow)
-				logLabel.SetText("Error: " + err.Error())
-			} else {
+			fyne.Do(func() {
+				progressBar.Hide()
+				setupBtn.Enable()
+				pathEntry.Enable()
+				pathSelectBtn.Enable()
+				if err != nil {
+					dialog.ShowError(err, a.mainWindow)
+					logLabel.SetText("Error: " + err.Error())
+					return
+				}
+				a.config.TextAssetsPath = targetPath
+				a.saveConfig()
+				a.githubManager = manager
+				logLabel.SetText(status)
 				dialog.ShowInformation("Success", "Workspace initialized successfully!", a.mainWindow)
 				if setupWindow != nil {
 					setupWindow.Close()
 				}
-				// Refresh Asset Browser
 				if a.assetBrowser != nil {
-					a.assetBrowser.SetPaths(a.config.GamedataPath, a.config.TextAssetsPath)
+					a.assetBrowser.SetPaths(a.config.GamedataPath, targetPath)
 				}
-			}
+			})
 		}()
 	})
 	setupBtn.Importance = widget.HighImportance

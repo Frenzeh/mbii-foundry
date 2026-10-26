@@ -103,12 +103,9 @@ func (vfs *VirtualFileSystem) findPK3s(root string) []string {
 	var pk3s []string
 	seen := make(map[string]bool)
 
-	// In Quake 3 / OpenJK, load order determines asset precedence:
-	// 1. base/ (JKA stock base assets)
-	// 2. MBII/ (Public official release for standard players)
-	// 3. MBIITest/ (Beta tester / QA builds)
-	// 4. MBIIRelease/ (Dev release staging)
-	// 5. Dev sandboxes & custom profile folders (e.g. ProfileFrenzy, Profile*)
+	// Foundry's overlay policy scans these folders in order, then custom
+	// subdirectories, with later sources winning. This is not a claim about
+	// the active search path of a particular game installation/profile.
 	priorityDirs := []string{
 		filepath.Join(root, "base"),
 		filepath.Join(root, "MBII"),
@@ -150,12 +147,35 @@ func (vfs *VirtualFileSystem) findPK3s(root string) []string {
 				}
 			}
 		}
-		// Sort alphabetically within each folder (engine load order)
-		sort.Strings(dirPK3s)
+		// Match the icon extractor's ASCII-folded PK3 filename ordering.
+		// Stable ties retain os.ReadDir's deterministic name order.
+		sort.SliceStable(dirPK3s, func(i, j int) bool {
+			return pk3PathLess(filepath.Base(dirPK3s[i]), filepath.Base(dirPK3s[j]))
+		})
 		pk3s = append(pk3s, dirPK3s...)
 	}
 
 	return pk3s
+}
+
+// pk3PathLess uses the same byte folding as tools/extract-icons.
+func pk3PathLess(a, b string) bool {
+	fold := func(c byte) byte {
+		if c >= 'a' && c <= 'z' {
+			return c - ('a' - 'A')
+		}
+		if c == '\\' || c == ':' {
+			return '/'
+		}
+		return c
+	}
+	for i := 0; i < len(a) && i < len(b); i++ {
+		ac, bc := fold(a[i]), fold(b[i])
+		if ac != bc {
+			return ac < bc
+		}
+	}
+	return len(a) < len(b)
 }
 
 func (vfs *VirtualFileSystem) indexPK3(path string) {
@@ -302,9 +322,11 @@ func (vfs *VirtualFileSystem) ReadFile(path string) (io.ReadCloser, error) {
 			return nil, err
 		}
 
-		// Find file
-		for _, f := range r.File {
-			if f.Name == source.EntryName || strings.EqualFold(strings.ReplaceAll(f.Name, "\\", "/"), norm) {
+		// Indexing keeps the last entry for each logical path. Search backwards
+		// for that exact entry name, including repeated identical ZIP names.
+		for i := len(r.File) - 1; i >= 0; i-- {
+			f := r.File[i]
+			if f.Name == source.EntryName {
 				rc, err := f.Open()
 				if err != nil {
 					r.Close()

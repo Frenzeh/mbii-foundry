@@ -160,6 +160,7 @@ type classCard struct {
 	owner   *ClassIconPicker
 	active  bool
 	hovered bool
+	focused bool
 
 	bg      *canvas.Rectangle
 	border  *canvas.Rectangle
@@ -236,6 +237,28 @@ func (c *classCard) Tapped(*fyne.PointEvent) {
 	c.owner.selectFromCard(c.def)
 }
 
+func (c *classCard) FocusGained() {
+	c.focused = true
+	c.applyStyle()
+}
+
+func (c *classCard) FocusLost() {
+	c.focused = false
+	c.applyStyle()
+}
+
+func (c *classCard) TypedRune(r rune) {
+	if r == ' ' {
+		c.Tapped(nil)
+	}
+}
+
+func (c *classCard) TypedKey(ev *fyne.KeyEvent) {
+	if ev.Name == fyne.KeyReturn || ev.Name == fyne.KeyEnter {
+		c.Tapped(nil)
+	}
+}
+
 func (c *classCard) MouseIn(*desktop.MouseEvent) {
 	c.hovered = true
 	c.applyStyle()
@@ -274,6 +297,11 @@ func (c *classCard) applyStyle() {
 	default:
 		c.bg.FillColor = color.Transparent
 		c.border.StrokeColor = color.Transparent
+	}
+	c.border.StrokeWidth = 2
+	if c.focused {
+		c.border.StrokeColor = theme.FocusColor()
+		c.border.StrokeWidth = 3
 	}
 	c.bg.Refresh()
 	c.border.Refresh()

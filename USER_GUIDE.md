@@ -51,6 +51,18 @@ vehicle keys remain visible in Source.
 
 These are selected editing surfaces, not exhaustive engine dictionaries.
 
+Numeric form fields retain their supported floating-point precision; opening a
+file or editing an unrelated field should not round its SAB/VEH values. In MBCH,
+the Custom Skills and Point Buy views edit the same indexed skill/name/rank/
+description slots. Rank modifiers (`rankHealth`, `rankArmor`, and other `rank*`
+keys) have one canonical value rather than competing copies in advanced fields.
+Review Source before saving changes to unusual or repeated keys.
+
+Configured rank-cost totals are authoring previews, not verified purchase or
+specialization mechanics. Defensive pool displays show configured values;
+energy, explosive, and melee EHP remain **Unverified**, without inferred
+class/attribute damage-reduction bonuses.
+
 ## 3. Use the form and Source together
 
 The right-hand **Source** panel displays the current form's exact would-save
@@ -62,10 +74,13 @@ text. Use its collapse/expand control to hide or restore it, or
   that text.
 - **Apply** is enabled only when the active format parser accepts the draft. A
   successful Apply updates the form and becomes an undoable step.
-- **Revert** explicitly discards the draft and returns to source generated from
-  the form.
+- **Revert** explicitly discards the shared draft and refreshes both highlighted
+  and editable text from the form. Continuing to type starts from that restored
+  text, not the discarded draft.
 - Switching tabs, toggling View/Edit, or using a pop-out does not discard an
-  unapplied draft. Drafts are document-specific.
+  unapplied draft. Drafts and their parse diagnostics are document-specific;
+  docked and popped-out Source views mirror the same draft. Closing one mirror
+  does not overwrite newer edits from another.
 
 If you press Save while a Source draft exists, Foundry asks whether to apply it
 before beginning save review. A parse error leaves the draft available for
@@ -79,11 +94,18 @@ Use `Edit -> Undo` / `Edit -> Redo`.
 - Windows/Linux: `Ctrl-Z`, `Ctrl-Shift-Z` or `Ctrl-Y`
 
 History covers form edits, valid Source applies, JSON imports, template changes,
-and multi-definition selection. Text-entry edits are coalesced after a short
-quiet period, and a document keeps up to 100 snapshots.
+and multi-definition selection. Text-entry edits are grouped into short
+coalescing windows, and a document keeps up to 100 snapshots.
 
-Closing a dirty tab, a detached editor, or the application presents a discard
-guard. An unapplied Source draft also counts as unsaved work.
+Fresh unnamed documents keep their initial defaults as the history baseline.
+Undo can return to those defaults even before a name is entered; this internal
+restoration does not relax the validation required by Source Apply.
+
+Closing a dirty tab or detached document asks before discarding it. Application
+Quit and the main window's close button share a guard covering tabbed and
+detached documents, including unapplied Source drafts. Quit attempts to persist
+recovery and reports whether that succeeded. If persistence or recovery cleanup
+fails, continuing requires explicit acceptance that recovery is not guaranteed.
 
 ## 5. Review and save
 
@@ -111,11 +133,18 @@ Save review is intentionally exact text, not a claim that all normalization is
 harmless. Read the proposed side when preserving comments, unusual keys, and
 multi-definition files matters.
 
+Save As to a different existing file still requires review even if that file
+already contains byte-identical candidate text. A successful save adopts the
+chosen destination as the document path and saved baseline. Cancel or failure
+keeps the destination chooser available for correction/retry instead of
+reporting a successful save.
+
 ## 6. Recover an interrupted session
 
-Every 15 seconds, Foundry snapshots dirty `.mbch`, `.sab`, `.veh`, and `.siege`
-working state and any Source draft into the operating-system configuration
-directory. It also captures a final pass during ordinary shutdown.
+Every 15 seconds, Foundry attempts to snapshot dirty `.mbch`, `.sab`, `.veh`,
+and `.siege` working state and any Source draft into the operating-system
+configuration directory. Detached documents are included. It also captures a
+final pass during ordinary shutdown and checks the persistence result.
 
 After an interrupted session, **Recover Unsaved Work** lists safe snapshots.
 Choose Restore to reopen the working state. Restoration never writes the
@@ -123,9 +152,11 @@ original file; use the normal reviewed Save flow when ready. Declining recovery
 removes the recovery entries. A clean save or confirmed discard removes that
 document's entry.
 
-Recovery depends on writable configuration storage. If startup reports that the
-configuration directory is unavailable, local editing still works but recovery,
-backups, preferences, and favorites cannot be persisted.
+Recovery depends on writable configuration storage, not merely a configured
+path. If startup reports that the configuration directory is unavailable,
+local editing still works but recovery, backups, preferences, and favorites
+cannot be persisted. A later write failure is not a successful recovery save;
+read the quit guard's result before choosing to continue.
 
 ## 7. Browse assets and read diagnostics
 
@@ -157,6 +188,20 @@ explicit `uishader`, then model/skin portrait names, and may use the model's
 default portrait where the applicable preview allows it. A silhouette means no
 portrait was resolved. These are 2D images, not previews of mesh, materials,
 animations, or tint.
+
+Shader still-image lookup uses a deterministic **Foundry preview policy**:
+later PK3 sources win, loose files win over PK3s, and then the lexically later
+lowercase logical shader path wins; within a file, the last supported
+declaration wins. Foundry selects a supported texture, not the shader's stage
+blending or animation. This policy is not verified engine/profile equivalence.
+
+### Keyboard and documentation access
+
+Use Tab to focus custom activity, class, asset, and equipment controls, then
+Enter or Space to activate the focused control. Focus cues and visible color/
+RGB-channel labels supplement hover and swatches; these are not a claim of
+screen-reader certification. Explicit documentation clicks still open/update
+the Info panel when **Show info tooltips on hover** is disabled in Preferences.
 
 ## 8. Validate
 
@@ -250,10 +295,38 @@ The directory contains `config.json`, recent files, favorites, backup and
 recovery data, modpack metadata, and the update cache. Foundry migrates the old
 `mbii-fa-creator` directory by copying it and leaves the old directory intact.
 
+The manually refreshed attribute/weapon catalog is separate:
+`os.UserCacheDir()/mbii-foundry/catalog.json`, one atomically replaced cache
+file, not a `data/` directory. Bundled resources are read-only; missing or invalid
+cache falls back to installed/embedded data. Refresh fetches upstream `main`
+over HTTPS with a 10-second timeout, a 4 MiB per-file bound, and no redirects.
+It is not authenticated by the application-update manifest or an independent
+catalog signature.
+
 Local editing needs no GitHub credential. If you opt into contribution features,
 **Connect / manage GitHub access** uses the operating system's native credential
-store. The token is excluded from `config.json`. A legacy plaintext token is
-removed only after native storage can be written and read back successfully.
+store. The token is excluded from newly persisted `config.json`. An active
+legacy plaintext token stays protected until native storage succeeds and its
+read-back is verified; failure does not erase that source.
+
+Only an explicit **Use saved credential** Connect, after a verified native read,
+cleans an eligible regular retained pre-rebrand configuration backup. Recorded
+migration provenance permits cleanup even after token replacement. Older
+markerless backups are eligible only when their token matches the active legacy
+or verified token. Differing or unverifiable backups remain unchanged; known
+plaintext produces a warning for manual review. Foundry never migrates a backup
+token into the native store, and does not automatically clean every historical
+backup.
+
+### Optional GitHub contribution
+
+Workspace clone/push requires the connected account's expected HTTPS
+`TextAssets` fork on GitHub. Upstream pulls are pinned to
+`https://github.com/MovieBattles/TextAssets.git` and carry no GitHub credential;
+they do not trust an arbitrary local upstream URL. In the submission dialog,
+the pull-request checkbox is honored: leave it unchecked for push-only. If a
+push succeeds but opening the requested PR fails, Foundry reports that partial
+outcome instead of claiming the PR exists.
 
 The raw log is `mbii-foundry.log` under the operating-system temporary
 directory. `Help -> Debug Logs` redacts configured roots and known credentials

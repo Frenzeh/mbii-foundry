@@ -1,5 +1,190 @@
 # Foundry audit
 
+**Original audit:** 2026-10-21. **Current release decision: NO-GO pending native interaction and release qualification.**
+
+The original findings below describe the pre-remediation snapshot, not the current implementation. Their line references and present-tense descriptions are retained as historical evidence. The candidate disposition below supersedes their repair status; successful automated checks do not establish unexercised native behavior.
+
+## Remediation candidate — 0.16.3-alpha, unreleased
+
+Repairs for A1–A14 are implemented in a nonsynced candidate, preserving the prior Go 1.27.3/Fyne 2.8.2 and layout work. The candidate uses macOS marketing version 0.16.3 and bundle build 19. Its changelog remains **Unreleased**. No new commit, push, tag, release draft, or publication has been performed.
+
+| Finding | Implemented change | Verification boundary |
+|---|---|---|
+| A1 | Credential-free pinned public upstream; expected HTTPS fork and redirect checks for authenticated contribution operations. | Synthetic Go regressions pass; no real token or contribution push exercised. |
+| A2 | Pre-removal close interception, consolidated quit requests, truthful recovery errors, and destination adoption for identical Save As. | Go lifecycle/save regressions pass. Native Cmd-W/Cmd-Q, cancellation, and dirty detached-window behavior remain unverified. |
+| A3 | Authoritative shared Source drafts, visible Revert, fresh unnamed recovery, document/draft push notifications instead of polling, and stale queued history-commit guards. | Go draft/recovery regressions and the full race suite pass. Native edit/quit/relaunch recovery remains unverified. |
+| A4 | Fresh defaults, retained numeric precision, and pending edits flushed before definition changes. | Go editor regressions pass. Fresh native controls still need interaction checks. |
+| A5 | Canonical custom-skill/rank ownership and structural form rebinding without stale validation callbacks. | Serialized delete/reinsert/reorder/edit/Undo/Redo regressions pass; native operation remains unverified. |
+| A6 | Effective-field edits, precision, cumulative flags, siege order, and assessment of AST boundary artifacts. | Parser suite and standalone MBCH/VEH save/reopen consumer smoke pass. Engine corpus/parity was not exercised. |
+| A7 | Explicit PR consent, truthful branch/PR outcomes, and UI-loop publication of background results. | Synthetic contribution regressions pass; no live PR was created. |
+| A8 | macOS 13.0 target, checked universal slices, Linux native dependencies, and explicit external-data/engine test opt-ins. | Actual universal helper build passes with both slices targeting 13.0. New Windows/Linux CI and oldest-supported-macOS runtime checks have not run. |
+| A9 | Physical loose-file identity, deterministic archive/entry precedence, picker invalidation, and documented shader-preview policy. | Asset regressions pass. No live installation or engine shader-equivalence claim. |
+| A10 | Atomic user catalog cache, shared merge/hidden policy, checked persistence, and immutable bundled resources. | Catalog regressions pass. HTTPS catalog refresh is not independently signed by the application-update key. |
+| A11 | Consistent configured-cost interpretation and explicit EHP/preview uncertainty. | Projection regressions pass; gameplay behavior is not certified. |
+| A12 | Conservative retained-backup cleanup after explicit verified saved-credential use; exclusive private signer-key creation. | Injected credential-store, synthetic-file, and signer regressions pass. No real keychain or credential was accessed. |
+| A13 | Labelled forms, picker keyboard/focus behavior, explicit documentation actions, and active-document gauge ownership. | Go behavioral checks pass; current native Home rendering is observed. Other native controls and screen-reader operation remain unverified. |
+| A14 | Supported Python packaging inputs and atomic publication; removal of confirmed private dead paths; current architecture and historical-plan documentation. | Thirteen Python tests and a real packaging API smoke pass. Native Windows Python behavior was not exercised. |
+
+### Local verification
+
+All execution used disposable nonsynced directories, synthetic `HOME`/`TMPDIR` and configuration/cache roots, cached dependencies, no external-data opt-ins, and no real credentials. External HTTP was blocked for the native session. The local sync-root metadata check establishes scratch path placement only, not sync health or remote state.
+
+- `go test -count=1 -timeout=5m ./...`, `go vet ./...`, `go build ./...`, and `go mod verify` pass.
+- The additional full race run initially failed in the headless test harness, where Fyne dispatches callbacks inline. Source polling was replaced with document/draft notifications, headless session clocks gained explicit ownership, and stale queued commits gained generation guards. Targeted race checks then passed, followed by the complete `go test -race -count=1 -timeout=8m ./...` suite. This is not a native interaction result.
+- `python3 -m unittest -v packager.test_pk3_builder`: 13 tests pass. A standalone consumer built and inspected a real PK3; a missing required asset was rejected without replacing an existing output.
+- A standalone Go consumer saved and reopened synthetic MBCH/VEH files, retaining authored no-op bytes, neighboring content, canonical rank edits, and floating-point precision.
+- The actual `build_app.sh` helper built ARM64 and x86_64, checked both Mach-O deployment targets as 13.0, and passed strict ad-hoc bundle-signature verification. This is not Developer ID signing, notarization, or runtime proof on macOS 13.
+- The repaired native ARM64 bundle launched and rendered Home with version 0.16.3-alpha. **No current native edit, Save, Save As, close, quit, or recovery interaction is claimed.**
+
+See [the local gate record](audit-evidence/2026-10-21/remediation-local-gates.txt) for observed results and limits. The older screenshots and selected-test outputs below belong to the original audit.
+
+### Remaining release gates
+
+Native input is blocked by the GUI provider: actions return `window_not_focused` with no focused window, while window capture works and the provider declares no focus capability. A user-focus request and a fresh isolated Launch Services launch did not establish an interactive recipient. Further blind focus/click attempts were stopped.
+
+Before publication, exercise fresh defaults, Source/Revert, reviewed Save and identical Save As, custom-skill Undo/Redo, close/quit cancellation including a detached dirty window, and source-only recovery in the actual native application. Then obtain green cross-platform CI for the exact release commit, create the signed tag, inspect all signed release manifests/archives, and explicitly publish the draft. None of those release operations is implied by completing a worker or passing local tests.
+
+## Original October scope and evidence
+
+- Source: `005bf9d0b2762e6ed2be13296bff464ceb2646ae`, plus the 13-file uncommitted Go 1.27.3/Fyne 2.8.2 and layout integration set. Those inputs still matched the isolated snapshot at the start of this audit. This report and its evidence are subsequent documentation additions.
+- Snapshot fingerprint: `32ebf0661335d11332e31f979e08b9e1de2c4eefa7ad5838f3b0d826a862db55` (the recorded composite of the base SHA and ordered input-file hashes, not a Git commit).
+- Tracking: audit `beads_mbii-0k5.1`; release `beads_mbii-0k5`. A1–A8 were blocking findings; the user subsequently included A9–A14 in remediation. Current qualification limits are recorded above.
+- Seven read-only review lanes covered persistence/recovery, parsers/catalogs, assets/export, security/update trust, UI workflows, platform/release contracts, and maintainability. Cross-cutting findings were consolidated rather than counted repeatedly.
+- **[S]** means current source/control-flow inspection; **[T]** means an exercised selected regression; **[V]** means an inspected native screenshot. **[INFERENCE]** marks an unexercised consequence. Security findings were reviewed statically: no exploit reproduction, malicious archive, live endpoint, credential, or private-overlay probe.
+- All new execution used a nonsynced scratch snapshot with synthetic `HOME`/`TMPDIR`, no configured game assets, disabled external-data switches, cached dependencies, and blocked external HTTP for the native session. No game, real configuration, live TextAssets, or `office-pc` was accessed.
+
+Most functional findings predate the 13-file integration patch. The Linux dependency mismatch accompanies the GLFW upgrade. Do not attribute the entire audit backlog to the layout work or assume the existing public release is free of baseline defects.
+
+## Original release-blocking findings
+
+### A1 — Contribution credential destination trust
+
+**High · [S] · `beads_mbii-0k5.2`**
+
+`github_manager.go:167–206,238–243,321–330` accepts existing workspace remotes and attaches the stored GitHub token during Sync/Push without validating their effective destination. The workspace directory is user-selectable. This is conditional on control of repository configuration, not an ordinary upstream asset commit.
+
+Pin public upstream and omit credentials for public pulls. Validate and pin authenticated pushes to the intended HTTPS GitHub fork; constrain credential-bearing redirects. No token disclosure was exercised.
+
+### A2 — Close, quit, and Save As ownership
+
+**High · [S] · `beads_mbii-0k5.3`**
+
+- `main.go:672–674` registers the guard as `DocTabs.OnClosed`, which Fyne invokes after removal. Cancelling can no longer retain the visible tab. The keyboard path reaches `closeTab:1649–1709`, which removes registrations without removing the tab, leaving a visible but untracked editor.
+- `main.go:603–608` promises a recovery snapshot even when recovery is disabled or persistence failed.
+- `save_review.go:525–530` returns success for a clean, byte-identical Save As destination without adopting that destination. Subsequent Save can still target the original file.
+
+Use one pre-close interception/confirmed-removal path, retain truthful recovery outcomes, and complete destination identity transitions even when bytes need no rewrite.
+
+### A3 — Source draft and recovery consistency
+
+**High/Medium · [S] · `beads_mbii-0k5.4`**
+
+- `source_panel.go:350–359` republishes stale mirror text during passive switches/closure, potentially replacing the newer authoritative draft.
+- VEH/SIEGE local Source tabs (`veh_editor.go:160–162`, `siege_editor.go:304–306`) are editable entries without Apply, model binding, or shared draft tracking.
+- Source Revert (`source_panel.go:723–738`) clears draft state but can leave discarded text in the editable widget; later typing restores it as a draft.
+- `crash_recovery.go:538–550` tries to apply an unnamed fresh working form before restoring a valid unapplied Source draft. Failure leaves the recovery record unresolved rather than opening the draft.
+- Autosave skips clean documents without retiring their previous snapshots (`crash_recovery.go:398–410`), so intentionally undone/reverted work can reappear as recoverable work.
+
+Make the shared store authoritative, remove the untracked editing path, synchronize deliberate Revert, and distinguish fresh form state from retained raw drafts during recovery.
+
+### A4 — Fresh editor state, precision, and rapid definition changes
+
+**High · [S/V] · `beads_mbii-0k5.5`**
+
+- `NewSABEditor` (`sab_editor.go:138–151`) creates default model values but leaves controls unpopulated. The first Source projection reads blank controls back into the model: blade count/dimensions and unit scales become zero. Native evidence confirms the zeroed Source and the resulting save warning.
+- Fresh SAB/VEH/SIEGE sessions can lazily establish their clean/undo anchor after the first mutation (`session_state.go:229–232,452–460`). A single edit can consequently appear clean.
+- MBCH, SAB, and VEH form population rounds authored floating-point values before reading them back (`mbch_editor.go:1629–1634`, `sab_editor.go:857–858,886–889`, `veh_editor.go:217–222`). `parsers/veh_ast_sync.go:25–31` independently rounds present floats during generation.
+- SAB/VEH definition switching generates source before flushing pending form changes (`sab_editor.go:585–595`, `veh_editor.go:532–540`).
+
+Populate controls under the loading guard, establish a restorable pre-edit anchor, retain roundtrip-safe numeric values, and flush current form state before generating a switch snapshot.
+
+### A5 — Canonical MBCH fields and dirty tracking
+
+**High · [S] · `beads_mbii-0k5.6`**
+
+- Custom Skills reads/writes `c_att_*` extras rather than the parser's canonical skill arrays (`custom_skills_editor.go:54–105`). Loaded skills can appear absent; adding a skill can overwrite an existing slot during serialization.
+- Rank parsing recognizes `rank_`, not supported names such as `rankHealth` (`parsers/mbch_parser.go:820–829`). Competing extra-field ownership can overwrite a rank-form edit.
+- Raw attribute changes do not synchronize the holdable projection; its later callback replaces the current `HI_*` tokens from stale state (`mbch_editor.go:761–803`).
+- Saber Color, Class Limit, Respawn Time, and Extra Lives lack the same dirty/session mutation path as other scalar controls (`mbch_editor.go:904–952`), allowing changes to bypass quit/recovery protection.
+
+Use one canonical owner per field, synchronize all projections without recursive user callbacks, and record every exposed user mutation.
+
+### A6 — Effective parser edits and assessment
+
+**High/Medium · [S] · `beads_mbii-0k5.7`**
+
+- SAB bulk editing/validation uses first-effective SGPV helpers even though SAB scalar parsing is last-effective (`parsers/mbtc_parser.go:906–913,1209–1213`). A reported successful edit can leave the parsed effective value unchanged.
+- A numbered blade edit can remain overridden by a later global blade assignment (`parsers/sab_ast_sync.go:117–135`).
+- SIEGE parsing requires the `Teams` mapping to precede its named bodies (`parsers/siege_parser.go:218–252`); generation can remove an association that failed to resolve solely because of order.
+- MBCH assessment omits top-level description values and some nested interior bytes (`parsers/assessment.go:75–153`); a bulk consumer also ignores assessment diagnostics (`parsers/mbtc_parser.go:1323–1331`).
+
+Synchronize the effective field according to its format, resolve mappings independently of order, and measure/validate the retained serialized content. No oversized-input or destructive historical reproduction was run.
+
+### A7 — Contribution consent and UI-thread ownership
+
+**High/Medium · [S] · `beads_mbii-0k5.8`**
+
+`submission_wizard.go:105–114` ignores the offered Create Pull Request checkbox; another route treats every PR-creation error as success (`95–102`). This is not acceptable publication consent or completion reporting.
+
+Workspace, submission, sync, and catalog-refresh workers also mutate Fyne graphics outside `fyne.Do` (`workspace_wizard.go:67–95`, `submission_wizard.go:85–126`, `main.go:2292–2299,2587–2599`). The threading-contract violations are source-confirmed; a resulting crash/race was not exercised. Capture inputs on the UI thread, perform background work separately, and marshal results back. Honor push-only versus PR creation and distinguish a verified existing PR from an actual error.
+
+### A8 — Platform qualification and hermetic verification
+
+**High · [S/T] · `beads_mbii-0k5.9`**
+
+- GLFW 3.4 defaults to X11 **and** Wayland. Both workflow apt lists omit explicit `libwayland-dev`/`libxkbcommon-dev` (`ci.yml:35–39`, `release.yml:124–128`). The requirement/provisioning mismatch is confirmed; hosted-runner failure is not.
+- `xcrun vtool -show-build` on the actual local ARM64 candidate reports **`minos 27.0`, SDK `27.0`**. `macos/Info.plist` declares `10.13`; CI, release, and `build_app.sh` do not pin a deployment target. This local result is not a claim about prior public artifacts. Choose a toolchain-supported minimum, align declarations/build flags, and inspect rebuilt Mach-O targets.
+- `TestRoundTripLegendsCharacters` and `TestSiegeRealFileNoOp` contain hardcoded live TextAssets roots; `TestParseRealFiles` searches adjacent trees. `-short` does not isolate them. Explicit engine verification also activates from `MBII_ENGINE_SRC`. These checks were excluded, not probed.
+
+Linux/Windows builds, oldest-supported-macOS execution, and cross-platform runtime behavior remain unverified for this candidate.
+
+## Original additional findings and maintenance recommendations
+
+These describe the original snapshot. Their current implementation and verification boundaries are recorded in the candidate table above.
+
+| ID / tracking | Original finding and source | Recommended repair |
+|---|---|---|
+| A9 · `beads_mbii-0k5.10` | Loose VFS entries lose their physical path (`asset_browser.go:1391–1397`); runtime PK3 ordering differs from the extractor, and indexed/read duplicate entries can differ (`vfs.go:153–155,306–308`). Texture probing can bypass declared shaders; duplicate shader winners depend on map order. The custom picker retains stale selection and routes PK3 navigation through filesystem loading. | Preserve source identity and deterministic precedence; clear selection and use the correct navigation backend. Static findings, not hostile-archive tests. |
+| A10 · `beads_mbii-0k5.11` | Manual catalog refresh writes to `DataPath`, which may be signed bundle resources, publishes memory before persistence, logs write failures as success, and bypasses startup merge/hidden/rank policies (`data_loader.go:417–484`). | Keep resources immutable; use an atomic user cache and shared policy. HTTPS main-branch provenance is distinct from application-manifest authentication. Changed sealed resources would invalidate signature coverage **[INFERENCE]**; no installed bundle was modified. |
+| A11 · `beads_mbii-0k5.12` | Comparison labels raw configured pools as Energy/Explosive EHP without `EvidenceStatus`; point-buy maximum and simulator use different cost interpretations (`character_diff.go:56–57`, `mbch_pointbuy.go:598–609`, `mbch_pointbuy_sim.go:381–391`). | Preserve uncertainty labels and reconcile configured-cost semantics without claiming verified gameplay behavior. |
+| A12 · `beads_mbii-0k5.13` | Rebrand migration retains a legacy config whose token is not sanitized with the new copy. Signing-key generation can preserve an existing permissive file mode (`config_dir.go:66–79`, `cmd/signer/main.go:68–80`). | Sanitize retained credential fields after verified native storage; generate keys exclusively/private. No actual token/key exposure was inspected. Current CI signing uses a private temporary directory and restrictive umask. |
+| A13 · `beads_mbii-0k5.14` | SAB blade and skin RGB labels are discarded through `NewFormItem(...).Widget`; custom activity/class/asset controls lack complete keyboard contracts. Explicit documentation clicks depend on the hover preference, and the buffer gauge does not follow active-document changes. | Reuse labelled forms, existing focus patterns, and correct event routing. SAB labels are visually confirmed; screen-reader operation is unverified. |
+| A14 · `beads_mbii-0k5.15` | The standalone Python builder ignores several populated asset lists (`packager/pk3_builder.py:175–188`). Old highlighter/source-view/widget paths and architectural plans need reconciliation. | Determine supported external Python use before removal or repair. Do not treat “no in-repo caller” as proof that a tool is unused, or estimated line savings as verified. No broad deletion was performed. |
+
+Updater rollback currently proves recovery from detected replacement/relaunch-start failures, not a healthy next launch: `cmd.Start()` success is not an application readiness handshake. This remains an explicit reliability limitation, not a newly reproduced failed installation.
+
+## Verification of the original audit snapshot
+
+- The same exact snapshot previously passed native macOS ARM64 build, `go vet ./...`, module verification, and four focused setup/sidebar regressions.
+- This audit ran **23 selected main-package tests** covering catalog preservation, SAB definition navigation/Apply/undo, VEH loading, MBCH projections, recovery, shared drafts, all four editors' exact publication/session bookkeeping, MBTC composition, modpack export, and session history. [Primary output](audit-evidence/2026-10-21/workflow-tests.txt).
+- **11 selected parser tests** passed for lexical/sibling retention, selected definitions, modeled SAB fields, MBCH description/custom-spec handling, immutable generation, and SIEGE no-op/rename behavior. [Primary output](audit-evidence/2026-10-21/parser-tests.txt).
+- Native **1200×832** observation confirmed stacked Home, the Files empty state, creation of a Saber, identifier/type/color form-to-Source synchronization, dirty indication after multiple edits, and entry into the reviewed-save dialog. The dialog warned that the new saber had zero blades. **No native save completion is claimed.** Orca actions were synthetic; visual claims rely on inspected resulting screenshots, not its unasserted action status.
+- [Home viewport](audit-evidence/2026-10-21/home-1200.png), [new Saber fields/defaults](audit-evidence/2026-10-21/new-saber-defaults.png), [save-review warning](audit-evidence/2026-10-21/save-review-warning.png).
+- Native smoke was stopped. Duplicate `-lobjc` and synthetic-HOME locale warnings were observed; neither prevented these checks.
+
+The selected tests omit the newly identified transitions. In particular, exact reviewed-byte publication does **not** establish semantic validity of fresh defaults; existing shared-draft tests do not establish safety against a stale mirror republishing later. No full-suite, screen-reader, complete-asset performance, live contribution, automatic installation, Windows/Linux runtime, or game-behavior pass is claimed.
+
+## Historical finding reconciliation at the original October audit
+
+| September finding | Disposition at that audit |
+|---|---|
+| F1 — truncate before validation / ignored backup | Addressed in source: staged candidates, checked backup, destination rechecks, and no-replace publication. Not a power-loss guarantee. |
+| F2 — always discard later SAB/VEH definitions | Original defect addressed through whole-document AST contexts; selected sibling regressions passed. Precision/effective-value defects remain under A4/A6. |
+| F3 — Source bypasses dirty/recovery contracts | Substantially improved, **not closed** end-to-end; A2–A5 record remaining defects. |
+| F4 — desktop PK3 exporter crosses project boundary | Current Go exporter has rooted, checked manifest/publication controls. No old destructive probe was rerun. Separate Python/provenance issues remain. |
+| F5 — unchecked macOS ZIP fallback | Addressed in current control flow: fresh staging, prevalidated members, bounded/exclusive extraction, CRC checks, authenticated manifests and artifact digests. No exploit replay. |
+| F6 — parser fidelity | Partially addressed by retained ASTs; not a blanket engine lexical-equivalence guarantee. SIEGE comment parsing and fresh extra-field generation still require caution. |
+| F7 — bulk/team/project completion | Many former no-op/error-reporting defects are repaired; current effective-edit/export/contribution issues remain separately listed. |
+| F8 — limits and derived stats | Shared capacities and ExtraLives handling improved; A6/A11 retain assessment and uncertainty issues. |
+
+Current universal-Mac packaging builds/verifies both architectures; the old “universal in name only” finding is obsolete. Source snapshots verify declarations, not deployed gameplay mechanics: the current metadata distinguishes 31 source-key-verified fields from 274 whose metadata remains unverified.
+
+**At the close of the original audit, publication was blocked.** That audit itself performed no implementation fixes, version bump, commit, push, tag, release artifact packaging, or publication. Subsequent remediation is recorded above. The following September report is preserved as historical evidence; its blanket “all findings remain open” language is not the current disposition.
+
+---
+
+# Historical audit — 2026-09-07
+
 **Date:** 2026-09-07. **Source baseline:** `010c1c8` (`Fix portrait rendering and source-aware asset caches`), application version `0.15.0-alpha`.
 
 This is the second-pass audit of the standalone Go/Fyne Foundry editor. It supersedes the preliminary local reports `~/tmp/foundry-independent-audit.md` and `~/tmp/foundry-parser-consumer-evidence.md`. This pass changes documentation only: the findings below are not implemented fixes.

@@ -6,28 +6,25 @@ import (
 	"testing"
 )
 
+// externalTextAssetsRoot gates real-data coverage before any filesystem access.
+// A path alone never opts an ordinary test run into a developer's checkout.
+func externalTextAssetsRoot(t *testing.T) string {
+	t.Helper()
+	if testing.Short() {
+		t.Skip("real TextAssets integration is disabled in short mode")
+	}
+	if os.Getenv("MBII_TEST_REAL_DATA") != "1" {
+		t.Skip("set MBII_TEST_REAL_DATA=1 and MBII_TEXTASSETS to run real TextAssets integration")
+	}
+	root := os.Getenv("MBII_TEXTASSETS")
+	if root == "" {
+		t.Fatal("MBII_TEXTASSETS is required when MBII_TEST_REAL_DATA=1")
+	}
+	return root
+}
+
 func TestParseRealFiles(t *testing.T) {
-	// Integration test that exercises the parser against a real TextAssets
-	// checkout. Skipped when the checkout isn't available (e.g. CI running
-	// off a fresh clone of just this repo). Run with `MBII_TEXTASSETS=/path`
-	// or place a TextAssets checkout adjacent to this repo.
-	textAssetsDir := os.Getenv("MBII_TEXTASSETS")
-	if textAssetsDir == "" {
-		candidates := []string{
-			"../../../../TextAssets",
-			"../../../../../TextAssets",
-			"../../../TextAssets",
-		}
-		for _, c := range candidates {
-			if _, err := os.Stat(c); err == nil {
-				textAssetsDir = c
-				break
-			}
-		}
-	}
-	if textAssetsDir == "" {
-		t.Skip("TextAssets checkout not found; set MBII_TEXTASSETS or place one adjacent to this repo to run this integration test")
-	}
+	textAssetsDir := externalTextAssetsRoot(t)
 
 	t.Logf("Scanning for MBCH files in %s...", textAssetsDir)
 

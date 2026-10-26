@@ -294,6 +294,94 @@ WeaponInfo0 {
 	}
 }
 
+func TestMBCHEffectiveFieldsAndNumericLexemesRoundTrip(t *testing.T) {
+	input := `ClassInfo
+{
+	"name" "Ignored quoted class key"
+	customField "keep me" NAME "dead text" // preserve this line
+	nAmE "Effective"
+	ſpeed 9.5
+	speed +1.2300e+00
+	maxhealth +0100
+}
+WeaponInfo0
+{
+	"clipsize" 42
+	customOverride keep CLIPSIZE 99 // preserve this line too
+	cLiPsIzE 7
+	reloadTimeModifier 0.33333333333333331
+}
+`
+	character, err := ParseMBCH(input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if character.Name != "Effective" || character.Speed != 1.23 || character.MaxHealth != 100 {
+		t.Fatalf("ClassInfo effective values = %q/%g/%d", character.Name, character.Speed, character.MaxHealth)
+	}
+	if len(character.WeaponOverrides) != 1 || character.WeaponOverrides[0].ClipSize != 7 {
+		t.Fatalf("WeaponInfo effective clip size = %#v", character.WeaponOverrides)
+	}
+
+	noOp, err := GenerateMBCH(character)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if noOp != input {
+		t.Fatalf("no-op round trip changed retained text:\n--- want ---\n%s\n--- got ---\n%s", input, noOp)
+	}
+
+	character.Name = "Edited"
+	character.Speed = 1.25
+	character.WeaponOverrides[0].ClipSize = 8
+	character.WeaponOverrides[0].ReloadTimeModifier = 0.5
+	output, err := GenerateMBCH(character)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := strings.NewReplacer(
+		`nAmE "Effective"`, `nAmE "Edited"`,
+		"speed +1.2300e+00", "speed 1.25",
+		"cLiPsIzE 7", "cLiPsIzE 8",
+		"reloadTimeModifier 0.33333333333333331", "reloadTimeModifier 0.5",
+	).Replace(input)
+	if output != want {
+		t.Fatalf("edit changed dead text, comments, ordering, or key case:\n--- want ---\n%s\n--- got ---\n%s", want, output)
+	}
+
+	reopened, err := ParseMBCH(output)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if reopened.Name != "Edited" || reopened.Speed != 1.25 || len(reopened.WeaponOverrides) != 1 ||
+		reopened.WeaponOverrides[0].ClipSize != 8 || reopened.WeaponOverrides[0].ReloadTimeModifier != 0.5 {
+		t.Fatalf("edited values did not survive reopen: %#v / %#v", reopened, reopened.WeaponOverrides)
+	}
+}
+
+func TestMBCHNumericLexemeEquivalenceIsStrict(t *testing.T) {
+	for _, test := range []struct {
+		name string
+		same bool
+	}{
+		{"finite exponent", sameFiniteFloatValue("+1.2300e+00", 1.23)},
+		{"malformed float", sameFiniteFloatValue("1.23junk", 1.23)},
+		{"nan", sameFiniteFloatValue("NaN", 0)},
+		{"infinity", sameFiniteFloatValue("+Inf", 0)},
+		{"float overflow", sameFiniteFloatValue("1e10000", 0)},
+		{"signed integer", sameIntValue("+0100", 100)},
+		{"malformed integer", sameIntValue("100junk", 100)},
+		{"integer overflow", sameIntValue("9223372036854775808", 0)},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			want := test.name == "finite exponent" || test.name == "signed integer"
+			if test.same != want {
+				t.Fatalf("equivalence = %v, want %v", test.same, want)
+			}
+		})
+	}
+}
+
 // Assessment measures payloads the way BG_SiegeGetValueGroup copies
 // them: comments and whitespace included, outer braces excluded.
 func TestAssessmentIncludesCommentsInBudget(t *testing.T) {

@@ -156,21 +156,29 @@ func TestSetupWizardHeadlessLayoutFitsWithoutScroll(t *testing.T) {
 			app := &App{fyneApp: ui, mainWindow: window, configPath: filepath.Join(t.TempDir(), "config.json")}
 			app.showSetupWizard()
 			overlay := window.Canvas().Overlays().Top()
-			modal, ok := overlay.(*widget.PopUp)
-			if !ok {
-				t.Fatalf("setup popup not shown, got %T", overlay)
+			content := findContainerContaining(overlay, findButtonByText(overlay, "Use these folders"))
+			if content == nil {
+				t.Fatal("setup dialog content not found")
 			}
-			if containsScroll(modal.Content) {
+			if containsScroll(content) {
 				t.Fatal("setup dialog contains a scroll container")
 			}
-			want := app.boundedDialogSize(fyne.NewSize(760, 520))
-			min, got := modal.Content.MinSize(), modal.Content.Size()
+			viewport := window.Canvas().Size()
+			min, got := content.MinSize(), content.Size()
 			t.Logf("window=%v dialog=%v min=%v scroll=false", size, got, min)
-			if min.Width > want.Width || min.Height > want.Height {
-				t.Fatalf("setup min size %v exceeds bounded dialog %v", min, want)
+			position, ok := objectPositionWithin(overlay, content)
+			if !ok {
+				t.Fatal("setup dialog content is outside overlay tree")
 			}
-			if got.Width > want.Width || got.Height > want.Height {
-				t.Fatalf("setup dialog %v exceeds bounded size %v", got, want)
+			position = position.Add(overlay.Position())
+			if position.X < 0 || position.Y < 0 ||
+				position.X+got.Width > viewport.Width+1 ||
+				position.Y+got.Height > viewport.Height+1 {
+				t.Fatalf("setup dialog overflows viewport: pos=%v size=%v viewport=%v",
+					position, got, viewport)
+			}
+			if min.Width > got.Width || min.Height > got.Height {
+				t.Fatalf("setup dialog %v clips minimum content size %v", got, min)
 			}
 		})
 	}
@@ -199,13 +207,14 @@ func TestSetupWizardLongValidationStatusStaysBounded(t *testing.T) {
 				config:     AppConfig{TextAssetsPath: missing},
 			}
 			app.showSetupWizard()
-			popup, ok := window.Canvas().Overlays().Top().(*widget.PopUp)
-			if !ok {
-				t.Fatalf("setup popup not shown, got %T", window.Canvas().Overlays().Top())
+			overlay := window.Canvas().Overlays().Top()
+			content := findContainerContaining(overlay, findButtonByText(overlay, "Use these folders"))
+			if content == nil {
+				t.Fatal("setup dialog content not found")
 			}
 			window.Canvas().Capture()
 
-			status := findLabelByPrefix(popup.Content, "TextAssets:")
+			status := findLabelByPrefix(content, "TextAssets:")
 			if status == nil {
 				t.Fatal("long validation status not found")
 			}
@@ -215,21 +224,21 @@ func TestSetupWizardLongValidationStatusStaysBounded(t *testing.T) {
 			if status.Size().Height > 80 {
 				t.Fatalf("validation status grew to %.1fpx high", status.Size().Height)
 			}
-			position, ok := objectPositionWithin(popup.Content, status)
+			position, ok := objectPositionWithin(content, status)
 			if !ok {
 				t.Fatal("validation status is outside popup content tree")
 			}
 			if position.X < 0 || position.Y < 0 ||
-				position.X+status.Size().Width > popup.Content.Size().Width+1 ||
-				position.Y+status.Size().Height > popup.Content.Size().Height+1 {
+				position.X+status.Size().Width > content.Size().Width+1 ||
+				position.Y+status.Size().Height > content.Size().Height+1 {
 				t.Fatalf("validation status overflows popup: pos=%v size=%v popup=%v",
-					position, status.Size(), popup.Content.Size())
+					position, status.Size(), content.Size())
 			}
-			useButton := findButtonByText(popup.Content, "Use these folders")
+			useButton := findButtonByText(content, "Use these folders")
 			if useButton == nil {
 				t.Fatal("setup footer action not found")
 			}
-			buttonPosition, ok := objectPositionWithin(popup.Content, useButton)
+			buttonPosition, ok := objectPositionWithin(content, useButton)
 			if !ok {
 				t.Fatal("setup footer action is outside popup content tree")
 			}
@@ -237,7 +246,7 @@ func TestSetupWizardLongValidationStatusStaysBounded(t *testing.T) {
 				t.Fatalf("validation status overlaps footer: status=%v/%v buttonY=%.1f",
 					position, status.Size(), buttonPosition.Y)
 			}
-			if containsScroll(popup.Content) {
+			if containsScroll(content) {
 				t.Fatal("long validation introduced a scroll container")
 			}
 		})
@@ -290,12 +299,33 @@ func findButtonByText(root fyne.CanvasObject, text string) *widget.Button {
 	return nil
 }
 
+// findContainerContaining locates the outermost content container without
+// depending on the concrete widgets wrapping a dialog in the overlay stack.
+func findContainerContaining(root, target fyne.CanvasObject) *fyne.Container {
+	if target == nil {
+		return nil
+	}
+	if content, ok := root.(*fyne.Container); ok && containsObject(content, target) {
+		return content
+	}
+	for _, child := range childObjects(root) {
+		if content := findContainerContaining(child, target); content != nil {
+			return content
+		}
+	}
+	return nil
+}
+
 func containsScroll(root fyne.CanvasObject) bool {
 	if root == nil {
 		return false
 	}
 	if fmt.Sprintf("%T", root) == "*widget.Scroll" {
 		return true
+	}
+	// Inspect the dialog composition, not scrolling used internally by inputs.
+	if _, ok := root.(fyne.Widget); ok {
+		return false
 	}
 	for _, child := range childObjects(root) {
 		if containsScroll(child) {
@@ -351,8 +381,8 @@ func childObjects(root fyne.CanvasObject) []fyne.CanvasObject {
 	switch object := root.(type) {
 	case *fyne.Container:
 		return object.Objects
-	case *widget.PopUp:
-		return []fyne.CanvasObject{object.Content}
+	case fyne.Widget:
+		return test.WidgetRenderer(object).Objects()
 	default:
 		return nil
 	}

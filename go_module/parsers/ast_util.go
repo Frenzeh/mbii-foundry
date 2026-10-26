@@ -18,11 +18,136 @@ func truncateSGPV(s string) string {
 	return s
 }
 
-// getFieldValueSGPV is getFieldValue with SGPV truncation applied — the
-// value the engine's paired-value reader would hand to the model.
+func equalFoldASCIIBytes(a, b string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := 0; i < len(a); i++ {
+		ac, bc := a[i], b[i]
+		if ac >= 'a' && ac <= 'z' {
+			ac -= 'a' - 'A'
+		}
+		if bc >= 'a' && bc <= 'z' {
+			bc -= 'a' - 'A'
+		}
+		if ac != bc {
+			return false
+		}
+	}
+	return true
+}
+
+// findFieldValueSGPV returns the first effective occurrence of key and its
+// value token for supported well-formed fields. SGPV skips the remainder of a
+// line after a non-matching key, so key-like tokens after that line's value are
+// dead text, not candidates. Comment-adjacent and bare-value error semantics
+// remain outside this helper's preservation contract.
+func findFieldValueSGPV(block *ASTBlock, key string) (int, int) {
+	for i := 0; i < len(block.Children); {
+		tok, ok := block.Children[i].(*ASTToken)
+		if !ok || tok.Type != TokenString {
+			i++
+			continue
+		}
+
+		if equalFoldASCIIBytes(tok.Text, key) {
+			for j := i + 1; j < len(block.Children); j++ {
+				switch next := block.Children[j].(type) {
+				case *ASTToken:
+					if next.Type == TokenComment {
+						return i, -1
+					}
+					if next.Type == TokenString {
+						return i, j
+					}
+				case *ASTBlock:
+					return i, -1
+				}
+			}
+			return i, -1
+		}
+
+		// A non-match makes the rest of this physical line invisible to
+		// SGPV (bg_saga.c:336-339). Resume after its newline.
+		i++
+		for i < len(block.Children) {
+			if ws, ok := block.Children[i].(*ASTToken); ok && ws.Type == TokenWhitespace && strings.Contains(ws.Text, "\n") {
+				i++
+				break
+			}
+			i++
+		}
+	}
+	return -1, -1
+}
+
+// getFieldValueSGPV returns the value the engine's paired-value reader would
+// hand to the model.
 func getFieldValueSGPV(block *ASTBlock, key string) (string, bool) {
-	v, ok := getFieldValue(block, key)
-	return truncateSGPV(v), ok
+	_, valueIdx := findFieldValueSGPV(block, key)
+	if valueIdx == -1 {
+		return "", false
+	}
+	value := block.Children[valueIdx].(*ASTToken)
+	return truncateSGPV(unquote(value.Text)), true
+}
+
+// setFieldValueSGPV updates the first effective occurrence of key. It does not
+// touch key-like tokens in the dead remainder of another field's line.
+func setFieldValueSGPV(block *ASTBlock, key, val string, useQuotes bool) {
+	valStr := val
+	if useQuotes {
+		valStr = fmt.Sprintf("\"%s\"", val)
+	} else if val == "" {
+		valStr = "\"\""
+	}
+
+	keyIdx, valueIdx := findFieldValueSGPV(block, key)
+	if valueIdx != -1 {
+		value := block.Children[valueIdx].(*ASTToken)
+		if value.Text != valStr && unquote(value.Text) != val && truncateSGPV(unquote(value.Text)) != val {
+			value.Text = valStr
+		}
+		return
+	}
+	if keyIdx != -1 {
+		block.Children = append(block.Children[:keyIdx+1], append([]ASTNode{
+			&ASTToken{Type: TokenWhitespace, Text: " "},
+			&ASTToken{Type: TokenString, Text: valStr},
+		}, block.Children[keyIdx+1:]...)...)
+		return
+	}
+
+	insertIdx := len(block.Children)
+	indent := "\t"
+	if insertIdx > 0 {
+		if ws, ok := block.Children[insertIdx-1].(*ASTToken); ok && ws.Type == TokenWhitespace && strings.Contains(ws.Text, "\n") {
+			lines := strings.Split(ws.Text, "\n")
+			indent = lines[len(lines)-1]
+			if indent == "" {
+				indent = "\t"
+			}
+		}
+	} else {
+		block.Children = append(block.Children, &ASTToken{Type: TokenWhitespace, Text: "\n"})
+		insertIdx = 1
+	}
+
+	var newNodes []ASTNode
+	if insertIdx > 0 {
+		last := block.Children[insertIdx-1]
+		if ws, ok := last.(*ASTToken); !ok || ws.Type != TokenWhitespace || !strings.Contains(ws.Text, "\n") {
+			newNodes = append(newNodes, &ASTToken{Type: TokenWhitespace, Text: "\n"})
+		}
+	}
+	newNodes = append(newNodes,
+		&ASTToken{Type: TokenWhitespace, Text: indent},
+		&ASTToken{Type: TokenString, Text: key},
+		&ASTToken{Type: TokenWhitespace, Text: "\t\t"},
+		&ASTToken{Type: TokenString, Text: valStr},
+		&ASTToken{Type: TokenWhitespace, Text: "\n"},
+	)
+	block.Children = append(block.Children, newNodes...)
 }
 
 // getFieldValue finds the FIRST occurrence of `key` (case-insensitive)

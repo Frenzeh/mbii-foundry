@@ -15,7 +15,6 @@ type CustomFilePicker struct {
 	window       fyne.Window
 	browser      *AssetBrowser
 	onSelected   func(*AssetEntry)
-	currentPath  string
 	selectedFile *AssetEntry
 
 	// UI elements
@@ -60,14 +59,7 @@ func (cfp *CustomFilePicker) createUI() {
 			if cfp.selectedFile.IsDir || cfp.selectedFile.Name == ".." || cfp.selectedFile.Name == "(Parent)" {
 				LogInfo("Navigating directory...")
 				// Navigate into directory
-				if cfp.selectedFile.PK3Source == "" {
-					cfp.browser.loadFS(cfp.selectedFile.Path)
-				} else {
-					cfp.browser.loadGrid(cfp.selectedFile)
-				}
-				cfp.selectedFile = nil
-				cfp.refreshPathBar()
-				cfp.selectButton.Disable()
+				cfp.browser.openDirectory(cfp.selectedFile)
 			} else {
 				LogInfo("Returning file...")
 				// Open file — pass the whole AssetEntry so the caller
@@ -136,7 +128,11 @@ func (cfp *CustomFilePicker) createUI() {
 
 		homeDir, _ := os.UserHomeDir() // Ensure homeDir is available here too
 
-		if s == "Home" {
+		if s == "All Game Data (Virtual)" {
+			cfp.browser.loadVFS("")
+		} else if s == "TextAssets" {
+			cfp.browser.loadFS(cfp.browser.textAssetsPath)
+		} else if s == "Home" {
 			cfp.browser.loadFS(homeDir)
 		} else if s == "Computer" {
 			cfp.browser.loadFS("/")
@@ -177,7 +173,11 @@ func (cfp *CustomFilePicker) createUI() {
 	// Configure Browser interactions
 	cfp.browser.SetOnAssetSelected(func(asset *AssetEntry) {
 		cfp.selectedFile = asset
-		cfp.selectButton.Enable()
+		if asset == nil {
+			cfp.selectButton.Disable()
+		} else {
+			cfp.selectButton.Enable()
+		}
 	})
 
 	cfp.browser.SetOnAssetDouble(func(asset *AssetEntry) {
@@ -189,6 +189,7 @@ func (cfp *CustomFilePicker) createUI() {
 			cfp.window.Close()
 		}
 	})
+	cfp.browser.onDirectoryChanged = cfp.refreshPathBar
 
 	// Navigation toolbar — explicit Up / Home / Refresh buttons so users
 	// aren't hunting for a ".. (Up)" folder entry in the grid. Uses Fyne's
@@ -201,15 +202,9 @@ func (cfp *CustomFilePicker) createUI() {
 	homeBtn := widget.NewButtonWithIcon("Home", theme.HomeIcon(), func() {
 		home, _ := os.UserHomeDir()
 		cfp.browser.loadFS(home)
-		cfp.refreshPathBar()
 	})
 	homeBtn.Importance = widget.LowImportance
-	refreshBtn := widget.NewButtonWithIcon("", theme.ViewRefreshIcon(), func() {
-		if cfp.browser.currentDir != nil {
-			cfp.browser.loadFS(cfp.browser.currentDir.Path)
-			cfp.refreshPathBar()
-		}
-	})
+	refreshBtn := widget.NewButtonWithIcon("", theme.ViewRefreshIcon(), cfp.browser.refreshCurrentDirectory)
 	refreshBtn.Importance = widget.LowImportance
 
 	// View mode: icon toggle (grid ↔ list) instead of a dropdown.
@@ -269,7 +264,7 @@ func (cfp *CustomFilePicker) createUI() {
 	// in the main editor's browser, so pinning here benefits both.
 	var favBtn *widget.Button
 	syncFavBtn := func() {
-		if cfp.browser.currentDir == nil || cfp.browser.currentDir.Path == "" {
+		if cfp.browser.currentPK3 != "" || cfp.browser.currentDir == nil || cfp.browser.currentDir.Path == "" {
 			favBtn.Disable()
 			favBtn.SetIcon(theme.FolderOpenIcon())
 			favBtn.SetText("")
@@ -285,7 +280,7 @@ func (cfp *CustomFilePicker) createUI() {
 		}
 	}
 	favBtn = widget.NewButtonWithIcon("Favorite", theme.ContentAddIcon(), func() {
-		if cfp.browser.currentDir == nil || cfp.browser.currentDir.Path == "" {
+		if cfp.browser.currentPK3 != "" || cfp.browser.currentDir == nil || cfp.browser.currentDir.Path == "" {
 			return
 		}
 		path := cfp.browser.currentDir.Path
@@ -299,12 +294,8 @@ func (cfp *CustomFilePicker) createUI() {
 	})
 	favBtn.Importance = widget.LowImportance
 	syncFavBtn()
-	// Keep button state in sync as the user navigates — we hook into
-	// refreshPathBar since that's called on every folder change.
-	prevRefresh := cfp.refreshPathBar
-	_ = prevRefresh // kept to avoid "declared and not used" if we
-	// later need to chain; actual chaining done in refreshPathBar
-	// itself by calling syncFavBtn at end.
+	// Directory changes from the tree, grid, toolbar, and sources all
+	// refresh the breadcrumb and favorite toggle through the browser.
 	cfp.syncFavBtn = syncFavBtn
 
 	topNav := container.NewBorder(
@@ -331,51 +322,58 @@ func (cfp *CustomFilePicker) createUI() {
 // jump up any number of levels in one click.
 func (cfp *CustomFilePicker) refreshPathBar() {
 	cfp.pathBar.Objects = nil
-	path := "/"
-	if cfp.browser.currentDir != nil && cfp.browser.currentDir.Path != "" {
-		path = cfp.browser.currentDir.Path
-	}
-
-	// Build cumulative segments so each breadcrumb button knows the
-	// full path up to and including itself.
-	segments := strings.Split(strings.Trim(filepath.ToSlash(path), "/"), "/")
-	cumulative := ""
-	if strings.HasPrefix(path, "/") || len(segments) == 0 {
-		// Root marker (Unix '/' or empty path).
-		rootBtn := widget.NewButtonWithIcon("", theme.ComputerIcon(), func() {
-			cfp.browser.loadFS("/")
-			cfp.refreshPathBar()
-		})
-		rootBtn.Importance = widget.LowImportance
-		cfp.pathBar.Add(rootBtn)
-	}
-	for _, seg := range segments {
-		if seg == "" {
-			continue
+	addButton := func(label string, icon fyne.Resource, tapped func()) {
+		if len(cfp.pathBar.Objects) > 0 {
+			cfp.pathBar.Add(widget.NewLabel("›"))
 		}
-		if cumulative == "" && !strings.HasPrefix(path, "/") {
-			// Windows drive letter etc.
-			cumulative = seg
-		} else {
-			cumulative = cumulative + "/" + seg
-		}
-		segPath := cumulative
-		if !strings.HasPrefix(path, "/") && cumulative == seg {
-			segPath = seg + string(filepath.Separator)
-		}
-		cfp.pathBar.Add(widget.NewLabel("›"))
-		btn := widget.NewButton(seg, func() {
-			cfp.browser.loadFS(segPath)
-			cfp.refreshPathBar()
-		})
+		btn := widget.NewButtonWithIcon(label, icon, tapped)
 		btn.Importance = widget.LowImportance
 		cfp.pathBar.Add(btn)
 	}
-	cfp.pathBar.Refresh()
 
-	// Favorite-toggle button in the nav bar mirrors the current folder;
-	// update it whenever the breadcrumb rebuilds (= on every folder
-	// change).
+	source := cfp.browser.currentPK3
+	if source != "" {
+		label := filepath.Base(source)
+		if source == "VFS" {
+			label = "All Game Data"
+		}
+		addButton(label, theme.StorageIcon(), func() {
+			cfp.browser.openDirectory(&AssetEntry{IsDir: true, PK3Source: source})
+		})
+		if dir := cfp.browser.currentDir; dir != nil {
+			cumulative := ""
+			for _, segment := range strings.Split(dir.Path, "/") {
+				if segment == "" {
+					continue
+				}
+				if cumulative != "" {
+					cumulative += "/"
+				}
+				cumulative += segment
+				path := cumulative
+				addButton(segment, nil, func() {
+					cfp.browser.openDirectory(&AssetEntry{Path: path, IsDir: true, PK3Source: source})
+				})
+			}
+		}
+	} else if dir := cfp.browser.currentDir; dir != nil {
+		path := filepath.Clean(dir.Path)
+		volume := filepath.VolumeName(path)
+		root := volume + string(filepath.Separator)
+		addButton(root, theme.ComputerIcon(), func() { cfp.browser.loadFS(root) })
+		cumulative := root
+		for _, segment := range strings.Split(filepath.ToSlash(strings.TrimPrefix(path, root)), "/") {
+			if segment == "" {
+				continue
+			}
+			cumulative = filepath.Join(cumulative, segment)
+			target := cumulative
+			addButton(segment, nil, func() { cfp.browser.loadFS(target) })
+		}
+	} else {
+		cfp.pathBar.Add(widget.NewLabel("Select a source"))
+	}
+	cfp.pathBar.Refresh()
 	if cfp.syncFavBtn != nil {
 		cfp.syncFavBtn()
 	}
@@ -388,7 +386,11 @@ func (cfp *CustomFilePicker) refreshPathBar() {
 func (cfp *CustomFilePicker) rebuildSources() {
 	homeDir, _ := os.UserHomeDir()
 
-	cfp.sources = []string{"Home", "Computer", "--- Locations ---"}
+	cfp.sources = []string{"All Game Data (Virtual)", "Home", "Computer"}
+	if cfp.browser.textAssetsPath != "" {
+		cfp.sources = append(cfp.sources, "TextAssets")
+	}
+	cfp.sources = append(cfp.sources, "--- Locations ---")
 
 	cloudStoragePath := filepath.Join(homeDir, "Library", "CloudStorage")
 	if entries, err := os.ReadDir(cloudStoragePath); err == nil {
@@ -431,21 +433,12 @@ func (cfp *CustomFilePicker) rebuildSources() {
 // various "up" cases (FS, PK3, VFS) so the button does the right thing
 // regardless of where the user is.
 func (cfp *CustomFilePicker) goUp() {
-	if cfp.browser.currentDir == nil {
-		return
-	}
-	parent := filepath.Dir(cfp.browser.currentDir.Path)
-	if parent == "" || parent == "." {
-		return
-	}
-	cfp.browser.loadFS(parent)
-	cfp.refreshPathBar()
+	cfp.browser.goUp()
 }
 
 func (cfp *CustomFilePicker) Show(onSelected func(*AssetEntry)) {
 	cfp.onSelected = onSelected
-	cfp.selectedFile = nil
-	cfp.selectButton.Disable()
+	cfp.browser.clearSelection()
 
 	// Ensure decent initial size
 	cfp.window.Resize(fyne.NewSize(1200, 780))
@@ -454,7 +447,11 @@ func (cfp *CustomFilePicker) Show(onSelected func(*AssetEntry)) {
 	// Default to Home or Computer if nothing loaded
 	if cfp.browser.currentDir == nil {
 		if cfp.initialPath != "" {
-			cfp.browser.loadFS(cfp.initialPath)
+			if filepath.IsAbs(cfp.initialPath) {
+				cfp.browser.loadFS(cfp.initialPath)
+			} else {
+				cfp.browser.navigateToPath(cfp.initialPath)
+			}
 		} else {
 			home, _ := os.UserHomeDir()
 			cfp.browser.loadFS(home)

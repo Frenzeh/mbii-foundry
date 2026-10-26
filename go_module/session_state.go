@@ -45,8 +45,9 @@ type SourceDraft struct {
 // by the primary source panel and every pop-out mirror so a draft
 // survives pop-out/reattach and tab switches without being dropped.
 type SourceDraftStore struct {
-	mu     sync.Mutex
-	drafts map[Editor]SourceDraft
+	mu        sync.Mutex
+	drafts    map[Editor]SourceDraft
+	listeners map[Editor]*sourceListeners
 }
 
 func NewSourceDraftStore() *SourceDraftStore {
@@ -58,8 +59,16 @@ func (s *SourceDraftStore) Set(ed Editor, d SourceDraft) {
 		return
 	}
 	s.mu.Lock()
-	defer s.mu.Unlock()
+	if current, ok := s.drafts[ed]; ok && current == d {
+		s.mu.Unlock()
+		return
+	}
 	s.drafts[ed] = d
+	listeners := s.listeners[ed]
+	s.mu.Unlock()
+	if listeners != nil {
+		listeners.fire()
+	}
 }
 
 func (s *SourceDraftStore) Get(ed Editor) (SourceDraft, bool) {
@@ -77,8 +86,13 @@ func (s *SourceDraftStore) Delete(ed Editor) {
 		return
 	}
 	s.mu.Lock()
-	defer s.mu.Unlock()
+	_, existed := s.drafts[ed]
 	delete(s.drafts, ed)
+	listeners := s.listeners[ed]
+	s.mu.Unlock()
+	if existed && listeners != nil {
+		listeners.fire()
+	}
 }
 
 // DeleteIfMatch consumes only the draft that was actually reviewed or
@@ -88,18 +102,51 @@ func (s *SourceDraftStore) DeleteIfMatch(ed Editor, want SourceDraft) bool {
 		return false
 	}
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	got, ok := s.drafts[ed]
 	if !ok || got != want {
+		s.mu.Unlock()
 		return false
 	}
 	delete(s.drafts, ed)
+	listeners := s.listeners[ed]
+	s.mu.Unlock()
+	if listeners != nil {
+		listeners.fire()
+	}
 	return true
 }
 
 func (s *SourceDraftStore) Has(ed Editor) bool {
 	_, ok := s.Get(ed)
 	return ok
+}
+
+// addListener subscribes to actual draft changes for one document.
+// Notify outside the store lock: a panel may normalize diagnostics while
+// rendering a draft, and setting an unchanged draft must not notify again.
+func (s *SourceDraftStore) addListener(ed Editor, fn func()) func() {
+	s.mu.Lock()
+	if s.listeners == nil {
+		s.listeners = make(map[Editor]*sourceListeners)
+	}
+	listeners := s.listeners[ed]
+	if listeners == nil {
+		listeners = &sourceListeners{}
+		s.listeners[ed] = listeners
+	}
+	remove := listeners.add(fn)
+	s.mu.Unlock()
+	return func() {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		remove()
+		listeners.mu.Lock()
+		empty := len(listeners.fns) == 0
+		listeners.mu.Unlock()
+		if empty && s.listeners[ed] == listeners {
+			delete(s.listeners, ed)
+		}
+	}
 }
 
 // sourceListeners multiplexes source-changed push notifications to
@@ -160,7 +207,9 @@ func (l *sourceListeners) fire() {
 // DocumentSession owns baseline/draft/history state for one document.
 // render snapshots the current working state into its canonical
 // source form; restore swaps a previously-snapshotted source back
-// into the working model. Both run on the UI thread.
+// into the working model, including unnamed fresh forms that are not
+// valid user Apply input. Both run on the UI thread. Editors must Reset
+// after populating their initial controls, before exposing user edits.
 type documentSnapshot struct {
 	Source      string
 	SelectedDef int
@@ -199,22 +248,33 @@ type DocumentSession struct {
 	committed    string
 	committedDef int
 
-	// Debounce plumbing for form-level edits. Both fields are only
-	// mutated on the UI thread (the timer callback hops through
-	// fyne.Do first), so the single-shot clear is atomic with respect
-	// to flushPending.
-	started   bool
-	timer     *time.Timer
-	pendingFn func()
+	// The session captures its scheduler at construction. Production timers
+	// dispatch onto the UI thread; headless fixtures own a serial clock.
+	started          bool
+	scheduleCommit   func(time.Duration, func()) sessionCommitTimer
+	commitTimer      sessionCommitTimer
+	commitGeneration uint64
 
 	maxHistory int
 }
 
+type sessionCommitTimer interface {
+	Stop() bool
+}
+
+// scheduleSessionCommit returns a stoppable timer. Cancellation cannot
+// retract a callback already queued on the UI thread; the session checks its
+// generation before committing so an old callback cannot consume a new edit.
+var scheduleSessionCommit = func(delay time.Duration, commit func()) sessionCommitTimer {
+	return time.AfterFunc(delay, func() { fyne.Do(commit) })
+}
+
 func NewDocumentSession(render func() string, restore func(src string) error) *DocumentSession {
 	return &DocumentSession{
-		render:     render,
-		restore:    restore,
-		maxHistory: 100,
+		render:         render,
+		restore:        restore,
+		scheduleCommit: scheduleSessionCommit,
+		maxHistory:     100,
 	}
 }
 
@@ -228,23 +288,17 @@ func (s *DocumentSession) SetOnDirtyChange(f func(bool)) { s.onDirtyChange = f }
 // anchor immediately marks the document dirty.
 func (s *DocumentSession) noteUserEdit() {
 	s.init()
-	if s.timer != nil || s.pendingFn != nil {
+	if s.commitTimer != nil {
 		return // coalesce into the pending commit
 	}
-	s.pendingFn = s.commitPending
-	s.timer = time.AfterFunc(600*time.Millisecond, func() {
-		// Background goroutine: hop to the UI thread before touching
-		// widget-backed render state. Clear both handles atomically
-		// inside the callback so a racing flushPending can't run it
-		// twice.
-		fyne.Do(func() {
-			s.timer = nil
-			fn := s.pendingFn
-			s.pendingFn = nil
-			if fn != nil {
-				fn()
-			}
-		})
+	s.commitGeneration++
+	generation := s.commitGeneration
+	s.commitTimer = s.scheduleCommit(600*time.Millisecond, func() {
+		if generation != s.commitGeneration || s.commitTimer == nil {
+			return
+		}
+		s.commitTimer = nil
+		s.commitPending()
 	})
 	s.syncDirty() // first keystroke marks the tab dirty immediately
 }
@@ -273,15 +327,12 @@ func (s *DocumentSession) appendUndo(snapshot documentSnapshot) {
 // before discrete operations (undo/redo/apply/import/definition
 // switch) and on save. Safe to call when nothing is pending.
 func (s *DocumentSession) flushPending() {
-	if s.timer != nil {
-		s.timer.Stop()
-		s.timer = nil
+	if s.commitTimer == nil {
+		return
 	}
-	fn := s.pendingFn
-	s.pendingFn = nil
-	if fn != nil {
-		fn()
-	}
+	s.commitTimer.Stop()
+	s.commitTimer = nil
+	s.commitPending()
 }
 
 // beginDiscreteChange snapshots the current state ahead of an atomic
@@ -384,7 +435,7 @@ func (s *DocumentSession) CanUndo() bool {
 	}
 	s.init()
 	s.flushPending()
-	return s.render() != s.committed || s.SelectedDef != s.committedDef
+	return len(s.undo) > 0 || s.render() != s.committed || s.SelectedDef != s.committedDef
 }
 
 func (s *DocumentSession) CanRedo() bool { return len(s.redo) > 0 }
@@ -446,9 +497,9 @@ func (s *DocumentSession) syncDirty() {
 	}
 }
 
-// init lazily anchors both the dirty anchor and the history cursor at
-// first observation so editors constructed before their UI exists
-// still behave.
+// init lazily anchors the dirty state and history for non-widget callers.
+// Widget editors must Reset after initial control population: a first
+// observation from noteUserEdit would otherwise anchor after the edit.
 func (s *DocumentSession) init() {
 	if s.started {
 		return

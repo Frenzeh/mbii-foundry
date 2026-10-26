@@ -141,6 +141,7 @@ func NewSABEditor(app *App) *SABEditor {
 		fileManager: app.fileManager,
 		app:         app,
 		sourceSubs:  &sourceListeners{},
+		loading:     true,
 	}
 	e.session = NewDocumentSession(
 		func() string { return e.sessionRender() },
@@ -148,6 +149,9 @@ func NewSABEditor(app *App) *SABEditor {
 	)
 	e.session.SetOnDirtyChange(e.setDirtyState)
 	e.createUI()
+	e.updateUI()
+	e.loading = false
+	e.session.Reset()
 	return e
 }
 
@@ -275,7 +279,12 @@ func (e *SABEditor) createUI() {
 	e.blade1RadiusEntry = NewInputEntry()
 	e.blade1LengthEntry.OnChanged = func(s string) { e.markDirty() }
 	e.blade1RadiusEntry.OnChanged = func(s string) { e.markDirty() }
-	bladeGrid := container.NewGridWithColumns(2, widget.NewFormItem("Color", e.blade1ColorSelect).Widget, widget.NewFormItem("Preview", e.bladePreview).Widget, widget.NewFormItem("Length", e.blade1LengthEntry).Widget, widget.NewFormItem("Radius", e.blade1RadiusEntry).Widget)
+	bladeForm := widget.NewForm(
+		widget.NewFormItem("Color", e.blade1ColorSelect),
+		widget.NewFormItem("Preview", e.bladePreview),
+		widget.NewFormItem("Length", e.blade1LengthEntry),
+		widget.NewFormItem("Radius", e.blade1RadiusEntry),
+	)
 
 	e.soundOnEntry = NewInputEntry()
 	e.soundOffEntry = NewInputEntry()
@@ -422,12 +431,13 @@ func (e *SABEditor) createUI() {
 	animForm := widget.NewForm(widget.NewFormItem("Slap Animation", e.slapAnimEntry), widget.NewFormItem("Ready Animation", e.readyAnimEntry), widget.NewFormItem("Jump Attack Up", e.jumpAtkUpMoveEntry), widget.NewFormItem("Jump Attack Forward", e.jumpAtkFwdMoveEntry), widget.NewFormItem("Lunge Attack", e.lungeAtkMoveEntry))
 
 	// Source View
-	e.sourceView = widget.NewRichTextFromMarkdown("Loading...")
+	e.sourceView = widget.NewRichText()
+	e.sourceView.Wrapping = fyne.TextWrapOff
 	sourceTab := container.NewMax(container.NewScroll(e.sourceView))
 
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Identity", container.NewVScroll(NewFormSection("Saber identity", "Definition name, model, skin, and blade count.", identityForm))),
-		container.NewTabItem("Blades", container.NewVScroll(NewFormSection("Primary blade", "Color and blade proportions.", bladeGrid))),
+		container.NewTabItem("Blades", container.NewVScroll(NewFormSection("Primary blade", "Color and blade proportions.", bladeForm))),
 		container.NewTabItem("Sounds", container.NewVScroll(container.NewVBox(
 			NewFormSection("Core sounds", "", soundsForm),
 			NewFormSection("Swing", "", e.swingSoundsGroup),
@@ -475,14 +485,7 @@ func (e *SABEditor) createUI() {
 }
 
 func (e *SABEditor) updateSourceView() {
-	e.updateSaberFromUI()
-	content, err := parsers.GenerateSAB(e.saber)
-	if err != nil {
-		e.sourceView.ParseMarkdown("Error: " + err.Error())
-		return
-	}
-	highlighter := NewSyntaxHighlighter()
-	e.sourceView.Segments = highlighter.Highlight(content).Segments
+	e.sourceView.Segments = highlightedSegments(e.GenerateSource())
 	e.sourceView.Refresh()
 }
 func (e *SABEditor) updateBladePreview(colorName string) {
@@ -513,13 +516,16 @@ func (e *SABEditor) GetRecentFiles() []RecentFile  { return e.fileManager.GetRec
 
 func (e *SABEditor) NewSaber() {
 	e.session.beginDiscreteChange()
+	e.loading = true
 	e.saber = parsers.NewSaberData()
 	e.docSource = ""
 	e.defNames = []string{}
 	e.session.SelectedDef = 0
 	e.updateUI()
+	e.loading = false
 	e.session.endDiscreteChange()
 	e.refreshDefinitionBar()
+	e.fireSourceChanged()
 }
 
 // LoadFile reads a possibly multi-definition .sab file. The whole
@@ -580,8 +586,9 @@ func (e *SABEditor) SelectDefinition(index int) error {
 	if index == e.session.SelectedDef {
 		return nil
 	}
-	// Fold current form state into the document source; refuse the
-	// switch when the current block can't render (nothing mutated yet).
+	// Fold pending form values in before rendering; refuse the switch
+	// if the current document cannot be rendered or the target parsed.
+	e.updateSaberFromUI()
 	cur, err := parsers.GenerateSAB(e.saber)
 	if err != nil {
 		return fmt.Errorf("cannot switch definition: %v", err)
@@ -592,6 +599,7 @@ func (e *SABEditor) SelectDefinition(index int) error {
 	}
 
 	e.session.beginDiscreteChangeFrom(cur)
+	e.defNames[e.session.SelectedDef] = e.saber.Name
 	e.docSource = cur
 	e.session.SelectedDef = index
 	e.saber = saber
@@ -627,6 +635,9 @@ func (e *SABEditor) sessionRender() string { return e.GenerateSource() }
 // sessionRestore swaps a snapshot back into the working model
 // in-memory. Path, baseline and dirty bookkeeping are untouched.
 func (e *SABEditor) sessionRestore(src string) error {
+	if err := validateSourceStructure(src); err != nil {
+		return err
+	}
 	names, err := parsers.DefinitionNames(src)
 	if err != nil || len(names) == 0 {
 		return fmt.Errorf("restore saber definitions: %v", err)
@@ -671,6 +682,9 @@ func (e *SABEditor) ApplySourceText(src string) error {
 	}
 	if e.session.SelectedDef < 0 || e.session.SelectedDef >= len(names) {
 		return fmt.Errorf("definition %d out of range (%d definitions)", e.session.SelectedDef+1, len(names))
+	}
+	if strings.TrimSpace(names[e.session.SelectedDef]) == "" {
+		return fmt.Errorf("saber definition has no name")
 	}
 	saber, err := parsers.ParseSABDefinition(src, e.session.SelectedDef)
 	if err != nil {
@@ -854,8 +868,8 @@ func (e *SABEditor) updateUI() {
 	e.numBladesEntry.SetText(strconv.Itoa(e.saber.NumBlades))
 	if len(e.saber.Blades) > 0 {
 		e.blade1ColorSelect.SetSelected(e.saber.Blades[0].Color)
-		e.blade1LengthEntry.SetText(fmt.Sprintf("%.1f", e.saber.Blades[0].Length))
-		e.blade1RadiusEntry.SetText(fmt.Sprintf("%.1f", e.saber.Blades[0].Radius))
+		e.blade1LengthEntry.SetText(strconv.FormatFloat(e.saber.Blades[0].Length, 'g', -1, 64))
+		e.blade1RadiusEntry.SetText(strconv.FormatFloat(e.saber.Blades[0].Radius, 'g', -1, 64))
 	}
 	e.soundOnEntry.SetText(e.saber.SoundOn)
 	e.soundOffEntry.SetText(e.saber.SoundOff)
@@ -883,10 +897,10 @@ func (e *SABEditor) updateUI() {
 	e.parryBonusEntry.SetText(strconv.Itoa(e.saber.ParryBonus))
 	e.breakParryEntry.SetText(strconv.Itoa(e.saber.BreakParryBonus))
 	e.disarmBonusEntry.SetText(strconv.Itoa(e.saber.DisarmBonus))
-	e.moveSpeedEntry.SetText(fmt.Sprintf("%.2f", e.saber.MoveSpeedScale))
-	e.animSpeedEntry.SetText(fmt.Sprintf("%.2f", e.saber.AnimSpeedScale))
-	e.damageScaleEntry.SetText(fmt.Sprintf("%.2f", e.saber.DamageScale))
-	e.knockbackEntry.SetText(fmt.Sprintf("%.2f", e.saber.KnockbackScale))
+	e.moveSpeedEntry.SetText(strconv.FormatFloat(e.saber.MoveSpeedScale, 'g', -1, 64))
+	e.animSpeedEntry.SetText(strconv.FormatFloat(e.saber.AnimSpeedScale, 'g', -1, 64))
+	e.damageScaleEntry.SetText(strconv.FormatFloat(e.saber.DamageScale, 'g', -1, 64))
+	e.knockbackEntry.SetText(strconv.FormatFloat(e.saber.KnockbackScale, 'g', -1, 64))
 	e.trailStyleEntry.SetText(strconv.Itoa(e.saber.TrailStyle))
 	e.blockEffectEntry.SetText(e.saber.BlockEffect)
 	e.hitPersonEffectEntry.SetText(e.saber.HitPersonEffect)

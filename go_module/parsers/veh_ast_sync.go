@@ -1,6 +1,7 @@
 package parsers
 
 import "fmt"
+import "strconv"
 import "strings"
 
 func syncVehicleToAST(veh *VehicleData, block *ASTBlock) {
@@ -23,11 +24,15 @@ func syncVehicleToAST(veh *VehicleData, block *ASTBlock) {
 	syncStr("skin", veh.Skin, "", false)
 
 	syncFloat := func(k string, v, def float64) {
-		_, found := getFieldValue(block, k)
-		if v != def {
-			setFieldValue(block, k, fmt.Sprintf("%.1f", v), false)
-		} else if found {
-			setFieldValue(block, k, fmt.Sprintf("%.1f", v), false)
+		old, found := getFieldValue(block, k)
+		if found {
+			parsed, _ := strconv.ParseFloat(old, 64)
+			if v == parsed {
+				return // Retain the authored numeric token on a no-op save.
+			}
+		}
+		if v != def || found {
+			setFieldValue(block, k, formatVehicleFloat(v), false)
 		}
 	}
 

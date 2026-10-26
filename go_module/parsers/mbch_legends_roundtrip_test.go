@@ -2,16 +2,10 @@ package parsers
 
 // Legends round-trip regression tests.
 //
-// These tests load real MBCH files from the user's local TextAssets
-// checkout, parse → generate → re-parse, and assert that every
-// significant field survives the round trip. The goal isn't byte-
-// exact output (formatting drift is fine) — it's data fidelity: if
-// a tester edits a file in Foundry, saves it, reloads it, they
-// should see exactly the same loadout.
-//
-// Files are looked up relative to the user's standard gamedata
-// location. The test skips (not fails) when the files aren't
-// present, so CI on a clean checkout still passes.
+// These optional tests load real MBCH files from an explicitly selected
+// TextAssets checkout, parse → generate → re-parse, and assert that every
+// significant field survives the round trip. Set MBII_TEST_REAL_DATA=1
+// and MBII_TEXTASSETS to opt in; -short always skips this coverage.
 
 import (
 	"fmt"
@@ -22,11 +16,6 @@ import (
 	"strings"
 	"testing"
 )
-
-// legendsCharRoot is the filesystem path the tests check for real
-// MBCH files. Skips gracefully on machines that don't have MBII
-// installed at this path (CI, fresh clones, etc.).
-const legendsCharRoot = "/Users/pj/Library/CloudStorage/SynologyDrive-mcp5/mbii/TextAssets/z_MBLegends/ext_data/mb2/character"
 
 // roundTripCases lists legends files chosen to exercise the parser
 // across its complexity spectrum:
@@ -45,9 +34,7 @@ var roundTripCases = []string{
 }
 
 func TestRoundTripLegendsCharacters(t *testing.T) {
-	if _, err := os.Stat(legendsCharRoot); err != nil {
-		t.Skipf("legends character root not present (%v) — skipping round-trip test", err)
-	}
+	legendsCharRoot := filepath.Join(externalTextAssetsRoot(t), "z_MBLegends", "ext_data", "mb2", "character")
 
 	for _, fname := range roundTripCases {
 		fname := fname
@@ -55,8 +42,7 @@ func TestRoundTripLegendsCharacters(t *testing.T) {
 			path := filepath.Join(legendsCharRoot, fname)
 			data, err := os.ReadFile(path)
 			if err != nil {
-				t.Skipf("%s not readable: %v", fname, err)
-				return
+				t.Fatalf("read selected Legends fixture %s: %v", fname, err)
 			}
 
 			orig, err := ParseMBCH(string(data))

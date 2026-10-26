@@ -795,9 +795,9 @@ func EditConfigField(format ConfigFormat, source, key, value string) (*FieldEdit
 	case FormatMBCH:
 		return editMBCHField(source, key, value)
 	case FormatSAB:
-		return editFirstDefinitionField(source, key, value, "saber")
+		return editFirstDefinitionField(format, source, key, value)
 	case FormatVEH:
-		return editFirstDefinitionField(source, key, value, "vehicle")
+		return editFirstDefinitionField(format, source, key, value)
 	case FormatSIEGE:
 		return editSiegeField(source, key, value)
 	case FormatMBTC:
@@ -887,7 +887,7 @@ func findOverrideScope(doc *ASTDocument, keyLower string) (string, bool) {
 
 // ── SAB / VEH (first definition) ─────────────────────────────────────
 
-func editFirstDefinitionField(source, key, value, kind string) (*FieldEditResult, error) {
+func editFirstDefinitionField(format ConfigFormat, source, key, value string) (*FieldEditResult, error) {
 	tokens, _ := Lex(source)
 	doc := parseAST(tokens)
 
@@ -898,19 +898,41 @@ func editFirstDefinitionField(source, key, value, kind string) (*FieldEditResult
 		}
 	}
 	if len(blocks) == 0 {
+		kind := "vehicle"
+		if format == FormatSAB {
+			kind = "saber"
+		}
 		return nil, fmt.Errorf("no %s definition in document", kind)
 	}
 
 	first := blocks[0]
 	res := &FieldEditResult{Definitions: len(blocks)}
-	res.OldValue, res.Found = getEngineBlockField(first, key)
+	if format == FormatSAB {
+		res.OldValue, res.Found = getSaberBlockField(first, key)
+	} else {
+		res.OldValue, res.Found = getFieldValue(first, key)
+	}
 	name := unquote(first.NameToken.Text)
 	if res.Definitions > 1 {
 		res.Scope = fmt.Sprintf("definition 1 of %d (%s)", res.Definitions, name)
 	} else {
 		res.Scope = fmt.Sprintf("definition (%s)", name)
 	}
-	setFieldPreservingStyle(first, key, value)
+	if format == FormatSAB {
+		if saberFlagField(key) && !parseSaberBool(value) {
+			// Every non-zero occurrence contributes to the flag. Clear
+			// those values in place without dropping inline comments.
+			walkTokenPairs(first.Children, func(_ int, candidate string, valueIdx int, old string, hasValue bool) bool {
+				if hasValue && strings.EqualFold(candidate, key) && parseSaberBool(old) {
+					first.Children[valueIdx].(*ASTToken).Text = "0"
+				}
+				return true
+			})
+		}
+		setSaberEffectiveField(first, key, value, strings.ContainsAny(value, " \t"))
+	} else {
+		setFieldValue(first, key, value, strings.ContainsAny(value, " \t"))
+	}
 	res.Content = doc.String()
 	return res, nil
 }
@@ -1207,12 +1229,12 @@ func ValidateSerialized(format ConfigFormat, content, key, value string) error {
 	case FormatMBCH:
 		return validateMBCHSerialized(content, key, value)
 	case FormatSAB:
-		if err := validateFirstDefinitionSerialized(content, key, value); err != nil {
+		if err := validateFirstDefinitionSerialized(format, content, key, value); err != nil {
 			return err
 		}
 		return validateSABSemantics(content)
 	case FormatVEH:
-		if err := validateFirstDefinitionSerialized(content, key, value); err != nil {
+		if err := validateFirstDefinitionSerialized(format, content, key, value); err != nil {
 			return err
 		}
 		return validateVEHSemantics(content)
@@ -1301,7 +1323,7 @@ func validateMBCHSerialized(content, key, value string) error {
 	if err != nil {
 		return err
 	}
-	var problems []string
+	problems := bs.Diagnostics
 	if bs.TotalFileBytes >= MBCHMaxFileBytes {
 		problems = append(problems, fmt.Sprintf("file %d/%d bytes (engine rejects at >=%d)", bs.TotalFileBytes, MBCHMaxFileBytes-1, MBCHMaxFileBytes))
 	}
@@ -1321,17 +1343,15 @@ func validateMBCHSerialized(content, key, value string) error {
 	if bs.MaxPairedValueBytes > PairedValueMaxPayload {
 		problems = append(problems, fmt.Sprintf("paired value %d/%d bytes", bs.MaxPairedValueBytes, PairedValueMaxPayload))
 	}
-	// Lexical diagnostics are the single responsibility of
-	// AssessMBCHSourceBuffers (assessment.go); they are deliberately NOT
-	// duplicated here. Budget enforcement above uses the shared
-	// constants from limits.go.
+	// Assessment owns lexical diagnostics as well as byte accounting;
+	// every consumer must enforce both before publishing an edit.
 	if len(problems) > 0 {
-		return fmt.Errorf("engine budget check: %s", strings.Join(problems, "; "))
+		return fmt.Errorf("engine validation: %s", strings.Join(problems, "; "))
 	}
 	return nil
 }
 
-func validateFirstDefinitionSerialized(content, key, value string) error {
+func validateFirstDefinitionSerialized(format ConfigFormat, content, key, value string) error {
 	tokens, _ := Lex(content)
 	doc := parseAST(tokens)
 	for _, node := range doc.Nodes {
@@ -1339,7 +1359,24 @@ func validateFirstDefinitionSerialized(content, key, value string) error {
 		if !ok || b.NameToken == nil {
 			continue
 		}
-		if old, found := getEngineBlockField(b, key); !found || old != value {
+		old, found := getFieldValue(b, key)
+		if format == FormatSAB {
+			old, found = getSaberBlockField(b, key)
+			if saberFlagField(key) {
+				enabled := parseSaberBool(value)
+				value = "0"
+				if enabled {
+					value = "1"
+				}
+			} else if base := saberBladeBase(key); base != "" && base != "sabercolor" {
+				number, err := strconv.ParseFloat(value, 64)
+				if err != nil {
+					return fmt.Errorf("validation failed: %q is not a number: %w", key, err)
+				}
+				value = strconv.FormatFloat(number, 'g', -1, 64)
+			}
+		}
+		if !found || old != value {
 			return fmt.Errorf("validation failed: first definition has %q = %q (found=%v) after edit", key, old, found)
 		}
 		return nil

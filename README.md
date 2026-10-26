@@ -16,7 +16,7 @@ Choose a release with binaries and download the archive for your computer:
 
 | Platform | Archive |
 |---|---|
-| macOS — Apple silicon and Intel | `mbii-foundry-macos-universal.zip` |
+| macOS 13 or newer — Apple silicon and Intel | `mbii-foundry-macos-universal.zip` |
 | Windows — x64 | `mbii-foundry-windows-amd64.zip` |
 | Linux — x64 | `mbii-foundry-linux-amd64.tar.gz` |
 

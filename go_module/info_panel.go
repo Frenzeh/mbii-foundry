@@ -1041,16 +1041,18 @@ func (ip *InfoPanel) ShowInfo(key, context string) {
 	// Client is nil for regular users (see holocron_client.go); this
 	// block is dead code for non-maintainer builds.
 	if ip.holocronClient != nil && ip.holocronClient.Available {
+		client := *ip.holocronClient
+		ip.content.ParseMarkdown(addEnumWrapPoints(md + "\n\n_[querying dev backend...]_"))
 		go func(query string) {
-			ip.content.ParseMarkdown(md + "\n\n_[querying dev backend...]_")
-
-			summary, err := ip.holocronClient.Ask(query)
-			if err == nil && summary != "" {
-				newContent := md + "\n\n**DEV INSIGHT**\n" + summary
-				ip.content.ParseMarkdown(addEnumWrapPoints(newContent))
-			} else {
-				ip.content.ParseMarkdown(addEnumWrapPoints(md)) // Revert
-			}
+			summary, err := client.Ask(query)
+			fyne.Do(func() {
+				if err == nil && summary != "" {
+					newContent := md + "\n\n**DEV INSIGHT**\n" + summary
+					ip.content.ParseMarkdown(addEnumWrapPoints(newContent))
+				} else {
+					ip.content.ParseMarkdown(addEnumWrapPoints(md)) // Revert
+				}
+			})
 		}(key)
 	}
 }

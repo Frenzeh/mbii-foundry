@@ -26,9 +26,6 @@ import (
 	"fyne.io/fyne/v2/widget"
 	"path/filepath"
 	"strings"
-	"sync"
-	"sync/atomic"
-	"time"
 
 	"github.com/Frenzeh/mbii-foundry/parsers"
 )
@@ -71,16 +68,10 @@ type SourcePanel struct {
 	// exact validation state.
 	lastParseErr string
 
-	// srcRemove unsubscribes this panel from the current editor's
-	// source-changed push notifications; srcSubEditor is the editor
-	// the subscription belongs to.
-	srcRemove    func()
-	srcSubEditor Editor
-
-	tickerStop chan struct{}
-	tickerDone chan struct{}
-	closeOnce  sync.Once
-	closed     atomic.Bool
+	// UI-thread-owned subscriptions to working source and shared drafts.
+	srcRemove   func()
+	draftRemove func()
+	closed      bool
 
 	// Legacy SourceProvider subscriptions have setter semantics instead
 	// of a remove callback. Track the provider so Close can detach it.
@@ -105,17 +96,13 @@ type SourcePanel struct {
 	// inEditMode reflects which view is on top of the Stack.
 	inEditMode bool
 
-	// Last source string rendered from the form. Used to detect
-	// changes for ticker refreshes + to revert edits.
+	// Last source string rendered from the form. Used when entering edit
+	// mode without a draft and when displaying the read-only view.
 	lastRenderedSource string
 }
 
 func NewSourcePanel(a *App) *SourcePanel {
-	sp := &SourcePanel{
-		app:        a,
-		tickerStop: make(chan struct{}),
-		tickerDone: make(chan struct{}),
-	}
+	sp := &SourcePanel{app: a}
 	// Every panel owned by an App uses exactly the same draft store.
 	// Initialize it here for lightweight/test Apps rather than silently
 	// creating a private store that mirrors cannot see.
@@ -127,31 +114,6 @@ func NewSourcePanel(a *App) *SourcePanel {
 	} else {
 		sp.drafts = NewSourceDraftStore()
 	}
-	// Safety-net ticker for editors that don't invoke
-	// SetOnSourceChanged on every mutation. Must fyne.Do for UI
-	// thread safety.
-	go func() {
-		ticker := time.NewTicker(500 * time.Millisecond)
-		defer ticker.Stop()
-		defer close(sp.tickerDone)
-		for {
-			select {
-			case <-sp.tickerStop:
-				return
-			case <-ticker.C:
-				if sp.closed.Load() || sp.provider == nil {
-					continue
-				}
-				fyne.Do(func() {
-					if sp.closed.Load() || sp.provider == nil {
-						return
-					}
-					sp.refreshFromProvider()
-				})
-			}
-		}
-	}()
-
 	sp.header = widget.NewLabelWithStyle("SOURCE", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	sp.byteCount = widget.NewLabel("")
 	sp.byteCount.TextStyle = fyne.TextStyle{Monospace: true}
@@ -267,22 +229,17 @@ func NewSourcePanel(a *App) *SourcePanel {
 // GetContent returns the panel's root widget.
 func (sp *SourcePanel) GetContent() fyne.CanvasObject { return sp.container }
 
-// Close releases the panel's background refresh loop and source subscription.
+// Close releases the panel's source and draft subscriptions on the UI thread.
 // It is safe to call repeatedly (including both reattach and window-close
 // paths); a disposed panel cannot be attached to another editor.
 func (sp *SourcePanel) Close() {
-	if sp == nil {
+	if sp == nil || sp.closed {
 		return
 	}
-	sp.closeOnce.Do(func() {
-		sp.closed.Store(true)
-		close(sp.tickerStop)
-		<-sp.tickerDone
-		sp.storeDraftFor(sp.editorRef)
-		sp.unsubscribeSource()
-		sp.provider = nil
-		sp.editorRef = nil
-	})
+	sp.closed = true
+	sp.unsubscribeSource()
+	sp.provider = nil
+	sp.editorRef = nil
 }
 
 // SetOnPopOut wires the pop-out button. Pass nil to disable (used
@@ -292,45 +249,40 @@ func (sp *SourcePanel) SetOnPopOut(cb func()) { sp.onPopOut = cb }
 // SetActiveEditor tells the panel which editor to track. Safe to
 // pass nil.
 func (sp *SourcePanel) SetActiveEditor(ed Editor) {
-	if sp == nil || sp.closed.Load() {
+	if sp == nil || sp.closed {
 		return
 	}
-	// 1. Park the outgoing editor's draft.
-	sp.storeDraftFor(sp.editorRef)
+	// Every user keystroke is already in the shared store. An outgoing
+	// mirror may be stale, so never republish its local text here.
 	sp.unsubscribeSource()
 
 	sp.provider = nil
 	sp.editorRef = ed
 
-	// 2. Assign the provider + subscribe BEFORE restoring the draft:
+	// Assign the provider + subscribe BEFORE restoring the draft:
 	// applyDraft and refreshFromProvider read provider-dependent state
 	// (byte counter, placeholders) and need the surface wired up.
 	if provider, ok := ed.(SourceProvider); ok {
 		sp.provider = provider
-		if lp, ok := ed.(SourceListenerProvider); ok {
-			sp.srcSubEditor = ed
-			sp.srcRemove = lp.AddSourceListener(func() {
-				fyne.Do(func() {
-					if !sp.closed.Load() {
-						sp.refreshFromProvider()
-					}
-				})
+		refresh := func() {
+			fyne.Do(func() {
+				if !sp.closed && sp.editorRef == ed {
+					sp.refreshFromProvider()
+				}
 			})
+		}
+		sp.draftRemove = sp.drafts.addListener(ed, refresh)
+		if lp, ok := ed.(SourceListenerProvider); ok {
+			sp.srcRemove = lp.AddSourceListener(refresh)
 		} else {
 			// Legacy fallback: retain the provider so Close can clear
 			// its setter-based callback.
 			sp.legacySource = provider
-			provider.SetOnSourceChanged(func() {
-				fyne.Do(func() {
-					if !sp.closed.Load() {
-						sp.refreshFromProvider()
-					}
-				})
-			})
+			provider.SetOnSourceChanged(refresh)
 		}
 	}
 
-	// 3. Restore the incoming editor's draft, or reset document-local
+	// Restore the incoming editor's draft, or reset document-local
 	// mode/diagnostics so the outgoing document cannot leak into it.
 	if d, ok := sp.drafts.Get(ed); ok {
 		sp.applyDraft(d)
@@ -340,22 +292,6 @@ func (sp *SourcePanel) SetActiveEditor(ed Editor) {
 		sp.setEditMode(false)
 	}
 	sp.refreshFromProvider()
-}
-
-// storeDraftFor parks the current edit text (if any) into the shared
-// store for ed. It only ever WRITES: passive surfaces (mirrors, tab
-// switches with no pending edits) must never erase another surface's
-// retained draft. Drafts are deleted exclusively by a successful
-// Apply, an explicit Revert, or a confirmed Discard.
-func (sp *SourcePanel) storeDraftFor(ed Editor) {
-	if ed == nil || sp.editorRef != ed || !sp.userDirty {
-		return
-	}
-	sp.drafts.Set(ed, SourceDraft{
-		Text:     sp.editor.Text,
-		ParseErr: sp.lastParseErr,
-		EditMode: sp.inEditMode,
-	})
 }
 
 // applyDraft restores a stored draft into the edit surface: text,
@@ -380,22 +316,28 @@ func (sp *SourcePanel) applyDraft(d SourceDraft) {
 }
 
 func (sp *SourcePanel) setEditorText(text string) {
+	if sp.editor.Text == text {
+		return
+	}
 	sp.settingText = true
 	sp.editor.SetText(text)
 	sp.settingText = false
 }
 
-// unsubscribeSource drops this panel's push subscription, if any.
+// unsubscribeSource drops this panel's source and draft push subscriptions.
 func (sp *SourcePanel) unsubscribeSource() {
 	if sp.srcRemove != nil {
 		sp.srcRemove()
 		sp.srcRemove = nil
 	}
+	if sp.draftRemove != nil {
+		sp.draftRemove()
+		sp.draftRemove = nil
+	}
 	if sp.legacySource != nil {
 		sp.legacySource.SetOnSourceChanged(nil)
 		sp.legacySource = nil
 	}
-	sp.srcSubEditor = nil
 }
 
 // refreshFromProvider re-renders from the provider's current source,
@@ -428,29 +370,29 @@ func (sp *SourcePanel) refreshFromProvider() {
 }
 
 // renderFromProvider pushes src into both views and updates
-// bookkeeping. NOTE: never delete the stored draft here. Passive
-// refreshes (ticker, form-driven pushes) must not erase a retained
-// draft — only a successful Apply, an explicit Revert or a confirmed
-// Discard may consume one.
+// bookkeeping. NOTE: never delete the stored draft here. Form-driven
+// refreshes must not erase a retained draft — only a successful Apply,
+// an explicit Revert or a confirmed Discard may consume one.
 func (sp *SourcePanel) renderFromProvider(src string) {
 	if src == "" {
 		sp.setPlaceholder("(no source yet — the editor is empty)")
-		sp.setEditorText("")
 	} else {
 		// No-wrap rendering: source goes into the highlighter as-is
 		// and overflows horizontally inside the bi-directional Scroll.
 		sp.highlighted.Segments = highlightedSegments(src)
 		sp.highlighted.Refresh()
-		// Only overwrite the Entry if we're not in edit mode — editing
-		// should feel uninterrupted even if the form is still ticking.
-		if !sp.inEditMode {
-			sp.setEditorText(src)
-		}
 	}
+	// refreshFromProvider reaches this path only when no draft remains.
+	// Keep the editable surface in sync too, including after Revert in
+	// edit mode; otherwise later typing would resurrect discarded text.
+	sp.setEditorText(src)
 	sp.lastRenderedSource = src
 	sp.userDirty = false
 	sp.lastParseErr = ""
 	sp.updateByteCount(src)
+	if sp.inEditMode {
+		sp.validateEdits(src)
+	}
 }
 
 // setPlaceholder shows a muted italic message in the highlighted
@@ -709,12 +651,13 @@ func (sp *SourcePanel) applyEdits() {
 		dialog.ShowError(err, sp.app.mainWindow)
 		return
 	}
-	// Applied — consume exactly the version this surface applied. If a
-	// mirror published newer text, refreshFromProvider pulls that draft.
+	// Applied — consume exactly the version this surface applied. Removal
+	// notifies every panel; a failed match must reveal the newer draft here.
 	sp.userDirty = false
 	sp.lastParseErr = ""
-	sp.drafts.DeleteIfMatch(sp.editorRef, draft)
-	sp.refreshFromProvider()
+	if !sp.drafts.DeleteIfMatch(sp.editorRef, draft) {
+		sp.refreshFromProvider()
+	}
 	sp.app.updateStatus("Applied source edits to the form")
 }
 
@@ -731,21 +674,17 @@ func (sp *SourcePanel) revertEdits() {
 	}
 	sp.userDirty = false
 	sp.lastParseErr = ""
-	if sp.editorRef != nil {
-		sp.drafts.DeleteIfMatch(sp.editorRef, current)
+	if !sp.drafts.DeleteIfMatch(sp.editorRef, current) {
+		sp.refreshFromProvider()
 	}
-	sp.refreshFromProvider()
 }
 
 // DraftPendingFor reports whether ed has unapplied source work —
-// valid or not — retained in the panel's draft state. Close and quit
-// guards count this as unsaved changes.
+// valid or not — retained in the authoritative shared draft store.
+// Close and quit guards must not count an already-consumed mirror.
 func (sp *SourcePanel) DraftPendingFor(ed Editor) bool {
 	if sp == nil || ed == nil {
 		return false
-	}
-	if ed == sp.editorRef && sp.userDirty {
-		return true
 	}
 	return sp.drafts.Has(ed)
 }
@@ -757,8 +696,4 @@ func (sp *SourcePanel) DiscardDraft(ed Editor) {
 		return
 	}
 	sp.drafts.Delete(ed)
-	if sp.editorRef == ed {
-		sp.userDirty = false
-		sp.lastParseErr = ""
-	}
 }

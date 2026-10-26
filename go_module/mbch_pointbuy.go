@@ -24,6 +24,7 @@ package main
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -61,7 +62,8 @@ var KnownRankAttributes = []string{
 }
 
 type PointBuyUI struct {
-	editor *MBCHEditor
+	editor  *MBCHEditor
+	loading bool
 
 	container *fyne.Container
 
@@ -117,6 +119,9 @@ func NewPointBuyUI(editor *MBCHEditor) *PointBuyUI {
 func (p *PointBuyUI) createUI() {
 	// --- Header: custom-build toggle + budget ---
 	p.customBuildCheck = widget.NewCheck("Custom Build enabled", func(on bool) {
+		if p.loading || p.editor.loading {
+			return
+		}
 		if on {
 			p.editor.character.IsCustomBuild = 1
 		} else {
@@ -134,6 +139,9 @@ func (p *PointBuyUI) createUI() {
 	p.mbPointsEntry = NewInputEntry()
 	p.mbPointsEntry.SetPlaceHolder("100")
 	p.mbPointsEntry.OnChanged = func(s string) {
+		if p.loading || p.editor.loading {
+			return
+		}
 		n, err := strconv.Atoi(strings.TrimSpace(s))
 		if err != nil {
 			return
@@ -147,7 +155,7 @@ func (p *PointBuyUI) createUI() {
 		p.refreshBudget()
 	}
 
-	p.budgetLabel = widget.NewLabel("max spend: 0 / 0")
+	p.budgetLabel = widget.NewLabel("max cumulative configured costs: 0 / 0 · runtime behavior Unverified")
 
 	// Archetype count buttons. GridWrap forces all three to the same
 	// width so "1 / 2 / 3" reads as a coherent toggle group, not three
@@ -170,9 +178,9 @@ func (p *PointBuyUI) createUI() {
 		widget.NewFormItem("Budget check", p.budgetLabel),
 	)
 	headerForm.Items[0].HintText = "If off, the class uses the classic fixed loadout instead of point-buy"
-	headerForm.Items[1].HintText = "Total points the player spends across the active archetype (e.g. 100)"
-	headerForm.Items[2].HintText = "How many specs the player picks from — single, dual, or three archetypes"
-	headerForm.Items[3].HintText = "Live check of the priciest spec's max spend vs the mbPoints ceiling"
+	headerForm.Items[1].HintText = "Configured budget for the local preview (e.g. 100); runtime purchase behavior is Unverified"
+	headerForm.Items[2].HintText = "Number of configured archetype slot windows"
+	headerForm.Items[3].HintText = "Sums configured costs through the selected rank, consistently with Simulate; runtime behavior Unverified"
 
 	// --- Build all 45 slot widgets up front. Tabs only show the
 	// slice relevant to each archetype; slots outside the active
@@ -299,6 +307,11 @@ func (p *PointBuyUI) buildSlotRow(globalIdx int, attrOptions []string) *fyne.Con
 	p.slotMaxCost[globalIdx] = maxCost
 
 	mode.OnChanged = func(s string) {
+		if p.loading || p.editor.loading {
+			return
+		}
+		p.loading = true
+		p.refreshSlotLayout(globalIdx)
 		switch s {
 		case "Empty":
 			p.editor.character.CustomSkills[globalIdx] = ""
@@ -329,29 +342,40 @@ func (p *PointBuyUI) buildSlotRow(globalIdx int, attrOptions []string) *fyne.Con
 				rankEntry.SetText("")
 			}
 		}
-		p.refreshSlotLayout(globalIdx)
-		p.editor.markDirty()
-		p.refreshBudget()
+		p.loading = false
+		p.refreshSlotMaxCost(globalIdx)
+		p.customSkillsChanged()
 	}
 
 	skillSel.OnChanged = func(s string) {
+		if p.loading || p.editor.loading {
+			return
+		}
 		p.editor.character.CustomSkills[globalIdx] = s
 		p.refreshSlotIcon(globalIdx)
-		p.editor.markDirty()
+		p.customSkillsChanged()
 	}
 	nameEntry.OnChanged = func(s string) {
+		if p.loading || p.editor.loading {
+			return
+		}
 		p.editor.character.CustomNames[globalIdx] = s
-		p.editor.markDirty()
+		p.customSkillsChanged()
 	}
 	rankEntry.OnChanged = func(s string) {
+		if p.loading || p.editor.loading {
+			return
+		}
 		p.editor.character.CustomRanks[globalIdx] = s
 		p.refreshSlotMaxCost(globalIdx)
-		p.refreshBudget()
-		p.editor.markDirty()
+		p.customSkillsChanged()
 	}
 	descEntry.OnChanged = func(s string) {
+		if p.loading || p.editor.loading {
+			return
+		}
 		p.editor.character.CustomDescs[globalIdx] = s
-		p.editor.markDirty()
+		p.customSkillsChanged()
 	}
 
 	// Skill row packs the attribute dropdown between the resolved icon
@@ -365,16 +389,15 @@ func (p *PointBuyUI) buildSlotRow(globalIdx int, attrOptions []string) *fyne.Con
 	// Form carries the per-field label + HintText so authors can see
 	// what each input does even after they've typed into it (unlike
 	// placeholders, which vanish the moment the field has content).
-	// Items stay stashed on the slot so refreshSlotLayout can rebuild
-	// form.Items based on mode (Empty → nothing, Header → just Name,
-	// Skill → all four) — hiding the widget inside a form item leaves
-	// the label + hint visible, so rebuilding is the right fix.
+	// Keep each item and entry across mode changes. refreshSlotLayout changes
+	// the form owner only when the visible item sequence changes, so labels
+	// and hints disappear together without retaining stale form callbacks.
 	skillItem := widget.NewFormItem("Skill", skillRow)
 	skillItem.HintText = "MB_ATT_* attribute ID — what this row grants (weapon, ability, perk)"
 	nameItem := widget.NewFormItem("Name", nameEntry)
 	nameItem.HintText = "Display label shown in the in-game loadout menu (e.g. \"A280 Blaster Rifle:\")"
 	costsItem := widget.NewFormItem("Costs", rankEntry)
-	costsItem.HintText = "Per-rank point cost, comma-separated. \"0,4,10\" → rank 1 free, rank 2 costs 4, rank 3 costs 10"
+	costsItem.HintText = "Configured per-rank costs. The local preview sums \"0,4,10\" to 14 through rank 3; runtime behavior Unverified"
 	descItem := widget.NewFormItem("Description", descEntry)
 	descItem.HintText = "Optional tooltip shown under the rank in-game (e.g. \"Adds secondary fire\")"
 
@@ -390,6 +413,14 @@ func (p *PointBuyUI) buildSlotRow(globalIdx int, attrOptions []string) *fyne.Con
 	row := container.NewBorder(nil, widget.NewSeparator(),
 		left, nil, form)
 	return row
+}
+
+func (p *PointBuyUI) customSkillsChanged() {
+	if p.editor.customSkillsUI != nil {
+		p.editor.customSkillsUI.LoadFromCharacter(p.editor.character)
+	}
+	p.refreshBudget()
+	p.editor.markDirty()
 }
 
 // selectArchetypeCount applies the N-archetype choice: updates the
@@ -425,9 +456,8 @@ func (p *PointBuyUI) selectArchetypeCount(n int, fromUser bool) {
 	} else {
 		p.editor.character.HasCustomSpec = 0
 	}
-	p.editor.markDirty()
 	p.rebuildArchetypeTabs()
-	p.refreshBudget()
+	p.customSkillsChanged()
 	if p.simulator != nil {
 		p.simulator.Refresh()
 	}
@@ -525,10 +555,9 @@ func (p *PointBuyUI) buildSpecPane(spec, totalSpecs int) fyne.CanvasObject {
 	return content
 }
 
-// refreshSlotLayout rebuilds the slot's form.Items so only the fields
-// relevant to the current mode render. Unlike Hide() on a FormItem's
-// content widget, rebuilding the slice actually removes the label +
-// hint rows that would otherwise leave empty blocks behind.
+// refreshSlotLayout shows only the current mode's fields. Structural changes
+// replace the form owner, not the existing entry widgets; ordinary value
+// refreshes retain both the form and its validation bindings.
 //
 //	Empty  → no fields at all
 //	Header → just the Name entry (the section label text)
@@ -539,15 +568,32 @@ func (p *PointBuyUI) refreshSlotLayout(i int) {
 	if form == nil || items == nil {
 		return
 	}
-	mode := p.slotModes[i].Selected
-	switch mode {
-	case "Empty":
-		form.Items = nil
+	var visible []*widget.FormItem
+	switch p.slotModes[i].Selected {
 	case "Header":
-		// Items index 1 = Name.
-		form.Items = []*widget.FormItem{items[1]}
+		visible = items[1:2]
 	case "Skill":
-		form.Items = items
+		visible = items
+	}
+	if !slices.Equal(form.Items, visible) {
+		// Fyne 2.8.2 can leave truncated entries bound to obsolete indices,
+		// and its sequential detach/rebind can unbind a moved retained entry.
+		// Retire all old ownership before a new form binds the shared entries.
+		for _, item := range form.Items {
+			if entry, ok := item.Widget.(fyne.Validatable); ok {
+				entry.SetOnValidationChanged(nil)
+			}
+			if entry, ok := item.Widget.(fyne.Requireable); ok {
+				entry.SetOnRequiredChanged(nil)
+			}
+		}
+		oldForm := form
+		oldForm.Items = nil
+		oldForm.Refresh()
+		form = widget.NewForm(visible...)
+		p.slotForms[i] = form
+		p.slotRows[i].Remove(oldForm)
+		p.slotRows[i].Add(form)
 	}
 	form.Refresh()
 	p.slotRows[i].Refresh()
@@ -599,32 +645,24 @@ func (p *PointBuyUI) refreshBudget() {
 	for s := 0; s < specs; s++ {
 		total := 0
 		for i := 0; i < parsers.PointbuySlotsPerArchetype; i++ {
-			total += parseRankCostSum(p.editor.character.CustomRanks[s*parsers.PointbuySlotsPerArchetype+i])
+			idx := s*parsers.PointbuySlotsPerArchetype + i
+			if detectSlotMode(p.editor.character.CustomSkills[idx], p.editor.character.CustomRanks[idx]) == "Skill" {
+				total += parseRankCostSum(p.editor.character.CustomRanks[idx])
+			}
 		}
 		if total > worst {
 			worst = total
 		}
 	}
 	target := p.editor.character.MBPoints
-	p.budgetLabel.SetText(fmt.Sprintf("max configured rank costs: %d / %d · runtime behavior Unverified", worst, target))
+	p.budgetLabel.SetText(fmt.Sprintf("max cumulative configured costs: %d / %d · runtime behavior Unverified", worst, target))
 }
 
 // parseRankCostSum parses a CSV of rank costs and returns the sum.
 // Header rows ("-1") return 0.
 func parseRankCostSum(csv string) int {
-	csv = strings.TrimSpace(csv)
-	if csv == "" || csv == "-1" {
-		return 0
-	}
-	total := 0
-	for _, part := range strings.Split(csv, ",") {
-		n, err := strconv.Atoi(strings.TrimSpace(part))
-		if err != nil || n < 0 {
-			continue
-		}
-		total += n
-	}
-	return total
+	costs := parseRankCostList(csv)
+	return totalCostOf(costs, len(costs))
 }
 
 // pointBuyAttrOptions returns the list of MB_ATT_* IDs available.
@@ -761,6 +799,9 @@ func (p *PointBuyUI) GetContent() fyne.CanvasObject { return p.container }
 // UpdateUI is called after a file loads. Repopulates every slot +
 // archetype header and redraws the tab strip to match HasCustomSpec.
 func (p *PointBuyUI) UpdateUI() {
+	wasLoading := p.loading
+	p.loading = true
+	defer func() { p.loading = wasLoading }()
 	p.customBuildCheck.SetChecked(p.editor.character.IsCustomBuild == 1)
 	if p.editor.character.MBPoints > 0 {
 		p.mbPointsEntry.SetText(strconv.Itoa(p.editor.character.MBPoints))
@@ -787,12 +828,12 @@ func (p *PointBuyUI) UpdateUI() {
 
 		mode := detectSlotMode(skill, ranks)
 		p.slotModes[i].SetSelected(mode)
+		p.refreshSlotLayout(i)
 		setLoadedCatalogSelection(p.slotSkills[i], attrOptions, skill)
 		p.slotNames[i].SetText(name)
 		p.slotRanks[i].SetText(ranks)
 		p.slotDescs[i].SetText(descs)
 
-		p.refreshSlotLayout(i)
 		p.refreshSlotIcon(i)
 		p.refreshSlotMaxCost(i)
 	}

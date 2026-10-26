@@ -11,7 +11,8 @@ import (
 )
 
 // To run this measurement harness:
-// 1. Set environment variables for the paths:
+// 1. Opt in with MBII_TEST_REAL_DATA=1 and set the paths (-short always skips):
+//    export MBII_TEST_REAL_DATA=1
 //    export MBII_GAMEDATA_PATH="path/to/MBII_GameData"
 //    export MBII_TEXTASSETS_PATH="path/to/mbii/TextAssets"
 // 2. Run the test:
@@ -36,13 +37,24 @@ func benchmarkAssetBrowser(vfs *VirtualFileSystem) *AssetBrowser {
 	return &AssetBrowser{vfs: vfs, shaderResolver: NewShaderResolver(vfs)}
 }
 
-func BenchmarkVFSCold(b *testing.B) {
+func benchmarkAssetPaths(b *testing.B) (string, string) {
+	b.Helper()
+	if testing.Short() {
+		b.Skip("real asset benchmarks are disabled in short mode")
+	}
+	if os.Getenv("MBII_TEST_REAL_DATA") != "1" {
+		b.Skip("set MBII_TEST_REAL_DATA=1 to run real asset benchmarks")
+	}
 	gameDataPath := os.Getenv("MBII_GAMEDATA_PATH")
 	textAssetsPath := os.Getenv("MBII_TEXTASSETS_PATH")
-
 	if gameDataPath == "" || textAssetsPath == "" {
-		b.Skip("Skipping full-index measurement: MBII_GAMEDATA_PATH and MBII_TEXTASSETS_PATH env vars not set")
+		b.Fatal("MBII_GAMEDATA_PATH and MBII_TEXTASSETS_PATH are required when MBII_TEST_REAL_DATA=1")
 	}
+	return gameDataPath, textAssetsPath
+}
+
+func BenchmarkVFSCold(b *testing.B) {
+	gameDataPath, textAssetsPath := benchmarkAssetPaths(b)
 
 	b.ResetTimer()
 	for range b.N {
@@ -54,12 +66,7 @@ func BenchmarkVFSCold(b *testing.B) {
 }
 
 func BenchmarkVFSWarm(b *testing.B) {
-	gameDataPath := os.Getenv("MBII_GAMEDATA_PATH")
-	textAssetsPath := os.Getenv("MBII_TEXTASSETS_PATH")
-
-	if gameDataPath == "" || textAssetsPath == "" {
-		b.Skip("Skipping full-index measurement: MBII_GAMEDATA_PATH and MBII_TEXTASSETS_PATH env vars not set")
-	}
+	gameDataPath, textAssetsPath := benchmarkAssetPaths(b)
 
 	vfs := NewVirtualFileSystem(gameDataPath, textAssetsPath)
 	if err := vfs.Refresh(); err != nil {
@@ -75,12 +82,7 @@ func BenchmarkVFSWarm(b *testing.B) {
 }
 
 func BenchmarkGalleryOpening(b *testing.B) {
-	gameDataPath := os.Getenv("MBII_GAMEDATA_PATH")
-	textAssetsPath := os.Getenv("MBII_TEXTASSETS_PATH")
-
-	if gameDataPath == "" || textAssetsPath == "" {
-		b.Skip("Skipping full-index measurement: paths not set")
-	}
+	gameDataPath, textAssetsPath := benchmarkAssetPaths(b)
 
 	app := test.NewApp()
 	defer app.Quit()
@@ -103,12 +105,7 @@ func BenchmarkGalleryOpening(b *testing.B) {
 }
 
 func BenchmarkGalleryFiltering(b *testing.B) {
-	gameDataPath := os.Getenv("MBII_GAMEDATA_PATH")
-	textAssetsPath := os.Getenv("MBII_TEXTASSETS_PATH")
-
-	if gameDataPath == "" || textAssetsPath == "" {
-		b.Skip("Skipping full-index measurement: paths not set")
-	}
+	gameDataPath, textAssetsPath := benchmarkAssetPaths(b)
 
 	app := test.NewApp()
 	defer app.Quit()
@@ -163,16 +160,12 @@ func BenchmarkGalleryFiltering(b *testing.B) {
 }
 
 func BenchmarkEditorDirtyRefresh(b *testing.B) {
-	gameDataPath := os.Getenv("MBII_GAMEDATA_PATH")
-	textAssetsPath := os.Getenv("MBII_TEXTASSETS_PATH")
-
-	if gameDataPath == "" || textAssetsPath == "" {
-		b.Skip("Skipping full-index measurement: paths not set")
-	}
+	gameDataPath, textAssetsPath := benchmarkAssetPaths(b)
 
 	app := test.NewApp()
 	app.Settings().SetTheme(theme.DefaultTheme())
-	defer app.Quit()
+	b.Cleanup(app.Quit)
+	useSessionTestClock(b)
 	win := app.NewWindow("Bench")
 
 	vfs := NewVirtualFileSystem(gameDataPath, textAssetsPath)

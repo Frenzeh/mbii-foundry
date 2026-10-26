@@ -21,22 +21,8 @@ func NewWelcomeScreen(app *App) *WelcomeScreen {
 	return &WelcomeScreen{app: app}
 }
 
-// Welcome screen — brutalist-leaning typography paired with a more
-// content-dense layout. Earlier iterations bled the title to the edge
-// of an otherwise empty canvas; without content underneath, the bleed
-// read as unfinished. The screen now flows:
-//
-//	MBII FOUNDRY (display)
-//	MOVIE BATTLES II CONTENT EDITOR (caption)
-//	[accent rule]
-//	CREATE column       RECENT column
-//	  [tile cards]        [file buttons OR onboarding tips]
-//	[accent rule]
-//	GET STARTED strip (keyboard shortcuts + pointers)
-//	Version footer
-//
-// Padding is modest on all sides so the type still pushes toward the
-// edges, but every horizontal band has something to look at.
+// Home keeps its actions in one scrollable page and stacks columns when the
+// editor pane is narrow, without changing the user's saved pane widths.
 func (w *WelcomeScreen) GetContent() fyne.CanvasObject {
 	// Hero: MBII logo on the left, "FOUNDRY" word to its right. Logo
 	// communicates the "MBII" half of the brand visually so the type
@@ -72,19 +58,16 @@ func (w *WelcomeScreen) GetContent() fyne.CanvasObject {
 	title.TextSize = SizeTitle
 	title.TextStyle = fyne.TextStyle{Bold: true}
 
-	subtitle := canvas.NewText("MOVIE BATTLES II CONTENT EDITOR", theme.ForegroundColor())
-	subtitle.Alignment = fyne.TextAlignLeading
-	subtitle.TextSize = SizeSmall
+	subtitle := welcomeHint("MOVIE BATTLES II CONTENT EDITOR")
 	subtitle.TextStyle = fyne.TextStyle{Bold: true}
+	subtitle.SizeName = theme.SizeNameCaptionText
 
 	// Type stack to the right of the logo: FOUNDRY on top, subtitle
 	// directly beneath it so the subtitle indents to match the "F" of
 	// FOUNDRY rather than hanging off the left margin under the logo.
 	titleStack := container.NewVBox(title, subtitle)
 
-	// Tight horizontal gap between logo and type (SpaceXS = 4px) so the
-	// two read as one composite hero mark.
-	heroRow := container.NewHBox(logo, Gap(SpaceXS), titleStack)
+	heroRow := container.NewBorder(nil, nil, logo, nil, titleStack)
 
 	// Accent rule factory. Uses AccentRule widget so each rule
 	// repaints when the theme changes, rather than keeping whatever
@@ -127,32 +110,19 @@ func (w *WelcomeScreen) GetContent() fyne.CanvasObject {
 
 	recentCol := container.NewVBox(recentLabel, Gap(SpaceXS), w.buildRecentColumn())
 
-	// Two-column body. Equal widths; the sparse column gets onboarding
-	// content so neither side feels under-used.
-	body := container.New(layout.NewGridLayoutWithColumns(2), createCol, recentCol)
-
-	// Footer strip — always pinned to the bottom of the welcome area.
-	// Pairs with the top rule to bracket the content, and gives the
-	// bottom of the screen a visual baseline instead of trailing off
-	// into empty dark space on taller windows. The update callout
-	// (when a newer release exists) lives inside the footer's right
-	// column so it sits snug next to the version string rather than
-	// as a separate banner up top.
-	footer := w.buildFooter()
-	footerBlock := container.NewVBox(rule(), Gap(SpaceSM), footer)
-
-	top := container.NewVBox(
+	body := container.New(&welcomeColumnsLayout{}, createCol, recentCol)
+	footerBlock := container.NewVBox(rule(), Gap(SpaceSM), w.buildFooter())
+	page := container.NewVBox(
 		heroRow,
 		Gap(SpaceSM),
 		rule(),
 		Gap(SpaceSM),
 		body,
+		Gap(SpaceLG),
+		footerBlock,
 	)
-
-	// Border lays top at its MinSize at the top, footer at its MinSize
-	// at the bottom, leaving the middle as a breathing gap that grows
-	// with the window — so the GET STARTED strip stays bottom-aligned.
-	return container.NewPadded(container.NewBorder(top, footerBlock, nil, nil, layout.NewSpacer()))
+	padded := container.New(layout.NewCustomPaddedLayout(SpaceLG, SpaceLG, SpaceLG, SpaceLG), page)
+	return container.NewVScroll(padded)
 }
 
 // sectionCaption gives primary sections enough weight to anchor each column
@@ -164,25 +134,22 @@ func sectionCaption(text string) *canvas.Text {
 	return t
 }
 
-// buildRecentColumn returns either the list of recent file buttons or
-// an onboarding block if there are no recents. The onboarding block
-// mirrors the CREATE column's visual weight so an empty Recents still
-// looks intentional.
+// buildRecentColumn returns recent-file links or a short onboarding block.
 func (w *WelcomeScreen) buildRecentColumn() fyne.CanvasObject {
 	recentFiles := w.app.fileManager.GetRecentFiles()
 	if len(recentFiles) > 0 {
 		items := container.NewVBox()
 		for _, rf := range recentFiles {
 			path := rf.Path
-			btn := widget.NewButtonWithIcon(filepath.Base(path), theme.FileIcon(), func() {
+			link := widget.NewHyperlink(filepath.Base(path), nil)
+			link.Wrapping = fyne.TextWrapWord
+			link.OnTapped = func() {
 				// openFileFromPath defers the heavy work to the next
 				// UI tick internally — the click handler returns
 				// immediately so macOS doesn't show a beach ball.
 				w.app.openFileFromPath(path)
-			})
-			btn.Importance = widget.LowImportance
-			btn.Alignment = widget.ButtonAlignLeading
-			items.Add(btn)
+			}
+			items.Add(link)
 		}
 		return items
 	}
@@ -191,19 +158,11 @@ func (w *WelcomeScreen) buildRecentColumn() fyne.CanvasObject {
 	emptyHeadline.TextSize = SizeSubtitle
 	emptyHeadline.TextStyle = fyne.TextStyle{Bold: true}
 
-	emptyHint := canvas.NewText("Pick a card on the left or open a file.", theme.ForegroundColor())
-	emptyHint.TextSize = SizeSmall
+	emptyHint := welcomeHint("Create something new or open an existing file.")
 
 	tipHeader := canvas.NewText("WHILE YOU'RE HERE", theme.ForegroundColor())
 	tipHeader.TextSize = SizeBody
 	tipHeader.TextStyle = fyne.TextStyle{Bold: true}
-
-	tip := func(body string) *canvas.Text {
-		t := canvas.NewText(body, theme.ForegroundColor())
-		t.TextSize = SizeSmall
-		t.TextStyle = fyne.TextStyle{Monospace: true}
-		return t
-	}
 
 	return container.NewVBox(
 		emptyHeadline,
@@ -212,41 +171,29 @@ func (w *WelcomeScreen) buildRecentColumn() fyne.CanvasObject {
 		Gap(SpaceLG),
 		tipHeader,
 		Gap(SpaceXS),
-		tip("FILES     browse the assets on your disk"),
-		tip("LIBRARY   look up every enum and flag"),
-		tip("MODPACKS  package a folder into a .pk3"),
+		welcomeHint("Files — browse the assets on your disk."),
+		welcomeHint("Library — look up every enum and flag."),
+		welcomeHint("Modpacks — package a folder into a .pk3."),
 		Gap(SpaceSM),
-		tip("Double-click any asset to open it."),
-		tip("Drag the panel dividers to resize."),
+		welcomeHint("Double-click any asset to open it."),
+		welcomeHint("Drag the panel dividers to resize."),
 	)
 }
 
-// buildFooter renders the bottom strip of the welcome screen — a
-// shortcut list on the left, a brand/version block on the right.
-// When an update is available, a compact callout slots in above the
-// version string so users see the "new version available" hint in
-// the same place they look for the current version — no separate
-// banner up top fighting the hero for attention.
+// buildFooter keeps shortcuts and version information readable at any pane width.
 func (w *WelcomeScreen) buildFooter() fyne.CanvasObject {
 	shortcutHeader := sectionCaption("GET STARTED")
-
-	mono := func(body string) *canvas.Text {
-		t := canvas.NewText(body, theme.ForegroundColor())
-		t.TextSize = SizeSmall
-		t.TextStyle = fyne.TextStyle{Monospace: true}
-		return t
-	}
 
 	shortcuts := container.NewVBox(
 		shortcutHeader,
 		Gap(SpaceXS),
-		mono("CMD+N   create a new file"),
-		mono("CMD+O   open an existing file"),
-		mono("CMD+S   save the current file"),
-		mono("?       help / show keyboard shortcuts"),
+		welcomeHint("CMD+N — create a new file"),
+		welcomeHint("CMD+O — open an existing file"),
+		welcomeHint("CMD+S — save the current file"),
+		welcomeHint("? — help / show keyboard shortcuts"),
 	)
 
-	return container.New(layout.NewGridLayoutWithColumns(2), shortcuts, w.buildBrandColumn())
+	return container.New(&welcomeColumnsLayout{}, shortcuts, w.buildBrandColumn())
 }
 
 // buildBrandColumn renders the footer's right column: branding line,
@@ -287,4 +234,64 @@ func (w *WelcomeScreen) buildBrandColumn() fyne.CanvasObject {
 	}
 
 	return container.NewVBox(children...)
+}
+
+func welcomeHint(text string) *widget.Label {
+	label := widget.NewLabel(text)
+	label.Wrapping = fyne.TextWrapWord
+	return label
+}
+
+// welcomeColumnsLayout uses equal columns only when each has room for readable
+// copy. Its minimum width is one column, so Home never widens the editor split.
+type welcomeColumnsLayout struct {
+	width float32
+}
+
+func (l *welcomeColumnsLayout) stacked(objects []fyne.CanvasObject) bool {
+	minWidth := float32(320)
+	for _, object := range objects {
+		minWidth = fyne.Max(minWidth, object.MinSize().Width)
+	}
+	return l.width < minWidth*2+SpaceLG
+}
+
+func (l *welcomeColumnsLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
+	var size fyne.Size
+	stacked := l.stacked(objects)
+	for i, object := range objects {
+		min := object.MinSize()
+		size.Width = fyne.Max(size.Width, min.Width)
+		if stacked {
+			size.Height += min.Height
+			if i > 0 {
+				size.Height += SpaceLG
+			}
+		} else {
+			size.Height = fyne.Max(size.Height, min.Height)
+		}
+	}
+	return size
+}
+
+func (l *welcomeColumnsLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+	l.width = size.Width
+	stacked := l.stacked(objects)
+	width := size.Width
+	if !stacked {
+		width = (width - SpaceLG) / 2
+	}
+	var position fyne.Position
+	for _, object := range objects {
+		// Establish the wrapping width before measuring this column's height.
+		object.Resize(fyne.NewSize(width, object.MinSize().Height))
+		height := object.MinSize().Height
+		object.Resize(fyne.NewSize(width, height))
+		object.Move(position)
+		if stacked {
+			position.Y += height + SpaceLG
+		} else {
+			position.X += width + SpaceLG
+		}
+	}
 }

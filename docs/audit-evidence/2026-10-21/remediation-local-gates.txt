@@ -1,0 +1,80 @@
+Foundry 0.16.3-alpha remediation candidate — 2026-10-21
+Observed gate record, not a complete command transcript or release approval.
+
+Isolation
+- Nonsynced scratch source and verification roots; synthetic HOME, TMPDIR,
+  configuration/cache directories; cached Go dependencies; no real credentials.
+- Real-data and engine opt-ins unset. Native external HTTP blocked through a
+  loopback refusal proxy. No live game installation or external engine run.
+- Scratch placement checked against local sync-root metadata only; no claim
+  about sync health, other devices, or remote recovery.
+
+Ordinary Go gate after timer repair: PASS
+- go test -count=1 -timeout=5m ./...
+  Main package 31.916s; signer 0.179s; parsers 0.145s;
+  safeio 0.175s; updatemanifest 0.140s.
+- go vet ./...; go build ./...: exit 0.
+- Earlier go mod verify passed with "all modules verified"; dependency inputs
+  have not changed since that check.
+
+Race gate after timer repair: PASS
+- Targeted Source/session/lifecycle/catalog race checks: main package 67.160s.
+- GORACE=halt_on_error=1 go test -race -count=1 -timeout=8m ./...
+  Main package 284.937s; signer 1.343s; parsers 1.347s;
+  safeio 1.328s; updatemanifest 1.316s. All passed.
+- The preceding unchanged-candidate race run had failed after 407.152s with
+  SourcePanel/Fyne concurrent accesses in the headless test harness, not the
+  native application. It was not replayed before a repair.
+- Headless Fyne dispatches inline. Redundant Source polling was replaced by
+  document/draft notifications; test fixtures own serial session clocks.
+  Production still schedules 600ms UI-thread commits, with generation guards
+  preventing stale queued callbacks from consuming newer edits.
+
+Python packaging: PASS
+- python3 -m unittest -v packager.test_pk3_builder: 13 tests, all OK.
+- Standalone API consumer built a real PK3 with shader, PNG, readme, and
+  manifest; inspected exact entries/bytes. Missing required input was rejected
+  without replacing an existing output. Disposable data was removed.
+- Observed entries: gfx/smoke/icon.png, manifest.json, readme.txt,
+  scripts/smoke.shader. Manifest listed three content files.
+
+Standalone Go parser consumer: PASS
+- Saved and reopened synthetic MBCH and VEH files using the public parser API.
+- Observed rankHealth: 100,150; speedMax: 123.12345678901235.
+- Authored no-op bytes, neighboring fields/comments, and sibling vehicle
+  definition were retained. Disposable program/data were removed.
+- This is not engine equivalence or complete format coverage.
+
+macOS universal helper: PASS
+- Ran actual build_app.sh again after the timer repair, with destination outside
+  the source tree; helper completed in 43.47s.
+- Executable contains exactly ARM64 and x86_64 slices.
+- vtool reported LC_BUILD_VERSION / platform MACOS / minos 13.0 for each slice.
+- Bundle ad-hoc signing and codesign --verify --deep --strict succeeded.
+- Not Developer ID signed, notarized, or runtime-tested on macOS 13.
+- Shell syntax, plist, and workflow YAML parsing checks passed.
+- Final universal executable SHA-256:
+  ad72441b2e5c1b5c984cc0a9331fc74d5eae0d736b80839c4e0c528dad956262
+
+Native application: PARTIAL / INTERACTION BLOCKED
+- ARM64 bundle launched and Home rendered with version 0.16.3-alpha.
+- The final rebuilt bundle loaded packaged data/definitions and displayed Home
+  in a 127x136 Stage Manager thumbnail. That capture is startup evidence, not a
+  normal-size layout or control-interaction check. No focus retries were made.
+- GUI actions returned window_not_focused with no focused window. Provider
+  declares no focus capability. User-focus request and fresh isolated Launch
+  Services launch did not establish a working interaction recipient.
+- No current edit, Source/Revert, Save, Save As, Cmd-W/Cmd-Q, detached-window,
+  Undo/Redo, or recovery interaction is claimed. Blind retries stopped.
+- Nonfatal duplicate -lobjc and synthetic-HOME locale warnings were observed.
+
+Release: HELD
+- No new commit, push, tag, release draft, or publication.
+- Cross-platform CI, signed release-archive inspection, and publication have
+  not run for this candidate. Last observed public release: v0.16.2-alpha.
+
+Tracking update: BLOCKED
+- Appending the qualification note to beads_mbii-0k5 failed while opening the
+  existing Dolt store: "resource deadlock avoided". No alternate database was
+  configured in the Beads service context. No retry, database repair/reset,
+  inferred successful update, or issue closure was performed.

@@ -2,9 +2,21 @@ package parsers
 
 import (
 	"fmt"
+	"math"
 	"sort"
+	"strconv"
 	"strings"
 )
+
+func sameIntValue(raw string, value int) bool {
+	parsed, err := strconv.Atoi(raw)
+	return err == nil && parsed == value
+}
+
+func sameFiniteFloatValue(raw string, value float64) bool {
+	parsed, err := strconv.ParseFloat(raw, 64)
+	return err == nil && !math.IsNaN(parsed) && !math.IsInf(parsed, 0) && parsed == value
+}
 
 func syncMBCHToAST(char *MBCHCharacter, doc *ASTDocument) {
 	var classInfoBlock *ASTBlock
@@ -27,29 +39,35 @@ func syncMBCHToAST(char *MBCHCharacter, doc *ASTDocument) {
 	}
 
 	syncStr := func(block *ASTBlock, k, v, def string, quote bool) {
-		_, found := getFieldValue(block, k)
+		_, found := getFieldValueSGPV(block, k)
 		if v != def {
-			setFieldValue(block, k, v, quote)
+			setFieldValueSGPV(block, k, v, quote)
 		} else if found {
-			setFieldValue(block, k, v, quote)
+			setFieldValueSGPV(block, k, v, quote)
 		}
 	}
 
 	syncInt := func(block *ASTBlock, k string, v, def int) {
-		_, found := getFieldValue(block, k)
+		raw, found := getFieldValueSGPV(block, k)
+		if found && sameIntValue(raw, v) {
+			return
+		}
 		if v != def {
-			setFieldValue(block, k, fmt.Sprintf("%d", v), false)
+			setFieldValueSGPV(block, k, fmt.Sprintf("%d", v), false)
 		} else if found {
-			setFieldValue(block, k, fmt.Sprintf("%d", v), false)
+			setFieldValueSGPV(block, k, fmt.Sprintf("%d", v), false)
 		}
 	}
 
 	syncFloat := func(block *ASTBlock, k string, v, def float64) {
-		_, found := getFieldValue(block, k)
+		raw, found := getFieldValueSGPV(block, k)
+		if found && sameFiniteFloatValue(raw, v) {
+			return
+		}
 		if v != def {
-			setFieldValue(block, k, fmt.Sprintf("%g", v), false)
+			setFieldValueSGPV(block, k, fmt.Sprintf("%g", v), false)
 		} else if found {
-			setFieldValue(block, k, fmt.Sprintf("%g", v), false)
+			setFieldValueSGPV(block, k, fmt.Sprintf("%g", v), false)
 		}
 	}
 
@@ -109,23 +127,28 @@ func syncMBCHToAST(char *MBCHCharacter, doc *ASTDocument) {
 	// model, and its line is removed from the document.
 	liveExtras := make(map[string]string, len(char.ExtraFields)+len(char.RankAttributes))
 	for k, v := range char.RankAttributes {
-		liveExtras[k] = v
+		liveExtras[strings.ToLower(k)] = v
 	}
 	for k, v := range char.ExtraFields {
-		if strings.ToLower(k) == "description" {
-			// The description is a top-level key (SGPV reads it from the
-			// file buffer, bg_saga.c:2383); it is never duplicated into
-			// the ClassInfo extras tail.
+		if strings.ToLower(k) == "description" || isRankAttribute(k) {
+			// Description belongs at top level; rank modifiers belong
+			// exclusively to RankAttributes, never to the extras pass.
 			continue
 		}
 		liveExtras[k] = v
 	}
-	removeStaleExtras(b, liveExtras, mbchClassInfoTyped)
+	removeStaleExtras(b, liveExtras, func(key string) bool {
+		if isRankAttribute(key) {
+			_, live := liveExtras[strings.ToLower(key)]
+			return live // Retain shadowed case variants until the rank is deleted.
+		}
+		return mbchClassInfoTyped(key)
+	})
 	for _, k := range sortedKeys(char.RankAttributes) {
 		setFieldValue(b, k, char.RankAttributes[k], false)
 	}
 	for _, k := range sortedKeys(char.ExtraFields) {
-		if strings.ToLower(k) == "description" {
+		if strings.ToLower(k) == "description" || isRankAttribute(k) {
 			continue
 		}
 		v := char.ExtraFields[k]

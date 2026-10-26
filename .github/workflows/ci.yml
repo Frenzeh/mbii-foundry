@@ -25,9 +25,20 @@ jobs:
 
       - uses: actions/setup-go@v6
         with:
-          go-version: '1.24'
+          go-version: '1.27.3'
           cache: true
           cache-dependency-path: go_module/go.sum
+
+      - name: Configure macOS deployment target
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          TARGET=13.0
+          test "$(/usr/libexec/PlistBuddy -c 'Print :LSMinimumSystemVersion' ../macos/Info.plist)" = "$TARGET"
+          echo "MACOSX_DEPLOYMENT_TARGET=$TARGET" >> "$GITHUB_ENV"
+          echo "CGO_CFLAGS=-mmacosx-version-min=$TARGET" >> "$GITHUB_ENV"
+          echo "CGO_CXXFLAGS=-mmacosx-version-min=$TARGET" >> "$GITHUB_ENV"
+          echo "CGO_LDFLAGS=-mmacosx-version-min=$TARGET" >> "$GITHUB_ENV"
 
       - name: Install Fyne system deps (Linux only)
         if: runner.os == 'Linux'
@@ -36,13 +47,45 @@ jobs:
           sudo apt-get install -y \
             libgl1-mesa-dev xorg-dev libasound2-dev \
             libxxf86vm-dev libxrandr-dev libxinerama-dev \
-            libxcursor-dev libxi-dev
+            libxcursor-dev libxi-dev libwayland-dev libxkbcommon-dev
 
       - name: go vet
         run: go vet ./...
 
       - name: go build
+        if: runner.os != 'macOS'
         run: go build -v ./...
+
+      - name: Build and qualify macOS universal slices
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          set -euo pipefail
+          BUILD_STAGE="$(mktemp -d "$RUNNER_TEMP/foundry-macos-XXXXXX")"
+          trap 'rm -rf "$BUILD_STAGE"' EXIT
+          # Do not reuse native objects built against a different SDK/target.
+          export GOCACHE="$BUILD_STAGE/go-cache"
+          LDFLAGS="-linkmode=external -extldflags=-mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET"
+          CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 CC="clang -arch x86_64" CXX="clang++ -arch x86_64" \
+            go build -v -o "$BUILD_STAGE/mbii-foundry_amd64" -ldflags="$LDFLAGS"
+          CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 CC="clang -arch arm64" CXX="clang++ -arch arm64" \
+            go build -v -o "$BUILD_STAGE/mbii-foundry_arm64" -ldflags="$LDFLAGS"
+          test "$(lipo -archs "$BUILD_STAGE/mbii-foundry_amd64")" = "x86_64"
+          test "$(lipo -archs "$BUILD_STAGE/mbii-foundry_arm64")" = "arm64"
+          lipo -create -output "$BUILD_STAGE/mbii-foundry" "$BUILD_STAGE/mbii-foundry_amd64" "$BUILD_STAGE/mbii-foundry_arm64"
+          lipo "$BUILD_STAGE/mbii-foundry" -verify_arch x86_64
+          lipo "$BUILD_STAGE/mbii-foundry" -verify_arch arm64
+          ARCHS="$(lipo -archs "$BUILD_STAGE/mbii-foundry")"
+          test "$(wc -w <<<"$ARCHS" | tr -d ' ')" = "2"
+          for ARCH in x86_64 arm64; do
+            BUILD_INFO="$(xcrun vtool -arch "$ARCH" -show-build "$BUILD_STAGE/mbii-foundry")"
+            printf '%s\n' "$BUILD_INFO"
+            MINOS="$(printf '%s\n' "$BUILD_INFO" | awk '$1 == "minos" {print $2}')"
+            if [ "$MINOS" != "$MACOSX_DEPLOYMENT_TARGET" ] && [ "$MINOS" != "$MACOSX_DEPLOYMENT_TARGET.0" ]; then
+              echo "::error::$ARCH minos is '$MINOS', expected $MACOSX_DEPLOYMENT_TARGET."
+              exit 1
+            fi
+          done
 
       - name: gofmt check
         if: runner.os == 'Linux'
@@ -55,4 +98,7 @@ jobs:
           fi
 
       - name: go test
+        env:
+          MBII_TEST_REAL_DATA: '0'
+          MBII_VERIFY_ENGINE: '0'
         run: go test ./...

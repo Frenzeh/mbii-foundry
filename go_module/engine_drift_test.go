@@ -345,10 +345,14 @@ func TestSchemaWeaponAbilityAndFlagDomains(t *testing.T) {
 }
 
 func TestExplicitEngineVerification(t *testing.T) {
-	explicit := os.Getenv("MBII_VERIFY_ENGINE") == "1"
-	engineRoot := strings.TrimSpace(os.Getenv("MBII_ENGINE_SRC"))
-	if !explicit && engineRoot == "" {
-		return
+	if testing.Short() {
+		t.Skip("external engine verification is disabled in short mode")
+	}
+	if os.Getenv("MBII_VERIFY_ENGINE") != "1" {
+		t.Skip("set MBII_VERIFY_ENGINE=1 and MBII_ENGINE_SRC to verify against an external engine checkout")
+	}
+	if strings.TrimSpace(os.Getenv("MBII_ENGINE_SRC")) == "" {
+		t.Fatal("MBII_ENGINE_SRC is required when MBII_VERIFY_ENGINE=1")
 	}
 
 	cmd := exec.Command("go", "run", filepath.Join("..", "tools", "generate_snapshot.go"),

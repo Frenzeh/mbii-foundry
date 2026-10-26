@@ -67,6 +67,45 @@ func AssessMBCHSourceBuffers(source string) (BlockAssessmentResult, error) {
 		res.Diagnostics = append(res.Diagnostics, "unbalanced braces")
 	}
 
+	assessPairs := func(nodes []ASTNode) {
+		walkSGPVPairs(nodes, func(keyIdx int, key string, _ int, val string, hasVal bool) bool {
+			if !hasVal {
+				// The retained AST can attach a scalar value to a following
+				// anonymous group as its NameToken: key value\n{...}.
+				// That name is still the next lexical value before the brace.
+				// Recover it for read-only assessment; mutable AST visitors
+				// cannot use a block index as a scalar value-token index.
+				for _, node := range nodes[keyIdx+1:] {
+					if block, ok := node.(*ASTBlock); ok {
+						if block.NameToken != nil {
+							val = truncateSGPV(unquote(block.NameToken.Text))
+							hasVal = true
+						}
+						break
+					}
+				}
+			}
+			if len(key) >= KeyMaxPayload {
+				res.Diagnostics = append(res.Diagnostics, fmt.Sprintf("key exceeds %d bytes: %s", KeyMaxPayload, key))
+			}
+			if !hasVal {
+				res.Diagnostics = append(res.Diagnostics, fmt.Sprintf("bare recognized value or empty key: %s", key))
+				return true
+			}
+			// SGPV copies the value interior, without its quotes.
+			if len(val) > res.MaxPairedValueBytes {
+				res.MaxPairedValueBytes = len(val)
+			}
+			if val == "" {
+				res.Diagnostics = append(res.Diagnostics, fmt.Sprintf("bare recognized value or empty key: %s", key))
+			}
+			return true
+		})
+	}
+	// The engine also reads paired fields, notably description, directly
+	// from the file buffer. Top-level groups are skipped by this scan.
+	assessPairs(doc.Nodes)
+
 	// Find effective blocks and calculate payloads. The engine reads the
 	// FIRST group with a given name (BG_SiegeGetValueGroup scans from
 	// the top and returns on first match).
@@ -95,28 +134,7 @@ func AssessMBCHSourceBuffers(source string) (BlockAssessmentResult, error) {
 			res.ForceInfoBytes = append(res.ForceInfoBytes, payloadSize)
 		}
 
-		// Paired-value scan, SGPV-accurate.
-		walkSGPVPairs(b.Children, func(_ int, key string, _ int, val string, hasVal bool) bool {
-			if len(key) >= KeyMaxPayload {
-				// SGPV copies keys into checkKey[SIEGE_CLASS_KEY_LEN]
-				// unbounded (bg_saga.c:236-244) — a too-long key is an
-				// engine overflow hazard.
-				res.Diagnostics = append(res.Diagnostics, fmt.Sprintf("key exceeds %d bytes: %s", KeyMaxPayload, key))
-			}
-			if !hasVal {
-				res.Diagnostics = append(res.Diagnostics, fmt.Sprintf("bare recognized value or empty key: %s", key))
-				return true
-			}
-			// Exact SGPV buffer accounting: the value interior (quotes
-			// excluded) is what lands in pB.
-			if len(val) > res.MaxPairedValueBytes {
-				res.MaxPairedValueBytes = len(val)
-			}
-			if val == "" {
-				res.Diagnostics = append(res.Diagnostics, fmt.Sprintf("bare recognized value or empty key: %s", key))
-			}
-			return true
-		})
+		assessPairs(b.Children)
 	}
 
 	if err != nil {
@@ -133,23 +151,23 @@ func AssessMBCHSourceBuffers(source string) (BlockAssessmentResult, error) {
 // 1301). Comments and whitespace are raw text to the engine and count.
 func rawInteriorLength(nodes []ASTNode) int {
 	total := 0
-	var walk func(nodes []ASTNode, outer bool)
-	walk = func(nodes []ASTNode, outer bool) {
-		for _, n := range nodes {
-			switch t := n.(type) {
-			case *ASTToken:
-				total += len(t.Text)
-			case *ASTBlock:
-				if t.NameToken != nil {
-					total += len(t.NameToken.Text)
-				}
-				if !outer {
-					total += 2 // inner braces survive the copy
-				}
-				walk(t.Children, false)
+	for _, node := range nodes {
+		switch n := node.(type) {
+		case *ASTToken:
+			total += len(n.Text)
+		case *ASTBlock:
+			if n.NameToken != nil {
+				total += len(n.NameToken.Text)
+			}
+			total += rawInteriorLength(n.Preamble)
+			if n.OpenBrace != nil {
+				total += len(n.OpenBrace.Text)
+			}
+			total += rawInteriorLength(n.Children)
+			if n.CloseBrace != nil {
+				total += len(n.CloseBrace.Text)
 			}
 		}
 	}
-	walk(nodes, true)
 	return total
 }

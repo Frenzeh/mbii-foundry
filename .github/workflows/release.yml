@@ -104,7 +104,7 @@ jobs:
 
       - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
         with:
-          go-version: '1.24'
+          go-version: '1.27.3'
           cache: true
           cache-dependency-path: go_module/go.sum
 
@@ -125,7 +125,7 @@ jobs:
           sudo apt-get install -y \
             libgl1-mesa-dev xorg-dev libasound2-dev \
             libxxf86vm-dev libxrandr-dev libxinerama-dev \
-            libxcursor-dev libxi-dev
+            libxcursor-dev libxi-dev libwayland-dev libxkbcommon-dev
 
       - name: Build (Linux)
         if: runner.os == 'Linux'
@@ -158,17 +158,38 @@ jobs:
         shell: bash
         env:
           PUBLISHER_PUBLIC_KEY: ${{ secrets.PUBLISHER_PUBLIC_KEY }}
+          MACOSX_DEPLOYMENT_TARGET: '13.0'
+          CGO_CFLAGS: '-mmacosx-version-min=13.0'
+          CGO_CXXFLAGS: '-mmacosx-version-min=13.0'
+          CGO_LDFLAGS: '-mmacosx-version-min=13.0'
         run: |
+          set -euo pipefail
+          test "$(/usr/libexec/PlistBuddy -c 'Print :LSMinimumSystemVersion' ../macos/Info.plist)" = "$MACOSX_DEPLOYMENT_TARGET"
+          BUILD_STAGE="$(mktemp -d "$RUNNER_TEMP/foundry-macos-XXXXXX")"
+          trap 'rm -rf "$BUILD_STAGE"' EXIT
+          # A restored Go cache may contain native objects built for another SDK.
+          export GOCACHE="$BUILD_STAGE/go-cache"
+          LDFLAGS="-s -w -X=main.PublisherTrustedKey=$PUBLISHER_PUBLIC_KEY -linkmode=external -extldflags=-mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET"
           CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 CC="clang -arch x86_64" CXX="clang++ -arch x86_64" \
-            go build -v -o mbii-foundry_amd64 -ldflags="-s -w -X=main.PublisherTrustedKey=$PUBLISHER_PUBLIC_KEY"
+            go build -v -o mbii-foundry_amd64 -ldflags="$LDFLAGS"
           CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 CC="clang -arch arm64" CXX="clang++ -arch arm64" \
-            go build -v -o mbii-foundry_arm64 -ldflags="-s -w -X=main.PublisherTrustedKey=$PUBLISHER_PUBLIC_KEY"
+            go build -v -o mbii-foundry_arm64 -ldflags="$LDFLAGS"
           test "$(lipo -archs mbii-foundry_amd64)" = "x86_64"
           test "$(lipo -archs mbii-foundry_arm64)" = "arm64"
           lipo -create -output mbii-foundry mbii-foundry_amd64 mbii-foundry_arm64
-          lipo mbii-foundry -verify_arch x86_64 arm64
+          lipo mbii-foundry -verify_arch x86_64
+          lipo mbii-foundry -verify_arch arm64
           ARCHS="$(lipo -archs mbii-foundry)"
           test "$(wc -w <<<"$ARCHS" | tr -d ' ')" = "2"
+          for ARCH in x86_64 arm64; do
+            BUILD_INFO="$(xcrun vtool -arch "$ARCH" -show-build mbii-foundry)"
+            printf '%s\n' "$BUILD_INFO"
+            MINOS="$(printf '%s\n' "$BUILD_INFO" | awk '$1 == "minos" {print $2}')"
+            if [ "$MINOS" != "$MACOSX_DEPLOYMENT_TARGET" ] && [ "$MINOS" != "$MACOSX_DEPLOYMENT_TARGET.0" ]; then
+              echo "::error::$ARCH minos is '$MINOS', expected $MACOSX_DEPLOYMENT_TARGET."
+              exit 1
+            fi
+          done
 
       - name: Package macOS .app bundle (ad-hoc alpha)
         if: runner.os == 'macOS'
@@ -227,7 +248,7 @@ jobs:
 
       - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
         with:
-          go-version: '1.24'
+          go-version: '1.27.3'
           cache: true
           cache-dependency-path: go_module/go.sum
 

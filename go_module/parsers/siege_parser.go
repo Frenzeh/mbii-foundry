@@ -90,6 +90,21 @@ func ParseSiege(content string) (*SiegeData, error) {
 	// Tokenize
 	tokens := tokenize(cleanContent)
 
+	// Resolve Teams before any named body, regardless of source order.
+	// Keep the existing tokenizer and field policies in both passes.
+	for i := 0; i+1 < len(tokens); {
+		key := tokens[i]
+		if tokens[i+1] == "{" {
+			blockContent, next := extractBlock(tokens, i+1)
+			if strings.EqualFold(key, "teams") {
+				processGlobalBlock(siege, key, blockContent)
+			}
+			i = next
+		} else {
+			i += 2
+		}
+	}
+
 	i := 0
 	for i < len(tokens) {
 		key := tokens[i]
@@ -106,7 +121,9 @@ func ParseSiege(content string) (*SiegeData, error) {
 			blockContent, newIdx := extractBlock(tokens, i)
 			i = newIdx
 
-			processGlobalBlock(siege, key, blockContent)
+			if !strings.EqualFold(key, "teams") {
+				processGlobalBlock(siege, key, blockContent)
+			}
 		} else {
 			// Key-Value pair
 			i++ // consume value

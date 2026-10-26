@@ -43,8 +43,19 @@ trap 'rm -rf "$BUILD_STAGE"' EXIT
 echo "Building..."
 if [[ "$OSTYPE" == "darwin"* ]]; then
     echo "  Building universal macOS binary..."
-    CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 CC="clang -arch x86_64" CXX="clang++ -arch x86_64" go build -o "$BUILD_STAGE/${BIN_NAME}_amd64"
-    CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 CC="clang -arch arm64" CXX="clang++ -arch arm64" go build -o "$BUILD_STAGE/${BIN_NAME}_arm64"
+    export MACOSX_DEPLOYMENT_TARGET=13.0
+    if [ "$(/usr/libexec/PlistBuddy -c 'Print :LSMinimumSystemVersion' "$MACOS_TEMPLATES/Info.plist")" != "$MACOSX_DEPLOYMENT_TARGET" ]; then
+        echo "  ! Info.plist minimum must match macOS $MACOSX_DEPLOYMENT_TARGET" >&2
+        exit 1
+    fi
+    export CGO_CFLAGS="${CGO_CFLAGS:-} -mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET"
+    export CGO_CXXFLAGS="${CGO_CXXFLAGS:-} -mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET"
+    export CGO_LDFLAGS="${CGO_LDFLAGS:-} -mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET"
+    # Native objects from an older build cache can retain a newer SDK's target.
+    export GOCACHE="$BUILD_STAGE/go-cache"
+    LDFLAGS="-linkmode=external -extldflags=-mmacosx-version-min=$MACOSX_DEPLOYMENT_TARGET"
+    CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 CC="clang -arch x86_64" CXX="clang++ -arch x86_64" go build -o "$BUILD_STAGE/${BIN_NAME}_amd64" -ldflags="$LDFLAGS"
+    CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 CC="clang -arch arm64" CXX="clang++ -arch arm64" go build -o "$BUILD_STAGE/${BIN_NAME}_arm64" -ldflags="$LDFLAGS"
     if [ "$(lipo -archs "$BUILD_STAGE/${BIN_NAME}_amd64")" != "x86_64" ]; then
         echo "  ! amd64 build does not contain exactly x86_64" >&2
         exit 1
@@ -54,7 +65,8 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
         exit 1
     fi
     lipo -create -output "$BUILD_BINARY" "$BUILD_STAGE/${BIN_NAME}_amd64" "$BUILD_STAGE/${BIN_NAME}_arm64"
-    lipo "$BUILD_BINARY" -verify_arch x86_64 arm64
+    lipo "$BUILD_BINARY" -verify_arch x86_64
+    lipo "$BUILD_BINARY" -verify_arch arm64
     buildArchs="$(lipo -archs "$BUILD_BINARY")"
     if [ "$(wc -w <<<"$buildArchs" | tr -d ' ')" != "2" ]; then
         echo "  ! Universal binary has unexpected architectures: $buildArchs" >&2
@@ -145,12 +157,22 @@ fi
 
 # Validate architecture
 echo "  Validating architecture..."
-lipo "$STAGING_BUNDLE/Contents/MacOS/$BIN_NAME" -verify_arch x86_64 arm64
+lipo "$STAGING_BUNDLE/Contents/MacOS/$BIN_NAME" -verify_arch x86_64
+lipo "$STAGING_BUNDLE/Contents/MacOS/$BIN_NAME" -verify_arch arm64
 lipoOut="$(lipo -archs "$STAGING_BUNDLE/Contents/MacOS/$BIN_NAME")"
 if [ "$(wc -w <<<"$lipoOut" | tr -d ' ')" != "2" ]; then
     echo "  ! Binary is not an exact x86_64+arm64 universal binary: $lipoOut"
     exit 1
 fi
+for arch in x86_64 arm64; do
+    buildInfo="$(xcrun vtool -arch "$arch" -show-build "$STAGING_BUNDLE/Contents/MacOS/$BIN_NAME")"
+    printf '%s\n' "$buildInfo"
+    minos="$(printf '%s\n' "$buildInfo" | awk '$1 == "minos" {print $2}')"
+    if [ "$minos" != "$MACOSX_DEPLOYMENT_TARGET" ] && [ "$minos" != "$MACOSX_DEPLOYMENT_TARGET.0" ]; then
+        echo "  ! $arch minos is '$minos', expected $MACOSX_DEPLOYMENT_TARGET" >&2
+        exit 1
+    fi
+done
 
 # Code sign for macOS (required for newer macOS versions).
 # Default is the ad-hoc identity ("-"): structural integrity only,

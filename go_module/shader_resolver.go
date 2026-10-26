@@ -1,58 +1,45 @@
 package main
 
-// Shader file resolver — bridges Quake3/JKA `.shader` files into the
-// asset-loading path. MBII content authors typically reference a
-// portrait via a *shader name* (e.g. `models/players/t_yoda/mb2_icon_default`)
-// rather than a file path. The shader file itself maps the logical
-// name to one or more texture stages (`.tga` / `.jpg`), and the engine
-// reads the FIRST `map` directive to get the renderable image.
+// ShaderResolver supplies still-image previews for declared Quake-style shaders.
+// It chooses the first supported non-built-in map/clampmap/animmap texture in
+// each definition; it does not reproduce stage blending or engine rendering.
 //
-// Without this resolver, Foundry's LoadIconResource only tried the
-// shader name as a literal path with `.tga/.png/.jpg` extensions —
-// which works only when the shader name happens to match the texture
-// path 1:1. For shaders that map to a different texture (very common
-// for portraits with `nopicmip` or scrolling stages), the lookup
-// failed and the icon stayed as a placeholder.
-//
-// Approach:
-//   1. On VFS refresh, scan the index for *.shader files.
-//   2. For each shader file, lex the top-level shader-name { ... }
-//      blocks and pull the first `map <path>` directive.
-//   3. Build a map[shaderName] → texturePath.
-//   4. LoadIconResource consults this map as a fallback before giving up.
-//
-// The lexer is intentionally minimal — it does NOT need to be a
-// faithful Q3 shader parser. It just needs to find shader names and
-// their primary `map` stage. Stage-stack semantics, blendFunc,
-// rgbGen, etc. are irrelevant for our use (rendering a still image).
+// Only the winning VFS copy of each .shader file is read. Duplicate names use
+// Foundry's deterministic preview policy: later PK3 source wins, loose files
+// win over PK3s, then the lexically later lowercase logical .shader path wins.
+// Within a file, the last supported declaration wins. This is a preview policy,
+// not verified equivalence with an engine's active profile or shader registration.
 
 import (
 	"bufio"
 	"io"
+	"sort"
 	"strings"
 	"sync"
 )
 
 // ShaderResolver caches the parsed shader-name → texture-path map.
-// One instance per VFS — populated lazily on first lookup, rebuilt
-// when the VFS reindexes (caller invokes Reset() at that point).
+// One instance per VFS, built by Prebuild after indexing and invalidated
+// with Reset before a later background rebuild.
 type ShaderResolver struct {
 	vfs     *VirtualFileSystem
 	mu      sync.RWMutex
+	buildMu sync.Mutex
 	built   bool
 	shaders map[string]string // shader name (lowercased) → texture path
 }
 
-// NewShaderResolver constructs a resolver bound to a VFS. The shader
-// table isn't built until the first Resolve() call so we don't pay
-// the parse cost on startup.
+// NewShaderResolver constructs a resolver bound to a VFS. Prebuild parses
+// the table on a background worker before the UI readiness notification.
 func NewShaderResolver(vfs *VirtualFileSystem) *ShaderResolver {
 	return &ShaderResolver{vfs: vfs}
 }
 
 // Reset invalidates the cached shader map. Call after a VFS refresh
-// so the next Resolve re-scans the new asset set.
+// before Prebuild scans the new asset set.
 func (sr *ShaderResolver) Reset() {
+	sr.buildMu.Lock()
+	defer sr.buildMu.Unlock()
 	sr.mu.Lock()
 	defer sr.mu.Unlock()
 	sr.built = false
@@ -83,15 +70,14 @@ func (sr *ShaderResolver) Resolve(name string) string {
 	return sr.shaders[strings.ToLower(name)]
 }
 
-// Prebuild kicks off the shader scan if it hasn't started yet. Safe
-// to call multiple times — re-entrant calls return immediately if a
-// build is in progress or already done. Caller is expected to invoke
-// this from a background goroutine (typically right after a VFS
-// refresh completes).
+// Prebuild serializes scans and skips a completed build. Call from a
+// background worker: Resolve remains non-blocking while a scan runs.
 func (sr *ShaderResolver) Prebuild() {
 	if sr == nil {
 		return
 	}
+	sr.buildMu.Lock()
+	defer sr.buildMu.Unlock()
 	sr.build()
 }
 
@@ -106,13 +92,9 @@ func (sr *ShaderResolver) Prebuild() {
 //     across the call. Recovered output is appended into a local
 //     map, then assigned under sr.mu at the end.
 //
-// Earlier draft acquired sr.mu.Lock() across the entire scan, which
-// blocked any concurrent Resolve call for the duration of the parse
-// (potentially hundreds of files). The split now keeps Resolve
-// responsive: while we're parsing, callers see "not built yet" and
-// each will spin a build only once thanks to the sr.built flag.
+// buildMu serializes builds/resets without holding sr.mu across file I/O.
 func (sr *ShaderResolver) build() {
-	if sr == nil || sr.vfs == nil {
+	if sr.vfs == nil {
 		sr.mu.Lock()
 		sr.shaders = map[string]string{}
 		sr.built = true
@@ -128,24 +110,43 @@ func (sr *ShaderResolver) build() {
 	}
 	sr.mu.Unlock()
 
-	// Snapshot shader file paths.
-	var shaderFiles []string
+	// Snapshot logical paths and their VFS source priority. All loose files
+	// form the final tier; VFS indexing has already selected their overlay.
+	type shaderFile struct {
+		path     string
+		priority int
+	}
+	var shaderFiles []shaderFile
 	sr.vfs.mu.RLock()
-	for k := range sr.vfs.Index {
-		if strings.HasSuffix(k, ".shader") {
-			shaderFiles = append(shaderFiles, k)
+	sourceOrder := make(map[string]int, len(sr.vfs.Sources))
+	for i, source := range sr.vfs.Sources {
+		sourceOrder[source] = i
+	}
+	for path, source := range sr.vfs.Index {
+		if strings.HasSuffix(path, ".shader") {
+			priority := len(sr.vfs.Sources)
+			if source.PK3Path != "" {
+				priority = sourceOrder[source.PK3Path]
+			}
+			shaderFiles = append(shaderFiles, shaderFile{path: path, priority: priority})
 		}
 	}
 	sr.vfs.mu.RUnlock()
+	sort.Slice(shaderFiles, func(i, j int) bool {
+		if shaderFiles[i].priority != shaderFiles[j].priority {
+			return shaderFiles[i].priority < shaderFiles[j].priority
+		}
+		return shaderFiles[i].path < shaderFiles[j].path
+	})
 
 	// Parse outside any lock. Defensive: each ReadFile / parse is
 	// wrapped in a recover() so a malformed shader file can't crash
 	// the editor — worst case it skips that file.
 	out := map[string]string{}
-	for _, path := range shaderFiles {
+	for _, file := range shaderFiles {
 		func() {
 			defer func() { _ = recover() }()
-			rc, err := sr.vfs.ReadFile(path)
+			rc, err := sr.vfs.ReadFile(file.path)
 			if err != nil {
 				return
 			}

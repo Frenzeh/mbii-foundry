@@ -121,7 +121,7 @@ class PK3Structure:
 
     def total_asset_count(self) -> int:
         """Get total number of assets"""
-        return sum(len(assets) for assets in self.get_all_assets().values())
+        return sum(len(assets) for assets in self.get_all_assets().values()) + len(self.other_files)
 
 
 def get_asset_path(asset_type: AssetType, **kwargs) -> str:

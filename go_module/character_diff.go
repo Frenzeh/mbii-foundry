@@ -38,25 +38,13 @@ func ShowCharacterDiffDialog(parent fyne.Window, charA *parsers.MBCHCharacter, n
 			return
 		}
 
-		dmA := CalculateDefensiveMatrix(charA)
-		dmB := CalculateDefensiveMatrix(charB)
-
 		// 1. Header Overview
 		hdrA := widget.NewLabelWithStyle(fmt.Sprintf("%s\nClass: %s\nModel: %s/%s", nameA, charA.MBClass, charA.Model, charA.Skin), fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 		hdrB := widget.NewLabelWithStyle(fmt.Sprintf("%s\nClass: %s\nModel: %s/%s", nameB, charB.MBClass, charB.Model, charB.Skin), fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 		hdrRow := container.NewGridWithColumns(2, container.NewPadded(hdrA), container.NewPadded(hdrB))
 
 		// 2. Stats Delta Table
-		statsList := container.NewVBox(
-			widget.NewLabelWithStyle("Core Stats & Defensive Matrix", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
-			createDiffRow("Health", fmt.Sprintf("%d", charA.MaxHealth), fmt.Sprintf("%d", charB.MaxHealth), charA.MaxHealth != charB.MaxHealth),
-			createDiffRow("Armor", fmt.Sprintf("%d", charA.MaxArmor), fmt.Sprintf("%d", charB.MaxArmor), charA.MaxArmor != charB.MaxArmor),
-			createDiffRow("Total Lives", fmt.Sprintf("%d", dmA.TotalLives), fmt.Sprintf("%d", dmB.TotalLives), dmA.TotalLives != dmB.TotalLives),
-			createDiffRow("Raw EHP", fmt.Sprintf("%d", dmA.TotalRawEHP), fmt.Sprintf("%d", dmB.TotalRawEHP), dmA.TotalRawEHP != dmB.TotalRawEHP),
-			createDiffRow("Energy EHP", fmt.Sprintf("%d", dmA.EnergyEHP), fmt.Sprintf("%d", dmB.EnergyEHP), dmA.EnergyEHP != dmB.EnergyEHP),
-			createDiffRow("Explosive EHP", fmt.Sprintf("%d", dmA.ExplosiveEHP), fmt.Sprintf("%d", dmB.ExplosiveEHP), dmA.ExplosiveEHP != dmB.ExplosiveEHP),
-			createDiffRow("Speed", fmt.Sprintf("%.2f", charA.Speed), fmt.Sprintf("%.2f", charB.Speed), charA.Speed != charB.Speed),
-		)
+		statsList := buildCharacterDiffStats(charA, charB)
 
 		// 3. Weapons Comparison
 		weapList := container.NewVBox(
@@ -119,7 +107,7 @@ func ShowCharacterDiffDialog(parent fyne.Window, charA *parsers.MBCHCharacter, n
 		"Close",
 		container.NewBorder(
 			container.NewVBox(
-				widget.NewLabelWithStyle("Compare Character Attributes, Weapons & EHP Deltas", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+				widget.NewLabelWithStyle("Compare Configured Stats, Weapons & Attributes", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
 				browseBtn,
 				widget.NewSeparator(),
 			),
@@ -130,6 +118,22 @@ func ShowCharacterDiffDialog(parent fyne.Window, charA *parsers.MBCHCharacter, n
 	)
 	dlg.Resize(fyne.NewSize(760, 560))
 	dlg.Show()
+}
+
+func buildCharacterDiffStats(charA, charB *parsers.MBCHCharacter) *fyne.Container {
+	dmA := CalculateDefensiveMatrix(charA)
+	dmB := CalculateDefensiveMatrix(charB)
+	return container.NewVBox(
+		widget.NewLabelWithStyle("Configured Stats & Defensive Evidence", fyne.TextAlignLeading, fyne.TextStyle{Bold: true}),
+		createDiffRow("Health", fmt.Sprintf("%d", charA.MaxHealth), fmt.Sprintf("%d", charB.MaxHealth), charA.MaxHealth != charB.MaxHealth),
+		createDiffRow("Armor", fmt.Sprintf("%d", charA.MaxArmor), fmt.Sprintf("%d", charB.MaxArmor), charA.MaxArmor != charB.MaxArmor),
+		createDiffRow("Total Lives", fmt.Sprintf("%d", dmA.TotalLives), fmt.Sprintf("%d", dmB.TotalLives), dmA.TotalLives != dmB.TotalLives),
+		createDiffRow("Configured pool across lives", fmt.Sprintf("%d", dmA.TotalRawEHP), fmt.Sprintf("%d", dmB.TotalRawEHP), dmA.TotalRawEHP != dmB.TotalRawEHP),
+		createDiffRow("Energy EHP", dmA.EvidenceStatus, dmB.EvidenceStatus, dmA.EvidenceStatus != dmB.EvidenceStatus),
+		createDiffRow("Explosive EHP", dmA.EvidenceStatus, dmB.EvidenceStatus, dmA.EvidenceStatus != dmB.EvidenceStatus),
+		createDiffRow("Speed", fmt.Sprintf("%g", charA.Speed), fmt.Sprintf("%g", charB.Speed), charA.Speed != charB.Speed),
+		widget.NewLabel("Unverified: configured pools do not establish channel-specific damage reduction."),
+	)
 }
 
 func createDiffRow(label, valA, valB string, isDiff bool) fyne.CanvasObject {

@@ -2,18 +2,23 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
+
+	"github.com/Frenzeh/mbii-foundry/safeio"
 )
 
 const (
-	// GitHub raw content URLs for data files
-	GitHubDataBaseURL = "https://raw.githubusercontent.com/Frenzeh/mbii-foundry/main/data"
+	// Manual catalogs follow upstream main over HTTPS, not the signed app-update manifest.
+	GitHubDataBaseURL    = "https://raw.githubusercontent.com/Frenzeh/mbii-foundry/main/data"
+	maxCatalogFileBytes  = 4 << 20
+	maxCatalogCacheBytes = 2 * maxCatalogFileBytes
+	maxCatalogEntries    = 4096
 )
 
 var (
@@ -25,19 +30,19 @@ var (
 	LoadedSaberStyles []SaberStyleDef
 	LoadedGlossary    []GlossaryDef
 	DataLock          sync.RWMutex
-	DataPath          string // Store the data path for updates
+	DataPath          string // Read-only installed data directory; never an update destination.
 )
 
-// LoadExternalData loads data files from the specified directory.
+// LoadExternalData merges installed data and a valid user cache over embedded defaults.
 func LoadExternalData(dataPath string) error {
 	DataLock.Lock()
 	defer DataLock.Unlock()
 
-	DataPath = dataPath // Store for GitHub update caching
+	DataPath = dataPath
 
 	// --- Classes ---
 	classPath := filepath.Join(dataPath, "classes.json")
-	classData, err := os.ReadFile(classPath)
+	classData, err := readInstalledDataFile(dataPath, "classes.json")
 
 	LoadedClasses = make([]ClassDef, len(MBIIClasses))
 	copy(LoadedClasses, MBIIClasses)
@@ -72,120 +77,20 @@ func LoadExternalData(dataPath string) error {
 		LogInfo("classes.json not found, using defaults.")
 	}
 
-	// Load Attributes
-	attPath := filepath.Join(dataPath, "attributes.json")
-	attData, err := os.ReadFile(attPath)
-
-	// Initialize with defaults
-	LoadedAttributes = make([]AttributeDef, len(MBIIAttributes))
-	copy(LoadedAttributes, MBIIAttributes)
-
-	if err == nil {
-		var atts []AttributeDef
-		if err := json.Unmarshal(attData, &atts); err == nil {
-			// Merge logic
-			attMap := make(map[string]int)
-			for i, a := range LoadedAttributes {
-				attMap[a.ID] = i
-			}
-
-			for _, ext := range atts {
-				if idx, ok := attMap[ext.ID]; ok {
-					// Update existing
-					if ext.Name != "" {
-						LoadedAttributes[idx].Name = ext.Name
-					}
-					if ext.Description != "" {
-						LoadedAttributes[idx].Description = ext.Description
-					}
-					if ext.Category != "" {
-						LoadedAttributes[idx].Category = ext.Category
-					}
-					if ext.MaxLevel > 0 {
-						LoadedAttributes[idx].MaxLevel = ext.MaxLevel
-					}
-
-					// Rich Docs - overwrite
-					if ext.Overview != "" {
-						LoadedAttributes[idx].Overview = ext.Overview
-					}
-					if len(ext.Levels) > 0 {
-						LoadedAttributes[idx].Levels = ext.Levels
-					}
-					if len(ext.Tips) > 0 {
-						LoadedAttributes[idx].Tips = ext.Tips
-					}
-					if len(ext.Tags) > 0 {
-						LoadedAttributes[idx].Tags = ext.Tags
-					}
-				} else {
-					// Add new
-					LoadedAttributes = append(LoadedAttributes, ext)
-					attMap[ext.ID] = len(LoadedAttributes) - 1
-				}
-			}
-			LogInfo("Loaded and merged %d attributes from %s", len(atts), attPath)
-		} else {
-			LogError("Failed to parse attributes.json: %v", err)
-		}
-	} else {
-		LogInfo("attributes.json not found at %s, using defaults.", attPath)
-	}
-
-	// Load Weapons
-	weapPath := filepath.Join(dataPath, "weapons.json")
-	weapData, err := os.ReadFile(weapPath)
-
-	// Initialize with defaults
-	LoadedWeapons = make([]WeaponDef, len(MBIIWeapons))
-	copy(LoadedWeapons, MBIIWeapons)
-
-	if err == nil {
-		var weaps []WeaponDef
-		if err := json.Unmarshal(weapData, &weaps); err == nil {
-			// Merge logic
-			weapMap := make(map[string]int)
-			for i, w := range LoadedWeapons {
-				weapMap[w.ID] = i
-			}
-
-			for _, ext := range weaps {
-				if idx, ok := weapMap[ext.ID]; ok {
-					if ext.Name != "" {
-						LoadedWeapons[idx].Name = ext.Name
-					}
-					if ext.Description != "" {
-						LoadedWeapons[idx].Description = ext.Description
-					}
-					if ext.Category != "" {
-						LoadedWeapons[idx].Category = ext.Category
-					}
-
-					if ext.Overview != "" {
-						LoadedWeapons[idx].Overview = ext.Overview
-					}
-					if len(ext.Tips) > 0 {
-						LoadedWeapons[idx].Tips = ext.Tips
-					}
-					if len(ext.Tags) > 0 {
-						LoadedWeapons[idx].Tags = ext.Tags
-					}
-				} else {
-					LoadedWeapons = append(LoadedWeapons, ext)
-					weapMap[ext.ID] = len(LoadedWeapons) - 1
-				}
-			}
-			LogInfo("Loaded and merged %d weapons from %s", len(weaps), weapPath)
-		} else {
-			LogError("Failed to parse weapons.json: %v", err)
-		}
-	} else {
-		LogInfo("weapons.json not found at %s, using defaults.", weapPath)
+	catalog := loadBaseCatalog(dataPath)
+	if cachePath, err := catalogCachePath(); err != nil {
+		LogError("Catalog cache is unavailable; using installed data and defaults: %v", err)
+	} else if cached, err := readCatalogCache(cachePath); err == nil {
+		catalog.Attributes = mergeCatalogAttributes(catalog.Attributes, cached.Attributes)
+		catalog.Weapons = mergeCatalogWeapons(catalog.Weapons, cached.Weapons)
+		LogInfo("Loaded catalog cache from %s", cachePath)
+	} else if !os.IsNotExist(err) {
+		LogError("Ignoring invalid catalog cache %s: %v", cachePath, err)
 	}
 
 	// --- Class Flags ---
 	cfPath := filepath.Join(dataPath, "class_flags.json")
-	cfData, err := os.ReadFile(cfPath)
+	cfData, err := readInstalledDataFile(dataPath, "class_flags.json")
 	LoadedClassFlags = make([]ClassFlagDef, len(MBIIClassFlags))
 	copy(LoadedClassFlags, MBIIClassFlags)
 	if err == nil {
@@ -217,7 +122,7 @@ func LoadExternalData(dataPath string) error {
 
 	// --- Saber Styles ---
 	ssPath := filepath.Join(dataPath, "saber_styles.json")
-	ssData, err := os.ReadFile(ssPath)
+	ssData, err := readInstalledDataFile(dataPath, "saber_styles.json")
 	LoadedSaberStyles = make([]SaberStyleDef, len(MBIISaberStyles))
 	copy(LoadedSaberStyles, MBIISaberStyles)
 	if err == nil {
@@ -249,7 +154,7 @@ func LoadExternalData(dataPath string) error {
 
 	// --- Glossary ---
 	glossPath := filepath.Join(dataPath, "glossary.json")
-	glossData, err := os.ReadFile(glossPath)
+	glossData, err := readInstalledDataFile(dataPath, "glossary.json")
 	if err == nil {
 		var gloss []GlossaryDef
 		if err := json.Unmarshal(glossData, &gloss); err == nil {
@@ -258,49 +163,220 @@ func LoadExternalData(dataPath string) error {
 		}
 	}
 
-	// Flip the Hidden flag on IDs from hidden_content.go's curated
-	// sets (#ifdef-guarded or commented-out in the game headers). The
-	// JSON files are flat lists that don't know about live-vs-hidden
-	// status — that's a property of the build, not the content — so
-	// we apply it here after all loading is done.
 	markHiddenClasses(LoadedClasses)
-	markHiddenWeapons(LoadedWeapons)
-	markHiddenAttributes(LoadedAttributes)
-
-	// Reshuffle attributes into clearer buckets so the editor's
-	// category-grouped grid actually splits meaningfully. The legacy
-	// JSON file dumps most attributes into "General"; the
-	// recategorize pass uses ID-prefix rules (see
-	// hidden_content.go) to move them into Force/Saber/Regen/
-	// Multipliers/Supply/Class-Specific/Weapons as appropriate.
-	recategorizeAttributes(LoadedAttributes)
-
-	// Strip decorative emoji prefixes from weapon/attribute names.
-	// Historically the JSON hand-crafted names like "💣 Pulse Grenade"
-	// as a cheap stand-in for real icons. Now that Foundry embeds the
-	// actual game HUD icons and renders them alongside the label,
-	// those emojis are visual noise fighting the real art. The strip
-	// is conservative — only removes leading non-word runes (emojis,
-	// combining marks, surrounding whitespace) up to the first real
-	// letter/digit, so names like "E-11 Blaster" or "(Old) Bryar"
-	// keep their natural opening punctuation.
-	for i := range LoadedWeapons {
-		LoadedWeapons[i].Name = stripLeadingNonWord(LoadedWeapons[i].Name)
-	}
-	fallbackMap := make(map[string]AttributeDef, len(MBIIAttributes))
-	for _, a := range MBIIAttributes {
-		fallbackMap[a.ID] = a
-	}
-	for i := range LoadedAttributes {
-		LoadedAttributes[i].Name = stripLeadingNonWord(LoadedAttributes[i].Name)
-		if LoadedAttributes[i].MaxLevel <= 0 {
-			if fb, ok := fallbackMap[LoadedAttributes[i].ID]; ok && fb.MaxLevel > 0 {
-				LoadedAttributes[i].MaxLevel = fb.MaxLevel
-			}
-		}
-	}
+	applyCatalogPolicy(&catalog)
+	LoadedAttributes, LoadedWeapons = catalog.Attributes, catalog.Weapons
 
 	return nil
+}
+
+type catalogCache struct {
+	Attributes []AttributeDef `json:"attributes"`
+	Weapons    []WeaponDef    `json:"weapons"`
+}
+
+// CatalogUpdate holds a persisted, prepared catalog awaiting UI-thread publication.
+type CatalogUpdate struct {
+	Summary string
+	catalog catalogCache
+}
+
+func readCatalogFile(path string, limit int64) ([]byte, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	data, readErr := readAllLimited(f, limit)
+	closeErr := f.Close()
+	if err := errors.Join(readErr, closeErr); err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func readInstalledDataFile(dataPath, filename string) ([]byte, error) {
+	if dataPath == "" {
+		return nil, os.ErrNotExist
+	}
+	return readCatalogFile(filepath.Join(dataPath, filename), maxCatalogFileBytes)
+}
+
+func loadBaseCatalog(dataPath string) catalogCache {
+	catalog := catalogCache{
+		Attributes: append([]AttributeDef(nil), MBIIAttributes...),
+		Weapons:    append([]WeaponDef(nil), MBIIWeapons...),
+	}
+	if data, err := readInstalledDataFile(dataPath, "attributes.json"); err == nil {
+		var attrs []AttributeDef
+		if err := json.Unmarshal(data, &attrs); err == nil {
+			catalog.Attributes = mergeCatalogAttributes(catalog.Attributes, attrs)
+		} else {
+			LogError("Failed to parse installed attributes.json: %v", err)
+		}
+	} else if !os.IsNotExist(err) {
+		LogError("Failed to read installed attributes.json: %v", err)
+	}
+	if data, err := readInstalledDataFile(dataPath, "weapons.json"); err == nil {
+		var weapons []WeaponDef
+		if err := json.Unmarshal(data, &weapons); err == nil {
+			catalog.Weapons = mergeCatalogWeapons(catalog.Weapons, weapons)
+		} else {
+			LogError("Failed to parse installed weapons.json: %v", err)
+		}
+	} else if !os.IsNotExist(err) {
+		LogError("Failed to read installed weapons.json: %v", err)
+	}
+	return catalog
+}
+
+func mergeCatalogAttributes(attrs, external []AttributeDef) []AttributeDef {
+	byID := make(map[string]int, len(attrs))
+	for i, attr := range attrs {
+		byID[attr.ID] = i
+	}
+	for _, ext := range external {
+		idx, ok := byID[ext.ID]
+		if !ok {
+			attrs = append(attrs, ext)
+			byID[ext.ID] = len(attrs) - 1
+			continue
+		}
+		if ext.Name != "" {
+			attrs[idx].Name = ext.Name
+		}
+		if ext.Description != "" {
+			attrs[idx].Description = ext.Description
+		}
+		if ext.Category != "" {
+			attrs[idx].Category = ext.Category
+		}
+		if ext.MaxLevel > 0 {
+			attrs[idx].MaxLevel = ext.MaxLevel
+		}
+		if ext.Overview != "" {
+			attrs[idx].Overview = ext.Overview
+		}
+		if len(ext.Levels) > 0 {
+			attrs[idx].Levels = ext.Levels
+		}
+		if len(ext.Tips) > 0 {
+			attrs[idx].Tips = ext.Tips
+		}
+		if len(ext.Tags) > 0 {
+			attrs[idx].Tags = ext.Tags
+		}
+	}
+	return attrs
+}
+
+func mergeCatalogWeapons(weapons, external []WeaponDef) []WeaponDef {
+	byID := make(map[string]int, len(weapons))
+	for i, weapon := range weapons {
+		byID[weapon.ID] = i
+	}
+	for _, ext := range external {
+		idx, ok := byID[ext.ID]
+		if !ok {
+			weapons = append(weapons, ext)
+			byID[ext.ID] = len(weapons) - 1
+			continue
+		}
+		if ext.Name != "" {
+			weapons[idx].Name = ext.Name
+		}
+		if ext.Description != "" {
+			weapons[idx].Description = ext.Description
+		}
+		if ext.Category != "" {
+			weapons[idx].Category = ext.Category
+		}
+		if ext.Overview != "" {
+			weapons[idx].Overview = ext.Overview
+		}
+		if len(ext.Tips) > 0 {
+			weapons[idx].Tips = ext.Tips
+		}
+		if len(ext.Tags) > 0 {
+			weapons[idx].Tags = ext.Tags
+		}
+	}
+	return weapons
+}
+
+func applyCatalogPolicy(catalog *catalogCache) {
+	markHiddenAttributes(catalog.Attributes)
+	markHiddenWeapons(catalog.Weapons)
+	recategorizeAttributes(catalog.Attributes)
+	for i := range catalog.Weapons {
+		catalog.Weapons[i].Name = stripLeadingNonWord(catalog.Weapons[i].Name)
+	}
+	fallbacks := make(map[string]int, len(MBIIAttributes))
+	for _, attr := range MBIIAttributes {
+		fallbacks[attr.ID] = attr.MaxLevel
+	}
+	for i := range catalog.Attributes {
+		attr := &catalog.Attributes[i]
+		attr.Name = stripLeadingNonWord(attr.Name)
+		if attr.MaxLevel <= 0 && fallbacks[attr.ID] > 0 {
+			attr.MaxLevel = fallbacks[attr.ID]
+		}
+	}
+}
+
+func validateCatalogID(id string, seen map[string]bool) error {
+	if len(id) == 0 || len(id) > 128 {
+		return fmt.Errorf("catalog identifier must contain 1–128 bytes")
+	}
+	for _, r := range id {
+		if r != '_' && !(r >= 'A' && r <= 'Z') && !(r >= 'a' && r <= 'z') && !(r >= '0' && r <= '9') {
+			return fmt.Errorf("invalid catalog identifier %q", id)
+		}
+	}
+	if seen[id] {
+		return fmt.Errorf("duplicate catalog identifier %q", id)
+	}
+	seen[id] = true
+	return nil
+}
+
+func validateCatalog(catalog catalogCache) error {
+	if len(catalog.Attributes) == 0 || len(catalog.Attributes) > maxCatalogEntries {
+		return fmt.Errorf("attributes must contain 1–%d entries", maxCatalogEntries)
+	}
+	if len(catalog.Weapons) == 0 || len(catalog.Weapons) > maxCatalogEntries {
+		return fmt.Errorf("weapons must contain 1–%d entries", maxCatalogEntries)
+	}
+	seen := make(map[string]bool, len(catalog.Attributes))
+	for _, attr := range catalog.Attributes {
+		if err := validateCatalogID(attr.ID, seen); err != nil {
+			return fmt.Errorf("attributes: %w", err)
+		}
+		if attr.MaxLevel < 0 || attr.MaxLevel > 255 {
+			return fmt.Errorf("attribute %s max_level is outside 0–255", attr.ID)
+		}
+	}
+	seen = make(map[string]bool, len(catalog.Weapons))
+	for _, weapon := range catalog.Weapons {
+		if err := validateCatalogID(weapon.ID, seen); err != nil {
+			return fmt.Errorf("weapons: %w", err)
+		}
+	}
+	return nil
+}
+
+func readCatalogCache(path string) (catalogCache, error) {
+	data, err := readCatalogFile(path, maxCatalogCacheBytes)
+	if err != nil {
+		return catalogCache{}, err
+	}
+	var catalog catalogCache
+	if err := json.Unmarshal(data, &catalog); err != nil {
+		return catalogCache{}, err
+	}
+	if err := validateCatalog(catalog); err != nil {
+		return catalogCache{}, err
+	}
+	return catalog, nil
 }
 
 // GetAttributes returns loaded attributes with non-live entries
@@ -379,107 +455,91 @@ func GetGlossary() []GlossaryDef {
 	return LoadedGlossary
 }
 
-// FetchDataFromGitHub downloads a JSON file from the GitHub repository.
-// Returns the downloaded content and any error encountered.
+// FetchDataFromGitHub downloads one supported catalog from upstream main over HTTPS.
 func FetchDataFromGitHub(filename string) ([]byte, error) {
-	url := fmt.Sprintf("%s/%s", GitHubDataBaseURL, filename)
-
+	if filename != "attributes.json" && filename != "weapons.json" {
+		return nil, fmt.Errorf("unsupported catalog file %q", filename)
+	}
 	client := &http.Client{
 		Timeout: 10 * time.Second,
+		CheckRedirect: func(_ *http.Request, _ []*http.Request) error {
+			return fmt.Errorf("catalog redirects are not allowed")
+		},
 	}
-
-	resp, err := client.Get(url)
+	resp, err := client.Get(GitHubDataBaseURL + "/" + filename)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch %s: %v", filename, err)
+		return nil, fmt.Errorf("failed to fetch %s: %w", filename, err)
 	}
-	defer resp.Body.Close()
-
 	if resp.StatusCode != http.StatusOK {
+		resp.Body.Close()
 		return nil, fmt.Errorf("failed to fetch %s: HTTP %d", filename, resp.StatusCode)
 	}
-
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response for %s: %v", filename, err)
+	data, readErr := readAllLimited(resp.Body, maxCatalogFileBytes)
+	closeErr := resp.Body.Close()
+	if err := errors.Join(readErr, closeErr); err != nil {
+		return nil, fmt.Errorf("failed to read %s: %w", filename, err)
 	}
-
 	return data, nil
 }
 
-// UpdateDataFromGitHub fetches the latest data files from GitHub and updates local cache.
-// If dataPath is empty, only in-memory data is updated.
-// Returns a summary message of what was updated.
-func UpdateDataFromGitHub() (string, error) {
-	var updated []string
-	var errors []string
-
-	// Fetch and update attributes
-	attData, err := FetchDataFromGitHub("attributes.json")
+// UpdateDataFromGitHub fetches, validates and atomically persists both catalogs.
+// It does not publish globals: call PublishCatalogUpdate on the UI thread after success.
+func UpdateDataFromGitHub() (*CatalogUpdate, error) {
+	attrData, err := FetchDataFromGitHub("attributes.json")
 	if err != nil {
-		errors = append(errors, fmt.Sprintf("attributes: %v", err))
-	} else {
-		var atts []AttributeDef
-		if err := json.Unmarshal(attData, &atts); err != nil {
-			errors = append(errors, fmt.Sprintf("attributes parse: %v", err))
-		} else {
-			DataLock.Lock()
-			LoadedAttributes = atts
-			DataLock.Unlock()
-			updated = append(updated, fmt.Sprintf("attributes (%d items)", len(atts)))
-
-			// Save to local file if path is set
-			if DataPath != "" {
-				localPath := filepath.Join(DataPath, "attributes.json")
-				if err := os.WriteFile(localPath, attData, 0644); err != nil {
-					LogError("Failed to save attributes.json locally: %v", err)
-				} else {
-					LogInfo("Saved attributes.json to %s", localPath)
-				}
-			}
-		}
+		return nil, err
 	}
-
-	// Fetch and update weapons
-	weapData, err := FetchDataFromGitHub("weapons.json")
+	var cached catalogCache
+	if err := json.Unmarshal(attrData, &cached.Attributes); err != nil {
+		return nil, fmt.Errorf("attributes parse: %w", err)
+	}
+	weaponData, err := FetchDataFromGitHub("weapons.json")
 	if err != nil {
-		errors = append(errors, fmt.Sprintf("weapons: %v", err))
-	} else {
-		var weaps []WeaponDef
-		if err := json.Unmarshal(weapData, &weaps); err != nil {
-			errors = append(errors, fmt.Sprintf("weapons parse: %v", err))
-		} else {
-			DataLock.Lock()
-			LoadedWeapons = weaps
-			DataLock.Unlock()
-			updated = append(updated, fmt.Sprintf("weapons (%d items)", len(weaps)))
-
-			// Save to local file if path is set
-			if DataPath != "" {
-				localPath := filepath.Join(DataPath, "weapons.json")
-				if err := os.WriteFile(localPath, weapData, 0644); err != nil {
-					LogError("Failed to save weapons.json locally: %v", err)
-				} else {
-					LogInfo("Saved weapons.json to %s", localPath)
-				}
-			}
-		}
+		return nil, err
+	}
+	if err := json.Unmarshal(weaponData, &cached.Weapons); err != nil {
+		return nil, fmt.Errorf("weapons parse: %w", err)
+	}
+	if err := validateCatalog(cached); err != nil {
+		return nil, err
+	}
+	cachePath, err := catalogCachePath()
+	if err != nil {
+		return nil, fmt.Errorf("catalog refresh was not saved: %w", err)
+	}
+	data, err := json.Marshal(cached)
+	if err != nil {
+		return nil, fmt.Errorf("encode catalog cache: %w", err)
+	}
+	if len(data) > maxCatalogCacheBytes {
+		return nil, fmt.Errorf("catalog cache exceeds %d-byte limit", maxCatalogCacheBytes)
 	}
 
-	// Build result message
-	var result string
-	if len(updated) > 0 {
-		result = fmt.Sprintf("Updated: %v", updated)
-	}
-	if len(errors) > 0 {
-		if result != "" {
-			result += "; "
-		}
-		result += fmt.Sprintf("Errors: %v", errors)
-		return result, fmt.Errorf("some updates failed")
-	}
+	DataLock.RLock()
+	dataPath := DataPath
+	DataLock.RUnlock()
+	prepared := loadBaseCatalog(dataPath)
+	prepared.Attributes = mergeCatalogAttributes(prepared.Attributes, cached.Attributes)
+	prepared.Weapons = mergeCatalogWeapons(prepared.Weapons, cached.Weapons)
+	applyCatalogPolicy(&prepared)
 
-	if result == "" {
-		return "No updates performed", nil
+	if err := os.MkdirAll(filepath.Dir(cachePath), 0700); err != nil {
+		return nil, fmt.Errorf("catalog refresh was not saved: %w", err)
 	}
-	return result, nil
+	// Replace the fetched pair together; a failed refresh leaves the previous pair intact.
+	if err := safeio.WriteFile(cachePath, data, 0600); err != nil {
+		return nil, fmt.Errorf("catalog refresh was not saved: %w", err)
+	}
+	return &CatalogUpdate{
+		Summary: fmt.Sprintf("Saved attributes (%d items) and weapons (%d items) to user cache", len(cached.Attributes), len(cached.Weapons)),
+		catalog: prepared,
+	}, nil
+}
+
+// PublishCatalogUpdate publishes a successful refresh without HTTP or filesystem work.
+// The caller must run this on the UI thread so existing catalog views remain safe.
+func PublishCatalogUpdate(update *CatalogUpdate) {
+	DataLock.Lock()
+	defer DataLock.Unlock()
+	LoadedAttributes, LoadedWeapons = update.catalog.Attributes, update.catalog.Weapons
 }

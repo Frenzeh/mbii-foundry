@@ -1,5 +1,16 @@
 # MBII Foundry Roadmap
 
+> **Historical planning document (December 2024), not a current acceptance
+> checklist.** The proposal bodies and original checkboxes below are retained
+> for context; they do not describe current implementation status or commit to
+> a product direction. For the shipped Go 1.27.3/Fyne 2.8.2 architecture and
+> current document/session/save boundaries, see [ARCHITECTURE.md](ARCHITECTURE.md)
+> and the [User Guide](../USER_GUIDE.md). Current code includes document
+> undo/redo, editable Source with retained drafts, AST-based parsing, tabs,
+> asset browsing, and PK3/source export; the old claims that those are absent
+> must not be used as present-day guidance. Historical “code signing” wording
+> is not evidence of Developer ID, notarization, or OS publisher trust.
+
 ```
      ╔══════════════════════════════════════════════════════════════════╗
      ║                                                                  ║
@@ -10,7 +21,7 @@
      ╚══════════════════════════════════════════════════════════════════╝
 ```
 
-## Current Status: "It Builds" → "It's Essential"
+## Historical Status: "It Builds" → "It's Essential"
 
 We have successfully "invigorated" the patient - it walks and talks - but it lacks the reflexes and muscle memory of a professional tool.
 
@@ -275,12 +286,15 @@ saber_flags:
 
 ## Frozen/On Hold
 
-### Wails Migration
-> **Status:** ON HOLD - Complete Phase 1-2 first.
+### Wails Migration — Historical, Unimplemented Proposal
+> **Recorded status:** ON HOLD, with Phase 1–2 proposed as prerequisites.
+> No Wails migration is implemented; this is not a release commitment or a
+> permanent product-direction decision.
 
-Benefits: Full CSS styling, custom fonts, WebGL effects, modern web architecture.
-Effort: ~8-12 hours.
-See `docs/WAILS_MIGRATION.md` for full plan.
+Proposed benefits: Full CSS styling, custom fonts, WebGL effects, modern web architecture.
+Historical estimate (not validated): ~8–12 hours.
+See [WAILS_MIGRATION.md](WAILS_MIGRATION.md) for the preserved proposal and
+[ARCHITECTURE.md](ARCHITECTURE.md) for the current Fyne implementation.
 
 ### New Editor Types
 > **Status:** FROZEN - Focus on safety and workflow before adding more editors.
@@ -303,7 +317,7 @@ No new editor types (Siege, VEH improvements) until Undo/Redo and Build workflow
 
 ---
 
-## Next Steps (Immediate)
+## Historical Next Steps (Not Current Instructions)
 
 **If I were managing this project, I would freeze new "Editors" and focus entirely on Phase 1 (Safety) and Phase 2 (Workflow).**
 

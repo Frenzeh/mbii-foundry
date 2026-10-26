@@ -66,20 +66,7 @@ func run(args []string, stdout io.Writer) error {
 	}
 
 	if *generate {
-		pub, priv, err := ed25519.GenerateKey(rand.Reader)
-		if err != nil {
-			return err
-		}
-		if _, err := fmt.Fprintf(stdout, "Public Key: %x\n", pub); err != nil {
-			return fmt.Errorf("write public key: %w", err)
-		}
-		if err := safeio.WriteFile("private_key.hex", []byte(hex.EncodeToString(priv)), 0600); err != nil {
-			return fmt.Errorf("write private key: %w", err)
-		}
-		if _, err := fmt.Fprintln(stdout, "Private key written to private_key.hex"); err != nil {
-			return fmt.Errorf("write status: %w", err)
-		}
-		return nil
+		return generateSigningKey(stdout)
 	}
 
 	if *keyFile == "" {
@@ -141,6 +128,52 @@ func run(args []string, stdout io.Writer) error {
 	}
 	if _, err := fmt.Fprintln(stdout, "Created manifest at "+*sign+".manifest.json"); err != nil {
 		return fmt.Errorf("write status: %w", err)
+	}
+	return nil
+}
+
+func generateSigningKey(stdout io.Writer) (err error) {
+	const path = "private_key.hex"
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+	if err != nil {
+		return fmt.Errorf("create private key (existing keys are never replaced): %w", err)
+	}
+	complete := false
+	defer func() {
+		if file != nil {
+			err = errors.Join(err, wrapSignerError("close incomplete private key", file.Close()))
+		}
+		if !complete {
+			err = errors.Join(err, wrapSignerError("remove incomplete private key", os.Remove(path)))
+		}
+	}()
+	if err := file.Chmod(0600); err != nil {
+		return fmt.Errorf("restrict private key permissions: %w", err)
+	}
+	pub, priv, err := ed25519.GenerateKey(rand.Reader)
+	if err != nil {
+		return fmt.Errorf("generate keypair: %w", err)
+	}
+	var encoded [ed25519.PrivateKeySize * 2]byte
+	hex.Encode(encoded[:], priv)
+	written, err := file.Write(encoded[:])
+	if err != nil {
+		return fmt.Errorf("write private key: %w", err)
+	}
+	if written != len(encoded) {
+		return fmt.Errorf("write private key: %w", io.ErrShortWrite)
+	}
+	if err := file.Sync(); err != nil {
+		return fmt.Errorf("sync private key: %w", err)
+	}
+	err = file.Close()
+	file = nil
+	if err != nil {
+		return fmt.Errorf("close private key: %w", err)
+	}
+	complete = true
+	if _, err := fmt.Fprintf(stdout, "Public Key: %x\nPrivate key written to %s\n", pub, path); err != nil {
+		return fmt.Errorf("private key was saved to %s, but public-key/status output failed: %w", path, err)
 	}
 	return nil
 }

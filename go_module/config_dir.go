@@ -8,16 +8,20 @@ package main
 //
 // On first launch after upgrade, if the old dir exists and the new
 // doesn't, we copy contents over. The old dir is left in place as a
-// safety net — users can delete it after confirming the new location
-// works. Migration failures fall back to the old dir so nobody loses
-// their config.
+// safety net, with its source recorded so credential cleanup can be retried
+// after a restart. Only credential fields are removed from that backup after
+// verified native storage; migration failures fall back to the old directory.
 
 import (
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/Frenzeh/mbii-foundry/safeio"
 )
+
+const legacyConfigSourceFile = ".legacy-config-source"
 
 // AppConfigDir returns the absolute path to the app's config directory,
 // creating it and migrating from the old brand name if necessary.
@@ -68,6 +72,11 @@ func appConfigDirWithBase(base string) (string, error) {
 			LogError("%v; staying on old path", wrapped)
 			return oldDir, wrapped
 		}
+		if err := recordLegacyConfigSource(tmpDir, filepath.Join(oldDir, "config.json")); err != nil {
+			wrapped := fmt.Errorf("configuration migration could not record its source: %w", err)
+			LogError("%v; staying on old path", wrapped)
+			return oldDir, wrapped
+		}
 
 		if renameErr := os.Rename(tmpDir, newDir); renameErr != nil {
 			wrapped := fmt.Errorf("configuration migration commit failed: %w", renameErr)
@@ -87,6 +96,38 @@ func appConfigDirWithBase(base string) (string, error) {
 		return "", err
 	}
 	return newDir, nil
+}
+
+// legacyConfigCandidate is the only retained file credential cleanup may inspect:
+// the pre-rebrand config.json beside a migrated configuration directory.
+func legacyConfigCandidate(configPath string) (string, error) {
+	if configPath == "" {
+		return "", nil
+	}
+	directory, err := filepath.Abs(filepath.Dir(configPath))
+	if err != nil {
+		return "", err
+	}
+	if filepath.Base(directory) != "mbii-foundry" {
+		return "", nil
+	}
+	return filepath.Join(filepath.Dir(directory), "mbii-fa-creator", "config.json"), nil
+}
+
+func recordLegacyConfigSource(configDir, source string) error {
+	source, err := filepath.Abs(source)
+	if err != nil {
+		return err
+	}
+	return safeio.WriteFile(filepath.Join(configDir, legacyConfigSourceFile), []byte(source), 0600)
+}
+
+// legacyConfigSourceRecorded reports whether migration recorded exactly candidate
+// as its source. Metadata is compared, never opened as a path, so it cannot
+// nominate another file; unreadable or mismatched metadata proves nothing.
+func legacyConfigSourceRecorded(configPath, candidate string) bool {
+	recorded, info, err := readRetainedConfigFile(filepath.Join(filepath.Dir(configPath), legacyConfigSourceFile))
+	return err == nil && info != nil && string(recorded) == candidate
 }
 
 // copyDir copies regular files and directories into an owned staging directory.

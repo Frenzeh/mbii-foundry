@@ -20,6 +20,7 @@ package main
 
 import (
 	"image/color"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -135,10 +136,12 @@ type activityPill struct {
 
 	active   bool
 	hovering bool
+	focused  bool
 
 	bg    *canvas.Rectangle
 	icon  *widget.Icon
 	label *canvas.Text
+	popUp *widget.PopUp
 }
 
 func newActivityPill(item *ActivityItem, parent *SidebarHeader, isToggle bool) *activityPill {
@@ -149,6 +152,7 @@ func newActivityPill(item *ActivityItem, parent *SidebarHeader, isToggle bool) *
 
 func (p *activityPill) CreateRenderer() fyne.WidgetRenderer {
 	p.bg = canvas.NewRectangle(color.Transparent)
+	p.bg.StrokeWidth = 2
 	p.icon = widget.NewIcon(p.item.Icon)
 
 	var content fyne.CanvasObject
@@ -158,8 +162,7 @@ func (p *activityPill) CreateRenderer() fyne.WidgetRenderer {
 		p.label = canvas.NewText(p.item.Label, theme.PlaceHolderColor())
 		p.label.TextSize = SizeSmall
 		p.label.TextStyle = fyne.TextStyle{Bold: true}
-		row := container.NewHBox(p.icon, p.label)
-		content = container.NewPadded(row)
+		content = container.New(&activityPillLayout{pill: p}, p.icon, p.label)
 	}
 
 	p.applyStyle()
@@ -171,6 +174,33 @@ func (p *activityPill) MinSize() fyne.Size {
 		return fyne.NewSize(36, 36)
 	}
 	return fyne.NewSize(64, 36)
+}
+
+type activityPillLayout struct {
+	pill *activityPill
+}
+
+func (l *activityPillLayout) MinSize([]fyne.CanvasObject) fyne.Size {
+	return l.pill.MinSize()
+}
+
+func (l *activityPillLayout) Layout(_ []fyne.CanvasObject, size fyne.Size) {
+	p := l.pill
+	iconSize, labelSize := p.icon.MinSize(), p.label.MinSize()
+	padding := theme.Padding()
+	// Switch the whole tab row to icons at normal sidebar widths.
+	// Also guard longer labels rather than drawing beyond the pill.
+	compact := size.Width < 112 || size.Width < iconSize.Width+labelSize.Width+3*padding
+	p.icon.Resize(iconSize)
+	if compact {
+		p.label.Hide()
+		p.icon.Move(fyne.NewPos((size.Width-iconSize.Width)/2, (size.Height-iconSize.Height)/2))
+		return
+	}
+	p.label.Show()
+	p.icon.Move(fyne.NewPos(padding, (size.Height-iconSize.Height)/2))
+	p.label.Resize(labelSize)
+	p.label.Move(fyne.NewPos(2*padding+iconSize.Width, (size.Height-labelSize.Height)/2))
 }
 
 func (p *activityPill) setIcon(icon fyne.Resource, tooltip string) {
@@ -208,6 +238,10 @@ func (p *activityPill) applyStyle() {
 	default:
 		p.bg.FillColor = color.Transparent
 	}
+	p.bg.StrokeColor = color.Transparent
+	if p.focused {
+		p.bg.StrokeColor = theme.FocusColor()
+	}
 	p.bg.Refresh()
 
 	if p.label != nil {
@@ -230,13 +264,60 @@ func (p *activityPill) Tapped(*fyne.PointEvent) {
 	p.parent.SetActive(p.item.ID)
 }
 
+func (p *activityPill) FocusGained() {
+	p.focused = true
+	p.applyStyle()
+}
+
+func (p *activityPill) FocusLost() {
+	p.focused = false
+	p.applyStyle()
+}
+
+func (p *activityPill) TypedRune(r rune) {
+	if r == ' ' {
+		p.Tapped(nil)
+	}
+}
+
+func (p *activityPill) TypedKey(ev *fyne.KeyEvent) {
+	if ev.Name == fyne.KeyReturn || ev.Name == fyne.KeyEnter {
+		p.Tapped(nil)
+	}
+}
+
 func (p *activityPill) MouseIn(*desktop.MouseEvent) {
 	p.hovering = true
 	p.applyStyle()
+	if p.popUp != nil {
+		return
+	}
+	go func() {
+		time.Sleep(tooltipHoverDelay)
+		fyne.Do(func() {
+			if !p.hovering || p.popUp != nil {
+				return
+			}
+			c := fyne.CurrentApp().Driver().CanvasForObject(p)
+			if c == nil {
+				return
+			}
+			text := p.item.Tooltip
+			if p.item.Label != "" {
+				text = p.item.Label + "\n" + text
+			}
+			p.popUp = widget.NewPopUp(widget.NewLabel(text), c)
+			p.popUp.ShowAtRelativePosition(fyne.NewPos(0, p.Size().Height), p)
+		})
+	}()
 }
 func (p *activityPill) MouseOut() {
 	p.hovering = false
 	p.applyStyle()
+	if p.popUp != nil {
+		p.popUp.Hide()
+		p.popUp = nil
+	}
 }
 func (p *activityPill) MouseMoved(*desktop.MouseEvent) {}
 
